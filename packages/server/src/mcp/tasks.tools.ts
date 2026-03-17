@@ -1,0 +1,89 @@
+// NPM
+import { z } from 'zod';
+import { eq, and } from 'drizzle-orm';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+// Services
+import { tasksService } from '../services/index.js';
+// DB
+import { db } from '../db/index.js';
+import { tasks } from '../db/schema/index.js';
+// Types
+import type { Task } from '@my-agents/shared';
+
+export function registerTaskTools(server: McpServer) {
+  server.registerTool('list_tasks', {
+    description: 'List tasks with optional filters by status, projectId, or agentId',
+    inputSchema: z.object({
+      status: z.enum(['To Do', 'In Progress', 'In Review', 'Done']).optional().describe('Filter by task status'),
+      projectId: z.string().uuid().optional().describe('Filter by project UUID'),
+      agentId: z.string().uuid().optional().describe('Filter by assigned agent UUID'),
+    }),
+  }, async ({ status, projectId, agentId }) => {
+    const conditions = [];
+    if (status) conditions.push(eq(tasks.status, status));
+    if (projectId) conditions.push(eq(tasks.projectId, projectId));
+    if (agentId) conditions.push(eq(tasks.agentId, agentId));
+
+    let result: Task[];
+    if (conditions.length > 0) {
+      result = db
+        .select()
+        .from(tasks)
+        .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+        .all() as Task[];
+    } else {
+      result = await tasksService.list();
+    }
+
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+  });
+
+  server.registerTool('get_task', {
+    description: 'Get full task details by ID including definition of done, notes, and assignments',
+    inputSchema: z.object({
+      id: z.string().uuid().describe('The task UUID'),
+    }),
+  }, async ({ id }) => {
+    const task = await tasksService.getById(id);
+    return { content: [{ type: 'text' as const, text: JSON.stringify(task, null, 2) }] };
+  });
+
+  server.registerTool('create_task', {
+    description: 'Create a new task on the Kanban board',
+    inputSchema: z.object({
+      name: z.string().min(1).max(200).describe('Task name'),
+      status: z.enum(['To Do', 'In Progress', 'In Review', 'Done']).optional().describe('Initial status (defaults to "To Do")'),
+      priority: z.enum(['Low', 'Medium', 'High']).optional().describe('Task priority'),
+      estimate: z.enum(['S', 'M', 'L']).optional().describe('Size estimate'),
+      definitionOfDone: z.string().optional().describe('Criteria for task completion'),
+      notes: z.string().optional().describe('Additional notes or context'),
+      projectId: z.string().uuid().optional().describe('Assign to a project'),
+      agentId: z.string().uuid().optional().describe('Assign to an agent'),
+      skillId: z.string().uuid().optional().describe('Assign a skill for execution'),
+    }),
+  }, async (args) => {
+    const task = await tasksService.create(args);
+    return { content: [{ type: 'text' as const, text: JSON.stringify(task, null, 2) }] };
+  });
+
+  server.registerTool('update_task', {
+    description:
+      'Update a task by ID. Use this to move tasks through the Kanban ' +
+      '(e.g. set status to "In Progress" or "Done"), add notes, or reassign.',
+    inputSchema: z.object({
+      id: z.string().uuid().describe('The task UUID to update'),
+      name: z.string().min(1).max(200).optional().describe('Updated task name'),
+      status: z.enum(['To Do', 'In Progress', 'In Review', 'Done']).optional().describe('New status'),
+      priority: z.enum(['Low', 'Medium', 'High']).optional().describe('Updated priority'),
+      estimate: z.enum(['S', 'M', 'L']).optional().describe('Updated estimate'),
+      definitionOfDone: z.string().optional().describe('Updated completion criteria'),
+      notes: z.string().optional().describe('Updated notes'),
+      projectId: z.string().uuid().nullable().optional().describe('Reassign project'),
+      agentId: z.string().uuid().nullable().optional().describe('Reassign agent'),
+      skillId: z.string().uuid().nullable().optional().describe('Reassign skill'),
+    }),
+  }, async ({ id, ...data }) => {
+    const task = await tasksService.update(id, data);
+    return { content: [{ type: 'text' as const, text: JSON.stringify(task, null, 2) }] };
+  });
+}

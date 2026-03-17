@@ -1,0 +1,23 @@
+{
+  "name": "my-agents",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "packages/server",
+    "packages/client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm run dev -w packages/server\" \"npm run dev -w packages/client\"",
+    "dev:server": "npm run dev -w packages/server",
+    "dev:client": "npm run dev -w packages/client",
+    "build": "npm run build -w packages/shared && npm run build -w packages/server && npm run build -w packages/client",
+    "mcp": "npm run mcp -w packages/server",
+    "db:generate": "npm run db:generate -w packages/server",
+    "db:migrate": "npm run db:migrate -w packages/server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

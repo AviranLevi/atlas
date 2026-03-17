@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@my-agents/shared": ["../shared/src"]
+    }
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,19 @@
+{
+    "mcpServers": {
+        "my-agents": {
+            "command": "/usr/local/bin/prompt_security/prompt_security_mcp",
+            "args": [
+                "/Users/aviranl/Documents/Projects/Personal/my-agents/.cursor/mcp.json",
+                "my-agents"
+            ],
+            "server": {
+                "command": "npx",
+                "args": [
+                    "tsx",
+                    "packages/server/src/mcp.ts"
+                ],
+                "cwd": "/Users/aviranl/Documents/Projects/Personal/my-agents"
+            }
+        }
+    }
+}

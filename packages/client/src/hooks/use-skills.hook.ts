@@ -1,0 +1,50 @@
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import type { Skill, CreateSkill, UpdateSkill } from '@my-agents/shared';
+
+const SKILLS_KEY = ['skills'] as const;
+
+export function useSkills() {
+  return useQuery({
+    queryKey: SKILLS_KEY,
+    queryFn: () => api.get<Skill[]>('/skills'),
+  });
+}
+
+export function useSkill(id: string | undefined) {
+  return useQuery({
+    queryKey: [...SKILLS_KEY, id],
+    queryFn: () => api.get<Skill>(`/skills/${id}`),
+    enabled: !!id,
+  });
+}
+
+export function useCreateSkill() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateSkill) =>
+      api.post<Skill>('/skills', data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SKILLS_KEY }),
+  });
+}
+
+export function useUpdateSkill() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateSkill }) =>
+      api.put<Skill>(`/skills/${id}`, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SKILLS_KEY }),
+  });
+}
+
+export function useDeleteSkill() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/skills/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: SKILLS_KEY }),
+  });
+}
