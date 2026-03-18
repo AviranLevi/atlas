@@ -7,6 +7,7 @@ import { SkillsPage } from '@/pages/SkillsPage';
 import { RulesPage } from '@/pages/RulesPage';
 import { MemoryPage } from '@/pages/MemoryPage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
+import { ProjectDetailPage } from '@/pages/ProjectDetailPage';
 import { KanbanPage } from '@/pages/KanbanPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 
@@ -32,6 +33,7 @@ export function App() {
               <Route path="/rules" element={<RulesPage />} />
               <Route path="/memory" element={<MemoryPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/kanban" element={<KanbanPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>

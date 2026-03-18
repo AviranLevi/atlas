@@ -16,15 +16,36 @@ type KanbanCardProps = {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   isOverlay?: boolean;
+  agentName?: string;
+  projectName?: string;
+  showProject?: boolean;
 };
 
 const priorityBadgeClass: Record<string, string> = {
-  High: 'border-red-200 bg-red-50 text-red-700',
-  Medium: 'border-yellow-200 bg-yellow-50 text-yellow-700',
-  Low: 'border-green-200 bg-green-50 text-green-700',
+  High: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300',
+  Medium: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
+  Low: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
 };
 
-export function KanbanCard({ task, onEdit, onDelete, isOverlay }: KanbanCardProps) {
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `${days}d`;
+}
+
+export function KanbanCard({
+  task,
+  onEdit,
+  onDelete,
+  isOverlay,
+  agentName,
+  projectName,
+  showProject = true,
+}: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -32,17 +53,56 @@ export function KanbanCard({ task, onEdit, onDelete, isOverlay }: KanbanCardProp
     isDragging,
   } = useDraggable({ id: task.id });
 
+  const metaRow = (
+    <div className="flex flex-wrap gap-1.5">
+      <Badge variant="outline" className={cn('text-xs', priorityBadgeClass[task.priority])}>
+        {task.priority}
+      </Badge>
+      <Badge variant="outline" className="text-xs">{task.estimate}</Badge>
+    </div>
+  );
+
+  const extraContent = (
+    <>
+      {task.tags && task.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {task.tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
+          ))}
+        </div>
+      )}
+      {task.definitionOfDone && (
+        <p className="text-muted-foreground line-clamp-1 text-[11px]">
+          {task.definitionOfDone}
+        </p>
+      )}
+      <div className="text-muted-foreground flex items-center justify-between text-[10px]">
+        <div className="flex items-center gap-2">
+          {agentName && (
+            <span className="inline-flex items-center gap-1">
+              <span className="bg-primary/10 inline-flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-medium">
+                {agentName.slice(0, 2).toUpperCase()}
+              </span>
+              <span className="max-w-[80px] truncate">{agentName}</span>
+            </span>
+          )}
+          {showProject && projectName && (
+            <span className="max-w-[80px] truncate">{projectName}</span>
+          )}
+        </div>
+        <span>{timeAgo(task.createdAt)}</span>
+      </div>
+    </>
+  );
+
   if (isOverlay) {
     return (
       <Card className="cursor-grabbing shadow-lg ring-2 ring-primary/30">
         <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
           <h4 className="font-medium leading-tight line-clamp-2">{task.name}</h4>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-1.5 px-4 pb-4 pt-0">
-          <Badge variant="outline" className={cn('text-xs', priorityBadgeClass[task.priority])}>
-            {task.priority}
-          </Badge>
-          <Badge variant="outline" className="text-xs">{task.estimate}</Badge>
+        <CardContent className="flex flex-col gap-1.5 px-4 pb-4 pt-0">
+          {metaRow}
         </CardContent>
       </Card>
     );
@@ -91,16 +151,9 @@ export function KanbanCard({ task, onEdit, onDelete, isOverlay }: KanbanCardProp
           </Tooltip>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-wrap gap-1.5 px-4 pb-4 pt-0">
-        <Badge
-          variant="outline"
-          className={cn('text-xs', priorityBadgeClass[task.priority])}
-        >
-          {task.priority}
-        </Badge>
-        <Badge variant="outline" className="text-xs">
-          {task.estimate}
-        </Badge>
+      <CardContent className="flex flex-col gap-1.5 px-4 pb-4 pt-0">
+        {metaRow}
+        {extraContent}
       </CardContent>
     </Card>
   );

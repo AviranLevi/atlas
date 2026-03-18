@@ -9,6 +9,9 @@ type KanbanColumnProps = {
   tasks: Task[];
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  agentMap: Map<string, string>;
+  projectMap: Map<string, string>;
+  showProject: boolean;
 };
 
 export function KanbanColumn({
@@ -16,6 +19,9 @@ export function KanbanColumn({
   tasks,
   onEdit,
   onDelete,
+  agentMap,
+  projectMap,
+  showProject,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: status });
 
@@ -38,6 +44,9 @@ export function KanbanColumn({
             task={task}
             onEdit={onEdit}
             onDelete={onDelete}
+            agentName={task.agentId ? agentMap.get(task.agentId) : undefined}
+            projectName={task.projectId ? projectMap.get(task.projectId) : undefined}
+            showProject={showProject}
           />
         ))}
       </div>

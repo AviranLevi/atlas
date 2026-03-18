@@ -18,6 +18,7 @@ export const tasks = sqliteTable('tasks', {
   projectId: text('project_id').references(() => projects.id),
   agentId: text('agent_id').references(() => agents.id),
   skillId: text('skill_id').references(() => skills.id),
+  tags: text('tags'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(timestampDefault),

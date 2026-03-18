@@ -5,8 +5,17 @@ import { projectsService } from '../services/index.js';
 
 export const projectsRoute = new Hono()
   .get('/', async (c) => {
+    const include = c.req.query('include');
+    if (include === 'summary') {
+      const projects = await projectsService.listWithSummary();
+      return c.json(projects);
+    }
     const projects = await projectsService.list();
     return c.json(projects);
+  })
+  .get('/:id/context', async (c) => {
+    const ctx = await projectsService.getContext(c.req.param('id'));
+    return c.json(ctx);
   })
   .get('/:id', async (c) => {
     const project = await projectsService.getById(c.req.param('id'));

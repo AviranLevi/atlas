@@ -8,6 +8,9 @@ export const projects = sqliteTable('projects', {
   name: text('name').notNull(),
   description: text('description'),
   techStack: text('tech_stack'),
+  status: text('status').notNull().default('active'),
+  repositoryUrl: text('repository_url'),
+  color: text('color'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(timestampDefault),

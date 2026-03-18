@@ -52,6 +52,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
   const [agentId, setAgentId] = useState<string>(NONE_VALUE);
   const [skillId, setSkillId] = useState<string>(NONE_VALUE);
   const [projectId, setProjectId] = useState<string>(NONE_VALUE);
+  const [tagsInput, setTagsInput] = useState('');
 
   const { data: agents = [] } = useAgents();
   const { data: skills = [] } = useSkills();
@@ -71,6 +72,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
       setAgentId(task.agentId ?? NONE_VALUE);
       setSkillId(task.skillId ?? NONE_VALUE);
       setProjectId(task.projectId ?? NONE_VALUE);
+      setTagsInput(task.tags?.join(', ') ?? '');
     } else {
       setName('');
       setPriority('Medium');
@@ -80,12 +82,17 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
       setAgentId(NONE_VALUE);
       setSkillId(NONE_VALUE);
       setProjectId(NONE_VALUE);
+      setTagsInput('');
     }
   }, [task, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    const parsedTags = tagsInput.trim()
+      ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
+      : null;
 
     if (isEditing) {
       const updatePayload: UpdateTask = {
@@ -94,6 +101,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
         estimate,
         definitionOfDone: definitionOfDone.trim() || null,
         notes: notes.trim() || null,
+        tags: parsedTags,
         agentId: toOptionalId(agentId),
         skillId: toOptionalId(skillId),
         projectId: toOptionalId(projectId),
@@ -112,6 +120,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
         estimate,
         definitionOfDone: definitionOfDone.trim() || null,
         notes: notes.trim() || null,
+        tags: parsedTags,
         agentId: toOptionalId(agentId),
         skillId: toOptionalId(skillId),
         projectId: toOptionalId(projectId),
@@ -197,6 +206,15 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Additional notes"
               rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="task-tags">Tags</Label>
+            <Input
+              id="task-tags"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              placeholder="bug, feature, refactor (comma-separated)"
             />
           </div>
           <div className="space-y-2">

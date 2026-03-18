@@ -113,6 +113,16 @@ export function KanbanPage() {
     {} as Record<TaskStatus, Task[]>
   );
 
+  const agentMap = useMemo(
+    () => new Map(agents.map((a) => [a.id, a.name])),
+    [agents],
+  );
+
+  const projectMap = useMemo(
+    () => new Map(projects.map((p) => [p.id, p.name])),
+    [projects],
+  );
+
   const hasFilters = projectFilter || agentFilter;
 
   if (isLoading) {
@@ -195,6 +205,9 @@ export function KanbanPage() {
               tasks={tasksByStatus[status] ?? []}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              agentMap={agentMap}
+              projectMap={projectMap}
+              showProject={!projectFilter}
             />
           ))}
         </div>

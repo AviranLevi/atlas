@@ -8,9 +8,31 @@ import type {
   Project,
   CreateProject,
   UpdateProject,
+  Agent,
+  Task,
 } from '@my-agents/shared';
 
 const PROJECTS_KEY = ['projects'] as const;
+
+type TaskCounts = {
+  todo: number;
+  inProgress: number;
+  inReview: number;
+  done: number;
+  total: number;
+};
+
+export type ProjectWithSummary = Project & {
+  taskCounts: TaskCounts;
+  agentCount: number;
+};
+
+export type ProjectContext = {
+  project: Project;
+  agents: Agent[];
+  tasks: Task[];
+  memories: Array<Record<string, unknown>>;
+};
 
 export function useProjects() {
   return useQuery({
@@ -19,10 +41,25 @@ export function useProjects() {
   });
 }
 
+export function useProjectsWithSummary() {
+  return useQuery({
+    queryKey: [...PROJECTS_KEY, 'summary'],
+    queryFn: () => api.get<ProjectWithSummary[]>('/projects?include=summary'),
+  });
+}
+
 export function useProject(id: string | undefined) {
   return useQuery({
     queryKey: [...PROJECTS_KEY, id],
     queryFn: () => api.get<Project>(`/projects/${id}`),
+    enabled: !!id,
+  });
+}
+
+export function useProjectContext(id: string | undefined) {
+  return useQuery({
+    queryKey: [...PROJECTS_KEY, id, 'context'],
+    queryFn: () => api.get<ProjectContext>(`/projects/${id}/context`),
     enabled: !!id,
   });
 }
