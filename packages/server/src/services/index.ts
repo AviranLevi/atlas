@@ -15,3 +15,11 @@ export const tasksService = new TasksService();
 export const projectsService = new ProjectsService();
 export const settingsService = new SettingsService();
 export const searchService = new SearchService();
+
+import { WorktreeService } from './worktree.service.js';
+import { PromptBuilderService } from './prompt-builder.service.js';
+import { OrchestratorService } from './orchestrator.service.js';
+
+export const worktreeService = new WorktreeService();
+export const promptBuilderService = new PromptBuilderService();
+export const orchestratorService = new OrchestratorService();

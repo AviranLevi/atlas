@@ -7,6 +7,8 @@ import { tasksRoute } from './tasks.route.js';
 import { projectsRoute } from './projects.route.js';
 import { settingsRoute } from './settings.route.js';
 import { searchRoute } from './search.route.js';
+import { workspacesRoute } from './workspaces.route.js';
+import { filesystemRoute } from './filesystem.route.js';
 
 export const apiRoutes = new Hono()
   .route('/agents', agentsRoute)
@@ -16,4 +18,6 @@ export const apiRoutes = new Hono()
   .route('/tasks', tasksRoute)
   .route('/projects', projectsRoute)
   .route('/settings', settingsRoute)
-  .route('/search', searchRoute);
+  .route('/search', searchRoute)
+  .route('/workspaces', workspacesRoute)
+  .route('/filesystem', filesystemRoute);

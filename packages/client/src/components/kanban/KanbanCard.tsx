@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,12 @@ type KanbanCardProps = {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onStartWork?: (task: Task) => void;
   isOverlay?: boolean;
   agentName?: string;
   projectName?: string;
   showProject?: boolean;
+  canStartWork?: boolean;
 };
 
 const priorityBadgeClass: Record<string, string> = {
@@ -41,10 +43,12 @@ export function KanbanCard({
   task,
   onEdit,
   onDelete,
+  onStartWork,
   isOverlay,
   agentName,
   projectName,
   showProject = true,
+  canStartWork = false,
 }: KanbanCardProps) {
   const {
     attributes,
@@ -121,6 +125,22 @@ export function KanbanCard({
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
         <h4 className="font-medium leading-tight line-clamp-2">{task.name}</h4>
         <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
+          {canStartWork && task.status === 'To Do' && onStartWork && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                  onClick={() => onStartWork(task)}
+                  aria-label="Start work"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Start Agent Work</TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

@@ -23,6 +23,8 @@ import {
 import { KanbanColumn } from '@/components/kanban/KanbanColumn';
 import { KanbanCard } from '@/components/kanban/KanbanCard';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { StartWorkDialog } from '@/components/workspaces/StartWorkDialog';
+import { WorkspaceStatusPanel } from '@/components/workspaces/WorkspaceStatusPanel';
 // Hooks
 import { useTasks, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
@@ -36,6 +38,8 @@ export function KanbanPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [startWorkDialogOpen, setStartWorkDialogOpen] = useState(false);
+  const [startWorkTask, setStartWorkTask] = useState<Task | null>(null);
 
   const projectFilter = searchParams.get('projectId') ?? undefined;
   const agentFilter = searchParams.get('agentId') ?? undefined;
@@ -89,6 +93,11 @@ export function KanbanPage() {
       updateTask.mutate({ id: taskId, data: { status: newStatus } });
     }
     setActiveTask(null);
+  }
+
+  function handleStartWork(task: Task) {
+    setStartWorkTask(task);
+    setStartWorkDialogOpen(true);
   }
 
   function handleEdit(task: Task) {
@@ -205,9 +214,11 @@ export function KanbanPage() {
               tasks={tasksByStatus[status] ?? []}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onStartWork={handleStartWork}
               agentMap={agentMap}
               projectMap={projectMap}
               showProject={!projectFilter}
+              canStartWork
             />
           ))}
         </div>
@@ -218,10 +229,23 @@ export function KanbanPage() {
         </DragOverlay>
       </DndContext>
 
+      <WorkspaceStatusPanel />
+
       <TaskDialog
         open={dialogOpen}
         onOpenChange={handleOpenChange}
         task={editingTask}
+      />
+
+      <StartWorkDialog
+        open={startWorkDialogOpen}
+        onOpenChange={(open) => {
+          setStartWorkDialogOpen(open);
+          if (!open) setStartWorkTask(null);
+        }}
+        task={startWorkTask}
+        agentName={startWorkTask?.agentId ? agentMap.get(startWorkTask.agentId) : undefined}
+        projectName={startWorkTask?.projectId ? projectMap.get(startWorkTask.projectId) : undefined}
       />
     </div>
   );

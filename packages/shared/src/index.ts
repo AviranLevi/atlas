@@ -5,3 +5,4 @@ export * from "./schemas/memory.schema";
 export * from "./schemas/tasks.schema";
 export * from "./schemas/projects.schema";
 export * from "./schemas/settings.schema";
+export * from "./schemas/workspaces.schema";

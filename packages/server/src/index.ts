@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { AppError } from './lib/errors.js';
 import { logger } from './lib/logger.js';
 import { apiRoutes } from './routes/index.js';
+import { orchestratorService } from './services/index.js';
 
 const app = new Hono();
 
@@ -22,3 +23,5 @@ app.route('/api/v1', apiRoutes);
 const port = 3100;
 serve({ fetch: app.fetch, port });
 logger.info(`Server running on http://localhost:${port}`);
+
+orchestratorService.reconcileOnStartup();

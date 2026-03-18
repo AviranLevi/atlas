@@ -14,3 +14,6 @@ export const memoryRepository = new MemoryRepository(db);
 export const tasksRepository = new TasksRepository(db);
 export const projectsRepository = new ProjectsRepository(db);
 export const settingsRepository = new SettingsRepository(db);
+
+import { WorkspacesRepository } from './workspaces.repository.js';
+export const workspacesRepository = new WorkspacesRepository(db);

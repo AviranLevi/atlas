@@ -7,6 +7,7 @@ import { registerRuleTools } from './rules.tools.js';
 import { registerSkillTools } from './skills.tools.js';
 import { registerSettingsTools } from './settings.tools.js';
 import { registerSearchTools } from './search.tools.js';
+import { registerWorkspaceTools } from './workspaces.tools.js';
 
 export function registerAllTools(server: McpServer) {
   registerAgentTools(server);
@@ -17,4 +18,5 @@ export function registerAllTools(server: McpServer) {
   registerSkillTools(server);
   registerSettingsTools(server);
   registerSearchTools(server);
+  registerWorkspaceTools(server);
 }

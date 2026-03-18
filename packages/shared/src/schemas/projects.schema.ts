@@ -9,6 +9,7 @@ export const ProjectSchema = z.object({
   techStack: z.string().nullable(),
   status: ProjectStatusEnum,
   repositoryUrl: z.string().nullable(),
+  localPath: z.string().nullable(),
   color: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -20,6 +21,7 @@ export const CreateProjectSchema = z.object({
   techStack: z.string().nullable().optional(),
   status: ProjectStatusEnum.optional().default('active'),
   repositoryUrl: z.string().nullable().optional(),
+  localPath: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
 });
 

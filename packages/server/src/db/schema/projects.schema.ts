@@ -10,6 +10,7 @@ export const projects = sqliteTable('projects', {
   techStack: text('tech_stack'),
   status: text('status').notNull().default('active'),
   repositoryUrl: text('repository_url'),
+  localPath: text('local_path'),
   color: text('color'),
   createdAt: text('created_at')
     .notNull()
