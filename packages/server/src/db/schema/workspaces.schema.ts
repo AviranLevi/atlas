@@ -23,6 +23,7 @@ export const workspaces = sqliteTable('workspaces', {
   pid: integer('pid'),
   status: text('status').notNull().default('pending'),
   output: text('output'),
+  diffComments: text('diff_comments'), // JSON: [{id, filename, lineNumber, lineContent, body, createdAt}]
   startedAt: text('started_at'),
   completedAt: text('completed_at'),
   createdAt: text('created_at')

@@ -1,0 +1,106 @@
+import { spawn, type ChildProcess } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import type { ExecutorConfig } from './executor.types.js';
+import { generateMcpConfig } from './mcp-config-generator.js';
+import { logger } from '../lib/logger.js';
+
+const FILE_PATH = 'executors/spawn-agent.ts';
+const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
+const MAX_DB_OUTPUT_LINES = 50;
+
+export interface SpawnResult {
+  process: ChildProcess;
+  logFile: string;
+  mcpConfigPath?: string;
+}
+
+export interface SpawnCallbacks {
+  onCompleted: (output: string) => void;
+  onFailed: (output: string, error?: string) => void;
+}
+
+function buildArgs(executor: ExecutorConfig, prompt: string, mcpConfigPath?: string): string[] {
+  const args = [...executor.args];
+
+  if (mcpConfigPath && executor.mcpConfigFormat !== 'none') {
+    args.unshift('--mcp-config', mcpConfigPath);
+  }
+
+  switch (executor.promptDelivery) {
+    case 'flag':
+      args.push(executor.promptFlag!, prompt);
+      break;
+    case 'positional':
+      args.push(prompt);
+      break;
+    case 'stdin':
+      break;
+  }
+
+  return args;
+}
+
+export function spawnAgent(
+  workspaceId: string,
+  executor: ExecutorConfig,
+  cwd: string,
+  prompt: string,
+  callbacks: SpawnCallbacks,
+): SpawnResult {
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+
+  const logFile = path.join(OUTPUT_DIR, `${workspaceId}.log`);
+  const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+  const outputLines: string[] = [];
+
+  let mcpConfigPath: string | undefined;
+  if (executor.mcpConfigFormat !== 'none') {
+    mcpConfigPath = generateMcpConfig(workspaceId, executor.mcpConfigFormat);
+  }
+
+  const args = buildArgs(executor, prompt, mcpConfigPath);
+
+  logger.info(`${FILE_PATH} :: spawnAgent - spawning ${executor.command} ${args.join(' ').slice(0, 200)}... in ${cwd}`);
+
+  const proc = spawn(executor.command, args, {
+    cwd,
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: { ...process.env, ...executor.env },
+  });
+
+  const collectOutput = (data: Buffer) => {
+    const text = data.toString();
+    logStream.write(text);
+    const lines = text.split('\n');
+    outputLines.push(...lines);
+    while (outputLines.length > MAX_DB_OUTPUT_LINES) {
+      outputLines.shift();
+    }
+  };
+
+  proc.stdout?.on('data', collectOutput);
+  proc.stderr?.on('data', collectOutput);
+
+  if (executor.promptDelivery === 'stdin') {
+    proc.stdin?.write(prompt);
+    proc.stdin?.end();
+  }
+
+  proc.on('close', (code) => {
+    logStream.end();
+    const finalOutput = outputLines.join('\n');
+    if (code === 0) {
+      callbacks.onCompleted(finalOutput);
+    } else {
+      callbacks.onFailed(finalOutput, `Exit code: ${code}`);
+    }
+  });
+
+  proc.on('error', (err) => {
+    logStream.end();
+    callbacks.onFailed(`Spawn error: ${err.message}`, err.message);
+  });
+
+  return { process: proc, logFile, mcpConfigPath };
+}

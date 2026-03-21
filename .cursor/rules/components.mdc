@@ -15,28 +15,42 @@ alwaysApply: false
 
 ## File Layout
 
-Single-file components. Props are defined at the top of the same file.
+Components are single-file. Types and constants are extracted to separate files per directory.
 
 ```
 packages/client/src/
   pages/
     AgentsPage.tsx
     KanbanPage.tsx
+    kanban-page.constants.ts
+    SettingsPage.tsx
+    settings-page.types.ts
+    settings-page.constants.ts
     ...
   components/
     agents/
+      agents.types.ts           ← all types for this directory
+      agents.constants.ts       ← all constants for this directory
       AgentDialog.tsx
+      AgentProviderDialog.tsx
     kanban/
+      kanban.types.ts
+      kanban.constants.ts
       KanbanCard.tsx
       KanbanColumn.tsx
       TaskDialog.tsx
     layout/
+      layout.types.ts
+      layout.constants.ts
       AppShell.tsx
-      PageHeader.tsx
     ui/
       button.tsx
       card.tsx
       ...
+  lib/
+    format.ts                   ← shared formatting utilities (timeAgo, calcDuration)
+    utils.ts                    ← cn() and other generic utilities
+    api.ts                      ← API client
 ```
 
 ## Component Structure (order matters)
@@ -75,8 +89,9 @@ export function AgentCard({ agent, onSelect }: AgentCardProps) {
 
 ## Props
 
-- Define props at the top of the component file as a `type`.
-- Props type named `ComponentNameProps`.
+- Define props in the directory's `.types.ts` file (see `client-organization.mdc`).
+- Props type named `ComponentNameProps` (e.g., `KanbanCardProps`, not `Props`).
+- Import with `import type { ComponentNameProps } from './<directory>.types'`.
 - Destructure props in the function signature.
 - No `any` for props or state.
 

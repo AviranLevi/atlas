@@ -1,0 +1,1 @@
+export { UnifiedDiffView } from './UnifiedDiffView';

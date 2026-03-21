@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@hono/node-server": "^1.13",
     "@hono/zod-validator": "^0.4",
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -19,6 +20,7 @@
     "better-sqlite3": "^11.7",
     "drizzle-orm": "^0.38",
     "hono": "^4.7",
+    "openai": "^6.32.0",
     "zod": "^3.24"
   },
   "devDependencies": {

@@ -24,11 +24,15 @@ export const tasksRoute = new Hono()
     if (agentId) conditions.push(eq(tasks.agentId, agentId));
 
     if (conditions.length > 0) {
-      const result = db
+      const rows = db
         .select()
         .from(tasks)
         .where(conditions.length === 1 ? conditions[0] : and(...conditions))
-        .all() as Task[];
+        .all();
+      const result = rows.map((r) => ({
+        ...r,
+        tags: typeof r.tags === 'string' ? JSON.parse(r.tags) : r.tags ?? null,
+      })) as Task[];
       return c.json(result);
     }
 

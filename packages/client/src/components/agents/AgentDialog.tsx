@@ -1,27 +1,32 @@
 import { useEffect, useState } from 'react';
-import type { Agent } from '@my-agents/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCreateAgent, useUpdateAgent } from '@/hooks/use-agents.hook';
-
-type AgentDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  agent?: Agent;
-};
+import { useAgentProviders } from '@/hooks/use-agent-providers.hook';
+import type { AgentDialogProps } from './agents.types';
+import { NONE } from './agents.constants';
 
 export function AgentDialog({ open, onOpenChange, agent }: AgentDialogProps) {
   const createAgent = useCreateAgent();
   const updateAgent = useUpdateAgent();
+  const { data: providers = [] } = useAgentProviders();
   const isEditing = !!agent;
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [personality, setPersonality] = useState('');
   const [unbreakableRules, setUnbreakableRules] = useState('');
+  const [providerId, setProviderId] = useState<string>(NONE);
 
   useEffect(() => {
     if (agent) {
@@ -29,11 +34,13 @@ export function AgentDialog({ open, onOpenChange, agent }: AgentDialogProps) {
       setDescription(agent.description ?? '');
       setPersonality(agent.personality ?? '');
       setUnbreakableRules(agent.unbreakableRules ?? '');
+      setProviderId(agent.providerId ?? NONE);
     } else {
       setName('');
       setDescription('');
       setPersonality('');
       setUnbreakableRules('');
+      setProviderId(NONE);
     }
   }, [agent, open]);
 
@@ -44,6 +51,7 @@ export function AgentDialog({ open, onOpenChange, agent }: AgentDialogProps) {
       description: description || null,
       personality: personality || null,
       unbreakableRules: unbreakableRules || null,
+      providerId: providerId === NONE ? null : providerId,
     };
 
     if (isEditing) {
@@ -106,6 +114,24 @@ export function AgentDialog({ open, onOpenChange, agent }: AgentDialogProps) {
               rows={3}
             />
           </div>
+          {providers.length > 0 && (
+            <div className="space-y-2">
+              <Label>AI Provider</Label>
+              <Select value={providerId} onValueChange={setProviderId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>None</SelectItem>
+                  {providers.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

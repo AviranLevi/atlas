@@ -21,5 +21,13 @@ export const db = drizzle(sqlite, { schema });
 
 migrate(db, { migrationsFolder });
 
+// Manual column additions for columns added after initial drizzle migration setup.
+// SQLite ALTER TABLE ADD COLUMN is idempotent-safe with the "IF NOT EXISTS" workaround.
+try {
+  sqlite.exec(`ALTER TABLE workspaces ADD COLUMN diff_comments TEXT`);
+} catch {
+  // Column already exists — ignore
+}
+
 export { schema };
 export type DB = typeof db;

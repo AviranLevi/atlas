@@ -8,6 +8,8 @@ import { registerSkillTools } from './skills.tools.js';
 import { registerSettingsTools } from './settings.tools.js';
 import { registerSearchTools } from './search.tools.js';
 import { registerWorkspaceTools } from './workspaces.tools.js';
+import { registerPhaseTools } from './phases.tools.js';
+import { registerReviewTools } from './reviews.tools.js';
 
 export function registerAllTools(server: McpServer) {
   registerAgentTools(server);
@@ -19,4 +21,6 @@ export function registerAllTools(server: McpServer) {
   registerSettingsTools(server);
   registerSearchTools(server);
   registerWorkspaceTools(server);
+  registerPhaseTools(server);
+  registerReviewTools(server);
 }

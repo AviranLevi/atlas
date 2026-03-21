@@ -3,15 +3,15 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 // Services
 import { orchestratorService } from '../services/index.js';
-// Config
-import { listRuntimes } from '../config/agent-runtimes.js';
+// Executors
+import { executorRegistry } from '../executors/index.js';
 
 export function registerWorkspaceTools(server: McpServer) {
   server.registerTool('list_agent_runtimes', {
     description: 'List available agent runtimes (CLI tools) that can execute tasks',
     inputSchema: z.object({}),
   }, async () => {
-    const runtimes = listRuntimes();
+    const runtimes = await executorRegistry.listAll();
     return { content: [{ type: 'text' as const, text: JSON.stringify(runtimes, null, 2) }] };
   });
 

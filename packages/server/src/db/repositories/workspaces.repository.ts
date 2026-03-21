@@ -2,7 +2,7 @@
 import { eq } from 'drizzle-orm';
 // DB
 import type { DB } from '../index.js';
-import { workspaces } from '../schema/index.js';
+import { workspaces, tasks, projects } from '../schema/index.js';
 // Utils
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
@@ -32,10 +32,30 @@ type UpdateWorkspace = Partial<Omit<InsertWorkspace, 'taskId' | 'projectId'>>;
 export class WorkspacesRepository {
   constructor(private readonly db: DB) {}
 
+  private parseComments(raw: string | null | undefined): Workspace['diffComments'] {
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  private enrichRow(row: { workspaces: Workspace; tasks: { name: string } | null; projects: { name: string } | null }): Workspace {
+    return {
+      ...row.workspaces,
+      diffComments: this.parseComments(row.workspaces.diffComments as unknown as string),
+      taskName: row.tasks?.name ?? undefined,
+      projectName: row.projects?.name ?? undefined,
+    };
+  }
+
   findAll(): Workspace[] {
     const FUNCTION_NAME = 'findAll';
     try {
-      return this.db.select().from(workspaces).all() as Workspace[];
+      const rows = this.db
+        .select()
+        .from(workspaces)
+        .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
+        .leftJoin(projects, eq(workspaces.projectId, projects.id))
+        .all();
+      return rows.map((r) => this.enrichRow(r as any));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspaces', { cause: error });
@@ -45,11 +65,14 @@ export class WorkspacesRepository {
   findByStatus(status: string): Workspace[] {
     const FUNCTION_NAME = 'findByStatus';
     try {
-      return this.db
+      const rows = this.db
         .select()
         .from(workspaces)
+        .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
+        .leftJoin(projects, eq(workspaces.projectId, projects.id))
         .where(eq(workspaces.status, status))
-        .all() as Workspace[];
+        .all();
+      return rows.map((r) => this.enrichRow(r as any));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspaces by status', { cause: error });
@@ -64,7 +87,8 @@ export class WorkspacesRepository {
         .from(workspaces)
         .where(eq(workspaces.taskId, taskId))
         .get();
-      return (row as Workspace) ?? null;
+      if (!row) return null;
+      return { ...row, diffComments: this.parseComments(row.diffComments) } as Workspace;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspace by task', { cause: error });
@@ -74,8 +98,15 @@ export class WorkspacesRepository {
   findById(id: string): Workspace | null {
     const FUNCTION_NAME = 'findById';
     try {
-      const row = this.db.select().from(workspaces).where(eq(workspaces.id, id)).get();
-      return (row as Workspace) ?? null;
+      const row = this.db
+        .select()
+        .from(workspaces)
+        .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
+        .leftJoin(projects, eq(workspaces.projectId, projects.id))
+        .where(eq(workspaces.id, id))
+        .get();
+      if (!row) return null;
+      return this.enrichRow(row as any);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspace', { cause: error });
@@ -122,6 +153,15 @@ export class WorkspacesRepository {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete workspace', { cause: error });
+    }
+  }
+
+  removeByTaskId(taskId: string): void {
+    try {
+      this.db.delete(workspaces).where(eq(workspaces.taskId, taskId)).run();
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: removeByTaskId`, error);
+      throw new AppError('Failed to delete workspaces for task', { cause: error });
     }
   }
 }

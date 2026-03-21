@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Memory, MemoryType, MemoryScope } from '@my-agents/shared';
+import type { MemoryType, MemoryScope } from '@my-agents/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,15 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateMemory, useUpdateMemory } from '@/hooks/use-memory.hook';
-
-const MEMORY_TYPES: MemoryType[] = ['Decision', 'Convention', 'Preference', 'Problem'];
-const MEMORY_SCOPES: MemoryScope[] = ['global', 'project'];
-
-type MemoryDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  memory?: Memory;
-};
+import type { MemoryDialogProps } from './memory.types';
+import { MEMORY_TYPES, MEMORY_SCOPES } from './memory.constants';
 
 export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) {
   const createMemory = useCreateMemory();

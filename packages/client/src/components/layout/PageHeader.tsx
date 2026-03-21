@@ -1,11 +1,5 @@
 import { cn } from '@/lib/utils';
-
-type PageHeaderProps = {
-  title: string;
-  description?: string;
-  actions?: React.ReactNode;
-  className?: string;
-};
+import type { PageHeaderProps } from './layout.types';
 
 export function PageHeader({
   title,

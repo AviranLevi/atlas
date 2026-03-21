@@ -23,6 +23,7 @@ export const TaskSchema = z.object({
   projectId: z.string().uuid().nullable(),
   agentId: z.string().uuid().nullable(),
   skillId: z.string().uuid().nullable(),
+  phaseId: z.string().uuid().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -38,6 +39,7 @@ export const CreateTaskSchema = z.object({
   projectId: z.string().uuid().nullable().optional(),
   agentId: z.string().uuid().nullable().optional(),
   skillId: z.string().uuid().nullable().optional(),
+  phaseId: z.string().uuid().nullable().optional(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial();

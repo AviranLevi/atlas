@@ -6,3 +6,6 @@ export * from "./schemas/tasks.schema";
 export * from "./schemas/projects.schema";
 export * from "./schemas/settings.schema";
 export * from "./schemas/workspaces.schema";
+export * from "./schemas/agent-providers.schema";
+export * from "./schemas/phases.schema";
+export * from "./schemas/reviews.schema";

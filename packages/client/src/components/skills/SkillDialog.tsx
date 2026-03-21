@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Skill, SkillType } from '@my-agents/shared';
+import type { SkillType } from '@my-agents/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,23 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateSkill, useUpdateSkill } from '@/hooks/use-skills.hook';
-
-const SKILL_TYPES: SkillType[] = [
-  'Planning',
-  'Coding',
-  'Review',
-  'Architecture / Data',
-  'Planning / Roadmapping',
-  'Design / Systems',
-  'Design',
-  'Design / Balancing',
-];
-
-type SkillDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  skill?: Skill;
-};
+import type { SkillDialogProps } from './skills.types';
+import { SKILL_TYPES } from './skills.constants';
 
 export function SkillDialog({ open, onOpenChange, skill }: SkillDialogProps) {
   const createSkill = useCreateSkill();

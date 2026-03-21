@@ -21,33 +21,10 @@ import { useCreateProject, useUpdateProject } from '@/hooks/use-projects.hook';
 // Utils
 import { api } from '@/lib/api';
 // Types
-import type { Project, ProjectStatus } from '@my-agents/shared';
-
-type ScanResult = {
-  name: string | null;
-  description: string | null;
-  techStack: string | null;
-  repositoryUrl: string | null;
-};
-
-type ProjectDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  project?: Project;
-};
-
-const STATUSES: { value: ProjectStatus; label: string }[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'on-hold', label: 'On Hold' },
-  { value: 'archived', label: 'Archived' },
-  { value: 'completed', label: 'Completed' },
-];
-
-const COLOR_PRESETS = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
-  '#f97316', '#eab308', '#22c55e', '#06b6d4',
-  '#3b82f6', '#64748b',
-];
+import type { ProjectStatus } from '@my-agents/shared';
+import type { ProjectDialogProps, ScanResult } from './projects.types';
+// Constants
+import { STATUSES, COLOR_PRESETS } from './projects.constants';
 
 export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProps) {
   const createProject = useCreateProject();

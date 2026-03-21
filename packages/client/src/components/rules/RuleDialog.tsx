@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Rule, RuleType } from '@my-agents/shared';
+import type { RuleType } from '@my-agents/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,14 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateRule, useUpdateRule } from '@/hooks/use-rules.hook';
-
-const RULE_TYPES: RuleType[] = ['Backend', 'Frontend', 'Godot', 'General'];
-
-type RuleDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  rule?: Rule;
-};
+import type { RuleDialogProps } from './rules.types';
+import { RULE_TYPES } from './rules.constants';
 
 export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
   const createRule = useCreateRule();

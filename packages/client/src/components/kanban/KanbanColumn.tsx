@@ -2,19 +2,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { KanbanCard } from './KanbanCard';
-import type { Task } from '@my-agents/shared';
-
-type KanbanColumnProps = {
-  status: string;
-  tasks: Task[];
-  onEdit: (task: Task) => void;
-  onDelete: (id: string) => void;
-  onStartWork?: (task: Task) => void;
-  agentMap: Map<string, string>;
-  projectMap: Map<string, string>;
-  showProject: boolean;
-  canStartWork?: boolean;
-};
+import type { KanbanColumnProps } from './kanban.types';
 
 export function KanbanColumn({
   status,
@@ -26,6 +14,7 @@ export function KanbanColumn({
   projectMap,
   showProject,
   canStartWork,
+  activeWorkspaceMap,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: status });
 
@@ -53,6 +42,7 @@ export function KanbanColumn({
             projectName={task.projectId ? projectMap.get(task.projectId) : undefined}
             showProject={showProject}
             canStartWork={canStartWork}
+            activeWorkspaceId={activeWorkspaceMap?.get(task.id)}
           />
         ))}
       </div>

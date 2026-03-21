@@ -1,5 +1,6 @@
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { uuidDefault, timestampDefault } from '../helpers/index.js';
+import { agentProviders } from './agent-providers.schema.js';
 
 export const agents = sqliteTable('agents', {
   id: text('id')
@@ -9,6 +10,7 @@ export const agents = sqliteTable('agents', {
   description: text('description'),
   personality: text('personality'),
   unbreakableRules: text('unbreakable_rules'),
+  providerId: text('provider_id').references(() => agentProviders.id),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(timestampDefault),

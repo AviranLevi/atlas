@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -21,15 +22,7 @@ import {
 // Hooks
 import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
 // Types
-import type { Task } from '@my-agents/shared';
-
-type StartWorkDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  task: Task | null;
-  agentName?: string;
-  projectName?: string;
-};
+import type { StartWorkDialogProps } from './workspaces.types';
 
 export function StartWorkDialog({
   open,
@@ -93,11 +86,39 @@ export function StartWorkDialog({
                     <SelectValue placeholder="Select a runtime..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {runtimes.map((rt) => (
-                      <SelectItem key={rt.id} value={rt.id}>
-                        {rt.name}
-                      </SelectItem>
-                    ))}
+                    {runtimes
+                      .sort((a, b) => {
+                        // Ready first, then installed-but-not-auth, then not installed
+                        const score = (r: typeof a) =>
+                          r.installed && r.authenticated ? 2 : r.installed ? 1 : 0;
+                        return score(b) - score(a);
+                      })
+                      .map((rt) => (
+                        <SelectItem
+                          key={rt.id}
+                          value={rt.id}
+                          disabled={!rt.installed || !rt.authenticated}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span>{rt.name}</span>
+                            {!rt.installed && (
+                              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                Not installed
+                              </Badge>
+                            )}
+                            {rt.installed && !rt.authenticated && (
+                              <Badge variant="outline" className="text-[10px] border-yellow-300 text-yellow-600 dark:border-yellow-700 dark:text-yellow-400">
+                                {rt.authHint ?? 'Not authenticated'}
+                              </Badge>
+                            )}
+                            {rt.mcpConfigFormat !== 'none' && rt.installed && rt.authenticated && (
+                              <Badge variant="secondary" className="text-[10px]">
+                                MCP
+                              </Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               )}

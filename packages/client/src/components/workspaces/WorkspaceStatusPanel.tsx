@@ -13,29 +13,8 @@ import {
 import { useWorkspaces, useStopWork, useCleanupWorkspace } from '@/hooks/use-workspaces.hook';
 // Types
 import type { Workspace } from '@my-agents/shared';
-
-const statusConfig: Record<string, { label: string; className: string }> = {
-  pending: {
-    label: 'Pending',
-    className: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
-  },
-  running: {
-    label: 'Running',
-    className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
-  },
-  completed: {
-    label: 'Completed',
-    className: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
-  },
-  failed: {
-    label: 'Failed',
-    className: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300',
-  },
-  stopped: {
-    label: 'Stopped',
-    className: 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300',
-  },
-};
+// Constants
+import { statusConfig } from './workspaces.constants';
 
 function runningDuration(startedAt: string | null): string {
   if (!startedAt) return '--';
@@ -57,12 +36,23 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   return (
     <Card className="border-l-4" style={{ borderLeftColor: isActive ? '#3b82f6' : '#64748b' }}>
       <CardContent className="p-3 space-y-2">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 min-w-0">
-            <Badge variant="outline" className={config.className}>
-              {config.label}
-            </Badge>
-            <p className="text-xs font-medium truncate">{workspace.agentRuntime}</p>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1 space-y-0.5">
+            {/* Task name — the most important thing to see at a glance */}
+            <p className="text-sm font-semibold leading-tight truncate">
+              {workspace.taskName ?? 'Unknown task'}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className={`${config.className} text-[10px] px-1.5 py-0`}>
+                {config.label}
+              </Badge>
+              {workspace.projectName && (
+                <span className="text-muted-foreground text-[11px] truncate">
+                  {workspace.projectName}
+                </span>
+              )}
+              <span className="text-muted-foreground text-[11px]">{workspace.agentRuntime}</span>
+            </div>
           </div>
           <div className="flex shrink-0 gap-1">
             {isActive && (
@@ -101,7 +91,7 @@ function WorkspaceCard({ workspace }: { workspace: Workspace }) {
         <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
           <span className="inline-flex items-center gap-1">
             <GitBranch className="h-3 w-3" />
-            <span className="max-w-[140px] truncate">{workspace.branchName}</span>
+            <span className="max-w-[160px] truncate">{workspace.branchName}</span>
           </span>
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />

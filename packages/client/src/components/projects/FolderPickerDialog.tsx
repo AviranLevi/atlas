@@ -15,26 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 // Utils
 import { api } from '@/lib/api';
-
-type DirectoryEntry = {
-  name: string;
-  path: string;
-  isGitRepo: boolean;
-};
-
-type BrowseResponse = {
-  currentPath: string;
-  parentPath: string | null;
-  directories: DirectoryEntry[];
-  isGitRepo: boolean;
-};
-
-type FolderPickerDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialPath?: string;
-  onSelect: (path: string) => void;
-};
+// Types
+import type { BrowseResponse, FolderPickerDialogProps } from './projects.types';
 
 export function FolderPickerDialog({
   open,

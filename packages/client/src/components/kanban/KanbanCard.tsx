@@ -1,5 +1,6 @@
 import { useDraggable } from '@dnd-kit/core';
-import { Pencil, Trash2, Play } from 'lucide-react';
+import { Pencil, Trash2, Play, Terminal, FileCode } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,35 +10,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import type { Task } from '@my-agents/shared';
-
-type KanbanCardProps = {
-  task: Task;
-  onEdit: (task: Task) => void;
-  onDelete: (id: string) => void;
-  onStartWork?: (task: Task) => void;
-  isOverlay?: boolean;
-  agentName?: string;
-  projectName?: string;
-  showProject?: boolean;
-  canStartWork?: boolean;
-};
-
-const priorityBadgeClass: Record<string, string> = {
-  High: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300',
-  Medium: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
-  Low: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
-};
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `${days}d`;
-}
+import { ReviewBadge } from '@/components/reviews/ReviewBadge';
+import { useReview } from '@/hooks/use-reviews.hook';
+import { timeAgo } from '@/lib/format';
+import type { KanbanCardProps } from './kanban.types';
+import { priorityBadgeClass } from './kanban.constants';
 
 export function KanbanCard({
   task,
@@ -49,6 +26,7 @@ export function KanbanCard({
   projectName,
   showProject = true,
   canStartWork = false,
+  activeWorkspaceId,
 }: KanbanCardProps) {
   const {
     attributes,
@@ -56,6 +34,8 @@ export function KanbanCard({
     setNodeRef,
     isDragging,
   } = useDraggable({ id: task.id });
+
+  const { data: review } = useReview(task.status === 'In Review' ? task.id : '');
 
   const metaRow = (
     <div className="flex flex-wrap gap-1.5">
@@ -125,6 +105,42 @@ export function KanbanCard({
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
         <h4 className="font-medium leading-tight line-clamp-2">{task.name}</h4>
         <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
+          {activeWorkspaceId && task.status !== 'In Review' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-blue-500 hover:text-blue-600 dark:text-blue-400 animate-pulse"
+                  aria-label="View active workspace"
+                  asChild
+                >
+                  <Link to={`/workspaces/${activeWorkspaceId}`}>
+                    <Terminal className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Agent running — view workspace</TooltipContent>
+            </Tooltip>
+          )}
+          {activeWorkspaceId && task.status === 'In Review' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-green-600 hover:text-green-700 dark:text-green-400"
+                  aria-label="Review changes"
+                  asChild
+                >
+                  <Link to={`/workspaces/${activeWorkspaceId}`}>
+                    <FileCode className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Review changes</TooltipContent>
+            </Tooltip>
+          )}
           {canStartWork && task.status === 'To Do' && onStartWork && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -173,6 +189,7 @@ export function KanbanCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-1.5 px-4 pb-4 pt-0">
         {metaRow}
+        {review && <ReviewBadge status={review.status} />}
         {extraContent}
       </CardContent>
     </Card>

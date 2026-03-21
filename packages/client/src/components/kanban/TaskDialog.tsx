@@ -19,25 +19,17 @@ import {
 import { useAgents } from '@/hooks/use-agents.hook';
 import { useSkills } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
+import { usePhases } from '@/hooks/use-phases.hook';
 import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks.hook';
+import { ReviewPanel } from '@/components/reviews/ReviewPanel';
 import type {
-  Task,
   CreateTask,
   UpdateTask,
   TaskPriority,
   TaskEstimate,
 } from '@my-agents/shared';
-
-type TaskDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  task?: Task | null;
-};
-
-const PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High'];
-const ESTIMATES: TaskEstimate[] = ['S', 'M', 'L'];
-
-const NONE_VALUE = '__none__';
+import type { TaskDialogProps } from './kanban.types';
+import { PRIORITIES, ESTIMATES, NONE_VALUE } from './kanban.constants';
 
 function toOptionalId(value: string): string | null {
   return value === NONE_VALUE ? null : value;
@@ -53,10 +45,13 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
   const [skillId, setSkillId] = useState<string>(NONE_VALUE);
   const [projectId, setProjectId] = useState<string>(NONE_VALUE);
   const [tagsInput, setTagsInput] = useState('');
+  const [phaseId, setPhaseId] = useState<string>(NONE_VALUE);
 
   const { data: agents = [] } = useAgents();
   const { data: skills = [] } = useSkills();
   const { data: projects = [] } = useProjects();
+  const effectiveProjectId = projectId === NONE_VALUE ? '' : projectId;
+  const { data: phases = [] } = usePhases(effectiveProjectId);
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
 
@@ -72,6 +67,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
       setAgentId(task.agentId ?? NONE_VALUE);
       setSkillId(task.skillId ?? NONE_VALUE);
       setProjectId(task.projectId ?? NONE_VALUE);
+      setPhaseId(task.phaseId ?? NONE_VALUE);
       setTagsInput(task.tags?.join(', ') ?? '');
     } else {
       setName('');
@@ -82,6 +78,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
       setAgentId(NONE_VALUE);
       setSkillId(NONE_VALUE);
       setProjectId(NONE_VALUE);
+      setPhaseId(NONE_VALUE);
       setTagsInput('');
     }
   }, [task, open]);
@@ -105,6 +102,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
         agentId: toOptionalId(agentId),
         skillId: toOptionalId(skillId),
         projectId: toOptionalId(projectId),
+        phaseId: toOptionalId(phaseId),
       };
       updateTask.mutate(
         { id: task.id, data: updatePayload },
@@ -124,6 +122,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
         agentId: toOptionalId(agentId),
         skillId: toOptionalId(skillId),
         projectId: toOptionalId(projectId),
+        phaseId: toOptionalId(phaseId),
       };
       createTask.mutate(createPayload, {
         onSuccess: () => onOpenChange(false),
@@ -251,7 +250,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
           </div>
           <div className="space-y-2">
             <Label>Project</Label>
-            <Select value={projectId} onValueChange={setProjectId}>
+            <Select value={projectId} onValueChange={(v) => { setProjectId(v); setPhaseId(NONE_VALUE); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
@@ -265,6 +264,27 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
               </SelectContent>
             </Select>
           </div>
+          {effectiveProjectId && phases.length > 0 && (
+            <div className="space-y-2">
+              <Label>Phase</Label>
+              <Select value={phaseId} onValueChange={setPhaseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select phase" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE_VALUE}>None</SelectItem>
+                  {phases.map((ph) => (
+                    <SelectItem key={ph.id} value={ph.id}>
+                      {ph.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {isEditing && task.status === 'In Review' && (
+            <ReviewPanel taskId={task.id} />
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} asChild>
               <button type="button">Cancel</button>
