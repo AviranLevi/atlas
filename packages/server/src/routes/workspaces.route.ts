@@ -53,6 +53,10 @@ export const workspacesRoute = new Hono()
     const workspace = await orchestratorService.mergeAndClose(c.req.param('id'));
     return c.json(workspace);
   })
+  .post('/:id/complete', async (c) => {
+    const workspace = await orchestratorService.completeWithoutMerge(c.req.param('id'));
+    return c.json(workspace);
+  })
   .post('/:id/comments', zValidator('json', AddDiffCommentSchema), (c) => {
     const data = c.req.valid('json');
     const workspace = orchestratorService.addDiffComment(c.req.param('id'), data);

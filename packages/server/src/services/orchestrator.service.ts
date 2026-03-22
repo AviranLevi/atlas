@@ -494,6 +494,72 @@ export class OrchestratorService {
     }
   }
 
+  /**
+   * Complete a workspace without merging code changes.
+   * Used for non-code tasks (research, review, memory creation, etc.)
+   */
+  async completeWithoutMerge(workspaceId: string): Promise<Workspace> {
+    const FUNCTION_NAME = 'completeWithoutMerge';
+    try {
+      const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+
+      if (workspace.status !== 'completed') {
+        throw new AppError('Can only complete a finished workspace', { status: 400 });
+      }
+
+      const project = await projectsService.getById(workspace.projectId);
+
+      // Move task to Done
+      await tasksService.update(workspace.taskId, { status: 'Done' });
+
+      // Archive the workspace log
+      const archivedLogPath = this.archiveLog(workspaceId, workspace);
+
+      // Clean up worktree, branch, + MCP config (discard — no changes to keep)
+      if (project.localPath) {
+        try {
+          this.worktreeService.remove(workspace.worktreePath, project.localPath);
+        } catch {
+          logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree already removed`);
+        }
+        // Delete the orphaned branch (no code to preserve)
+        try {
+          const { execSync } = await import('child_process');
+          execSync(`git branch -D "${workspace.branchName}"`, {
+            cwd: project.localPath,
+            stdio: 'pipe',
+          });
+        } catch {
+          // Branch already gone — that's fine
+        }
+      }
+
+      removeMcpConfig(workspaceId);
+
+      // Mark as merged (same final status for history consistency)
+      const completed = workspacesRepository.update(workspaceId, {
+        status: 'merged',
+        completedAt: new Date().toISOString(),
+      });
+
+      activityLogService.log({
+        projectId: workspace.projectId,
+        taskId: workspace.taskId,
+        workspaceId,
+        agentId: workspace.agentId,
+        eventType: 'agent_completed',
+        description: 'Task completed (no code changes)',
+        metadata: { branchName: workspace.branchName, archivedLogPath },
+      });
+
+      return completed;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to complete workspace', { cause: error });
+    }
+  }
+
   addDiffComment(workspaceId: string, comment: { filename: string; lineNumber: number; lineContent: string; body: string }): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];

@@ -119,6 +119,18 @@ export function useMergeWorkspace() {
   });
 }
 
+export function useCompleteWorkspace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (workspaceId: string) =>
+      api.post<Workspace>(`/workspaces/${workspaceId}/complete`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
 export function useRequestChanges() {
   const queryClient = useQueryClient();
   return useMutation({

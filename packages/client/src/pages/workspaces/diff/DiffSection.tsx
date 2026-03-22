@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileCode,
   GitMerge,
+  CheckCircle2,
   Plus,
   Minus,
   ChevronRight,
@@ -25,6 +26,7 @@ import { cn } from '@/lib/utils';
 import {
   useWorkspaceDiff,
   useMergeWorkspace,
+  useCompleteWorkspace,
   useRequestChanges,
   useAddDiffComment,
   useEditDiffComment,
@@ -128,6 +130,7 @@ export function DiffSection({
 }) {
   const { data: diff, isLoading, error } = useWorkspaceDiff(workspaceId);
   const merge = useMergeWorkspace();
+  const complete = useCompleteWorkspace();
   const requestChanges = useRequestChanges();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<DiffViewMode>(
@@ -163,9 +166,28 @@ export function DiffSection({
   if (diff.files.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6 text-sm text-muted-foreground">
-          No changes detected in this workspace.
+        <CardContent className="flex items-center justify-between p-6">
+          <p className="text-sm text-muted-foreground">
+            No code changes in this workspace.
+          </p>
+          <Button
+            size="sm"
+            onClick={() => {
+              complete.mutate(workspaceId, {
+                onSuccess: () => navigate('/workspaces'),
+              });
+            }}
+            disabled={complete.isPending}
+          >
+            <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+            {complete.isPending ? 'Completing...' : 'Approve & Complete'}
+          </Button>
         </CardContent>
+        {complete.isError && (
+          <div className="border-t px-4 py-3 text-sm text-red-500">
+            Failed: {(complete.error as Error).message ?? 'Unknown error'}
+          </div>
+        )}
       </Card>
     );
   }
