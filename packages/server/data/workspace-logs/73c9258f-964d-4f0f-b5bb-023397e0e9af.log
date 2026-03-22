@@ -1,0 +1,8 @@
+The refactoring is complete. Here's what was changed in `PersonalDetails.component.tsx`:
+
+1. **Added `validate()` function** — checks email format with a regex, returns an error string or `null`
+2. **Added `error` state** — `useState<string | null>(null)`, matching the pattern in `LoginForm` and `SignupForm`
+3. **`handleSave`** — now runs validation first; blocks save and sets error if invalid
+4. **`handleCancel` / `handleEdit`** — clear the error state
+5. **Removed `console.log`s** from `handleOnChange`
+6. **Added `{error && <ErrorMessage message={error} />}`** inside the card, using the existing `ErrorMessage` component

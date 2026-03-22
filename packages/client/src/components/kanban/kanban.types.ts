@@ -30,4 +30,5 @@ export type TaskDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: Task | null;
+  defaultProjectId?: string;
 };

@@ -1,5 +1,5 @@
 // React / library
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Play } from 'lucide-react';
 // Components
 import {
@@ -24,6 +24,8 @@ import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
 // Types
 import type { StartWorkDialogProps } from './workspaces.types';
 
+const RUNTIME_STORAGE_KEY = 'my-agents:last-runtime';
+
 export function StartWorkDialog({
   open,
   onOpenChange,
@@ -35,6 +37,23 @@ export function StartWorkDialog({
   const startWork = useStartWork();
   const [selectedRuntime, setSelectedRuntime] = useState<string>('');
 
+  // Restore last used runtime when runtimes are loaded
+  useEffect(() => {
+    if (runtimes.length === 0 || selectedRuntime) return;
+    const saved = localStorage.getItem(RUNTIME_STORAGE_KEY);
+    if (saved) {
+      const runtime = runtimes.find((r) => r.id === saved);
+      if (runtime?.installed && runtime?.authenticated) {
+        setSelectedRuntime(saved);
+      }
+    }
+  }, [runtimes, selectedRuntime]);
+
+  const handleRuntimeChange = (value: string) => {
+    setSelectedRuntime(value);
+    localStorage.setItem(RUNTIME_STORAGE_KEY, value);
+  };
+
   const handleStart = () => {
     if (!task || !selectedRuntime) return;
     startWork.mutate(
@@ -42,7 +61,6 @@ export function StartWorkDialog({
       {
         onSuccess: () => {
           onOpenChange(false);
-          setSelectedRuntime('');
         },
       },
     );
@@ -81,7 +99,7 @@ export function StartWorkDialog({
               {runtimesLoading ? (
                 <p className="text-muted-foreground text-sm">Loading runtimes...</p>
               ) : (
-                <Select value={selectedRuntime} onValueChange={setSelectedRuntime}>
+                <Select value={selectedRuntime} onValueChange={handleRuntimeChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a runtime..." />
                   </SelectTrigger>

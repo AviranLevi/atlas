@@ -1,0 +1,9 @@
+Done. Here's what I changed:
+
+**`PersonalDetails.types.ts`** — extracted a `PersonalDetailsData` interface from the inline user object type, then used it for both `user` and `onSave`:
+```ts
+export interface PersonalDetailsData { email, firstName, lastName, avatar, gender, dateOfBirth, location, timezone }
+export interface PersonalDetailsProps { user: PersonalDetailsData; onSave?: (data: PersonalDetailsData) => void; }
+```
+
+**`PersonalDetails.component.tsx`** — destructured `onSave` and called `onSave?.(personalDetails)` in `handleSave` before closing edit mode.

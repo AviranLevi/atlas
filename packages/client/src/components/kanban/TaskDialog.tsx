@@ -35,7 +35,7 @@ function toOptionalId(value: string): string | null {
   return value === NONE_VALUE ? null : value;
 }
 
-export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
+export function TaskDialog({ open, onOpenChange, task, defaultProjectId }: TaskDialogProps) {
   const [name, setName] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('Medium');
   const [estimate, setEstimate] = useState<TaskEstimate>('M');
@@ -77,15 +77,17 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
       setNotes('');
       setAgentId(NONE_VALUE);
       setSkillId(NONE_VALUE);
-      setProjectId(NONE_VALUE);
+      // Auto-select: explicit default > single project > none
+      const autoProject = defaultProjectId ?? (projects.length === 1 ? projects[0].id : undefined);
+      setProjectId(autoProject ?? NONE_VALUE);
       setPhaseId(NONE_VALUE);
       setTagsInput('');
     }
-  }, [task, open]);
+  }, [task, open, defaultProjectId, projects]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || projectId === NONE_VALUE) return;
 
     const parsedTags = tagsInput.trim()
       ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
@@ -249,13 +251,14 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Project</Label>
+            <Label>
+              Project <span className="text-destructive">*</span>
+            </Label>
             <Select value={projectId} onValueChange={(v) => { setProjectId(v); setPhaseId(NONE_VALUE); }}>
-              <SelectTrigger>
+              <SelectTrigger className={projectId === NONE_VALUE ? 'border-destructive/50' : ''}>
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE_VALUE}>None</SelectItem>
                 {projects.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
@@ -263,6 +266,9 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
                 ))}
               </SelectContent>
             </Select>
+            {projectId === NONE_VALUE && (
+              <p className="text-xs text-destructive">A project is required to run tasks</p>
+            )}
           </div>
           {effectiveProjectId && phases.length > 0 && (
             <div className="space-y-2">
@@ -290,7 +296,7 @@ export function TaskDialog({ open, onOpenChange, task }: TaskDialogProps) {
               <button type="button">Cancel</button>
             </Button>
             <Button asChild>
-              <button type="submit" disabled={isPending}>
+              <button type="submit" disabled={isPending || !name.trim() || projectId === NONE_VALUE}>
                 {isEditing ? 'Update' : 'Create'}
               </button>
             </Button>

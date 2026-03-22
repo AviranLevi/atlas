@@ -253,6 +253,7 @@ export function KanbanPage() {
         open={dialogOpen}
         onOpenChange={handleOpenChange}
         task={editingTask}
+        defaultProjectId={projectFilter}
       />
 
       <StartWorkDialog
