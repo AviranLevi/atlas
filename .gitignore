@@ -4,4 +4,9 @@ dist
 .env
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 .DS_Store
+
+# Runtime data (logs, MCP configs, archived logs)
+data/
