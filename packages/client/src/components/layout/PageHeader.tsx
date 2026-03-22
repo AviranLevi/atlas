@@ -1,4 +1,7 @@
+// Lib
 import { cn } from '@/lib/utils';
+
+// Types
 import type { PageHeaderProps } from './layout.types';
 
 export function PageHeader({

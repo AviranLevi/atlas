@@ -18,7 +18,8 @@ import {
 import { FolderPickerDialog } from './FolderPickerDialog';
 // Hooks
 import { useCreateProject, useUpdateProject, useProjectBranches, useScanProject } from '@/hooks/use-projects.hook';
-// Utils
+
+// Lib
 import { api } from '@/lib/api';
 // Types
 import type { ProjectStatus } from '@my-agents/shared';

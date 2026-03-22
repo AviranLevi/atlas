@@ -1,10 +1,11 @@
-// React / libraries
+// React / library
 import {
   useQuery,
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-// Utils
+
+// Lib
 import { api, ApiError } from '@/lib/api';
 // Types
 import type { Workspace, ExecutorStatus } from '@my-agents/shared';
