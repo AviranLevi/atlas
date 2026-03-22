@@ -35,7 +35,7 @@ function toOptionalId(value: string): string | null {
   return value === NONE_VALUE ? null : value;
 }
 
-export function TaskDialog({ open, onOpenChange, task, defaultProjectId }: TaskDialogProps) {
+export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followUpContext }: TaskDialogProps) {
   const [name, setName] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('Medium');
   const [estimate, setEstimate] = useState<TaskEstimate>('M');
@@ -70,20 +70,20 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId }: TaskD
       setPhaseId(task.phaseId ?? NONE_VALUE);
       setTagsInput(task.tags?.join(', ') ?? '');
     } else {
-      setName('');
+      setName(followUpContext ? `Follow-up: ${followUpContext.originalTaskName}` : '');
       setPriority('Medium');
       setEstimate('M');
       setDefinitionOfDone('');
-      setNotes('');
+      setNotes(followUpContext ? `Follow-up from: ${followUpContext.originalTaskName}` : '');
       setAgentId(NONE_VALUE);
       setSkillId(NONE_VALUE);
       // Auto-select: explicit default > single project > none
       const autoProject = defaultProjectId ?? (projects.length === 1 ? projects[0].id : undefined);
       setProjectId(autoProject ?? NONE_VALUE);
       setPhaseId(NONE_VALUE);
-      setTagsInput('');
+      setTagsInput(followUpContext ? 'follow-up' : '');
     }
-  }, [task, open, defaultProjectId, projects]);
+  }, [task, open, defaultProjectId, projects, followUpContext]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,7 +138,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId }: TaskD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Task' : 'New Task'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Task' : followUpContext ? 'Create Follow-up Task' : 'New Task'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="space-y-2">

@@ -131,6 +131,18 @@ export function useCompleteWorkspace() {
   });
 }
 
+export function useRerunWorkspace() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ workspaceId, agentRuntimeId }: { workspaceId: string; agentRuntimeId: string }) =>
+      api.post<Workspace>(`/workspaces/${workspaceId}/rerun`, { agentRuntimeId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
 export function useRequestChanges() {
   const queryClient = useQueryClient();
   return useMutation({

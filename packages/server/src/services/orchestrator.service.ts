@@ -560,6 +560,35 @@ export class OrchestratorService {
     }
   }
 
+  /**
+   * Re-run a failed or completed workspace: clean up old one, start fresh.
+   */
+  async rerun(workspaceId: string, agentRuntimeId: string): Promise<Workspace> {
+    const FUNCTION_NAME = 'rerun';
+    try {
+      const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+
+      if (workspace.status !== 'failed' && workspace.status !== 'completed' && workspace.status !== 'stopped') {
+        throw new AppError('Can only re-run failed, stopped, or completed workspaces', { status: 400 });
+      }
+
+      const taskId = workspace.taskId;
+
+      // Clean up the old workspace
+      await this.cleanup(workspaceId);
+
+      // Reset task status so startWork can pick it up
+      await tasksService.update(taskId, { status: 'To Do' });
+
+      // Start fresh
+      return this.startWork(taskId, agentRuntimeId);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to re-run workspace', { cause: error });
+    }
+  }
+
   addDiffComment(workspaceId: string, comment: { filename: string; lineNumber: number; lineContent: string; body: string }): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];

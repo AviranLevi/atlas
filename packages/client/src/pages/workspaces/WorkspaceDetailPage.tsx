@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -11,6 +12,8 @@ import {
   XCircle,
   Loader2,
   Circle,
+  RotateCcw,
+  ListPlus,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,11 +23,13 @@ import {
   useWorkspaceStatus,
   useStopWork,
   useCleanupWorkspace,
+  useRerunWorkspace,
 } from '@/hooks/use-workspaces.hook';
 import type { DiffComment } from '@my-agents/shared';
 import { calcDuration } from '@/lib/format';
 import { statusMeta } from './workspaces-page.constants';
 import { DiffSection } from './diff';
+import { TaskDialog } from '@/components/kanban/TaskDialog';
 
 // ─── Status icon ─────────────────────────────────────────────────────
 
@@ -45,6 +50,8 @@ export function WorkspaceDetailPage() {
   const { data: workspace, isLoading, error } = useWorkspaceStatus(id);
   const stopWork = useStopWork();
   const cleanup = useCleanupWorkspace();
+  const rerun = useRerunWorkspace();
+  const [followUpOpen, setFollowUpOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -70,8 +77,16 @@ export function WorkspaceDetailPage() {
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
   const isMerged = workspace.status === 'merged';
   const canReview = workspace.status === 'completed';
+  const canRerun = workspace.status === 'failed' || workspace.status === 'stopped' || workspace.status === 'completed';
   const canCleanup = !isActive && !isMerged;
   const comments: DiffComment[] = Array.isArray(workspace.diffComments) ? workspace.diffComments : [];
+
+  const handleRerun = () => {
+    rerun.mutate(
+      { workspaceId: workspace.id, agentRuntimeId: workspace.agentRuntime },
+      { onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`) },
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -117,6 +132,27 @@ export function WorkspaceDetailPage() {
               Stop Agent
             </Button>
           )}
+          {canRerun && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRerun}
+              disabled={rerun.isPending}
+            >
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+              {rerun.isPending ? 'Re-running...' : 'Re-run'}
+            </Button>
+          )}
+          {canReview && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFollowUpOpen(true)}
+            >
+              <ListPlus className="mr-1.5 h-3.5 w-3.5" />
+              Follow-up Task
+            </Button>
+          )}
           {canCleanup && (
             <Button
               variant="outline"
@@ -130,6 +166,14 @@ export function WorkspaceDetailPage() {
           )}
         </div>
       </div>
+
+      {rerun.isError && (
+        <Card className="border-destructive/50">
+          <CardContent className="p-3 text-sm text-destructive">
+            Re-run failed: {(rerun.error as Error).message ?? 'Unknown error'}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Info cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -195,6 +239,18 @@ export function WorkspaceDetailPage() {
           </Card>
         </div>
       )}
+
+      {/* Follow-up task dialog */}
+      <TaskDialog
+        open={followUpOpen}
+        onOpenChange={setFollowUpOpen}
+        defaultProjectId={workspace.projectId}
+        followUpContext={{
+          originalTaskName: workspace.taskName ?? 'Unknown task',
+          workspaceId: workspace.id,
+          output: workspace.output ?? undefined,
+        }}
+      />
     </div>
   );
 }

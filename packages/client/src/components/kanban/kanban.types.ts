@@ -26,9 +26,16 @@ export type KanbanColumnProps = {
   activeWorkspaceMap?: Map<string, string>;
 };
 
+export type FollowUpContext = {
+  originalTaskName: string;
+  workspaceId: string;
+  output?: string;
+};
+
 export type TaskDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: Task | null;
   defaultProjectId?: string;
+  followUpContext?: FollowUpContext;
 };

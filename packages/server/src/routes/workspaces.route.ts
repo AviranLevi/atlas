@@ -57,6 +57,11 @@ export const workspacesRoute = new Hono()
     const workspace = await orchestratorService.completeWithoutMerge(c.req.param('id'));
     return c.json(workspace);
   })
+  .post('/:id/rerun', async (c) => {
+    const { agentRuntimeId } = await c.req.json<{ agentRuntimeId: string }>();
+    const workspace = await orchestratorService.rerun(c.req.param('id'), agentRuntimeId);
+    return c.json(workspace, 201);
+  })
   .post('/:id/comments', zValidator('json', AddDiffCommentSchema), (c) => {
     const data = c.req.valid('json');
     const workspace = orchestratorService.addDiffComment(c.req.param('id'), data);
