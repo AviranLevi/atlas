@@ -1,8 +1,9 @@
-// NPM
+// External
 import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
-// Utils
+
+// Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
 

@@ -1,13 +1,19 @@
+// Shared
+import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider } from '@my-agents/shared';
+
+// Repositories
+import { agentProvidersRepository } from '../db/repositories/index.js';
+
+// Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
-import { agentProvidersRepository } from '../db/repositories/index.js';
-import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider } from '@my-agents/shared';
 
 const FILE_PATH = 'services/agent-providers.service.ts';
 
 export class AgentProvidersService {
   constructor(private readonly repo = agentProvidersRepository) {}
 
+  /** Returns all agent providers. */
   async list(): Promise<AgentProvider[]> {
     const FUNCTION_NAME = 'list';
     try {
@@ -18,6 +24,7 @@ export class AgentProvidersService {
     }
   }
 
+  /** Returns an agent provider by ID. */
   async getById(id: string): Promise<AgentProvider> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -28,6 +35,7 @@ export class AgentProvidersService {
     }
   }
 
+  /** Creates a new agent provider. */
   async create(data: CreateAgentProvider): Promise<AgentProvider> {
     const FUNCTION_NAME = 'create';
     try {
@@ -38,6 +46,7 @@ export class AgentProvidersService {
     }
   }
 
+  /** Updates an agent provider by ID. */
   async update(id: string, data: UpdateAgentProvider): Promise<AgentProvider> {
     const FUNCTION_NAME = 'update';
     try {
@@ -48,6 +57,7 @@ export class AgentProvidersService {
     }
   }
 
+  /** Deletes an agent provider by ID. */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {
@@ -58,6 +68,7 @@ export class AgentProvidersService {
     }
   }
 
+  /** Tests connectivity to an agent provider (Anthropic, OpenAI, or Ollama). */
   async testConnection(id: string): Promise<{ ok: boolean; error?: string }> {
     const FUNCTION_NAME = 'testConnection';
     try {

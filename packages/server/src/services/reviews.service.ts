@@ -1,14 +1,22 @@
+// Shared
+import type { Review, ChecklistItem } from '@my-agents/shared';
+
+// Services
+import { activityLogService } from './index.js';
+
+// Repositories
+import { reviewsRepository, tasksRepository } from '../db/repositories/index.js';
+
+// Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
-import { reviewsRepository, tasksRepository } from '../db/repositories/index.js';
-import { activityLogService } from './index.js';
-import type { Review, ChecklistItem } from '@my-agents/shared';
 
 const FILE_PATH = 'services/reviews.service.ts';
 
 export class ReviewsService {
   constructor(private readonly repo = reviewsRepository) {}
 
+  /** Returns the review for a task, or null if none exists. */
   async getByTask(taskId: string): Promise<Review | null> {
     const FUNCTION_NAME = 'getByTask';
     try {
@@ -19,6 +27,7 @@ export class ReviewsService {
     }
   }
 
+  /** Returns a review by ID. */
   async getById(id: string): Promise<Review> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -29,6 +38,7 @@ export class ReviewsService {
     }
   }
 
+  /** Creates a review for a task, parsing its definition of done into checklist items. */
   async createForTask(taskId: string): Promise<Review> {
     const FUNCTION_NAME = 'createForTask';
     try {
@@ -68,6 +78,7 @@ export class ReviewsService {
     }
   }
 
+  /** Updates a review's checklist or notes. */
   async update(id: string, data: {
     checklist?: ChecklistItem[] | null;
     notes?: string | null;
@@ -81,6 +92,7 @@ export class ReviewsService {
     }
   }
 
+  /** Records an approval or change-request decision and updates task status accordingly. */
   async decide(
     id: string,
     decision: 'approved' | 'changes_requested',
@@ -116,6 +128,7 @@ export class ReviewsService {
     }
   }
 
+  /** Submits an AI agent's review with checklist updates, then records the decision. */
   async submitAiReview(id: string, data: {
     decision: 'approved' | 'changes_requested';
     notes?: string | null;

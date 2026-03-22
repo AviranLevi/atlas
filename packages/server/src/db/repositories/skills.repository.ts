@@ -1,15 +1,23 @@
+// External
 import { eq } from 'drizzle-orm';
+
+// Shared
+import type { CreateSkill, UpdateSkill, Skill } from '@my-agents/shared';
+
+// DB
 import type { DB } from '../index.js';
 import { skills } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-import type { CreateSkill, UpdateSkill, Skill } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/skills.repository.ts';
 
 export class SkillsRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns all skills. */
   findAll(): Skill[] {
     const FUNCTION_NAME = 'findAll';
     try {
@@ -20,6 +28,7 @@ export class SkillsRepository {
     }
   }
 
+  /** Returns a skill by ID, or null if not found. */
   findById(id: string): Skill | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -31,6 +40,7 @@ export class SkillsRepository {
     }
   }
 
+  /** Returns a skill by ID, or throws NotFoundError. */
   findByIdOrThrow(id: string): Skill {
     const row = this.findById(id);
     if (!row) {
@@ -39,6 +49,7 @@ export class SkillsRepository {
     return row;
   }
 
+  /** Inserts a new skill and returns the created record. */
   insert(data: CreateSkill): Skill {
     const FUNCTION_NAME = 'insert';
     try {
@@ -50,6 +61,7 @@ export class SkillsRepository {
     }
   }
 
+  /** Updates a skill and returns the updated record. */
   update(id: string, data: UpdateSkill): Skill {
     const FUNCTION_NAME = 'update';
     try {
@@ -66,6 +78,7 @@ export class SkillsRepository {
     }
   }
 
+  /** Deletes a skill by ID. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {

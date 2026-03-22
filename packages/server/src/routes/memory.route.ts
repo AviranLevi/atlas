@@ -1,33 +1,16 @@
+// External
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+
+// Shared
 import { CreateMemorySchema, UpdateMemorySchema } from '@my-agents/shared';
-import { memoryService } from '../services/index.js';
+
+// Controllers
+import { listMemory, getMemory, createMemory, updateMemory, deleteMemory } from '../controllers/memory.controller.js';
 
 export const memoryRoute = new Hono()
-  .get('/', async (c) => {
-    const type = c.req.query('type');
-    const scope = c.req.query('scope');
-    const projectId = c.req.query('projectId');
-    const memory = await memoryService.list({ type, scope, projectId });
-    return c.json(memory);
-  })
-  .get('/:id', async (c) => {
-    const mem = await memoryService.getById(c.req.param('id'));
-    return c.json(mem);
-  })
-  .post('/', zValidator('json', CreateMemorySchema), async (c) => {
-    const data = c.req.valid('json');
-    const mem = await memoryService.create(data);
-    return c.json(mem, 201);
-  })
-  .put('/:id', zValidator('json', UpdateMemorySchema), async (c) => {
-    const mem = await memoryService.update(
-      c.req.param('id'),
-      c.req.valid('json')
-    );
-    return c.json(mem);
-  })
-  .delete('/:id', async (c) => {
-    await memoryService.delete(c.req.param('id'));
-    return c.body(null, 204);
-  });
+  .get('/', listMemory)
+  .get('/:id', getMemory)
+  .post('/', zValidator('json', CreateMemorySchema), createMemory)
+  .put('/:id', zValidator('json', UpdateMemorySchema), updateMemory)
+  .delete('/:id', deleteMemory);

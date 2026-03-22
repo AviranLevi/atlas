@@ -1,13 +1,16 @@
-// NPM
+// External
 import { eq } from 'drizzle-orm';
+
+// Shared
+import type { Workspace } from '@my-agents/shared';
+
 // DB
 import type { DB } from '../index.js';
 import { workspaces, tasks, projects } from '../schema/index.js';
-// Utils
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-// Types
-import type { Workspace } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/workspaces.repository.ts';
 
@@ -46,6 +49,7 @@ export class WorkspacesRepository {
     };
   }
 
+  /** Returns all workspaces enriched with task and project names. */
   findAll(): Workspace[] {
     const FUNCTION_NAME = 'findAll';
     try {
@@ -62,6 +66,7 @@ export class WorkspacesRepository {
     }
   }
 
+  /** Returns workspaces by status, enriched with task and project names. */
   findByStatus(status: string): Workspace[] {
     const FUNCTION_NAME = 'findByStatus';
     try {
@@ -79,6 +84,7 @@ export class WorkspacesRepository {
     }
   }
 
+  /** Returns the workspace for a task, or null if not found. */
   findByTaskId(taskId: string): Workspace | null {
     const FUNCTION_NAME = 'findByTaskId';
     try {
@@ -95,6 +101,7 @@ export class WorkspacesRepository {
     }
   }
 
+  /** Returns a workspace by ID enriched with task/project names, or null. */
   findById(id: string): Workspace | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -113,6 +120,7 @@ export class WorkspacesRepository {
     }
   }
 
+  /** Returns a workspace by ID enriched with task/project names, or throws NotFoundError. */
   findByIdOrThrow(id: string): Workspace {
     const row = this.findById(id);
     if (!row) {
@@ -121,6 +129,7 @@ export class WorkspacesRepository {
     return row;
   }
 
+  /** Inserts a new workspace and returns the created record. */
   insert(data: InsertWorkspace): Workspace {
     const FUNCTION_NAME = 'insert';
     try {
@@ -131,6 +140,7 @@ export class WorkspacesRepository {
     }
   }
 
+  /** Updates a workspace and returns the updated record. */
   update(id: string, data: UpdateWorkspace): Workspace {
     const FUNCTION_NAME = 'update';
     try {
@@ -146,6 +156,7 @@ export class WorkspacesRepository {
     }
   }
 
+  /** Deletes a workspace by ID. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {
@@ -156,6 +167,7 @@ export class WorkspacesRepository {
     }
   }
 
+  /** Deletes all workspaces for a task. */
   removeByTaskId(taskId: string): void {
     try {
       this.db.delete(workspaces).where(eq(workspaces.taskId, taskId)).run();

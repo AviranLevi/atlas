@@ -1,10 +1,19 @@
+// External
 import { eq, or, isNull } from 'drizzle-orm';
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
-import { rulesRepository } from '../db/repositories/index.js';
+
+// Shared
+import type { Rule, CreateRule, UpdateRule } from '@my-agents/shared';
+
+// DB
 import { db } from '../db/index.js';
 import { rules } from '../db/schema/index.js';
-import type { Rule, CreateRule, UpdateRule } from '@my-agents/shared';
+
+// Repositories
+import { rulesRepository } from '../db/repositories/index.js';
+
+// Lib
+import { logger } from '../lib/logger.js';
+import { AppError } from '../lib/errors.js';
 
 const FILE_PATH = 'services/rules.service.ts';
 
@@ -36,10 +45,7 @@ export class RulesService {
     }
   }
 
-  /**
-   * Retrieves a rule by ID.
-   * @param id - The rule UUID.
-   */
+  /** Returns a rule by ID. */
   async getById(id: string): Promise<Rule> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -50,10 +56,7 @@ export class RulesService {
     }
   }
 
-  /**
-   * Creates a new rule.
-   * @param data - The rule creation data.
-   */
+  /** Creates a new rule. */
   async create(data: CreateRule): Promise<Rule> {
     const FUNCTION_NAME = 'create';
     try {
@@ -64,11 +67,7 @@ export class RulesService {
     }
   }
 
-  /**
-   * Updates a rule by ID.
-   * @param id - The rule UUID.
-   * @param data - The partial update data.
-   */
+  /** Updates a rule by ID. */
   async update(id: string, data: UpdateRule): Promise<Rule> {
     const FUNCTION_NAME = 'update';
     try {
@@ -79,10 +78,7 @@ export class RulesService {
     }
   }
 
-  /**
-   * Deletes a rule by ID.
-   * @param id - The rule UUID.
-   */
+  /** Deletes a rule by ID. */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {

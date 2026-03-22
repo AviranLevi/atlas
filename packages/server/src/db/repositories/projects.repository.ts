@@ -1,9 +1,16 @@
+// External
 import { eq } from 'drizzle-orm';
+
+// Shared
+import type { CreateProject, UpdateProject, Project } from '@my-agents/shared';
+
+// DB
 import type { DB } from '../index.js';
 import { projects } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-import type { CreateProject, UpdateProject, Project } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/projects.repository.ts';
 
@@ -30,6 +37,7 @@ function serializeScanData(data: Record<string, unknown>): Record<string, unknow
 export class ProjectsRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns all projects with scanData JSON parsed. */
   findAll(): Project[] {
     const FUNCTION_NAME = 'findAll';
     try {
@@ -41,6 +49,7 @@ export class ProjectsRepository {
     }
   }
 
+  /** Returns a project by ID with scanData JSON parsed, or null if not found. */
   findById(id: string): Project | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -52,6 +61,7 @@ export class ProjectsRepository {
     }
   }
 
+  /** Returns a project by ID with scanData JSON parsed, or throws NotFoundError. */
   findByIdOrThrow(id: string): Project {
     const row = this.findById(id);
     if (!row) {
@@ -60,6 +70,7 @@ export class ProjectsRepository {
     return row;
   }
 
+  /** Inserts a new project with scanData serialized to JSON. */
   insert(data: CreateProject): Project {
     const FUNCTION_NAME = 'insert';
     try {
@@ -73,6 +84,7 @@ export class ProjectsRepository {
     }
   }
 
+  /** Updates a project with scanData serialized to JSON and returns the updated record. */
   update(id: string, data: UpdateProject | Record<string, unknown>): Project {
     const FUNCTION_NAME = 'update';
     try {
@@ -90,6 +102,7 @@ export class ProjectsRepository {
     }
   }
 
+  /** Deletes a project by ID. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {

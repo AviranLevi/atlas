@@ -1,23 +1,26 @@
-// NPM
+// External
 import { eq, and, isNull, or } from 'drizzle-orm';
-// Utils
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+
+// Shared
+import type { Agent, CreateAgent, UpdateAgent } from '@my-agents/shared';
+
 // DB
-import { agentsRepository } from '../db/repositories/index.js';
 import { db } from '../db/index.js';
 import { agentSkills, agentRules, agentProjects, skills, rules, memory, globalInstructions } from '../db/schema/index.js';
-// Types
-import type { Agent, CreateAgent, UpdateAgent } from '@my-agents/shared';
+
+// Repositories
+import { agentsRepository } from '../db/repositories/index.js';
+
+// Lib
+import { logger } from '../lib/logger.js';
+import { AppError } from '../lib/errors.js';
 
 const FILE_PATH = 'services/agents.service.ts';
 
 export class AgentsService {
   constructor(private readonly repo = agentsRepository) {}
 
-  /**
-   * Retrieves all agents.
-   */
+  /** Retrieves all agents. */
   async list(): Promise<Agent[]> {
     const FUNCTION_NAME = 'list';
     try {
@@ -28,10 +31,7 @@ export class AgentsService {
     }
   }
 
-  /**
-   * Retrieves an agent by ID.
-   * @param id - The agent UUID.
-   */
+  /** Returns an agent by ID. */
   async getById(id: string): Promise<Agent> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -42,10 +42,7 @@ export class AgentsService {
     }
   }
 
-  /**
-   * Creates a new agent.
-   * @param data - The agent creation data.
-   */
+  /** Creates a new agent. */
   async create(data: CreateAgent): Promise<Agent> {
     const FUNCTION_NAME = 'create';
     try {
@@ -56,11 +53,7 @@ export class AgentsService {
     }
   }
 
-  /**
-   * Updates an agent by ID.
-   * @param id - The agent UUID.
-   * @param data - The partial update data.
-   */
+  /** Updates an agent by ID. */
   async update(id: string, data: UpdateAgent): Promise<Agent> {
     const FUNCTION_NAME = 'update';
     try {
@@ -71,10 +64,7 @@ export class AgentsService {
     }
   }
 
-  /**
-   * Deletes an agent by ID.
-   * @param id - The agent UUID.
-   */
+  /** Deletes an agent by ID. */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {
@@ -85,9 +75,7 @@ export class AgentsService {
     }
   }
 
-  /**
-   * Lists agents assigned to a project, including their role.
-   */
+  /** Lists agents assigned to a project, including their role. */
   async listByProject(projectId: string): Promise<(Agent & { role: string | null })[]> {
     const FUNCTION_NAME = 'listByProject';
     try {
@@ -109,9 +97,7 @@ export class AgentsService {
     }
   }
 
-  /**
-   * Assigns an agent to a project with an optional role.
-   */
+  /** Assigns an agent to a project with an optional role. */
   async assignToProject(agentId: string, projectId: string, role?: string | null): Promise<void> {
     const FUNCTION_NAME = 'assignToProject';
     try {
@@ -131,9 +117,7 @@ export class AgentsService {
     }
   }
 
-  /**
-   * Unassigns an agent from a project.
-   */
+  /** Unassigns an agent from a project. */
   async unassignFromProject(agentId: string, projectId: string): Promise<void> {
     const FUNCTION_NAME = 'unassignFromProject';
     try {
@@ -146,9 +130,7 @@ export class AgentsService {
     }
   }
 
-  /**
-   * Updates an agent's role within a project.
-   */
+  /** Updates an agent's role within a project. */
   async updateProjectRole(agentId: string, projectId: string, role: string | null): Promise<void> {
     const FUNCTION_NAME = 'updateProjectRole';
     try {

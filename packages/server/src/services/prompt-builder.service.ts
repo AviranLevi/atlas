@@ -1,6 +1,7 @@
 // Services
 import { agentsService, projectsService, tasksService, settingsService, memoryService } from './index.js';
-// Utils
+
+// Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
 

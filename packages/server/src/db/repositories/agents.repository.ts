@@ -1,16 +1,23 @@
+// External
 import { eq } from 'drizzle-orm';
+
+// Shared
+import type { Agent, CreateAgent, UpdateAgent } from '@my-agents/shared';
+
+// DB
 import type { DB } from '../index.js';
 import { agents } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-import type { CreateAgent, UpdateAgent } from '@my-agents/shared';
-import type { Agent } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/agents.repository.ts';
 
 export class AgentsRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns all agents. */
   findAll(): Agent[] {
     const FUNCTION_NAME = 'findAll';
     try {
@@ -21,6 +28,7 @@ export class AgentsRepository {
     }
   }
 
+  /** Returns an agent by ID, or null if not found. */
   findById(id: string): Agent | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -32,6 +40,7 @@ export class AgentsRepository {
     }
   }
 
+  /** Returns an agent by ID, or throws NotFoundError. */
   findByIdOrThrow(id: string): Agent {
     const row = this.findById(id);
     if (!row) {
@@ -40,6 +49,7 @@ export class AgentsRepository {
     return row;
   }
 
+  /** Inserts a new agent and returns the created record. */
   insert(data: CreateAgent): Agent {
     const FUNCTION_NAME = 'insert';
     try {
@@ -51,6 +61,7 @@ export class AgentsRepository {
     }
   }
 
+  /** Updates an agent and returns the updated record. */
   update(id: string, data: UpdateAgent): Agent {
     const FUNCTION_NAME = 'update';
     try {
@@ -67,6 +78,7 @@ export class AgentsRepository {
     }
   }
 
+  /** Deletes an agent by ID. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {

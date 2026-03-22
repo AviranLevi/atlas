@@ -1,15 +1,23 @@
+// External
 import { eq } from 'drizzle-orm';
+
+// Shared
+import type { CreateRule, UpdateRule, Rule } from '@my-agents/shared';
+
+// DB
 import type { DB } from '../index.js';
 import { rules } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-import type { CreateRule, UpdateRule, Rule } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/rules.repository.ts';
 
 export class RulesRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns all rules with tags JSON parsed. */
   findAll(): Rule[] {
     const FUNCTION_NAME = 'findAll';
     try {
@@ -24,6 +32,7 @@ export class RulesRepository {
     }
   }
 
+  /** Returns a rule by ID with tags JSON parsed, or null if not found. */
   findById(id: string): Rule | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -39,6 +48,7 @@ export class RulesRepository {
     }
   }
 
+  /** Returns a rule by ID with tags JSON parsed, or throws NotFoundError. */
   findByIdOrThrow(id: string): Rule {
     const row = this.findById(id);
     if (!row) {
@@ -47,6 +57,7 @@ export class RulesRepository {
     return row;
   }
 
+  /** Inserts a new rule with tags serialized to JSON. */
   insert(data: CreateRule): Rule {
     const FUNCTION_NAME = 'insert';
     try {
@@ -68,6 +79,7 @@ export class RulesRepository {
     }
   }
 
+  /** Updates a rule and returns the updated record. */
   update(id: string, data: UpdateRule): Rule {
     const FUNCTION_NAME = 'update';
     try {
@@ -94,6 +106,7 @@ export class RulesRepository {
     }
   }
 
+  /** Deletes a rule by ID. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {

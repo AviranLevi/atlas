@@ -1,78 +1,42 @@
+// External
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+
+// Shared
 import {
   CreateGlobalInstructionsSchema,
   UpdateGlobalInstructionsSchema,
   CreateDispatchRuleSchema,
   UpdateDispatchRuleSchema,
 } from '@my-agents/shared';
-import { settingsService } from '../services/index.js';
+
+// Controllers
+import {
+  listGlobalInstructions,
+  getGlobalInstruction,
+  createGlobalInstruction,
+  updateGlobalInstruction,
+  deleteGlobalInstruction,
+  listDispatchRules,
+  getDispatchRule,
+  createDispatchRule,
+  updateDispatchRule,
+  deleteDispatchRule,
+} from '../controllers/settings.controller.js';
 
 const globalInstructionsRoute = new Hono()
-  .get('/', async (c) => {
-    const items = await settingsService.listGlobalInstructions();
-    return c.json(items);
-  })
-  .get('/:id', async (c) => {
-    const item = await settingsService.getGlobalInstructionsById(
-      c.req.param('id')
-    );
-    return c.json(item);
-  })
-  .post(
-    '/',
-    zValidator('json', CreateGlobalInstructionsSchema),
-    async (c) => {
-      const data = c.req.valid('json');
-      const item = await settingsService.createGlobalInstructions(data);
-      return c.json(item, 201);
-    }
-  )
-  .put(
-    '/:id',
-    zValidator('json', UpdateGlobalInstructionsSchema),
-    async (c) => {
-      const item = await settingsService.updateGlobalInstructions(
-        c.req.param('id'),
-        c.req.valid('json')
-      );
-      return c.json(item);
-    }
-  )
-  .delete('/:id', async (c) => {
-    await settingsService.deleteGlobalInstructions(c.req.param('id'));
-    return c.body(null, 204);
-  });
+  .get('/', listGlobalInstructions)
+  .get('/:id', getGlobalInstruction)
+  .post('/', zValidator('json', CreateGlobalInstructionsSchema), createGlobalInstruction)
+  .put('/:id', zValidator('json', UpdateGlobalInstructionsSchema), updateGlobalInstruction)
+  .delete('/:id', deleteGlobalInstruction);
 
 const dispatchRulesRoute = new Hono()
-  .get('/', async (c) => {
-    const items = await settingsService.listDispatchRules();
-    return c.json(items);
-  })
-  .get('/:id', async (c) => {
-    const item = await settingsService.getDispatchRuleById(c.req.param('id'));
-    return c.json(item);
-  })
-  .post('/', zValidator('json', CreateDispatchRuleSchema), async (c) => {
-    const data = c.req.valid('json');
-    const item = await settingsService.createDispatchRule(data);
-    return c.json(item, 201);
-  })
-  .put(
-    '/:id',
-    zValidator('json', UpdateDispatchRuleSchema),
-    async (c) => {
-      const item = await settingsService.updateDispatchRule(
-        c.req.param('id'),
-        c.req.valid('json')
-      );
-      return c.json(item);
-    }
-  )
-  .delete('/:id', async (c) => {
-    await settingsService.deleteDispatchRule(c.req.param('id'));
-    return c.body(null, 204);
-  });
+  .get('/', listDispatchRules)
+  .get('/:id', getDispatchRule)
+  .post('/', zValidator('json', CreateDispatchRuleSchema), createDispatchRule)
+  .put('/:id', zValidator('json', UpdateDispatchRuleSchema), updateDispatchRule)
+  .delete('/:id', deleteDispatchRule);
 
 export const settingsRoute = new Hono()
   .route('/global-instructions', globalInstructionsRoute)

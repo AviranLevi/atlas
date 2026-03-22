@@ -1,23 +1,26 @@
-// NPM
+// External
 import { eq, sql } from 'drizzle-orm';
-// Utils
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+
+// Shared
+import type { Project, CreateProject, UpdateProject } from '@my-agents/shared';
+
 // DB
-import { projectsRepository } from '../db/repositories/index.js';
 import { db } from '../db/index.js';
 import { agentProjects, agents, tasks, memory, projects, workspaces, phases } from '../db/schema/index.js';
-// Types
-import type { Project, CreateProject, UpdateProject } from '@my-agents/shared';
+
+// Repositories
+import { projectsRepository } from '../db/repositories/index.js';
+
+// Lib
+import { logger } from '../lib/logger.js';
+import { AppError } from '../lib/errors.js';
 
 const FILE_PATH = 'services/projects.service.ts';
 
 export class ProjectsService {
   constructor(private readonly repo = projectsRepository) {}
 
-  /**
-   * Retrieves all projects.
-   */
+  /** Lists all projects. */
   async list(): Promise<Project[]> {
     const FUNCTION_NAME = 'list';
     try {
@@ -28,10 +31,7 @@ export class ProjectsService {
     }
   }
 
-  /**
-   * Retrieves a project by ID.
-   * @param id - The project UUID.
-   */
+  /** Returns a project by ID. */
   async getById(id: string): Promise<Project> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -42,10 +42,7 @@ export class ProjectsService {
     }
   }
 
-  /**
-   * Creates a new project.
-   * @param data - The project creation data.
-   */
+  /** Creates a new project. */
   async create(data: CreateProject): Promise<Project> {
     const FUNCTION_NAME = 'create';
     try {
@@ -56,11 +53,7 @@ export class ProjectsService {
     }
   }
 
-  /**
-   * Updates a project by ID.
-   * @param id - The project UUID.
-   * @param data - The partial update data.
-   */
+  /** Updates a project by ID. */
   async update(id: string, data: UpdateProject): Promise<Project> {
     const FUNCTION_NAME = 'update';
     try {
@@ -73,7 +66,6 @@ export class ProjectsService {
 
   /**
    * Deletes a project and all its related records (tasks, workspaces, memories, phases, agent assignments).
-   * @param id - The project UUID.
    */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
@@ -92,9 +84,7 @@ export class ProjectsService {
     }
   }
 
-  /**
-   * Retrieves all projects with task count breakdown and agent count.
-   */
+  /** Lists all projects with task count breakdown and agent count. */
   async listWithSummary() {
     const FUNCTION_NAME = 'listWithSummary';
     try {
@@ -149,10 +139,7 @@ export class ProjectsService {
     }
   }
 
-  /**
-   * Bootstraps a new project with default agents, skills, and memory.
-   * @param _projectId - The project UUID to bootstrap.
-   */
+  /** Bootstraps a new project with default agents, skills, and memory. */
   async bootstrapProject(_projectId: string): Promise<void> {
     const FUNCTION_NAME = 'bootstrapProject';
     try {
@@ -164,10 +151,7 @@ export class ProjectsService {
     }
   }
 
-  /**
-   * Exports project-specific Cursor rules.
-   * @param _projectId - The project UUID.
-   */
+  /** Exports project-specific Cursor rules. */
   async exportCursorRules(_projectId: string): Promise<string> {
     const FUNCTION_NAME = 'exportCursorRules';
     try {

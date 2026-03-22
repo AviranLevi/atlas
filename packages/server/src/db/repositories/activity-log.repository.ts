@@ -1,6 +1,11 @@
+// External
 import { eq, desc } from 'drizzle-orm';
+
+// DB
 import type { DB } from '../index.js';
 import { activityLog } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
@@ -30,6 +35,7 @@ function parseEntry(row: ActivityLogRow): ActivityLogEntry {
 export class ActivityLogRepository {
   constructor(private readonly db: DB) {}
 
+  /** Inserts an activity log entry. Best-effort — does not throw on failure. */
   insert(data: {
     projectId?: string | null;
     agentId?: string | null;
@@ -59,6 +65,7 @@ export class ActivityLogRepository {
     }
   }
 
+  /** Queries activity logs for a project, ordered by creation date. */
   findByProjectId(projectId: string, limit = 50): ActivityLogEntry[] {
     const FUNCTION_NAME = 'findByProjectId';
     try {
@@ -76,6 +83,7 @@ export class ActivityLogRepository {
     }
   }
 
+  /** Queries all activity logs, ordered by creation date. */
   findAll(limit = 50): ActivityLogEntry[] {
     const FUNCTION_NAME = 'findAll';
     try {

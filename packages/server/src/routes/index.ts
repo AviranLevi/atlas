@@ -1,4 +1,7 @@
+// External
 import { Hono } from 'hono';
+
+// Routes
 import { agentsRoute } from './agents.route.js';
 import { skillsRoute } from './skills.route.js';
 import { rulesRoute } from './rules.route.js';

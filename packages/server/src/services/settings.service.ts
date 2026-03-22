@@ -1,6 +1,4 @@
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
-import { settingsRepository } from '../db/repositories/index.js';
+// Shared
 import type {
   GlobalInstructions,
   CreateGlobalInstructions,
@@ -10,15 +8,19 @@ import type {
   UpdateDispatchRule,
 } from '@my-agents/shared';
 
+// Repositories
+import { settingsRepository } from '../db/repositories/index.js';
+
+// Lib
+import { logger } from '../lib/logger.js';
+import { AppError } from '../lib/errors.js';
+
 const FILE_PATH = 'services/settings.service.ts';
 
 export class SettingsService {
   constructor(private readonly repo = settingsRepository) {}
 
-  // Global Instructions
-  /**
-   * Retrieves all global instructions.
-   */
+  /** Lists all global instructions. */
   async listGlobalInstructions(): Promise<GlobalInstructions[]> {
     const FUNCTION_NAME = 'listGlobalInstructions';
     try {
@@ -29,10 +31,7 @@ export class SettingsService {
     }
   }
 
-  /**
-   * Retrieves global instructions by ID.
-   * @param id - The global instructions UUID.
-   */
+  /** Returns global instructions by ID. */
   async getGlobalInstructionsById(id: string): Promise<GlobalInstructions> {
     const FUNCTION_NAME = 'getGlobalInstructionsById';
     try {
@@ -43,10 +42,7 @@ export class SettingsService {
     }
   }
 
-  /**
-   * Creates new global instructions.
-   * @param data - The creation data.
-   */
+  /** Creates new global instructions. */
   async createGlobalInstructions(
     data: CreateGlobalInstructions
   ): Promise<GlobalInstructions> {
@@ -61,11 +57,7 @@ export class SettingsService {
     }
   }
 
-  /**
-   * Updates global instructions by ID.
-   * @param id - The global instructions UUID.
-   * @param data - The partial update data.
-   */
+  /** Updates global instructions by ID. */
   async updateGlobalInstructions(
     id: string,
     data: UpdateGlobalInstructions
@@ -81,10 +73,7 @@ export class SettingsService {
     }
   }
 
-  /**
-   * Deletes global instructions by ID.
-   * @param id - The global instructions UUID.
-   */
+  /** Deletes global instructions by ID. */
   async deleteGlobalInstructions(id: string): Promise<void> {
     const FUNCTION_NAME = 'deleteGlobalInstructions';
     try {
@@ -97,10 +86,7 @@ export class SettingsService {
     }
   }
 
-  // Dispatch Rules
-  /**
-   * Retrieves all dispatch rules.
-   */
+  /** Lists all dispatch rules. */
   async listDispatchRules(): Promise<DispatchRule[]> {
     const FUNCTION_NAME = 'listDispatchRules';
     try {
@@ -111,10 +97,7 @@ export class SettingsService {
     }
   }
 
-  /**
-   * Retrieves a dispatch rule by ID.
-   * @param id - The dispatch rule UUID.
-   */
+  /** Returns a dispatch rule by ID. */
   async getDispatchRuleById(id: string): Promise<DispatchRule> {
     const FUNCTION_NAME = 'getDispatchRuleById';
     try {
@@ -125,10 +108,7 @@ export class SettingsService {
     }
   }
 
-  /**
-   * Creates a new dispatch rule.
-   * @param data - The creation data.
-   */
+  /** Creates a new dispatch rule. */
   async createDispatchRule(data: CreateDispatchRule): Promise<DispatchRule> {
     const FUNCTION_NAME = 'createDispatchRule';
     try {
@@ -139,11 +119,7 @@ export class SettingsService {
     }
   }
 
-  /**
-   * Updates a dispatch rule by ID.
-   * @param id - The dispatch rule UUID.
-   * @param data - The partial update data.
-   */
+  /** Updates a dispatch rule by ID. */
   async updateDispatchRule(
     id: string,
     data: UpdateDispatchRule
@@ -157,10 +133,7 @@ export class SettingsService {
     }
   }
 
-  /**
-   * Deletes a dispatch rule by ID.
-   * @param id - The dispatch rule UUID.
-   */
+  /** Deletes a dispatch rule by ID. */
   async deleteDispatchRule(id: string): Promise<void> {
     const FUNCTION_NAME = 'deleteDispatchRule';
     try {
