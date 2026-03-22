@@ -16,6 +16,14 @@ export const workspacesRoute = new Hono()
     await executorRegistry.refresh();
     return c.json(await executorRegistry.listAll());
   })
+  .get('/archived-logs', (c) => {
+    return c.json(orchestratorService.listArchivedLogs());
+  })
+  .get('/archived-logs/:filename', (c) => {
+    const content = orchestratorService.getArchivedLog(c.req.param('filename'));
+    if (!content) return c.json({ error: 'Log not found' }, 404);
+    return c.text(content);
+  })
   .get('/', async (c) => {
     const status = c.req.query('status');
     const workspaces = status === 'active'
@@ -25,6 +33,7 @@ export const workspacesRoute = new Hono()
   })
   .get('/:id', async (c) => {
     const workspace = await orchestratorService.getStatus(c.req.param('id'));
+    if (!workspace) return c.json({ error: 'Workspace not found' }, 404);
     return c.json(workspace);
   })
   .post('/', zValidator('json', CreateWorkspaceSchema), async (c) => {
@@ -35,6 +44,10 @@ export const workspacesRoute = new Hono()
   .get('/:id/diff', async (c) => {
     const diff = await orchestratorService.getDiff(c.req.param('id'));
     return c.json(diff);
+  })
+  .post('/:id/request-changes', async (c) => {
+    const workspace = await orchestratorService.requestChanges(c.req.param('id'));
+    return c.json(workspace);
   })
   .post('/:id/merge', async (c) => {
     const workspace = await orchestratorService.mergeAndClose(c.req.param('id'));

@@ -6,6 +6,7 @@ export const WorkspaceStatusEnum = z.enum([
   'completed',
   'failed',
   'stopped',
+  'merged',
 ]);
 
 export const DiffCommentSchema = z.object({
@@ -15,6 +16,7 @@ export const DiffCommentSchema = z.object({
   lineContent: z.string(),
   body: z.string().min(1),
   createdAt: z.string(),
+  updatedAt: z.string().optional(),
 });
 
 export const AddDiffCommentSchema = z.object({

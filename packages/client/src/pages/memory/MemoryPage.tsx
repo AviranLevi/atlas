@@ -1,9 +1,17 @@
 import { useState } from 'react';
 import type { Memory } from '@my-agents/shared';
-import { Brain, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Brain, Plus, Pencil, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useMemories, useDeleteMemory } from '@/hooks/use-memory.hook';
+import { useProjects } from '@/hooks/use-projects.hook';
 import { MemoryDialog } from '@/components/memory/MemoryDialog';
 
 function formatLastUsed(date: string | null): string {
@@ -24,14 +32,26 @@ function formatLastUsed(date: string | null): string {
   return rtf.format(-seconds, 'second');
 }
 
+const typeBadgeVariants: Record<string, string> = {
+  Decision: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  Convention: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  Preference: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  Problem: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+};
+
 export function MemoryPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [scopeFilter, setScopeFilter] = useState<string>('all');
+  const [projectFilter, setProjectFilter] = useState<string>('all');
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const { data: projects = [] } = useProjects();
+
   const filters =
-    typeFilter !== 'all' || scopeFilter !== 'all'
+    typeFilter !== 'all' || scopeFilter !== 'all' || projectFilter !== 'all'
       ? {
           ...(typeFilter !== 'all' && { type: typeFilter }),
           ...(scopeFilter !== 'all' && { scope: scopeFilter }),
+          ...(projectFilter !== 'all' && { projectId: projectFilter }),
         }
       : undefined;
   const { data: memories, isLoading } = useMemories(filters);
@@ -54,6 +74,17 @@ export function MemoryPage() {
       deleteMemory.mutate(id);
     }
   };
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const projectMap = new Map(projects.map((p) => [p.id, p.name]));
 
   const typeOptions: { value: string; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -84,7 +115,8 @@ export function MemoryPage() {
         </Button>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           {typeOptions.map((opt) => (
             <Button
@@ -109,6 +141,21 @@ export function MemoryPage() {
             </Button>
           ))}
         </div>
+        {projects.length > 0 && (
+          <Select value={projectFilter} onValueChange={setProjectFilter}>
+            <SelectTrigger className="w-[180px] h-8 text-sm">
+              <SelectValue placeholder="All Projects" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {isLoading ? (
@@ -118,7 +165,7 @@ export function MemoryPage() {
           <Brain className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
           <h3 className="mb-1 text-lg font-medium">No memories yet</h3>
           <p className="text-muted-foreground mb-4">
-            Create your first memory to capture decisions, conventions, and preferences.
+            Memories are created automatically by agents as they work, or you can add them manually.
           </p>
           <Button onClick={handleCreate} variant="outline">
             <Plus className="mr-2 h-4 w-4" />
@@ -127,44 +174,80 @@ export function MemoryPage() {
         </div>
       ) : (
         <div className="rounded-md border">
-          <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 border-b bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground">
+          {/* Header */}
+          <div className="grid grid-cols-[24px_1fr_auto_auto_auto_auto_auto] gap-3 border-b bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground">
+            <div />
             <div>Name</div>
             <div>Type</div>
             <div>Scope</div>
+            <div>Project</div>
             <div>Last Used</div>
             <div />
           </div>
-          {memories.map((memory) => (
-            <div
-              key={memory.id}
-              className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-4 border-b px-4 py-3 last:border-0"
-            >
-              <div className="font-medium">{memory.name}</div>
-              <Badge variant="secondary">{memory.type}</Badge>
-              <Badge variant="outline">{memory.scope}</Badge>
-              <div className="text-muted-foreground text-sm">
-                {formatLastUsed(memory.lastUsed)}
-              </div>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEdit(memory)}
-                  aria-label="Edit memory"
+          {/* Rows */}
+          {memories.map((mem) => {
+            const isExpanded = expandedIds.has(mem.id);
+            return (
+              <div key={mem.id} className="border-b last:border-0">
+                <div
+                  className="grid grid-cols-[24px_1fr_auto_auto_auto_auto_auto] items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => toggleExpand(mem.id)}
                 >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(memory.id)}
-                  aria-label="Delete memory"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <div className="text-muted-foreground">
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div className="font-medium truncate">{mem.name}</div>
+                  <Badge
+                    variant="secondary"
+                    className={typeBadgeVariants[mem.type] ?? ''}
+                  >
+                    {mem.type}
+                  </Badge>
+                  <Badge variant="outline">
+                    {mem.scope === 'global' ? 'Global' : 'Project'}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                    {mem.projectId ? projectMap.get(mem.projectId) ?? '—' : '—'}
+                  </span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {formatLastUsed(mem.lastUsed)}
+                  </span>
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleEdit(mem)}
+                      aria-label="Edit memory"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleDelete(mem.id)}
+                      aria-label="Delete memory"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                {/* Expanded content */}
+                {isExpanded && (
+                  <div className="px-4 pb-4 pl-11">
+                    <div className="rounded-md bg-muted/40 p-3 text-sm whitespace-pre-wrap leading-relaxed">
+                      {mem.content}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

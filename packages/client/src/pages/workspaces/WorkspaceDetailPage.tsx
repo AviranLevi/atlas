@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   GitBranch,
+  GitMerge,
   Clock,
   Terminal,
   Square,
@@ -31,6 +32,7 @@ function StatusIcon({ status, className }: { status: string; className?: string 
   if (status === 'running') return <Loader2 className={cn('animate-spin text-blue-500', className)} />;
   if (status === 'pending') return <Circle className={cn('text-yellow-500', className)} />;
   if (status === 'completed') return <CheckCircle2 className={cn('text-green-500', className)} />;
+  if (status === 'merged') return <GitMerge className={cn('text-violet-500', className)} />;
   if (status === 'failed') return <XCircle className={cn('text-red-500', className)} />;
   return <Square className={cn('text-gray-400', className)} />;
 }
@@ -66,7 +68,9 @@ export function WorkspaceDetailPage() {
 
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
+  const isMerged = workspace.status === 'merged';
   const canReview = workspace.status === 'completed';
+  const canCleanup = !isActive && !isMerged;
   const comments: DiffComment[] = Array.isArray(workspace.diffComments) ? workspace.diffComments : [];
 
   return (
@@ -113,7 +117,7 @@ export function WorkspaceDetailPage() {
               Stop Agent
             </Button>
           )}
-          {!isActive && (
+          {canCleanup && (
             <Button
               variant="outline"
               size="sm"

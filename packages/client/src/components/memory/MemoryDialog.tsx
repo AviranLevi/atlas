@@ -13,18 +13,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateMemory, useUpdateMemory } from '@/hooks/use-memory.hook';
+import { useProjects } from '@/hooks/use-projects.hook';
 import type { MemoryDialogProps } from './memory.types';
 import { MEMORY_TYPES, MEMORY_SCOPES } from './memory.constants';
 
 export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) {
   const createMemory = useCreateMemory();
   const updateMemory = useUpdateMemory();
+  const { data: projects = [] } = useProjects();
   const isEditing = !!memory;
 
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
   const [type, setType] = useState<MemoryType>('Decision');
   const [scope, setScope] = useState<MemoryScope>('project');
+  const [projectId, setProjectId] = useState<string>('');
 
   useEffect(() => {
     if (memory) {
@@ -32,11 +35,13 @@ export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) 
       setContent(memory.content);
       setType(memory.type);
       setScope(memory.scope);
+      setProjectId(memory.projectId ?? '');
     } else {
       setName('');
       setContent('');
       setType('Decision');
       setScope('project');
+      setProjectId('');
     }
   }, [memory, open]);
 
@@ -47,6 +52,7 @@ export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) 
       content: content.trim(),
       type,
       scope,
+      ...(scope === 'project' && projectId ? { projectId } : {}),
     };
 
     if (isEditing) {
@@ -91,36 +97,55 @@ export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) 
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
-            <Select value={type} onValueChange={(v) => setType(v as MemoryType)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {MEMORY_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="type">Type</Label>
+              <Select value={type} onValueChange={(v) => setType(v as MemoryType)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MEMORY_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="scope">Scope</Label>
+              <Select value={scope} onValueChange={(v) => setScope(v as MemoryScope)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select scope" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MEMORY_SCOPES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="scope">Scope</Label>
-            <Select value={scope} onValueChange={(v) => setScope(v as MemoryScope)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select scope" />
-              </SelectTrigger>
-              <SelectContent>
-                {MEMORY_SCOPES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {scope === 'project' && projects.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="project">Project</Label>
+              <Select value={projectId} onValueChange={setProjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" asChild>
               <button type="button" onClick={() => onOpenChange(false)}>

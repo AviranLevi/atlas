@@ -9,15 +9,47 @@ export class MemoryService {
   constructor(private readonly repo = memoryRepository) {}
 
   /**
-   * Retrieves all memory entries.
+   * Retrieves memory entries with optional filters.
    */
-  async list(): Promise<Memory[]> {
+  async list(filters?: { type?: string; scope?: string; projectId?: string }): Promise<Memory[]> {
     const FUNCTION_NAME = 'list';
     try {
-      return this.repo.findAll();
+      if (filters?.projectId) {
+        const projectMemories = this.repo.findByProject(filters.projectId);
+        return this.applyFilters(projectMemories, filters);
+      }
+      const all = this.repo.findAll();
+      return this.applyFilters(all, filters);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to list memory', { cause: error });
+    }
+  }
+
+  private applyFilters(
+    memories: Memory[],
+    filters?: { type?: string; scope?: string },
+  ): Memory[] {
+    let result = memories;
+    if (filters?.type) {
+      result = result.filter((m) => m.type === filters.type);
+    }
+    if (filters?.scope) {
+      result = result.filter((m) => m.scope === filters.scope);
+    }
+    return result;
+  }
+
+  /**
+   * Retrieves all memories relevant to a project (project-scoped + global).
+   */
+  async listByProject(projectId: string): Promise<Memory[]> {
+    const FUNCTION_NAME = 'listByProject';
+    try {
+      return this.repo.findByProject(projectId);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to list memory by project', { cause: error });
     }
   }
 

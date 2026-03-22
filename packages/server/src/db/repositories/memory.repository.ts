@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, or, isNull } from 'drizzle-orm';
 import type { DB } from '../index.js';
 import { memory } from '../schema/index.js';
 import { logger } from '../../lib/logger.js';
@@ -37,6 +37,26 @@ export class MemoryRepository {
       throw new NotFoundError('Memory', id);
     }
     return row;
+  }
+
+  /** Find all memories relevant to a project: project-scoped + global */
+  findByProject(projectId: string): Memory[] {
+    const FUNCTION_NAME = 'findByProject';
+    try {
+      return this.db
+        .select()
+        .from(memory)
+        .where(
+          or(
+            eq(memory.projectId, projectId),
+            eq(memory.scope, 'global'),
+          ),
+        )
+        .all() as Memory[];
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query memory by project', { cause: error });
+    }
   }
 
   insert(data: CreateMemory): Memory {

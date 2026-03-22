@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Terminal,
   GitBranch,
+  GitMerge,
   Clock,
   Square,
   Trash2,
@@ -37,6 +38,7 @@ function StatusIcon({ status }: { status: string }) {
   if (status === 'running') return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
   if (status === 'pending') return <Circle className="h-4 w-4 text-yellow-500" />;
   if (status === 'completed') return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+  if (status === 'merged') return <GitMerge className="h-4 w-4 text-violet-500" />;
   if (status === 'failed') return <XCircle className="h-4 w-4 text-red-500" />;
   return <Square className="h-4 w-4 text-gray-400" />;
 }
@@ -47,7 +49,9 @@ function WorkspaceRow({ workspace }: { workspace: Workspace }) {
 
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
+  const isMerged = workspace.status === 'merged';
   const canReview = workspace.status === 'completed';
+  const canCleanup = !isActive && !isMerged;
 
   return (
     <Card
@@ -113,7 +117,7 @@ function WorkspaceRow({ workspace }: { workspace: Workspace }) {
               <TooltipContent>Stop agent</TooltipContent>
             </Tooltip>
           )}
-          {!isActive && (
+          {canCleanup && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -147,6 +151,7 @@ export function WorkspacesPage() {
     all: workspaces.length,
     active: workspaces.filter((w) => w.status === 'running' || w.status === 'pending').length,
     completed: workspaces.filter((w) => w.status === 'completed').length,
+    merged: workspaces.filter((w) => w.status === 'merged').length,
     failed: workspaces.filter((w) => w.status === 'failed').length,
     stopped: workspaces.filter((w) => w.status === 'stopped').length,
   };
@@ -171,10 +176,11 @@ export function WorkspacesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
           { label: 'Active', count: counts.active, color: 'text-blue-600 dark:text-blue-400' },
           { label: 'Completed', count: counts.completed, color: 'text-green-600 dark:text-green-400' },
+          { label: 'Merged', count: counts.merged, color: 'text-violet-600 dark:text-violet-400' },
           { label: 'Failed', count: counts.failed, color: 'text-red-600 dark:text-red-400' },
           { label: 'Total', count: counts.all, color: 'text-muted-foreground' },
         ].map((s) => (

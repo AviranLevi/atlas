@@ -5,7 +5,10 @@ import { memoryService } from '../services/index.js';
 
 export const memoryRoute = new Hono()
   .get('/', async (c) => {
-    const memory = await memoryService.list();
+    const type = c.req.query('type');
+    const scope = c.req.query('scope');
+    const projectId = c.req.query('projectId');
+    const memory = await memoryService.list({ type, scope, projectId });
     return c.json(memory);
   })
   .get('/:id', async (c) => {

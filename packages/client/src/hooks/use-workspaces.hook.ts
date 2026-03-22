@@ -5,7 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 // Utils
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 // Types
 import type { Workspace, ExecutorStatus } from '@my-agents/shared';
 
@@ -45,6 +45,11 @@ export function useWorkspaceStatus(id: string | undefined) {
     queryFn: () => api.get<Workspace & { fullOutput?: string }>(`/workspaces/${id}`),
     enabled: !!id,
     refetchInterval: 3000,
+    retry: (failureCount, error) => {
+      // Don't retry 404s (workspace was deleted after merge/cleanup)
+      if (error instanceof ApiError && error.status === 404) return false;
+      return failureCount < 3;
+    },
   });
 }
 
@@ -107,6 +112,18 @@ export function useMergeWorkspace() {
   return useMutation({
     mutationFn: (workspaceId: string) =>
       api.post<Workspace>(`/workspaces/${workspaceId}/merge`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
+export function useRequestChanges() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (workspaceId: string) =>
+      api.post<Workspace>(`/workspaces/${workspaceId}/request-changes`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });

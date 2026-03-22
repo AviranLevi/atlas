@@ -34,12 +34,19 @@ export const statusMeta: Record<
     badgeClass:
       'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400',
   },
+  merged: {
+    label: 'Merged',
+    leftColor: '#8b5cf6',
+    badgeClass:
+      'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300',
+  },
 };
 
 export const filterTabs: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'active', label: 'Active' },
   { key: 'completed', label: 'Completed' },
+  { key: 'merged', label: 'Merged' },
   { key: 'failed', label: 'Failed' },
   { key: 'stopped', label: 'Stopped' },
 ];

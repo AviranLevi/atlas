@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import {
   useWorkspaceDiff,
   useMergeWorkspace,
+  useRequestChanges,
   useAddDiffComment,
   useEditDiffComment,
   useRemoveDiffComment,
@@ -127,6 +128,7 @@ export function DiffSection({
 }) {
   const { data: diff, isLoading, error } = useWorkspaceDiff(workspaceId);
   const merge = useMergeWorkspace();
+  const requestChanges = useRequestChanges();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<DiffViewMode>(
     () => (localStorage.getItem('diff-view-mode') as DiffViewMode) || 'unified',
@@ -234,9 +236,11 @@ export function DiffSection({
               variant="outline"
               size="sm"
               className="border-yellow-500/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10"
+              onClick={() => requestChanges.mutate(workspaceId)}
+              disabled={requestChanges.isPending}
             >
               <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
-              Request Changes
+              {requestChanges.isPending ? 'Sending...' : 'Request Changes'}
             </Button>
           )}
 
@@ -271,6 +275,11 @@ export function DiffSection({
       {merge.isError && (
         <div className="border-t px-4 py-3 text-sm text-red-500">
           Merge failed: {(merge.error as Error).message ?? 'Unknown error'}
+        </div>
+      )}
+      {requestChanges.isError && (
+        <div className="border-t px-4 py-3 text-sm text-red-500">
+          Request changes failed: {(requestChanges.error as Error).message ?? 'Unknown error'}
         </div>
       )}
     </Card>

@@ -19,6 +19,7 @@ import type { Workspace } from '@my-agents/shared';
 
 const FILE_PATH = 'services/orchestrator.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
+const ARCHIVE_DIR = path.resolve(process.cwd(), 'data', 'archived-logs');
 
 const activeProcesses = new Map<string, ChildProcess>();
 
@@ -204,23 +205,45 @@ export class OrchestratorService {
     }
   }
 
-  async getStatus(workspaceId: string): Promise<Workspace & { fullOutput?: string }> {
-    const FUNCTION_NAME = 'getStatus';
-    try {
-      const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+  async getStatus(workspaceId: string): Promise<(Workspace & { fullOutput?: string }) | null> {
+    const workspace = workspacesRepository.findById(workspaceId);
 
-      const logFile = path.join(OUTPUT_DIR, `${workspaceId}.log`);
-      let fullOutput: string | undefined;
-      if (fs.existsSync(logFile)) {
-        fullOutput = fs.readFileSync(logFile, 'utf-8');
-      }
+    // Return null for deleted workspaces
+    // instead of throwing — avoids noisy 404 logs from polling clients.
+    if (!workspace) return null;
 
-      return { ...workspace, fullOutput };
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      if (error instanceof AppError) throw error;
-      throw new AppError('Failed to get workspace status', { cause: error });
+    const logFile = path.join(OUTPUT_DIR, `${workspaceId}.log`);
+    let fullOutput: string | undefined;
+    if (fs.existsSync(logFile)) {
+      fullOutput = fs.readFileSync(logFile, 'utf-8');
     }
+
+    return { ...workspace, fullOutput };
+  }
+
+  /**
+   * Archive a workspace log to the archived-logs directory.
+   * Returns the archived file path, or undefined if no log exists.
+   */
+  private archiveLog(workspaceId: string, workspace: Workspace): string | undefined {
+    const logFile = path.join(OUTPUT_DIR, `${workspaceId}.log`);
+    if (!fs.existsSync(logFile)) return undefined;
+
+    if (!fs.existsSync(ARCHIVE_DIR)) {
+      fs.mkdirSync(ARCHIVE_DIR, { recursive: true });
+    }
+
+    // Name: taskName_branchName_timestamp.log (sanitized)
+    const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
+    const taskName = sanitize(workspace.taskName ?? 'unknown');
+    const branch = sanitize(workspace.branchName ?? workspaceId);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const archiveName = `${taskName}_${branch}_${timestamp}.log`;
+    const archivePath = path.join(ARCHIVE_DIR, archiveName);
+
+    fs.copyFileSync(logFile, archivePath);
+    logger.info(`${FILE_PATH} :: archiveLog - Archived workspace log to ${archiveName}`);
+    return archivePath;
   }
 
   async cleanup(workspaceId: string): Promise<void> {
@@ -256,6 +279,143 @@ export class OrchestratorService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to cleanup workspace', { cause: error });
+    }
+  }
+
+  async requestChanges(workspaceId: string): Promise<Workspace> {
+    const FUNCTION_NAME = 'requestChanges';
+    try {
+      const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+
+      if (workspace.status !== 'completed') {
+        throw new AppError('Can only request changes on completed workspaces', { status: 400 });
+      }
+
+      const comments: Array<{ filename: string; lineNumber: number; lineContent: string; body: string }> =
+        Array.isArray(workspace.diffComments) ? workspace.diffComments : [];
+
+      if (comments.length === 0) {
+        throw new AppError('No review comments to send', { status: 400 });
+      }
+
+      const task = await tasksService.getById(workspace.taskId);
+      const project = await projectsService.getById(workspace.projectId);
+
+      if (!project.localPath) {
+        throw new AppError('Project has no local path', { status: 400 });
+      }
+
+      const executor = executorRegistry.getById(workspace.agentRuntime);
+      if (!executor) {
+        throw new AppError(`Unknown agent runtime: ${workspace.agentRuntime}`, { status: 400 });
+      }
+
+      // Build a review prompt with the original context + comments
+      const basePrompt = await this.promptBuilder.build({
+        taskId: workspace.taskId,
+        projectId: project.id,
+        agentId: workspace.agentId,
+        hasMcpAccess: executor.mcpConfigFormat !== 'none',
+      });
+
+      // Format review comments into a clear section
+      const commentLines = comments.map((c) => {
+        return `- **${c.filename}** (line ${c.lineNumber}): "${c.body}"${c.lineContent ? `\n  Code: \`${c.lineContent}\`` : ''}`;
+      });
+
+      const reviewSection = [
+        '',
+        '---',
+        '',
+        '## Review Comments — Changes Requested',
+        '',
+        'The reviewer has left the following comments on your code. Please address each one:',
+        '',
+        ...commentLines,
+        '',
+        'Please fix each issue above, then commit your changes to the current branch.',
+      ].join('\n');
+
+      const fullPrompt = basePrompt + reviewSection;
+
+      // Re-spawn the agent on the SAME worktree (not a new one)
+      const cwd = executor.usesProjectRoot ? project.localPath : workspace.worktreePath;
+      const result = spawnAgent(workspace.id, executor, cwd, fullPrompt, {
+        onCompleted: (output) => {
+          activeProcesses.delete(workspace.id);
+          // Clear comments on success — the agent addressed them
+          workspacesRepository.update(workspace.id, {
+            status: 'completed',
+            output,
+            completedAt: new Date().toISOString(),
+            diffComments: JSON.stringify([]),
+          } as any);
+          tasksService.update(workspace.taskId, { status: 'In Review' }).catch((e) => {
+            logger.warn(`${FILE_PATH} :: requestChanges - failed to move task to In Review`, e);
+          });
+          activityLogService.log({
+            projectId: workspace.projectId,
+            taskId: workspace.taskId,
+            workspaceId,
+            agentId: workspace.agentId,
+            eventType: 'agent_completed',
+            description: 'Agent completed review changes',
+            metadata: {},
+          });
+        },
+        onFailed: (output, error) => {
+          activeProcesses.delete(workspace.id);
+          // On failure, go back to completed + In Review so user can retry
+          workspacesRepository.update(workspace.id, {
+            status: 'completed',
+            output,
+            completedAt: new Date().toISOString(),
+          });
+          tasksService.update(workspace.taskId, { status: 'In Review' }).catch((e) => {
+            logger.warn(`${FILE_PATH} :: requestChanges - failed to reset task to In Review`, e);
+          });
+          activityLogService.log({
+            projectId: workspace.projectId,
+            taskId: workspace.taskId,
+            workspaceId,
+            agentId: workspace.agentId,
+            eventType: 'agent_failed',
+            description: `Agent failed during review changes: ${error ?? 'unknown error'}`,
+            metadata: { error },
+          });
+        },
+      });
+
+      activeProcesses.set(workspace.id, result.process);
+
+      // Keep comments in a snapshot so they can be restored on failure
+      const commentSnapshot = JSON.stringify(comments);
+
+      // Mark as running (don't clear comments yet — cleared on success only)
+      workspacesRepository.update(workspace.id, {
+        status: 'running',
+        pid: result.process.pid ?? null,
+        startedAt: new Date().toISOString(),
+        completedAt: null,
+      } as any);
+
+      await tasksService.update(workspace.taskId, { status: 'In Progress' });
+
+      activityLogService.log({
+        projectId: project.id,
+        taskId: workspace.taskId,
+        workspaceId,
+        agentId: workspace.agentId,
+        eventType: 'agent_started',
+        description: `Review changes requested with ${comments.length} comment(s)`,
+        metadata: { commentCount: comments.length },
+      });
+
+      return workspacesRepository.findByIdOrThrow(workspace.id);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to request changes', { cause: error });
     }
   }
 
@@ -298,6 +458,24 @@ export class OrchestratorService {
       // Move task to Done
       await tasksService.update(workspace.taskId, { status: 'Done' });
 
+      // Archive the workspace log (backup copy with descriptive name)
+      const archivedLogPath = this.archiveLog(workspaceId, workspace);
+
+      // Clean up worktree + MCP config (keep log file + DB record for history)
+      try {
+        this.worktreeService.remove(workspace.worktreePath, project.localPath);
+      } catch {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree already removed`);
+      }
+
+      removeMcpConfig(workspaceId);
+
+      // Mark as merged (keep the DB record for history)
+      const merged = workspacesRepository.update(workspaceId, {
+        status: 'merged',
+        completedAt: new Date().toISOString(),
+      });
+
       activityLogService.log({
         projectId: workspace.projectId,
         taskId: workspace.taskId,
@@ -305,14 +483,10 @@ export class OrchestratorService {
         agentId: workspace.agentId,
         eventType: 'agent_completed',
         description: 'Changes merged and task completed',
-        metadata: { branchName: workspace.branchName },
+        metadata: { branchName: workspace.branchName, archivedLogPath },
       });
 
-      // Clean up the workspace (worktree, logs, mcp config)
-      await this.cleanup(workspaceId);
-
-      // Return the workspace state before deletion
-      return { ...workspace, status: 'completed' };
+      return merged;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
@@ -428,5 +602,27 @@ export class OrchestratorService {
         `${FILE_PATH} :: reconcileOnStartup - reconciled ${active.length} orphaned workspace(s)`,
       );
     }
+  }
+
+  // ─── Archived logs ──────────────────────────────────────────────────
+
+  listArchivedLogs(): { filename: string; size: number; createdAt: string }[] {
+    if (!fs.existsSync(ARCHIVE_DIR)) return [];
+    return fs
+      .readdirSync(ARCHIVE_DIR)
+      .filter((f) => f.endsWith('.log'))
+      .map((filename) => {
+        const stat = fs.statSync(path.join(ARCHIVE_DIR, filename));
+        return { filename, size: stat.size, createdAt: stat.birthtime.toISOString() };
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  getArchivedLog(filename: string): string | null {
+    // Prevent path traversal
+    const safeName = path.basename(filename);
+    const filePath = path.join(ARCHIVE_DIR, safeName);
+    if (!fs.existsSync(filePath)) return null;
+    return fs.readFileSync(filePath, 'utf-8');
   }
 }

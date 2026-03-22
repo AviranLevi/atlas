@@ -1,5 +1,5 @@
 // Services
-import { agentsService, projectsService, tasksService, settingsService } from './index.js';
+import { agentsService, projectsService, tasksService, settingsService, memoryService } from './index.js';
 // Utils
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
@@ -36,7 +36,7 @@ export class PromptBuilderService {
 
       if (params.agentId) {
         const agentContext = await agentsService.getContext(params.agentId);
-        const { agent, skills: agentSkills, rules: agentRules, memories } = agentContext;
+        const { agent, skills: agentSkills, rules: agentRules, memories: agentMemories } = agentContext;
 
         const agentLines: string[] = [`## Your Identity: ${agent.name}`];
         if (agent.personality) agentLines.push(`\n**Personality:** ${agent.personality}`);
@@ -61,12 +61,33 @@ export class PromptBuilderService {
           sections.push(`## Coding Rules\n\n${ruleList}`);
         }
 
-        if (memories.length > 0) {
-          const memList = memories
+        // Agent-specific memories (deprecated in favor of project memories below,
+        // but still included for backwards compatibility)
+        if (agentMemories.length > 0) {
+          const memList = agentMemories
             .map((m) => `- [${m.type}] ${m.content}`)
             .join('\n');
-          sections.push(`## Your Memories\n\n${memList}`);
+          sections.push(`## Agent Memories\n\n${memList}`);
         }
+      }
+
+      // ─── Project memories (global + project-scoped) ───────────────
+      const projectMemories = await memoryService.listByProject(params.projectId);
+      // Deduplicate with agent memories (which are fetched separately above)
+      const agentMemoryIds = new Set<string>();
+      if (params.agentId) {
+        const agentContext = await agentsService.getContext(params.agentId);
+        for (const m of agentContext.memories) {
+          agentMemoryIds.add(m.id);
+        }
+      }
+      const uniqueProjectMemories = projectMemories.filter((m) => !agentMemoryIds.has(m.id));
+
+      if (uniqueProjectMemories.length > 0) {
+        const memList = uniqueProjectMemories
+          .map((m) => `- [${m.type}]${m.scope === 'global' ? ' (global)' : ''} **${m.name}**: ${m.content}`)
+          .join('\n');
+        sections.push(`## Project Knowledge\n\nThese are established conventions, decisions, and learnings for this project:\n\n${memList}`);
       }
 
       const { project } = projectContext;
@@ -103,12 +124,34 @@ export class PromptBuilderService {
           '- `update_task` -- Update this task\'s status (e.g., to "In Review" or "Done"), add notes',
           '- `create_task` -- Create new tasks on the Kanban board if you discover sub-tasks or bugs',
           '- `create_memory` -- Save important decisions, conventions, or problems discovered',
+          '- `update_memory` -- Update an existing memory entry',
+          '- `list_memories` -- List existing memories for reference',
           '- `list_tasks` -- List other tasks for context',
           '- `get_project_context` -- Get full project context',
           '- `search` -- Search across agents, skills, rules, memory, tasks, projects',
           '',
+          `**Task ID:** ${params.taskId}`,
+          `**Project ID:** ${params.projectId}`,
+          '',
           `When done, update this task (ID: ${params.taskId}) status to "In Review".`,
           'If you find additional work needed, create new tasks for it.',
+          '',
+          '## Memory Management (Important)',
+          '',
+          'As you work, **proactively save memories** using `create_memory` for anything future agents should know:',
+          '',
+          '- **Convention**: Coding patterns, naming conventions, or project structure patterns you discover',
+          '  - Example: "Components use .component.tsx suffix", "All API calls go through the api.ts utility"',
+          '- **Decision**: Architecture or design decisions you make or discover',
+          '  - Example: "Using Drizzle ORM with SQLite", "State management via React Query, not Redux"',
+          '- **Problem**: Bugs, gotchas, or tricky issues you encounter and solve',
+          '  - Example: "SQLite WAL mode required for concurrent reads", "Must run git worktree prune before creating new worktrees"',
+          '- **Preference**: User/project preferences you notice',
+          '  - Example: "Prefer named exports over default exports", "Use cn() utility for conditional classNames"',
+          '',
+          `Always set \`projectId\` to "${params.projectId}" and \`scope\` to "project" when creating memories.`,
+          'Before creating a memory, check existing memories with `list_memories` to avoid duplicates.',
+          'Do NOT save trivial or task-specific information — only save knowledge that would help future tasks.',
         );
       }
 

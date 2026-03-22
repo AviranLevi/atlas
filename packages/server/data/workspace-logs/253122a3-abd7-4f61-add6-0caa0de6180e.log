@@ -1,6 +1,0 @@
-Done. The changes:
-
-1. Added `onClick={onClose}` to the backdrop overlay div
-2. Added `onClick={(e) => e.stopPropagation()}` to the inner modal container to prevent clicks inside the modal from bubbling up and closing it
-
-The `vibe_kanban` MCP server appears to be unavailable, so I couldn't update the task status automatically. Please update task `d1a9b17d` to "In Review" manually.
