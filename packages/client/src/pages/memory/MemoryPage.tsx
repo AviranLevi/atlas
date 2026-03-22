@@ -3,15 +3,9 @@ import type { Memory } from '@my-agents/shared';
 import { Brain, Plus, Pencil, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useMemories, useDeleteMemory } from '@/hooks/use-memory.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
+import { useActiveProject } from '@/contexts/ProjectContext';
 import { MemoryDialog } from '@/components/memory/MemoryDialog';
 
 function formatLastUsed(date: string | null): string {
@@ -42,18 +36,17 @@ const typeBadgeVariants: Record<string, string> = {
 export function MemoryPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [scopeFilter, setScopeFilter] = useState<string>('all');
-  const [projectFilter, setProjectFilter] = useState<string>('all');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { data: projects = [] } = useProjects();
+  const { activeProjectId } = useActiveProject();
 
-  const filters =
-    typeFilter !== 'all' || scopeFilter !== 'all' || projectFilter !== 'all'
-      ? {
-          ...(typeFilter !== 'all' && { type: typeFilter }),
-          ...(scopeFilter !== 'all' && { scope: scopeFilter }),
-          ...(projectFilter !== 'all' && { projectId: projectFilter }),
-        }
-      : undefined;
+  const filters = (() => {
+    const f: Record<string, string> = {};
+    if (typeFilter !== 'all') f.type = typeFilter;
+    if (scopeFilter !== 'all') f.scope = scopeFilter;
+    if (activeProjectId) f.projectId = activeProjectId;
+    return Object.keys(f).length > 0 ? f : undefined;
+  })();
   const { data: memories, isLoading } = useMemories(filters);
   const deleteMemory = useDeleteMemory();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -141,21 +134,6 @@ export function MemoryPage() {
             </Button>
           ))}
         </div>
-        {projects.length > 0 && (
-          <Select value={projectFilter} onValueChange={setProjectFilter}>
-            <SelectTrigger className="w-[180px] h-8 text-sm">
-              <SelectValue placeholder="All Projects" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
       </div>
 
       {isLoading ? (

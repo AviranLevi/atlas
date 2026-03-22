@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { FolderPickerDialog } from './FolderPickerDialog';
 // Hooks
-import { useCreateProject, useUpdateProject } from '@/hooks/use-projects.hook';
+import { useCreateProject, useUpdateProject, useProjectBranches, useScanProject } from '@/hooks/use-projects.hook';
 // Utils
 import { api } from '@/lib/api';
 // Types
@@ -29,7 +29,9 @@ import { STATUSES, COLOR_PRESETS } from './projects.constants';
 export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProps) {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
+  const scanProject = useScanProject();
   const isEditing = !!project;
+  const { data: branches = [] } = useProjectBranches(isEditing ? project?.id : undefined);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -37,6 +39,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const [status, setStatus] = useState<ProjectStatus>('active');
   const [repositoryUrl, setRepositoryUrl] = useState('');
   const [localPath, setLocalPath] = useState('');
+  const [defaultBranch, setDefaultBranch] = useState('');
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [color, setColor] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -50,6 +53,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       setStatus((project.status as ProjectStatus) ?? 'active');
       setRepositoryUrl(project.repositoryUrl ?? '');
       setLocalPath(project.localPath ?? '');
+      setDefaultBranch(project.defaultBranch ?? '');
       setColor(project.color ?? null);
     } else {
       setName('');
@@ -58,6 +62,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       setStatus('active');
       setRepositoryUrl('');
       setLocalPath('');
+      setDefaultBranch('');
       setColor(null);
       setScanned(false);
     }
@@ -74,13 +79,14 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       if (result.description && !description) setDescription(result.description);
       if (result.techStack && !techStack) setTechStack(result.techStack);
       if (result.repositoryUrl && !repositoryUrl) setRepositoryUrl(result.repositoryUrl);
+      if (result.defaultBranch && !defaultBranch) setDefaultBranch(result.defaultBranch);
       setScanned(true);
     } catch {
       // scan is best-effort
     } finally {
       setScanning(false);
     }
-  }, [name, description, techStack, repositoryUrl]);
+  }, [name, description, techStack, repositoryUrl, defaultBranch]);
 
   const handleFolderSelect = useCallback((selectedPath: string) => {
     setLocalPath(selectedPath);
@@ -98,6 +104,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       status,
       repositoryUrl: repositoryUrl.trim() || null,
       localPath: localPath.trim() || null,
+      defaultBranch: defaultBranch.trim() || null,
       color: color || null,
     };
 
@@ -108,7 +115,13 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       );
     } else {
       createProject.mutate(data, {
-        onSuccess: () => onOpenChange(false),
+        onSuccess: (created) => {
+          onOpenChange(false);
+          // Auto-scan the project in the background after creation
+          if (data.localPath) {
+            scanProject.mutate(created.id);
+          }
+        },
       });
     }
   };
@@ -227,14 +240,41 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="repositoryUrl">Repository URL</Label>
-                <Input
-                  id="repositoryUrl"
-                  value={repositoryUrl}
-                  onChange={(e) => setRepositoryUrl(e.target.value)}
-                  placeholder="https://github.com/user/repo"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="repositoryUrl">Repository URL</Label>
+                  <Input
+                    id="repositoryUrl"
+                    value={repositoryUrl}
+                    onChange={(e) => setRepositoryUrl(e.target.value)}
+                    placeholder="https://github.com/user/repo"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="defaultBranch">Default Branch</Label>
+                  {branches.length > 0 ? (
+                    <Select
+                      value={defaultBranch || ''}
+                      onValueChange={(v) => setDefaultBranch(v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select branch..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {branches.map((b) => (
+                          <SelectItem key={b} value={b}>{b}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id="defaultBranch"
+                      value={defaultBranch}
+                      onChange={(e) => setDefaultBranch(e.target.value)}
+                      placeholder="main"
+                    />
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Color</Label>

@@ -5,6 +5,12 @@ export type ScanResult = {
   description: string | null;
   techStack: string | null;
   repositoryUrl: string | null;
+  defaultBranch: string | null;
+  packageManager: string | null;
+  cicd: string | null;
+  monorepo: boolean;
+  githubOwner: string | null;
+  githubRepo: string | null;
 };
 
 export type ProjectDialogProps = {

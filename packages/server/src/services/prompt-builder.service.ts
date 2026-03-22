@@ -6,6 +6,13 @@ import { AppError } from '../lib/errors.js';
 
 const FILE_PATH = 'services/prompt-builder.service.ts';
 
+/**
+ * Max number of individual memories to include in the prompt.
+ * The project brief already contains the top 15 condensed memories,
+ * so we only include the most recent ones that might not be in the brief yet.
+ */
+const MAX_RECENT_MEMORIES = 5;
+
 interface PromptBuildParams {
   taskId: string;
   projectId: string;
@@ -17,6 +24,11 @@ export class PromptBuilderService {
   /**
    * Builds a structured markdown prompt that gives the agent full context
    * about the task, project, and its own identity/instructions.
+   *
+   * Context strategy:
+   * - Project brief (compact, ~300-600 tokens) — always included
+   * - Recent memories not yet in brief — up to MAX_RECENT_MEMORIES
+   * - Full memory list available via MCP `list_memories` tool (lazy loading)
    */
   async build(params: PromptBuildParams): Promise<string> {
     const FUNCTION_NAME = 'build';
@@ -35,8 +47,15 @@ export class PromptBuilderService {
       }
 
       if (params.agentId) {
-        const agentContext = await agentsService.getContext(params.agentId);
-        const { agent, skills: agentSkills, rules: agentRules, memories: agentMemories } = agentContext;
+        const agentContext = await agentsService.getContext(params.agentId, params.projectId);
+        const {
+          agent,
+          skills: agentSkills,
+          rules: agentRules,
+          projectSkills,
+          projectRules,
+          memories: agentMemories,
+        } = agentContext;
 
         const agentLines: string[] = [`## Your Identity: ${agent.name}`];
         if (agent.personality) agentLines.push(`\n**Personality:** ${agent.personality}`);
@@ -54,11 +73,29 @@ export class PromptBuilderService {
           sections.push(`## Your Skills\n\n${skillList}`);
         }
 
+        if (projectSkills.length > 0) {
+          const skillList = projectSkills
+            .map((s) => {
+              const skill = s as Record<string, unknown>;
+              const line = `- **${skill.name}** (${skill.type})`;
+              return skill.steps ? `${line}\n  Steps: ${skill.steps}` : line;
+            })
+            .join('\n');
+          sections.push(`## Project-Specific Skills\n\n${skillList}`);
+        }
+
         if (agentRules.length > 0) {
           const ruleList = agentRules
             .map((r) => `- **${(r as Record<string, unknown>).name}**: ${(r as Record<string, unknown>).content ?? ''}`)
             .join('\n');
           sections.push(`## Coding Rules\n\n${ruleList}`);
+        }
+
+        if (projectRules.length > 0) {
+          const ruleList = projectRules
+            .map((r) => `- **${(r as Record<string, unknown>).name}**: ${(r as Record<string, unknown>).content ?? ''}`)
+            .join('\n');
+          sections.push(`## Project-Specific Rules\n\n${ruleList}`);
         }
 
         // Agent-specific memories (deprecated in favor of project memories below,
@@ -71,30 +108,66 @@ export class PromptBuilderService {
         }
       }
 
-      // ─── Project memories (global + project-scoped) ───────────────
-      const projectMemories = await memoryService.listByProject(params.projectId);
-      // Deduplicate with agent memories (which are fetched separately above)
-      const agentMemoryIds = new Set<string>();
-      if (params.agentId) {
-        const agentContext = await agentsService.getContext(params.agentId);
-        for (const m of agentContext.memories) {
-          agentMemoryIds.add(m.id);
+      // ─── Project context (brief-based or fallback) ─────────────
+      const { project } = projectContext;
+
+      if (project.projectBrief) {
+        // Use the pre-generated compact brief
+        sections.push(`## Project Context\n\n${project.projectBrief}`);
+
+        // Include only recent memories that may not be in the brief yet
+        const recentMemories = await this.getRecentMemories(params.projectId, params.agentId);
+        if (recentMemories.length > 0) {
+          const memList = recentMemories
+            .map((m) => `- [${m.type}]${m.scope === 'global' ? ' (global)' : ''} **${m.name}**: ${m.content}`)
+            .join('\n');
+          sections.push(`## Recent Updates\n\nNewly added project knowledge (may not be in the brief yet):\n\n${memList}`);
+        }
+      } else {
+        // Fallback: no brief exists yet — use raw data (legacy behavior)
+        const projLines: string[] = [`## Project: ${project.name}`];
+        if (project.description) projLines.push(`\n${project.description}`);
+        if (project.techStack) projLines.push(`\n**Tech Stack:** ${project.techStack}`);
+
+        // Include scan data inline if no brief
+        if (project.scanData) {
+          const sd = project.scanData;
+          if (sd.projectType) projLines.push(`**Type:** ${sd.projectType}`);
+          if (sd.languages?.length) projLines.push(`**Languages:** ${sd.languages.join(', ')}`);
+          if (sd.packageManager) projLines.push(`**Package Manager:** ${sd.packageManager}`);
+          if (sd.keyDirectories && Object.keys(sd.keyDirectories).length > 0) {
+            const dirs = Object.entries(sd.keyDirectories).map(([k, v]) => `${k}: \`${v}\``).join(', ');
+            projLines.push(`**Key Directories:** ${dirs}`);
+          }
+          if (sd.formatting) {
+            const tools: string[] = [];
+            if (sd.formatting.prettier) tools.push('Prettier');
+            if (sd.formatting.eslint) tools.push('ESLint');
+            if (sd.formatting.biome) tools.push('Biome');
+            if (sd.formatting.editorconfig) tools.push('EditorConfig');
+            if (tools.length > 0) projLines.push(`**Formatting:** ${tools.join(', ')}`);
+          }
+        }
+        sections.push(projLines.join('\n'));
+
+        // Include ALL memories (legacy, unbounded)
+        const projectMemories = await memoryService.listByProject(params.projectId);
+        const agentMemoryIds = new Set<string>();
+        if (params.agentId) {
+          const agentContext = await agentsService.getContext(params.agentId);
+          for (const m of agentContext.memories) {
+            agentMemoryIds.add(m.id);
+          }
+        }
+        const uniqueProjectMemories = projectMemories.filter((m) => !agentMemoryIds.has(m.id));
+
+        if (uniqueProjectMemories.length > 0) {
+          const memList = uniqueProjectMemories
+            .map((m) => `- [${m.type}]${m.scope === 'global' ? ' (global)' : ''} **${m.name}**: ${m.content}`)
+            .join('\n');
+          sections.push(`## Project Knowledge\n\nThese are established conventions, decisions, and learnings for this project:\n\n${memList}`);
         }
       }
-      const uniqueProjectMemories = projectMemories.filter((m) => !agentMemoryIds.has(m.id));
-
-      if (uniqueProjectMemories.length > 0) {
-        const memList = uniqueProjectMemories
-          .map((m) => `- [${m.type}]${m.scope === 'global' ? ' (global)' : ''} **${m.name}**: ${m.content}`)
-          .join('\n');
-        sections.push(`## Project Knowledge\n\nThese are established conventions, decisions, and learnings for this project:\n\n${memList}`);
-      }
-
-      const { project } = projectContext;
-      const projLines: string[] = [`## Project: ${project.name}`];
-      if (project.description) projLines.push(`\n${project.description}`);
-      if (project.techStack) projLines.push(`\n**Tech Stack:** ${project.techStack}`);
-      sections.push(projLines.join('\n'));
 
       const taskLines: string[] = [
         `## Task`,
@@ -125,9 +198,10 @@ export class PromptBuilderService {
           '- `create_task` -- Create new tasks on the Kanban board if you discover sub-tasks or bugs',
           '- `create_memory` -- Save important decisions, conventions, or problems discovered',
           '- `update_memory` -- Update an existing memory entry',
-          '- `list_memories` -- List existing memories for reference',
+          '- `list_memories` -- List existing memories for reference (full detail)',
           '- `list_tasks` -- List other tasks for context',
-          '- `get_project_context` -- Get full project context',
+          '- `get_project_context` -- Get full project context (all tasks, agents, memories)',
+          '- `get_project_brief` -- Get the compact project brief',
           '- `search` -- Search across agents, skills, rules, memory, tasks, projects',
           '',
           `**Task ID:** ${params.taskId}`,
@@ -162,5 +236,29 @@ export class PromptBuilderService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to build prompt', { cause: error });
     }
+  }
+
+  /**
+   * Get the most recent memories that were created/updated AFTER the brief
+   * was last generated. These supplement the brief with fresh knowledge.
+   */
+  private async getRecentMemories(projectId: string, agentId?: string | null) {
+    const allMemories = await memoryService.listByProject(projectId);
+
+    // Exclude agent-specific memories to avoid duplication
+    const agentMemoryIds = new Set<string>();
+    if (agentId) {
+      const agentContext = await agentsService.getContext(agentId);
+      for (const m of agentContext.memories) {
+        agentMemoryIds.add(m.id);
+      }
+    }
+
+    const filtered = allMemories.filter((m) => !agentMemoryIds.has(m.id));
+
+    // Sort by most recently updated and take only the latest N
+    return filtered
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, MAX_RECENT_MEMORIES);
   }
 }

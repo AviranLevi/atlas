@@ -50,6 +50,7 @@ export const WorkspaceSchema = z.object({
 export const CreateWorkspaceSchema = z.object({
   taskId: z.string().uuid(),
   agentRuntimeId: z.string().min(1),
+  baseBranch: z.string().min(1).optional(),
 });
 
 export const McpConfigFormatEnum = z.enum(['claude', 'cursor', 'generic-json', 'none']);

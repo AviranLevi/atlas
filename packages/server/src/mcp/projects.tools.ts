@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { projectsService } from '../services/index.js';
+import { projectsService, briefGeneratorService } from '../services/index.js';
 
 export function registerProjectTools(server: McpServer) {
   server.registerTool('list_projects', {
@@ -32,5 +32,23 @@ export function registerProjectTools(server: McpServer) {
   }, async ({ projectId }) => {
     const context = await projectsService.getContext(projectId);
     return { content: [{ type: 'text' as const, text: JSON.stringify(context, null, 2) }] };
+  });
+
+  server.registerTool('get_project_brief', {
+    description:
+      'Get a compact project brief: a condensed summary of the project\'s structure, ' +
+      'conventions, decisions, formatting rules, scripts, and environment. ' +
+      'Much lighter than get_project_context — use this for quick orientation.',
+    inputSchema: z.object({
+      projectId: z.string().uuid().describe('The project UUID'),
+    }),
+  }, async ({ projectId }) => {
+    const project = await projectsService.getById(projectId);
+    if (project.projectBrief) {
+      return { content: [{ type: 'text' as const, text: project.projectBrief }] };
+    }
+    // Generate on-demand if no brief exists
+    const brief = await briefGeneratorService.generateAndSave(projectId);
+    return { content: [{ type: 'text' as const, text: brief }] };
   });
 }

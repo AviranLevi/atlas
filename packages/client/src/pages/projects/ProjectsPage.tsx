@@ -43,7 +43,7 @@ export function ProjectsPage() {
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm('Delete this project?')) {
+    if (confirm('Delete this project and all its tasks, workspaces, memories, and phases? This cannot be undone.')) {
       deleteProject.mutate(id);
     }
   };

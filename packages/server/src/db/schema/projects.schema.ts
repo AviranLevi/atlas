@@ -11,6 +11,9 @@ export const projects = sqliteTable('projects', {
   status: text('status').notNull().default('active'),
   repositoryUrl: text('repository_url'),
   localPath: text('local_path'),
+  defaultBranch: text('default_branch'),
+  scanData: text('scan_data'),  // JSON blob of ProjectScanData
+  projectBrief: text('project_brief'),  // Auto-generated compressed context for agents
   color: text('color'),
   createdAt: text('created_at')
     .notNull()

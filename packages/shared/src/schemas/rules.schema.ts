@@ -13,6 +13,7 @@ export const RuleSchema = z.object({
   type: RuleTypeEnum,
   tags: z.array(z.string()),
   content: z.string().nullable(),
+  projectId: z.string().uuid().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -22,6 +23,8 @@ export const CreateRuleSchema = RuleSchema.pick({
   type: true,
   tags: true,
   content: true,
+}).extend({
+  projectId: z.string().uuid().nullable().optional(),
 });
 
 export const UpdateRuleSchema = CreateRuleSchema.partial();

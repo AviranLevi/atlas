@@ -1,5 +1,5 @@
 // NPM
-import { type ChildProcess } from 'child_process';
+import { type ChildProcess, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 // Services
@@ -27,7 +27,7 @@ export class OrchestratorService {
   private worktreeService = new WorktreeService();
   private promptBuilder = new PromptBuilderService();
 
-  async startWork(taskId: string, agentRuntimeId: string): Promise<Workspace> {
+  async startWork(taskId: string, agentRuntimeId: string, baseBranch?: string): Promise<Workspace> {
     const FUNCTION_NAME = 'startWork';
     try {
       const task = await tasksService.getById(taskId);
@@ -56,10 +56,17 @@ export class OrchestratorService {
         throw new AppError('A workspace is already active for this task', { status: 409 });
       }
 
+      // Resolve which branch to base the worktree on:
+      //   1. Explicit baseBranch from the request
+      //   2. Project's configured default branch
+      //   3. Auto-detect (main/master) — handled inside worktreeService.create
+      const resolvedBaseBranch = baseBranch || project.defaultBranch || undefined;
+
       const { worktreePath, branchName } = this.worktreeService.create(
         project.localPath,
         taskId,
         task.name,
+        resolvedBaseBranch,
       );
 
       const workspace = workspacesRepository.insert({
@@ -423,10 +430,28 @@ export class OrchestratorService {
     const FUNCTION_NAME = 'getDiff';
     try {
       const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+
+      // For merged/stopped workspaces the worktree has been removed — return empty diff
+      if (workspace.status === 'merged' || workspace.status === 'stopped') {
+        return {
+          files: [],
+          summary: { additions: 0, deletions: 0, filesChanged: 0 },
+        };
+      }
+
       const project = await projectsService.getById(workspace.projectId);
 
       if (!project.localPath) {
         throw new AppError('Project has no local path', { status: 400 });
+      }
+
+      // Check that the worktree path still exists before calling git
+      if (!fs.existsSync(workspace.worktreePath)) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree path no longer exists: ${workspace.worktreePath}`);
+        return {
+          files: [],
+          summary: { additions: 0, deletions: 0, filesChanged: 0 },
+        };
       }
 
       return this.worktreeService.getDiff(workspace.worktreePath, project.localPath);
@@ -696,6 +721,95 @@ export class OrchestratorService {
       logger.info(
         `${FILE_PATH} :: reconcileOnStartup - reconciled ${active.length} orphaned workspace(s)`,
       );
+    }
+  }
+
+  // ─── Pull Request ──────────────────────────────────────────────────
+
+  async createPullRequest(
+    workspaceId: string,
+    opts: { title?: string; body?: string } = {},
+  ): Promise<{ prUrl: string; prNumber: number }> {
+    const FUNCTION_NAME = 'createPullRequest';
+    try {
+      const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+
+      if (workspace.status !== 'completed') {
+        throw new AppError('Can only create PR for completed workspaces', { status: 400 });
+      }
+
+      const project = await projectsService.getById(workspace.projectId);
+
+      if (!project.localPath) {
+        throw new AppError('Project has no local path', { status: 400 });
+      }
+
+      if (!project.repositoryUrl || !project.repositoryUrl.includes('github.com')) {
+        throw new AppError('Project has no GitHub repository configured', { status: 400 });
+      }
+
+      // Push the branch to remote
+      try {
+        execSync(`git push -u origin "${workspace.branchName}"`, {
+          cwd: workspace.worktreePath,
+          stdio: 'pipe',
+          encoding: 'utf-8',
+        });
+      } catch (pushError: unknown) {
+        // Try from project root if worktree is gone
+        execSync(`git push -u origin "${workspace.branchName}"`, {
+          cwd: project.localPath,
+          stdio: 'pipe',
+          encoding: 'utf-8',
+        });
+      }
+
+      const task = await tasksService.getById(workspace.taskId);
+      const prTitle = opts.title || task.name;
+      const prBody = opts.body || [
+        '## Summary',
+        '',
+        task.notes || `Automated changes for: ${task.name}`,
+        '',
+        '---',
+        `*Created via [my-agents](${project.repositoryUrl}) workspace*`,
+      ].join('\n');
+
+      const baseBranch = project.defaultBranch || 'main';
+
+      // Create PR using gh CLI
+      const ghOutput = execSync(
+        `gh pr create --title "${prTitle.replace(/"/g, '\\"')}" --body "${prBody.replace(/"/g, '\\"')}" --base "${baseBranch}" --head "${workspace.branchName}"`,
+        {
+          cwd: project.localPath,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+        },
+      ).trim();
+
+      // gh pr create returns the PR URL
+      const prUrl = ghOutput;
+      const prNumberMatch = prUrl.match(/\/pull\/(\d+)/);
+      const prNumber = prNumberMatch ? parseInt(prNumberMatch[1], 10) : 0;
+
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - Created PR #${prNumber}: ${prUrl}`);
+
+      activityLogService.log({
+        projectId: workspace.projectId,
+        taskId: workspace.taskId,
+        workspaceId,
+        agentId: workspace.agentId,
+        eventType: 'agent_completed',
+        description: `Pull request created: #${prNumber}`,
+        metadata: { prUrl, prNumber },
+      });
+
+      return { prUrl, prNumber };
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new AppError(`Failed to create pull request: ${msg}`, { cause: error });
     }
   }
 

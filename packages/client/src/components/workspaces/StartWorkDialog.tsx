@@ -1,6 +1,6 @@
 // React / library
 import { useState, useEffect } from 'react';
-import { Play } from 'lucide-react';
+import { Play, GitBranch } from 'lucide-react';
 // Components
 import {
   Dialog,
@@ -21,10 +21,12 @@ import {
 } from '@/components/ui/select';
 // Hooks
 import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
+import { useProjectBranches, useProject } from '@/hooks/use-projects.hook';
 // Types
 import type { StartWorkDialogProps } from './workspaces.types';
 
 const RUNTIME_STORAGE_KEY = 'my-agents:last-runtime';
+const DEFAULT_BRANCH_VALUE = '__default__';
 
 export function StartWorkDialog({
   open,
@@ -32,10 +34,14 @@ export function StartWorkDialog({
   task,
   agentName,
   projectName,
+  projectId,
 }: StartWorkDialogProps) {
   const { data: runtimes = [], isLoading: runtimesLoading } = useAgentRuntimes();
+  const { data: branches = [], isLoading: branchesLoading } = useProjectBranches(projectId);
+  const { data: project } = useProject(projectId);
   const startWork = useStartWork();
   const [selectedRuntime, setSelectedRuntime] = useState<string>('');
+  const [selectedBranch, setSelectedBranch] = useState<string>(DEFAULT_BRANCH_VALUE);
 
   // Restore last used runtime when runtimes are loaded
   useEffect(() => {
@@ -49,6 +55,13 @@ export function StartWorkDialog({
     }
   }, [runtimes, selectedRuntime]);
 
+  // Reset branch selection when dialog opens
+  useEffect(() => {
+    if (open) {
+      setSelectedBranch(DEFAULT_BRANCH_VALUE);
+    }
+  }, [open]);
+
   const handleRuntimeChange = (value: string) => {
     setSelectedRuntime(value);
     localStorage.setItem(RUNTIME_STORAGE_KEY, value);
@@ -56,8 +69,9 @@ export function StartWorkDialog({
 
   const handleStart = () => {
     if (!task || !selectedRuntime) return;
+    const baseBranch = selectedBranch !== DEFAULT_BRANCH_VALUE ? selectedBranch : undefined;
     startWork.mutate(
-      { taskId: task.id, agentRuntimeId: selectedRuntime },
+      { taskId: task.id, agentRuntimeId: selectedRuntime, baseBranch },
       {
         onSuccess: () => {
           onOpenChange(false);
@@ -65,6 +79,8 @@ export function StartWorkDialog({
       },
     );
   };
+
+  const defaultBranchLabel = project?.defaultBranch || 'auto-detect';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -140,6 +156,37 @@ export function StartWorkDialog({
                   </SelectContent>
                 </Select>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <GitBranch className="h-3.5 w-3.5" />
+                Base Branch
+              </Label>
+              {branchesLoading ? (
+                <p className="text-muted-foreground text-sm">Loading branches...</p>
+              ) : (
+                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={DEFAULT_BRANCH_VALUE}>
+                      <span className="text-muted-foreground">
+                        Default ({defaultBranchLabel})
+                      </span>
+                    </SelectItem>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch} value={branch}>
+                        {branch}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-muted-foreground text-xs">
+                The worktree will branch off from this base.
+              </p>
             </div>
 
             {startWork.isError && (

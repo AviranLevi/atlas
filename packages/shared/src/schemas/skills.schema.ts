@@ -18,6 +18,7 @@ export const SkillSchema = z.object({
   steps: z.string().nullable(),
   inputFormat: z.string().nullable(),
   outputFormat: z.string().nullable(),
+  projectId: z.string().uuid().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -28,6 +29,8 @@ export const CreateSkillSchema = SkillSchema.pick({
   steps: true,
   inputFormat: true,
   outputFormat: true,
+}).extend({
+  projectId: z.string().uuid().nullable().optional(),
 });
 
 export const UpdateSkillSchema = CreateSkillSchema.partial();

@@ -39,6 +39,7 @@ export const agentProjects = sqliteTable('agent_projects', {
   projectId: text('project_id')
     .notNull()
     .references(() => projects.id),
+  role: text('role'),
 });
 
 export const skillRules = sqliteTable('skill_resources', {

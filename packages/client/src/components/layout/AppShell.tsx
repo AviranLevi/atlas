@@ -15,8 +15,10 @@ import {
 } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/use-theme.hook';
 import { useWorkspaces } from '@/hooks/use-workspaces.hook';
-import { navItems } from './layout.constants';
+import { useActiveProject } from '@/contexts/ProjectContext';
+import { navItems, projectContextNavItem } from './layout.constants';
 import { AgentStatusPanel } from './AgentStatusPanel';
+import { ProjectTabBar } from './ProjectTabBar';
 
 function ActiveWorkspaceDot() {
   const { data: workspaces = [] } = useWorkspaces();
@@ -34,6 +36,20 @@ function ActiveWorkspaceDot() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [expanded, setExpanded] = useState(true);
   const { theme, toggleTheme } = useTheme();
+  const { activeProjectId } = useActiveProject();
+
+  // Build nav items list — include "Context" only when a project is selected
+  const allNavItems = activeProjectId
+    ? [
+        ...navItems.slice(0, 2), // Kanban, Workspaces
+        {
+          to: `${projectContextNavItem.basePath}/${activeProjectId}`,
+          icon: projectContextNavItem.icon,
+          label: projectContextNavItem.label,
+        },
+        ...navItems.slice(2), // Agents, Skills, Rules, Memory, Settings
+      ]
+    : navItems;
 
   return (
     <div className="flex min-h-screen">
@@ -99,7 +115,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
-          {navItems.map(({ to, icon: Icon, label, badge }) => {
+          {allNavItems.map(({ to, icon: Icon, label, badge }) => {
             return (
               <Tooltip key={to} delayDuration={expanded ? 1000 : 0}>
                 <TooltipTrigger asChild>
@@ -134,7 +150,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <AgentStatusPanel expanded={expanded} />
       </aside>
-      <main className="flex-1 overflow-auto p-6">{children}</main>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <ProjectTabBar />
+        <main className="flex-1 overflow-auto p-6">{children}</main>
+      </div>
     </div>
   );
 }

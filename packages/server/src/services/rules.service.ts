@@ -1,6 +1,9 @@
+import { eq, or, isNull } from 'drizzle-orm';
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
 import { rulesRepository } from '../db/repositories/index.js';
+import { db } from '../db/index.js';
+import { rules } from '../db/schema/index.js';
 import type { Rule, CreateRule, UpdateRule } from '@my-agents/shared';
 
 const FILE_PATH = 'services/rules.service.ts';
@@ -9,11 +12,23 @@ export class RulesService {
   constructor(private readonly repo = rulesRepository) {}
 
   /**
-   * Retrieves all rules.
+   * Retrieves all rules, optionally filtered by projectId.
+   * When projectId is provided, returns rules where projectId matches OR projectId is null (global).
    */
-  async list(): Promise<Rule[]> {
+  async list(projectId?: string): Promise<Rule[]> {
     const FUNCTION_NAME = 'list';
     try {
+      if (projectId) {
+        const rows = db
+          .select()
+          .from(rules)
+          .where(or(eq(rules.projectId, projectId), isNull(rules.projectId)))
+          .all();
+        return rows.map((r) => ({
+          ...r,
+          tags: JSON.parse(r.tags ?? '[]'),
+        })) as Rule[];
+      }
       return this.repo.findAll();
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

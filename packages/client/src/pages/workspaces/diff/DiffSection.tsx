@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileCode,
   GitMerge,
+  GitPullRequest,
   CheckCircle2,
   Plus,
   Minus,
@@ -13,6 +14,7 @@ import {
   AlignJustify,
   Loader2,
   AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,6 +30,7 @@ import {
   useMergeWorkspace,
   useCompleteWorkspace,
   useRequestChanges,
+  useCreatePR,
   useAddDiffComment,
   useEditDiffComment,
   useRemoveDiffComment,
@@ -124,14 +127,17 @@ function DiffFileRow({
 export function DiffSection({
   workspaceId,
   comments,
+  hasGitHub = false,
 }: {
   workspaceId: string;
   comments: DiffComment[];
+  hasGitHub?: boolean;
 }) {
   const { data: diff, isLoading, error } = useWorkspaceDiff(workspaceId);
   const merge = useMergeWorkspace();
   const complete = useCompleteWorkspace();
   const requestChanges = useRequestChanges();
+  const createPR = useCreatePR();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<DiffViewMode>(
     () => (localStorage.getItem('diff-view-mode') as DiffViewMode) || 'unified',
@@ -266,6 +272,27 @@ export function DiffSection({
             </Button>
           )}
 
+          {hasGitHub && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                createPR.mutate(
+                  { workspaceId },
+                  {
+                    onSuccess: (data) => {
+                      window.open(data.prUrl, '_blank');
+                    },
+                  },
+                );
+              }}
+              disabled={createPR.isPending}
+            >
+              <GitPullRequest className="mr-1.5 h-3.5 w-3.5" />
+              {createPR.isPending ? 'Creating PR...' : 'Create PR'}
+            </Button>
+          )}
+
           <Button
             size="sm"
             onClick={() => {
@@ -302,6 +329,26 @@ export function DiffSection({
       {requestChanges.isError && (
         <div className="border-t px-4 py-3 text-sm text-red-500">
           Request changes failed: {(requestChanges.error as Error).message ?? 'Unknown error'}
+        </div>
+      )}
+      {createPR.isError && (
+        <div className="border-t px-4 py-3 text-sm text-red-500">
+          PR creation failed: {(createPR.error as Error).message ?? 'Unknown error'}
+        </div>
+      )}
+      {createPR.isSuccess && createPR.data && (
+        <div className="border-t px-4 py-3 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+          <GitPullRequest className="h-3.5 w-3.5" />
+          PR #{createPR.data.prNumber} created
+          <a
+            href={createPR.data.prUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 underline hover:no-underline"
+          >
+            View on GitHub
+            <ExternalLink className="h-3 w-3" />
+          </a>
         </div>
       )}
     </Card>

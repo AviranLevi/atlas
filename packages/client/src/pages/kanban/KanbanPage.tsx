@@ -29,6 +29,7 @@ import { useTasks, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 import { useAgents } from '@/hooks/use-agents.hook';
 import { useWorkspaces } from '@/hooks/use-workspaces.hook';
+import { useActiveProject } from '@/contexts/ProjectContext';
 // Types
 import type { Task, TaskStatus } from '@my-agents/shared';
 // Constants
@@ -40,8 +41,10 @@ export function KanbanPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [startWorkDialogOpen, setStartWorkDialogOpen] = useState(false);
   const [startWorkTask, setStartWorkTask] = useState<Task | null>(null);
+  const { activeProjectId } = useActiveProject();
 
-  const projectFilter = searchParams.get('projectId') ?? undefined;
+  // Project comes from the global tab bar; agent filter stays local
+  const projectFilter = activeProjectId ?? undefined;
   const agentFilter = searchParams.get('agentId') ?? undefined;
 
   const setFilter = useCallback(
@@ -151,7 +154,7 @@ export function KanbanPage() {
     [projects],
   );
 
-  const hasFilters = projectFilter || agentFilter;
+  const hasFilters = agentFilter;
 
   if (isLoading) {
     return (
@@ -178,23 +181,6 @@ export function KanbanPage() {
 
       <div className="flex flex-wrap items-center gap-3">
         <Select
-          value={projectFilter ?? '__all__'}
-          onValueChange={(v) => setFilter('projectId', v === '__all__' ? undefined : v)}
-        >
-          <SelectTrigger className="h-8 w-[200px] text-xs">
-            <SelectValue placeholder="All Projects" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">All Projects</SelectItem>
-            {projects.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
           value={agentFilter ?? '__all__'}
           onValueChange={(v) => setFilter('agentId', v === '__all__' ? undefined : v)}
         >
@@ -211,7 +197,7 @@ export function KanbanPage() {
           </SelectContent>
         </Select>
 
-        {hasFilters && (
+        {agentFilter && (
           <Button
             variant="ghost"
             size="sm"
@@ -265,6 +251,7 @@ export function KanbanPage() {
         task={startWorkTask}
         agentName={startWorkTask?.agentId ? agentMap.get(startWorkTask.agentId) : undefined}
         projectName={startWorkTask?.projectId ? projectMap.get(startWorkTask.projectId) : undefined}
+        projectId={startWorkTask?.projectId ?? undefined}
       />
     </div>
   );

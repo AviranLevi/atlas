@@ -28,7 +28,7 @@ export class WorktreeService {
   /**
    * Creates a git worktree for a task. Returns the absolute worktree path.
    */
-  create(projectLocalPath: string, taskId: string, taskName: string): { worktreePath: string; branchName: string } {
+  create(projectLocalPath: string, taskId: string, taskName: string, baseBranch?: string): { worktreePath: string; branchName: string } {
     const FUNCTION_NAME = 'create';
     try {
       const shortId = taskId.slice(0, 8);
@@ -65,7 +65,10 @@ export class WorktreeService {
         // Branch doesn't exist — that's fine
       }
 
-      execSync(`git worktree add -b "${branchName}" "${worktreePath}"`, {
+      // Resolve the base: explicit baseBranch, or auto-detect default
+      const base = baseBranch || this.getDefaultBranch(projectLocalPath);
+
+      execSync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, {
         cwd: projectLocalPath,
         stdio: 'pipe',
       });

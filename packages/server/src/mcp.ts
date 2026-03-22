@@ -8,20 +8,29 @@ import { registerAllTools } from './mcp/register-all.js';
 
 useStderrLogger();
 
+console.error('[MCP] Initializing my-agents MCP server...');
+console.error(`[MCP] cwd: ${process.cwd()}`);
+
 const server = new McpServer({
   name: 'my-agents',
   version: '0.0.1',
 });
 
-registerAllTools(server);
+try {
+  registerAllTools(server);
+  console.error('[MCP] All tools registered successfully');
+} catch (error) {
+  console.error('[MCP] Failed to register tools:', error);
+  process.exit(1);
+}
 
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('my-agents MCP server running on stdio');
+  console.error('[MCP] my-agents MCP server running on stdio');
 }
 
 main().catch((error) => {
-  console.error('Fatal error:', error);
+  console.error('[MCP] Fatal error:', error);
   process.exit(1);
 });

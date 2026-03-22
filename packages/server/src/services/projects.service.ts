@@ -6,7 +6,7 @@ import { AppError } from '../lib/errors.js';
 // DB
 import { projectsRepository } from '../db/repositories/index.js';
 import { db } from '../db/index.js';
-import { agentProjects, agents, tasks, memory, projects } from '../db/schema/index.js';
+import { agentProjects, agents, tasks, memory, projects, workspaces, phases } from '../db/schema/index.js';
 // Types
 import type { Project, CreateProject, UpdateProject } from '@my-agents/shared';
 
@@ -72,13 +72,20 @@ export class ProjectsService {
   }
 
   /**
-   * Deletes a project by ID.
+   * Deletes a project and all its related records (tasks, workspaces, memories, phases, agent assignments).
    * @param id - The project UUID.
    */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {
+      // Delete children in dependency order to avoid FK violations
+      db.delete(workspaces).where(eq(workspaces.projectId, id)).run();
+      db.delete(tasks).where(eq(tasks.projectId, id)).run();
+      db.delete(phases).where(eq(phases.projectId, id)).run();
+      db.delete(memory).where(eq(memory.projectId, id)).run();
+      db.delete(agentProjects).where(eq(agentProjects.projectId, id)).run();
       this.repo.remove(id);
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - deleted project ${id} and all related records`);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete project', { cause: error });

@@ -25,6 +25,7 @@ import {
   useCleanupWorkspace,
   useRerunWorkspace,
 } from '@/hooks/use-workspaces.hook';
+import { useProject } from '@/hooks/use-projects.hook';
 import type { DiffComment } from '@my-agents/shared';
 import { calcDuration } from '@/lib/format';
 import { statusMeta } from './workspaces-page.constants';
@@ -52,6 +53,7 @@ export function WorkspaceDetailPage() {
   const cleanup = useCleanupWorkspace();
   const rerun = useRerunWorkspace();
   const [followUpOpen, setFollowUpOpen] = useState(false);
+  const { data: project } = useProject(workspace?.projectId);
 
   if (isLoading) {
     return (
@@ -222,7 +224,11 @@ export function WorkspaceDetailPage() {
           <p className="text-xs text-muted-foreground mb-3">
             Hover over a line and click the comment icon to leave inline feedback.
           </p>
-          <DiffSection workspaceId={workspace.id} comments={comments} />
+          <DiffSection
+            workspaceId={workspace.id}
+            comments={comments}
+            hasGitHub={!!project?.repositoryUrl?.includes('github.com')}
+          />
         </div>
       )}
 

@@ -13,18 +13,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateRule, useUpdateRule } from '@/hooks/use-rules.hook';
+import { useProjects } from '@/hooks/use-projects.hook';
 import type { RuleDialogProps } from './rules.types';
 import { RULE_TYPES } from './rules.constants';
+
+const NONE = '__none__';
 
 export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
   const createRule = useCreateRule();
   const updateRule = useUpdateRule();
+  const { data: projects = [] } = useProjects();
   const isEditing = !!rule;
 
   const [name, setName] = useState('');
   const [type, setType] = useState<RuleType>('General');
   const [tagsStr, setTagsStr] = useState('');
   const [content, setContent] = useState('');
+  const [projectId, setProjectId] = useState<string>(NONE);
 
   useEffect(() => {
     if (rule) {
@@ -32,11 +37,13 @@ export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
       setType(rule.type);
       setTagsStr(rule.tags.join(', '));
       setContent(rule.content ?? '');
+      setProjectId(rule.projectId ?? NONE);
     } else {
       setName('');
       setType('General');
       setTagsStr('');
       setContent('');
+      setProjectId(NONE);
     }
   }, [rule, open]);
 
@@ -51,6 +58,7 @@ export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
       type,
       tags,
       content: content.trim() || null,
+      projectId: projectId === NONE ? null : projectId,
     };
 
     if (isEditing) {
@@ -94,6 +102,22 @@ export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
                 {RULE_TYPES.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="projectScope">Project Scope</Label>
+            <Select value={projectId} onValueChange={setProjectId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select project scope" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>Global (all projects)</SelectItem>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
                   </SelectItem>
                 ))}
               </SelectContent>

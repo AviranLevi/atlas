@@ -64,6 +64,15 @@ export function useProjectContext(id: string | undefined) {
   });
 }
 
+export function useProjectBranches(id: string | undefined) {
+  return useQuery({
+    queryKey: [...PROJECTS_KEY, id, 'branches'],
+    queryFn: () => api.get<string[]>(`/projects/${id}/branches`),
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+}
+
 export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -88,6 +97,24 @@ export function useDeleteProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/projects/${id}`),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+  });
+}
+
+export function useScanProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.post<Project>(`/projects/${id}/scan`, {}),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+  });
+}
+
+export function useGenerateBrief() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.post<Project>(`/projects/${id}/generate-brief`, {}),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });

@@ -56,7 +56,7 @@ export function useWorkspaceStatus(id: string | undefined) {
 export function useStartWork() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { taskId: string; agentRuntimeId: string }) =>
+    mutationFn: (data: { taskId: string; agentRuntimeId: string; baseBranch?: string }) =>
       api.post<Workspace>('/workspaces', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
@@ -139,6 +139,17 @@ export function useRerunWorkspace() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
+export function useCreatePR() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ workspaceId, title, body }: { workspaceId: string; title?: string; body?: string }) =>
+      api.post<{ prUrl: string; prNumber: number }>(`/workspaces/${workspaceId}/create-pr`, { title, body }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
     },
   });
 }

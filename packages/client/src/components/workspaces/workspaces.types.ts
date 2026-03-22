@@ -6,4 +6,5 @@ export type StartWorkDialogProps = {
   task: Task | null;
   agentName?: string;
   projectName?: string;
+  projectId?: string;
 };

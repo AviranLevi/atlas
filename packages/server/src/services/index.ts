@@ -27,7 +27,9 @@ export const reviewsService = new ReviewsService();
 import { WorktreeService } from './worktree.service.js';
 import { PromptBuilderService } from './prompt-builder.service.js';
 import { OrchestratorService } from './orchestrator.service.js';
+import { BriefGeneratorService } from './brief-generator.service.js';
 
 export const worktreeService = new WorktreeService();
 export const promptBuilderService = new PromptBuilderService();
 export const orchestratorService = new OrchestratorService();
+export const briefGeneratorService = new BriefGeneratorService();

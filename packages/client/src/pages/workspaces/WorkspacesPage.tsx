@@ -29,6 +29,7 @@ import {
   useStopWork,
   useCleanupWorkspace,
 } from '@/hooks/use-workspaces.hook';
+import { useActiveProject } from '@/contexts/ProjectContext';
 import type { Workspace } from '@my-agents/shared';
 import type { StatusFilter } from './workspaces-page.types';
 import { statusMeta, filterTabs } from './workspaces-page.constants';
@@ -144,8 +145,14 @@ function WorkspaceRow({ workspace }: { workspace: Workspace }) {
 }
 
 export function WorkspacesPage() {
-  const { data: workspaces = [], isLoading } = useWorkspaces();
+  const { data: allWorkspaces = [], isLoading } = useWorkspaces();
+  const { activeProjectId } = useActiveProject();
   const [filter, setFilter] = useState<StatusFilter>('all');
+
+  // Scope workspaces by active project tab
+  const workspaces = activeProjectId
+    ? allWorkspaces.filter((w) => w.projectId === activeProjectId)
+    : allWorkspaces;
 
   const counts: Record<StatusFilter, number> = {
     all: workspaces.length,

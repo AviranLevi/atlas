@@ -37,8 +37,8 @@ export const workspacesRoute = new Hono()
     return c.json(workspace);
   })
   .post('/', zValidator('json', CreateWorkspaceSchema), async (c) => {
-    const { taskId, agentRuntimeId } = c.req.valid('json');
-    const workspace = await orchestratorService.startWork(taskId, agentRuntimeId);
+    const { taskId, agentRuntimeId, baseBranch } = c.req.valid('json');
+    const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch);
     return c.json(workspace, 201);
   })
   .get('/:id/diff', async (c) => {
@@ -61,6 +61,11 @@ export const workspacesRoute = new Hono()
     const { agentRuntimeId } = await c.req.json<{ agentRuntimeId: string }>();
     const workspace = await orchestratorService.rerun(c.req.param('id'), agentRuntimeId);
     return c.json(workspace, 201);
+  })
+  .post('/:id/create-pr', async (c) => {
+    const { title, body } = await c.req.json<{ title?: string; body?: string }>();
+    const result = await orchestratorService.createPullRequest(c.req.param('id'), { title, body });
+    return c.json(result, 201);
   })
   .post('/:id/comments', zValidator('json', AddDiffCommentSchema), (c) => {
     const data = c.req.valid('json');

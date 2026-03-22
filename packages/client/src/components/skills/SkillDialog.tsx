@@ -13,12 +13,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateSkill, useUpdateSkill } from '@/hooks/use-skills.hook';
+import { useProjects } from '@/hooks/use-projects.hook';
 import type { SkillDialogProps } from './skills.types';
 import { SKILL_TYPES } from './skills.constants';
+
+const NONE = '__none__';
 
 export function SkillDialog({ open, onOpenChange, skill }: SkillDialogProps) {
   const createSkill = useCreateSkill();
   const updateSkill = useUpdateSkill();
+  const { data: projects = [] } = useProjects();
   const isEditing = !!skill;
 
   const [name, setName] = useState('');
@@ -26,6 +30,7 @@ export function SkillDialog({ open, onOpenChange, skill }: SkillDialogProps) {
   const [steps, setSteps] = useState('');
   const [inputFormat, setInputFormat] = useState('');
   const [outputFormat, setOutputFormat] = useState('');
+  const [projectId, setProjectId] = useState<string>(NONE);
 
   useEffect(() => {
     if (skill) {
@@ -34,12 +39,14 @@ export function SkillDialog({ open, onOpenChange, skill }: SkillDialogProps) {
       setSteps(skill.steps ?? '');
       setInputFormat(skill.inputFormat ?? '');
       setOutputFormat(skill.outputFormat ?? '');
+      setProjectId(skill.projectId ?? NONE);
     } else {
       setName('');
       setType('Coding');
       setSteps('');
       setInputFormat('');
       setOutputFormat('');
+      setProjectId(NONE);
     }
   }, [skill, open]);
 
@@ -51,6 +58,7 @@ export function SkillDialog({ open, onOpenChange, skill }: SkillDialogProps) {
       steps: steps.trim() || null,
       inputFormat: inputFormat.trim() || null,
       outputFormat: outputFormat.trim() || null,
+      projectId: projectId === NONE ? null : projectId,
     };
 
     if (isEditing) {
@@ -94,6 +102,22 @@ export function SkillDialog({ open, onOpenChange, skill }: SkillDialogProps) {
                 {SKILL_TYPES.map((t) => (
                   <SelectItem key={t} value={t}>
                     {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="projectScope">Project Scope</Label>
+            <Select value={projectId} onValueChange={setProjectId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select project scope" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>Global (all projects)</SelectItem>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Rule } from '@my-agents/shared';
 import { ScrollText, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useRules, useDeleteRule } from '@/hooks/use-rules.hook';
+import { useProjects } from '@/hooks/use-projects.hook';
 import { RuleDialog } from '@/components/rules/RuleDialog';
 import { RULE_TYPE_OPTIONS } from './rules-page.constants';
 
@@ -19,9 +20,15 @@ export function RulesPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const filters = typeFilter && typeFilter !== 'all' ? { type: typeFilter } : undefined;
   const { data: rules, isLoading } = useRules(filters);
+  const { data: projects = [] } = useProjects();
   const deleteRule = useDeleteRule();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | undefined>();
+
+  const projectMap = useMemo(
+    () => new Map(projects.map((p) => [p.id, p.name])),
+    [projects],
+  );
 
   const handleCreate = () => {
     setEditingRule(undefined);
@@ -92,9 +99,16 @@ export function RulesPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-sm font-semibold">{rule.name}</h3>
-                  <Badge variant="secondary" className="mt-1 text-[11px]">
-                    {rule.type}
-                  </Badge>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[11px]">
+                      {rule.type}
+                    </Badge>
+                    {rule.projectId && projectMap.get(rule.projectId) && (
+                      <Badge variant="outline" className="text-[10px]">
+                        Project: {projectMap.get(rule.projectId)}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
 

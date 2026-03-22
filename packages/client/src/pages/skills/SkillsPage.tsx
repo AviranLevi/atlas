@@ -1,17 +1,24 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Skill } from '@my-agents/shared';
 import { Zap, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useSkills, useDeleteSkill } from '@/hooks/use-skills.hook';
+import { useProjects } from '@/hooks/use-projects.hook';
 import { SkillDialog } from '@/components/skills/SkillDialog';
 
 export function SkillsPage() {
   const { data: skills, isLoading } = useSkills();
+  const { data: projects = [] } = useProjects();
   const deleteSkill = useDeleteSkill();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | undefined>();
+
+  const projectMap = useMemo(
+    () => new Map(projects.map((p) => [p.id, p.name])),
+    [projects],
+  );
 
   const handleCreate = () => {
     setEditingSkill(undefined);
@@ -67,9 +74,16 @@ export function SkillsPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-sm font-semibold">{skill.name}</h3>
-                  <Badge variant="secondary" className="mt-1 text-[11px]">
-                    {skill.type}
-                  </Badge>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <Badge variant="secondary" className="text-[11px]">
+                      {skill.type}
+                    </Badge>
+                    {skill.projectId && projectMap.get(skill.projectId) && (
+                      <Badge variant="outline" className="text-[10px]">
+                        Project: {projectMap.get(skill.projectId)}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
 
