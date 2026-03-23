@@ -189,6 +189,12 @@ export function ProjectDetailPage() {
   const [editingPhase, setEditingPhase] = useState<Phase | undefined>();
   const [assignPopoverOpen, setAssignPopoverOpen] = useState(false);
 
+  // All hooks must be called before any early returns (Rules of Hooks)
+  const { data: projectAgents = [] } = useProjectAgents(id ?? '');
+  const { data: allAgents = [] } = useAgents();
+  const assignAgent = useAssignAgent();
+  const unassignAgent = useUnassignAgent();
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -211,12 +217,6 @@ export function ProjectDetailPage() {
 
   const { project, agents: _ctxAgents, tasks, memories } = ctx;
   const status = statusConfig[project.status as ProjectStatus] ?? statusConfig.active;
-
-  // Use dedicated project agents hook for assign/unassign functionality
-  const { data: projectAgents = [] } = useProjectAgents(project.id);
-  const { data: allAgents = [] } = useAgents();
-  const assignAgent = useAssignAgent();
-  const unassignAgent = useUnassignAgent();
 
   const assignedAgentIds = new Set(projectAgents.map((a) => a.id));
   const unassignedAgents = allAgents.filter((a) => !assignedAgentIds.has(a.id));
