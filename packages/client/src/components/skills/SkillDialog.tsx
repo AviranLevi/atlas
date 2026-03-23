@@ -1,5 +1,7 @@
+// React / library
 import { useEffect, useState } from 'react';
-import type { SkillType } from '@my-agents/shared';
+
+// Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,12 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+// Hooks
 import { useCreateSkill, useUpdateSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
-import type { SkillDialogProps } from './skills.types';
-import { SKILL_TYPES } from './skills.constants';
 
-const NONE = '__none__';
+// Types
+import type { SkillType } from '@my-agents/shared';
+import type { SkillDialogProps } from './skills.types';
+
+// Constants
+import { SKILL_TYPES, NONE } from './skills.constants';
 
 export function SkillDialog({ open, onOpenChange, skill }: SkillDialogProps) {
   const createSkill = useCreateSkill();

@@ -1,4 +1,7 @@
+// React / library
 import { useEffect, useState } from 'react';
+
+// Components
 import {
   Dialog,
   DialogContent,
@@ -16,12 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ReviewPanel } from '@/components/reviews/ReviewPanel';
+
+// Hooks
 import { useAgents } from '@/hooks/use-agents.hook';
 import { useSkills } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 import { usePhases } from '@/hooks/use-phases.hook';
 import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks.hook';
-import { ReviewPanel } from '@/components/reviews/ReviewPanel';
+
+// Types
 import type {
   CreateTask,
   UpdateTask,
@@ -29,11 +36,9 @@ import type {
   TaskEstimate,
 } from '@my-agents/shared';
 import type { TaskDialogProps } from './kanban.types';
-import { PRIORITIES, ESTIMATES, NONE_VALUE } from './kanban.constants';
 
-function toOptionalId(value: string): string | null {
-  return value === NONE_VALUE ? null : value;
-}
+// Constants
+import { PRIORITIES, ESTIMATES, NONE_VALUE } from './kanban.constants';
 
 export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followUpContext }: TaskDialogProps) {
   const [name, setName] = useState('');
@@ -101,10 +106,10 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followU
         definitionOfDone: definitionOfDone.trim() || null,
         notes: notes.trim() || null,
         tags: parsedTags,
-        agentId: toOptionalId(agentId),
-        skillId: toOptionalId(skillId),
-        projectId: toOptionalId(projectId),
-        phaseId: toOptionalId(phaseId),
+        agentId: agentId === NONE_VALUE ? null : agentId,
+        skillId: skillId === NONE_VALUE ? null : skillId,
+        projectId: projectId === NONE_VALUE ? null : projectId,
+        phaseId: phaseId === NONE_VALUE ? null : phaseId,
       };
       updateTask.mutate(
         { id: task.id, data: updatePayload },
@@ -121,10 +126,10 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followU
         definitionOfDone: definitionOfDone.trim() || null,
         notes: notes.trim() || null,
         tags: parsedTags,
-        agentId: toOptionalId(agentId),
-        skillId: toOptionalId(skillId),
-        projectId: toOptionalId(projectId),
-        phaseId: toOptionalId(phaseId),
+        agentId: agentId === NONE_VALUE ? null : agentId,
+        skillId: skillId === NONE_VALUE ? null : skillId,
+        projectId: projectId === NONE_VALUE ? null : projectId,
+        phaseId: phaseId === NONE_VALUE ? null : phaseId,
       };
       createTask.mutate(createPayload, {
         onSuccess: () => onOpenChange(false),
