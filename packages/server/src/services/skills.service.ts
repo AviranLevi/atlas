@@ -1,10 +1,19 @@
+// External
 import { eq, or, isNull } from 'drizzle-orm';
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
-import { skillsRepository } from '../db/repositories/index.js';
+
+// Shared
+import type { Skill, CreateSkill, UpdateSkill } from '@my-agents/shared';
+
+// DB
 import { db } from '../db/index.js';
 import { skills } from '../db/schema/index.js';
-import type { Skill, CreateSkill, UpdateSkill } from '@my-agents/shared';
+
+// Repositories
+import { skillsRepository } from '../db/repositories/index.js';
+
+// Lib
+import { logger } from '../lib/logger.js';
+import { AppError } from '../lib/errors.js';
 
 const FILE_PATH = 'services/skills.service.ts';
 
@@ -33,10 +42,7 @@ export class SkillsService {
     }
   }
 
-  /**
-   * Retrieves a skill by ID.
-   * @param id - The skill UUID.
-   */
+  /** Returns a skill by ID. */
   async getById(id: string): Promise<Skill> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -47,10 +53,7 @@ export class SkillsService {
     }
   }
 
-  /**
-   * Creates a new skill.
-   * @param data - The skill creation data.
-   */
+  /** Creates a new skill. */
   async create(data: CreateSkill): Promise<Skill> {
     const FUNCTION_NAME = 'create';
     try {
@@ -61,11 +64,7 @@ export class SkillsService {
     }
   }
 
-  /**
-   * Updates a skill by ID.
-   * @param id - The skill UUID.
-   * @param data - The partial update data.
-   */
+  /** Updates a skill by ID. */
   async update(id: string, data: UpdateSkill): Promise<Skill> {
     const FUNCTION_NAME = 'update';
     try {
@@ -76,10 +75,7 @@ export class SkillsService {
     }
   }
 
-  /**
-   * Deletes a skill by ID.
-   * @param id - The skill UUID.
-   */
+  /** Deletes a skill by ID. */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {

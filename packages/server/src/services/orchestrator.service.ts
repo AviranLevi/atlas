@@ -1,21 +1,26 @@
-// NPM
+// External
 import { type ChildProcess, execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+
+// Shared
+import type { Workspace } from '@my-agents/shared';
+
 // Services
 import { tasksService, projectsService, activityLogService } from './index.js';
 import { WorktreeService } from './worktree.service.js';
 import { PromptBuilderService } from './prompt-builder.service.js';
-// DB
+
+// Repositories
 import { workspacesRepository } from '../db/repositories/index.js';
+
 // Executors
 import { executorRegistry, removeMcpConfig } from '../executors/index.js';
 import { spawnAgent } from '../executors/spawn-agent.js';
-// Utils
+
+// Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
-// Types
-import type { Workspace } from '@my-agents/shared';
 
 const FILE_PATH = 'services/orchestrator.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
@@ -27,6 +32,7 @@ export class OrchestratorService {
   private worktreeService = new WorktreeService();
   private promptBuilder = new PromptBuilderService();
 
+  /** Creates a worktree, spawns the agent process, and opens a workspace. */
   async startWork(taskId: string, agentRuntimeId: string, baseBranch?: string): Promise<Workspace> {
     const FUNCTION_NAME = 'startWork';
     try {
@@ -164,6 +170,7 @@ export class OrchestratorService {
     }
   }
 
+  /** Kills the agent process and optionally resets the task status. */
   async stopWork(workspaceId: string, resetTaskStatus = true): Promise<Workspace> {
     const FUNCTION_NAME = 'stopWork';
     try {
@@ -212,6 +219,7 @@ export class OrchestratorService {
     }
   }
 
+  /** Returns workspace status with optional full log output. */
   async getStatus(workspaceId: string): Promise<(Workspace & { fullOutput?: string }) | null> {
     const workspace = workspacesRepository.findById(workspaceId);
 
@@ -253,6 +261,7 @@ export class OrchestratorService {
     return archivePath;
   }
 
+  /** Stops the process, removes the worktree, and deletes the MCP config. */
   async cleanup(workspaceId: string): Promise<void> {
     const FUNCTION_NAME = 'cleanup';
     try {
@@ -289,6 +298,7 @@ export class OrchestratorService {
     }
   }
 
+  /** Re-runs the agent on a completed workspace with review comments as context. */
   async requestChanges(workspaceId: string): Promise<Workspace> {
     const FUNCTION_NAME = 'requestChanges';
     try {
@@ -426,6 +436,7 @@ export class OrchestratorService {
     }
   }
 
+  /** Returns the git diff for a workspace (empty if worktree is gone). */
   async getDiff(workspaceId: string) {
     const FUNCTION_NAME = 'getDiff';
     try {
@@ -462,6 +473,7 @@ export class OrchestratorService {
     }
   }
 
+  /** Merges the worktree branch, moves task to Done, and archives logs. */
   async mergeAndClose(workspaceId: string): Promise<Workspace> {
     const FUNCTION_NAME = 'mergeAndClose';
     try {
@@ -614,6 +626,7 @@ export class OrchestratorService {
     }
   }
 
+  /** Adds a review comment to a workspace diff. */
   addDiffComment(workspaceId: string, comment: { filename: string; lineNumber: number; lineContent: string; body: string }): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];
@@ -628,6 +641,7 @@ export class OrchestratorService {
     } as any);
   }
 
+  /** Edits an existing diff comment in a workspace. */
   editDiffComment(workspaceId: string, commentId: string, body: string): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];
@@ -639,6 +653,7 @@ export class OrchestratorService {
     } as any);
   }
 
+  /** Removes a diff comment from a workspace. */
   removeDiffComment(workspaceId: string, commentId: string): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];
@@ -648,6 +663,7 @@ export class OrchestratorService {
     } as any);
   }
 
+  /** Returns all pending and running workspaces. */
   async listActive(): Promise<Workspace[]> {
     return [
       ...workspacesRepository.findByStatus('pending'),
@@ -655,6 +671,7 @@ export class OrchestratorService {
     ];
   }
 
+  /** Returns all workspaces. */
   async listAll(): Promise<Workspace[]> {
     return workspacesRepository.findAll();
   }
@@ -726,6 +743,7 @@ export class OrchestratorService {
 
   // ─── Pull Request ──────────────────────────────────────────────────
 
+  /** Pushes the branch and creates a GitHub pull request via gh CLI. */
   async createPullRequest(
     workspaceId: string,
     opts: { title?: string; body?: string } = {},
@@ -815,6 +833,7 @@ export class OrchestratorService {
 
   // ─── Archived logs ──────────────────────────────────────────────────
 
+  /** Lists metadata for all archived workspace log files. */
   listArchivedLogs(): { filename: string; size: number; createdAt: string }[] {
     if (!fs.existsSync(ARCHIVE_DIR)) return [];
     return fs
@@ -827,6 +846,7 @@ export class OrchestratorService {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  /** Returns the content of an archived log file. Prevents path traversal. */
   getArchivedLog(filename: string): string | null {
     // Prevent path traversal
     const safeName = path.basename(filename);

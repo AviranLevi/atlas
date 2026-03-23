@@ -1,8 +1,13 @@
+// External
 import { like, or, sql } from 'drizzle-orm';
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+
+// DB
 import { db } from '../db/index.js';
 import { agents, skills, rules, memory, tasks, projects } from '../db/schema/index.js';
+
+// Lib
+import { logger } from '../lib/logger.js';
+import { AppError } from '../lib/errors.js';
 
 const FILE_PATH = 'services/search.service.ts';
 

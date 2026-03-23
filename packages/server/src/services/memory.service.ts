@@ -1,7 +1,12 @@
+// Shared
+import type { Memory, CreateMemory, UpdateMemory } from '@my-agents/shared';
+
+// Repositories
+import { memoryRepository } from '../db/repositories/index.js';
+
+// Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
-import { memoryRepository } from '../db/repositories/index.js';
-import type { Memory, CreateMemory, UpdateMemory } from '@my-agents/shared';
 
 const FILE_PATH = 'services/memory.service.ts';
 
@@ -9,7 +14,7 @@ export class MemoryService {
   constructor(private readonly repo = memoryRepository) {}
 
   /**
-   * Retrieves memory entries with optional filters.
+   * Lists memory entries, optionally filtered by type, scope, or projectId.
    */
   async list(filters?: { type?: string; scope?: string; projectId?: string }): Promise<Memory[]> {
     const FUNCTION_NAME = 'list';
@@ -40,9 +45,7 @@ export class MemoryService {
     return result;
   }
 
-  /**
-   * Retrieves all memories relevant to a project (project-scoped + global).
-   */
+  /** Lists all memories relevant to a project (project-scoped + global). */
   async listByProject(projectId: string): Promise<Memory[]> {
     const FUNCTION_NAME = 'listByProject';
     try {
@@ -53,10 +56,7 @@ export class MemoryService {
     }
   }
 
-  /**
-   * Retrieves a memory entry by ID.
-   * @param id - The memory UUID.
-   */
+  /** Returns a memory entry by ID. */
   async getById(id: string): Promise<Memory> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -67,10 +67,7 @@ export class MemoryService {
     }
   }
 
-  /**
-   * Creates a new memory entry.
-   * @param data - The memory creation data.
-   */
+  /** Creates a new memory entry. */
   async create(data: CreateMemory): Promise<Memory> {
     const FUNCTION_NAME = 'create';
     try {
@@ -81,11 +78,7 @@ export class MemoryService {
     }
   }
 
-  /**
-   * Updates a memory entry by ID.
-   * @param id - The memory UUID.
-   * @param data - The partial update data.
-   */
+  /** Updates a memory entry by ID. */
   async update(id: string, data: UpdateMemory): Promise<Memory> {
     const FUNCTION_NAME = 'update';
     try {
@@ -96,10 +89,7 @@ export class MemoryService {
     }
   }
 
-  /**
-   * Deletes a memory entry by ID.
-   * @param id - The memory UUID.
-   */
+  /** Deletes a memory entry by ID. */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {

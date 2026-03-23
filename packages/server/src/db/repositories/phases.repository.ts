@@ -1,15 +1,23 @@
+// External
 import { eq, sql } from 'drizzle-orm';
+
+// Shared
+import type { Phase, CreatePhase, UpdatePhase } from '@my-agents/shared';
+
+// DB
 import type { DB } from '../index.js';
 import { phases, tasks } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-import type { Phase, CreatePhase, UpdatePhase } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/phases.repository.ts';
 
 export class PhasesRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns all phases. */
   findAll(): Phase[] {
     const FUNCTION_NAME = 'findAll';
     try {
@@ -20,6 +28,7 @@ export class PhasesRepository {
     }
   }
 
+  /** Returns phases for a project with task count and done count aggregates. */
   findByProjectId(projectId: string): Phase[] {
     const FUNCTION_NAME = 'findByProjectId';
     try {
@@ -49,6 +58,7 @@ export class PhasesRepository {
     }
   }
 
+  /** Returns a phase by ID, or null if not found. */
   findById(id: string): Phase | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -60,6 +70,7 @@ export class PhasesRepository {
     }
   }
 
+  /** Returns a phase by ID, or throws NotFoundError. */
   findByIdOrThrow(id: string): Phase {
     const row = this.findById(id);
     if (!row) {
@@ -68,6 +79,7 @@ export class PhasesRepository {
     return row;
   }
 
+  /** Inserts a new phase and returns the created record. */
   insert(data: CreatePhase): Phase {
     const FUNCTION_NAME = 'insert';
     try {
@@ -79,6 +91,7 @@ export class PhasesRepository {
     }
   }
 
+  /** Updates a phase and returns the updated record. */
   update(id: string, data: UpdatePhase): Phase {
     const FUNCTION_NAME = 'update';
     try {
@@ -95,6 +108,7 @@ export class PhasesRepository {
     }
   }
 
+  /** Deletes a phase by ID after nullifying its tasks' phaseId. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {

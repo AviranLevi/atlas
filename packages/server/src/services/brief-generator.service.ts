@@ -1,6 +1,12 @@
+// Shared
 import type { Project, ProjectScanData, Memory } from '@my-agents/shared';
+
+// Services
 import { memoryService, projectsService } from './index.js';
+
+// Lib
 import { logger } from '../lib/logger.js';
+import { AppError } from '../lib/errors.js';
 
 const FILE_PATH = 'services/brief-generator.service.ts';
 
@@ -31,7 +37,7 @@ export class BriefGeneratorService {
       return brief;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw error;
+      throw new AppError('Failed to generate brief', { cause: error });
     }
   }
 

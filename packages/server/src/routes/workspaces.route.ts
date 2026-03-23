@@ -1,98 +1,48 @@
-// NPM
+// External
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
+
 // Shared
 import { CreateWorkspaceSchema, AddDiffCommentSchema } from '@my-agents/shared';
-// Services
-import { orchestratorService } from '../services/index.js';
-// Executors
-import { executorRegistry } from '../executors/index.js';
+
+// Controllers
+import {
+  listAgentRuntimes,
+  refreshAgentRuntimes,
+  listArchivedLogs,
+  getArchivedLog,
+  listWorkspaces,
+  getWorkspace,
+  createWorkspace,
+  getWorkspaceDiff,
+  requestWorkspaceChanges,
+  mergeWorkspace,
+  completeWorkspace,
+  rerunWorkspace,
+  createWorkspacePullRequest,
+  addWorkspaceComment,
+  editWorkspaceComment,
+  removeWorkspaceComment,
+  stopWorkspace,
+  deleteWorkspace,
+} from '../controllers/workspaces.controller.js';
 
 export const workspacesRoute = new Hono()
-  .get('/agent-runtimes', async (c) => {
-    return c.json(await executorRegistry.listAll());
-  })
-  .post('/agent-runtimes/refresh', async (c) => {
-    await executorRegistry.refresh();
-    return c.json(await executorRegistry.listAll());
-  })
-  .get('/archived-logs', (c) => {
-    return c.json(orchestratorService.listArchivedLogs());
-  })
-  .get('/archived-logs/:filename', (c) => {
-    const content = orchestratorService.getArchivedLog(c.req.param('filename'));
-    if (!content) return c.json({ error: 'Log not found' }, 404);
-    return c.text(content);
-  })
-  .get('/', async (c) => {
-    const status = c.req.query('status');
-    const workspaces = status === 'active'
-      ? await orchestratorService.listActive()
-      : await orchestratorService.listAll();
-    return c.json(workspaces);
-  })
-  .get('/:id', async (c) => {
-    const workspace = await orchestratorService.getStatus(c.req.param('id'));
-    if (!workspace) return c.json({ error: 'Workspace not found' }, 404);
-    return c.json(workspace);
-  })
-  .post('/', zValidator('json', CreateWorkspaceSchema), async (c) => {
-    const { taskId, agentRuntimeId, baseBranch } = c.req.valid('json');
-    const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch);
-    return c.json(workspace, 201);
-  })
-  .get('/:id/diff', async (c) => {
-    const diff = await orchestratorService.getDiff(c.req.param('id'));
-    return c.json(diff);
-  })
-  .post('/:id/request-changes', async (c) => {
-    const workspace = await orchestratorService.requestChanges(c.req.param('id'));
-    return c.json(workspace);
-  })
-  .post('/:id/merge', async (c) => {
-    const workspace = await orchestratorService.mergeAndClose(c.req.param('id'));
-    return c.json(workspace);
-  })
-  .post('/:id/complete', async (c) => {
-    const workspace = await orchestratorService.completeWithoutMerge(c.req.param('id'));
-    return c.json(workspace);
-  })
-  .post('/:id/rerun', async (c) => {
-    const { agentRuntimeId } = await c.req.json<{ agentRuntimeId: string }>();
-    const workspace = await orchestratorService.rerun(c.req.param('id'), agentRuntimeId);
-    return c.json(workspace, 201);
-  })
-  .post('/:id/create-pr', async (c) => {
-    const { title, body } = await c.req.json<{ title?: string; body?: string }>();
-    const result = await orchestratorService.createPullRequest(c.req.param('id'), { title, body });
-    return c.json(result, 201);
-  })
-  .post('/:id/comments', zValidator('json', AddDiffCommentSchema), (c) => {
-    const data = c.req.valid('json');
-    const workspace = orchestratorService.addDiffComment(c.req.param('id'), data);
-    return c.json(workspace, 201);
-  })
-  .post('/:id/comments/:commentId', async (c) => {
-    const { body } = await c.req.json<{ body: string }>();
-    const workspace = orchestratorService.editDiffComment(
-      c.req.param('id'),
-      c.req.param('commentId'),
-      body,
-    );
-    return c.json(workspace);
-  })
-  .delete('/:id/comments/:commentId', (c) => {
-    const workspace = orchestratorService.removeDiffComment(
-      c.req.param('id'),
-      c.req.param('commentId'),
-    );
-    return c.json(workspace);
-  })
-  .post('/:id/stop', async (c) => {
-    const workspace = await orchestratorService.stopWork(c.req.param('id'));
-    return c.json(workspace);
-  })
-  .delete('/:id', async (c) => {
-    await orchestratorService.cleanup(c.req.param('id'));
-    return c.body(null, 204);
-  });
+  .get('/agent-runtimes', listAgentRuntimes)
+  .post('/agent-runtimes/refresh', refreshAgentRuntimes)
+  .get('/archived-logs', listArchivedLogs)
+  .get('/archived-logs/:filename', getArchivedLog)
+  .get('/', listWorkspaces)
+  .get('/:id', getWorkspace)
+  .post('/', zValidator('json', CreateWorkspaceSchema), createWorkspace)
+  .get('/:id/diff', getWorkspaceDiff)
+  .post('/:id/request-changes', requestWorkspaceChanges)
+  .post('/:id/merge', mergeWorkspace)
+  .post('/:id/complete', completeWorkspace)
+  .post('/:id/rerun', rerunWorkspace)
+  .post('/:id/create-pr', createWorkspacePullRequest)
+  .post('/:id/comments', zValidator('json', AddDiffCommentSchema), addWorkspaceComment)
+  .post('/:id/comments/:commentId', editWorkspaceComment)
+  .delete('/:id/comments/:commentId', removeWorkspaceComment)
+  .post('/:id/stop', stopWorkspace)
+  .delete('/:id', deleteWorkspace);

@@ -1,8 +1,15 @@
+// Shared
+import type { Task, CreateTask, UpdateTask } from '@my-agents/shared';
+
+// Services
+import { activityLogService } from './index.js';
+
+// Repositories
+import { tasksRepository, workspacesRepository, reviewsRepository } from '../db/repositories/index.js';
+
+// Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
-import { tasksRepository, workspacesRepository, reviewsRepository } from '../db/repositories/index.js';
-import { activityLogService } from './index.js';
-import type { Task, CreateTask, UpdateTask } from '@my-agents/shared';
 
 /** Statuses that mean "an agent should not be running for this task". */
 const INACTIVE_STATUSES = new Set(['To Do', 'Done', 'Blocked']);
@@ -12,12 +19,13 @@ const FILE_PATH = 'services/tasks.service.ts';
 export class TasksService {
   constructor(private readonly repo = tasksRepository) {}
 
-  /**
-   * Retrieves all tasks.
-   */
-  async list(): Promise<Task[]> {
+  /** Lists tasks, optionally filtered by status, projectId, or agentId. */
+  async list(filters?: { status?: string; projectId?: string; agentId?: string }): Promise<Task[]> {
     const FUNCTION_NAME = 'list';
     try {
+      if (filters && (filters.status || filters.projectId || filters.agentId)) {
+        return this.repo.findByFilters(filters);
+      }
       return this.repo.findAll();
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -25,10 +33,7 @@ export class TasksService {
     }
   }
 
-  /**
-   * Retrieves a task by ID.
-   * @param id - The task UUID.
-   */
+  /** Returns a task by ID. */
   async getById(id: string): Promise<Task> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -39,10 +44,7 @@ export class TasksService {
     }
   }
 
-  /**
-   * Creates a new task.
-   * @param data - The task creation data.
-   */
+  /** Creates a new task and logs the creation event. */
   async create(data: CreateTask): Promise<Task> {
     const FUNCTION_NAME = 'create';
     try {
@@ -61,11 +63,7 @@ export class TasksService {
     }
   }
 
-  /**
-   * Updates a task by ID.
-   * @param id - The task UUID.
-   * @param data - The partial update data.
-   */
+  /** Updates a task by ID and handles status-change side effects. */
   async update(id: string, data: UpdateTask): Promise<Task> {
     const FUNCTION_NAME = 'update';
     try {
@@ -117,10 +115,7 @@ export class TasksService {
     }
   }
 
-  /**
-   * Deletes a task by ID.
-   * @param id - The task UUID.
-   */
+  /** Deletes a task and all its related workspaces and reviews. */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {

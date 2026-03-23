@@ -1,9 +1,16 @@
+// External
 import { eq } from 'drizzle-orm';
+
+// Shared
+import type { Review, ChecklistItem } from '@my-agents/shared';
+
+// DB
 import type { DB } from '../index.js';
 import { reviews } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-import type { Review, ChecklistItem } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/reviews.repository.ts';
 
@@ -19,6 +26,7 @@ function parseReview(row: ReviewRow): Review {
 export class ReviewsRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns the review for a task with checklist JSON parsed, or null. */
   findByTaskId(taskId: string): Review | null {
     const FUNCTION_NAME = 'findByTaskId';
     try {
@@ -30,6 +38,7 @@ export class ReviewsRepository {
     }
   }
 
+  /** Returns all pending reviews with checklist JSON parsed. */
   findPending(): Review[] {
     const FUNCTION_NAME = 'findPending';
     try {
@@ -41,6 +50,7 @@ export class ReviewsRepository {
     }
   }
 
+  /** Returns a review by ID with checklist JSON parsed, or null if not found. */
   findById(id: string): Review | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -52,6 +62,7 @@ export class ReviewsRepository {
     }
   }
 
+  /** Returns a review by ID with checklist JSON parsed, or throws NotFoundError. */
   findByIdOrThrow(id: string): Review {
     const row = this.findById(id);
     if (!row) {
@@ -60,6 +71,7 @@ export class ReviewsRepository {
     return row;
   }
 
+  /** Inserts a new review with checklist serialized to JSON. */
   insert(data: {
     taskId: string;
     checklist: ChecklistItem[] | null;
@@ -85,6 +97,7 @@ export class ReviewsRepository {
     }
   }
 
+  /** Deletes all reviews for a task. */
   removeByTaskId(taskId: string): void {
     try {
       this.db.delete(reviews).where(eq(reviews.taskId, taskId)).run();
@@ -94,6 +107,7 @@ export class ReviewsRepository {
     }
   }
 
+  /** Updates a review with selective field updates and returns the updated record. */
   update(id: string, data: {
     checklist?: ChecklistItem[] | null;
     notes?: string | null;

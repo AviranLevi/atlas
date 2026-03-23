@@ -1,4 +1,7 @@
+// DB
 import { db } from '../index.js';
+
+// Repositories
 import { AgentsRepository } from './agents.repository.js';
 import { SkillsRepository } from './skills.repository.js';
 import { RulesRepository } from './rules.repository.js';

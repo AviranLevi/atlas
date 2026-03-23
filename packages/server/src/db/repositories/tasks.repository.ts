@@ -1,9 +1,16 @@
-import { eq } from 'drizzle-orm';
+// External
+import { eq, and } from 'drizzle-orm';
+
+// Shared
+import type { CreateTask, UpdateTask, Task } from '@my-agents/shared';
+
+// DB
 import type { DB } from '../index.js';
 import { tasks } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-import type { CreateTask, UpdateTask, Task } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/tasks.repository.ts';
 
@@ -19,6 +26,7 @@ function parseTags(row: unknown): Task {
 export class TasksRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns all tasks with tags JSON parsed. */
   findAll(): Task[] {
     const FUNCTION_NAME = 'findAll';
     try {
@@ -30,6 +38,28 @@ export class TasksRepository {
     }
   }
 
+  /** Returns tasks matching any combination of status, projectId, and agentId filters. */
+  findByFilters(filters: { status?: string; projectId?: string; agentId?: string }): Task[] {
+    const FUNCTION_NAME = 'findByFilters';
+    try {
+      const conditions = [];
+      if (filters.status) conditions.push(eq(tasks.status, filters.status));
+      if (filters.projectId) conditions.push(eq(tasks.projectId, filters.projectId));
+      if (filters.agentId) conditions.push(eq(tasks.agentId, filters.agentId));
+
+      const rows = this.db
+        .select()
+        .from(tasks)
+        .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+        .all();
+      return rows.map((r) => parseTags(r));
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query tasks', { cause: error });
+    }
+  }
+
+  /** Returns a task by ID with tags JSON parsed, or null if not found. */
   findById(id: string): Task | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -42,6 +72,7 @@ export class TasksRepository {
     }
   }
 
+  /** Returns a task by ID with tags JSON parsed, or throws NotFoundError. */
   findByIdOrThrow(id: string): Task {
     const row = this.findById(id);
     if (!row) {
@@ -50,6 +81,7 @@ export class TasksRepository {
     return row;
   }
 
+  /** Inserts a new task with tags serialized to JSON. */
   insert(data: CreateTask): Task {
     const FUNCTION_NAME = 'insert';
     try {
@@ -63,6 +95,7 @@ export class TasksRepository {
     }
   }
 
+  /** Updates a task and returns the updated record. */
   update(id: string, data: UpdateTask): Task {
     const FUNCTION_NAME = 'update';
     try {
@@ -87,6 +120,7 @@ export class TasksRepository {
     }
   }
 
+  /** Deletes a task by ID. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {

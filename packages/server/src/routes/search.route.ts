@@ -1,18 +1,11 @@
+// External
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
-import { searchService } from '../services/index.js';
 
-const SearchQuerySchema = z.object({
-  q: z.string().min(1),
-});
+// Shared
+import { SearchQuerySchema } from '@my-agents/shared';
 
-export const searchRoute = new Hono().get(
-  '/',
-  zValidator('query', SearchQuerySchema),
-  async (c) => {
-    const { q } = c.req.valid('query');
-    const results = await searchService.search(q);
-    return c.json(results);
-  }
-);
+// Controllers
+import { search } from '../controllers/search.controller.js';
+
+export const searchRoute = new Hono().get('/', zValidator('query', SearchQuerySchema), search);

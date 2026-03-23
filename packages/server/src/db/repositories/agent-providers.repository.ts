@@ -1,15 +1,23 @@
+// External
 import { eq } from 'drizzle-orm';
+
+// Shared
+import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider } from '@my-agents/shared';
+
+// DB
 import type { DB } from '../index.js';
 import { agentProviders } from '../schema/index.js';
+
+// Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
-import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider } from '@my-agents/shared';
 
 const FILE_PATH = 'db/repositories/agent-providers.repository.ts';
 
 export class AgentProvidersRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns all agent providers. */
   findAll(): AgentProvider[] {
     const FUNCTION_NAME = 'findAll';
     try {
@@ -20,6 +28,7 @@ export class AgentProvidersRepository {
     }
   }
 
+  /** Returns an agent provider by ID, or null if not found. */
   findById(id: string): AgentProvider | null {
     const FUNCTION_NAME = 'findById';
     try {
@@ -31,6 +40,7 @@ export class AgentProvidersRepository {
     }
   }
 
+  /** Returns an agent provider by ID, or throws NotFoundError. */
   findByIdOrThrow(id: string): AgentProvider {
     const row = this.findById(id);
     if (!row) {
@@ -39,6 +49,7 @@ export class AgentProvidersRepository {
     return row;
   }
 
+  /** Inserts a new agent provider and returns the created record. */
   insert(data: CreateAgentProvider): AgentProvider {
     const FUNCTION_NAME = 'insert';
     try {
@@ -50,6 +61,7 @@ export class AgentProvidersRepository {
     }
   }
 
+  /** Updates an agent provider and returns the updated record. */
   update(id: string, data: UpdateAgentProvider): AgentProvider {
     const FUNCTION_NAME = 'update';
     try {
@@ -66,6 +78,7 @@ export class AgentProvidersRepository {
     }
   }
 
+  /** Deletes an agent provider by ID. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {

@@ -9,3 +9,4 @@ export * from "./schemas/workspaces.schema";
 export * from "./schemas/agent-providers.schema";
 export * from "./schemas/phases.schema";
 export * from "./schemas/reviews.schema";
+export * from "./schemas/search.schema";

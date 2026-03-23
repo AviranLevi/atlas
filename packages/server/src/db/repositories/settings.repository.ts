@@ -1,8 +1,7 @@
+// External
 import { eq } from 'drizzle-orm';
-import type { DB } from '../index.js';
-import { globalInstructions, dispatchRules } from '../schema/index.js';
-import { logger } from '../../lib/logger.js';
-import { AppError, NotFoundError } from '../../lib/errors.js';
+
+// Shared
 import type {
   CreateGlobalInstructions,
   UpdateGlobalInstructions,
@@ -12,12 +11,21 @@ import type {
   DispatchRule,
 } from '@my-agents/shared';
 
+// DB
+import type { DB } from '../index.js';
+import { globalInstructions, dispatchRules } from '../schema/index.js';
+
+// Lib
+import { logger } from '../../lib/logger.js';
+import { AppError, NotFoundError } from '../../lib/errors.js';
+
 const FILE_PATH = 'db/repositories/settings.repository.ts';
 
 export class SettingsRepository {
   constructor(private readonly db: DB) {}
 
   // Global Instructions
+  /** Returns all global instructions. */
   findAllGlobalInstructions(): GlobalInstructions[] {
     const FUNCTION_NAME = 'findAllGlobalInstructions';
     try {
@@ -28,6 +36,7 @@ export class SettingsRepository {
     }
   }
 
+  /** Returns global instructions by ID, or null if not found. */
   findGlobalInstructionsById(id: string): GlobalInstructions | null {
     const FUNCTION_NAME = 'findGlobalInstructionsById';
     try {
@@ -43,6 +52,7 @@ export class SettingsRepository {
     }
   }
 
+  /** Returns global instructions by ID, or throws NotFoundError. */
   findGlobalInstructionsByIdOrThrow(id: string): GlobalInstructions {
     const row = this.findGlobalInstructionsById(id);
     if (!row) {
@@ -51,6 +61,7 @@ export class SettingsRepository {
     return row;
   }
 
+  /** Inserts new global instructions and returns the created record. */
   insertGlobalInstructions(data: CreateGlobalInstructions): GlobalInstructions {
     const FUNCTION_NAME = 'insertGlobalInstructions';
     try {
@@ -66,6 +77,7 @@ export class SettingsRepository {
     }
   }
 
+  /** Updates global instructions and returns the updated record. */
   updateGlobalInstructions(
     id: string,
     data: UpdateGlobalInstructions
@@ -85,6 +97,7 @@ export class SettingsRepository {
     }
   }
 
+  /** Deletes global instructions by ID. */
   removeGlobalInstructions(id: string): void {
     const FUNCTION_NAME = 'removeGlobalInstructions';
     try {
@@ -101,6 +114,7 @@ export class SettingsRepository {
   }
 
   // Dispatch Rules
+  /** Returns all dispatch rules. */
   findAllDispatchRules(): DispatchRule[] {
     const FUNCTION_NAME = 'findAllDispatchRules';
     try {
@@ -111,6 +125,7 @@ export class SettingsRepository {
     }
   }
 
+  /** Returns a dispatch rule by ID, or null if not found. */
   findDispatchRuleById(id: string): DispatchRule | null {
     const FUNCTION_NAME = 'findDispatchRuleById';
     try {
@@ -126,6 +141,7 @@ export class SettingsRepository {
     }
   }
 
+  /** Returns a dispatch rule by ID, or throws NotFoundError. */
   findDispatchRuleByIdOrThrow(id: string): DispatchRule {
     const row = this.findDispatchRuleById(id);
     if (!row) {
@@ -134,6 +150,7 @@ export class SettingsRepository {
     return row;
   }
 
+  /** Inserts a new dispatch rule and returns the created record. */
   insertDispatchRule(data: CreateDispatchRule): DispatchRule {
     const FUNCTION_NAME = 'insertDispatchRule';
     try {
@@ -145,6 +162,7 @@ export class SettingsRepository {
     }
   }
 
+  /** Updates a dispatch rule and returns the updated record. */
   updateDispatchRule(id: string, data: UpdateDispatchRule): DispatchRule {
     const FUNCTION_NAME = 'updateDispatchRule';
     try {
@@ -161,6 +179,7 @@ export class SettingsRepository {
     }
   }
 
+  /** Deletes a dispatch rule by ID. */
   removeDispatchRule(id: string): void {
     const FUNCTION_NAME = 'removeDispatchRule';
     try {
