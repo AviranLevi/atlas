@@ -1,5 +1,7 @@
+// React / library
 import { useState } from 'react';
-import type { ChecklistItem } from '@my-agents/shared';
+
+// Components
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -12,6 +14,8 @@ import {
 } from '@/components/ui/select';
 import { CheckSquare, Square, CheckCircle2, RotateCcw, Bot, Loader2 } from 'lucide-react';
 import { ReviewBadge } from './ReviewBadge';
+
+// Hooks
 import {
   useReview,
   useUpdateReview,
@@ -19,6 +23,12 @@ import {
   useTriggerAiReview,
 } from '@/hooks/use-reviews.hook';
 import { useAgents } from '@/hooks/use-agents.hook';
+
+// Lib
+import { cn } from '@/lib/utils';
+
+// Types
+import type { ChecklistItem } from '@my-agents/shared';
 import type { ReviewPanelProps } from './reviews.types';
 
 export function ReviewPanel({ taskId }: ReviewPanelProps) {
@@ -85,7 +95,7 @@ export function ReviewPanel({ taskId }: ReviewPanelProps) {
             {review.checklist.map((item: ChecklistItem, i: number) => (
               <button
                 key={i}
-                className={`flex items-start gap-2 w-full text-left text-sm py-0.5 ${isDecided ? 'cursor-default' : 'hover:text-foreground cursor-pointer'}`}
+                className={cn('flex items-start gap-2 w-full text-left text-sm py-0.5', isDecided ? 'cursor-default' : 'hover:text-foreground cursor-pointer')}
                 onClick={() => handleChecklistToggle(i)}
                 disabled={isDecided}
               >

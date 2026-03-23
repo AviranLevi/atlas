@@ -1,3 +1,6 @@
+export const RUNTIME_STORAGE_KEY = 'my-agents:last-runtime';
+export const DEFAULT_BRANCH_VALUE = '__default__';
+
 export const statusConfig: Record<string, { label: string; className: string }> = {
   pending: {
     label: 'Pending',

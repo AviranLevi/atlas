@@ -25,8 +25,8 @@ import { useProjectBranches, useProject } from '@/hooks/use-projects.hook';
 // Types
 import type { StartWorkDialogProps } from './workspaces.types';
 
-const RUNTIME_STORAGE_KEY = 'my-agents:last-runtime';
-const DEFAULT_BRANCH_VALUE = '__default__';
+// Constants
+import { RUNTIME_STORAGE_KEY, DEFAULT_BRANCH_VALUE } from './workspaces.constants';
 
 export function StartWorkDialog({
   open,

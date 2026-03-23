@@ -1,5 +1,7 @@
+// React / library
 import { useEffect, useState } from 'react';
-import type { RuleType } from '@my-agents/shared';
+
+// Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,12 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+// Hooks
 import { useCreateRule, useUpdateRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
-import type { RuleDialogProps } from './rules.types';
-import { RULE_TYPES } from './rules.constants';
 
-const NONE = '__none__';
+// Types
+import type { RuleType } from '@my-agents/shared';
+import type { RuleDialogProps } from './rules.types';
+
+// Constants
+import { RULE_TYPES, NONE } from './rules.constants';
 
 export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
   const createRule = useCreateRule();
