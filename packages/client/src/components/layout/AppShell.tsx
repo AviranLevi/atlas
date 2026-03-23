@@ -1,11 +1,9 @@
+// React / library
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import {
-  PanelLeftClose,
-  PanelLeftOpen,
-  Sun,
-  Moon,
-} from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Sun, Moon } from 'lucide-react';
+
+// Components
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,12 +11,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useTheme } from '@/hooks/use-theme.hook';
-import { useWorkspaces } from '@/hooks/use-workspaces.hook';
-import { useActiveProject } from '@/contexts/ProjectContext';
-import { navItems, projectContextNavItem } from './layout.constants';
 import { AgentStatusPanel } from './AgentStatusPanel';
 import { ProjectTabBar } from './ProjectTabBar';
+
+// Hooks
+import { useTheme } from '@/hooks/use-theme.hook';
+import { useWorkspaces } from '@/hooks/use-workspaces.hook';
+
+// Contexts
+import { useActiveProject } from '@/contexts/ProjectContext';
+
+// Constants
+import { navItems, projectContextNavItem } from './layout.constants';
 
 function ActiveWorkspaceDot() {
   const { data: workspaces = [] } = useWorkspaces();

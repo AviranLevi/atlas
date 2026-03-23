@@ -37,3 +37,8 @@ export type CreateAgent = z.infer<typeof CreateAgentSchema>;
 export type UpdateAgent = z.infer<typeof UpdateAgentSchema>;
 export type ProjectAgent = z.infer<typeof ProjectAgentSchema>;
 export type AssignAgent = z.infer<typeof AssignAgentSchema>;
+
+export const AttachSkillSchema = z.object({ skillId: z.string().uuid() });
+export const AttachRuleSchema = z.object({ ruleId: z.string().uuid() });
+export type AttachSkill = z.infer<typeof AttachSkillSchema>;
+export type AttachRule = z.infer<typeof AttachRuleSchema>;

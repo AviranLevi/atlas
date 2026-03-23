@@ -1,10 +1,13 @@
+// React / library
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { Copy, Check, ChevronDown, ChevronUp, Plug } from 'lucide-react';
+
+// Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, ChevronDown, ChevronUp, Plug } from 'lucide-react';
-import type { ConnectionInfo } from './settings.types';
+
+// Hooks
+import { useMcpConnectionInfo } from '@/hooks/use-settings.hook';
 
 function CopyBlock({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -66,10 +69,7 @@ function CollapsibleSection({
 }
 
 export function McpConnectionPanel() {
-  const { data: info, isLoading } = useQuery({
-    queryKey: ['mcp-connection-info'],
-    queryFn: () => api.get<ConnectionInfo>('/mcp/connection-info'),
-  });
+  const { data: info, isLoading } = useMcpConnectionInfo();
 
   if (isLoading) {
     return (

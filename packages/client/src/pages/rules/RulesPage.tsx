@@ -1,6 +1,8 @@
+// React / library
 import { useMemo, useState } from 'react';
-import type { Rule } from '@my-agents/shared';
 import { ScrollText, Plus, Pencil, Trash2 } from 'lucide-react';
+
+// Components
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,9 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RuleDialog } from '@/components/rules/RuleDialog';
+
+// Hooks
 import { useRules, useDeleteRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
-import { RuleDialog } from '@/components/rules/RuleDialog';
+
+// Types
+import type { Rule } from '@my-agents/shared';
+
+// Constants
 import { RULE_TYPE_OPTIONS } from './rules-page.constants';
 
 export function RulesPage() {

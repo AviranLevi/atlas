@@ -98,42 +98,27 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followU
       ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
       : null;
 
+    const resolveOptional = (v: string) => (v === NONE_VALUE ? null : v);
+
+    const base = {
+      name: name.trim(),
+      priority,
+      estimate,
+      definitionOfDone: definitionOfDone.trim() || null,
+      notes: notes.trim() || null,
+      tags: parsedTags,
+      agentId: resolveOptional(agentId),
+      skillId: resolveOptional(skillId),
+      projectId: resolveOptional(projectId),
+      phaseId: resolveOptional(phaseId),
+    };
+
+    const onSuccess = () => onOpenChange(false);
+
     if (isEditing) {
-      const updatePayload: UpdateTask = {
-        name: name.trim(),
-        priority,
-        estimate,
-        definitionOfDone: definitionOfDone.trim() || null,
-        notes: notes.trim() || null,
-        tags: parsedTags,
-        agentId: agentId === NONE_VALUE ? null : agentId,
-        skillId: skillId === NONE_VALUE ? null : skillId,
-        projectId: projectId === NONE_VALUE ? null : projectId,
-        phaseId: phaseId === NONE_VALUE ? null : phaseId,
-      };
-      updateTask.mutate(
-        { id: task.id, data: updatePayload },
-        {
-          onSuccess: () => onOpenChange(false),
-        }
-      );
+      updateTask.mutate({ id: task.id, data: base satisfies UpdateTask }, { onSuccess });
     } else {
-      const createPayload: CreateTask = {
-        name: name.trim(),
-        status: 'To Do',
-        priority,
-        estimate,
-        definitionOfDone: definitionOfDone.trim() || null,
-        notes: notes.trim() || null,
-        tags: parsedTags,
-        agentId: agentId === NONE_VALUE ? null : agentId,
-        skillId: skillId === NONE_VALUE ? null : skillId,
-        projectId: projectId === NONE_VALUE ? null : projectId,
-        phaseId: phaseId === NONE_VALUE ? null : phaseId,
-      };
-      createTask.mutate(createPayload, {
-        onSuccess: () => onOpenChange(false),
-      });
+      createTask.mutate({ ...base, status: 'To Do' } satisfies CreateTask, { onSuccess });
     }
   };
 

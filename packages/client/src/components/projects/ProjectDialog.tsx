@@ -1,6 +1,7 @@
 // React / library
 import { useEffect, useState, useCallback } from 'react';
 import { FolderOpen, ScanSearch } from 'lucide-react';
+
 // Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -16,14 +17,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FolderPickerDialog } from './FolderPickerDialog';
-// Hooks
-import { useCreateProject, useUpdateProject, useProjectBranches, useScanProject } from '@/hooks/use-projects.hook';
 
-// Lib
-import { api } from '@/lib/api';
+// Hooks
+import { useCreateProject, useUpdateProject, useProjectBranches, useScanProject, useScanFolder } from '@/hooks/use-projects.hook';
+
 // Types
 import type { ProjectStatus } from '@my-agents/shared';
-import type { ProjectDialogProps, ScanResult } from './projects.types';
+import type { ProjectDialogProps } from './projects.types';
+
 // Constants
 import { STATUSES, COLOR_PRESETS } from './projects.constants';
 
@@ -31,6 +32,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const scanProject = useScanProject();
+  const scanFolder = useScanFolder();
   const isEditing = !!project;
   const { data: branches = [] } = useProjectBranches(isEditing ? project?.id : undefined);
 
@@ -43,7 +45,6 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const [defaultBranch, setDefaultBranch] = useState('');
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [color, setColor] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
@@ -69,32 +70,26 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
     }
   }, [project, open]);
 
-  const scanFolder = useCallback(async (folderPath: string) => {
+  const doScan = useCallback((folderPath: string) => {
     if (!folderPath) return;
-    setScanning(true);
-    try {
-      const result = await api.get<ScanResult>(
-        `/filesystem/scan?path=${encodeURIComponent(folderPath)}`,
-      );
-      if (result.name && !name) setName(result.name);
-      if (result.description && !description) setDescription(result.description);
-      if (result.techStack && !techStack) setTechStack(result.techStack);
-      if (result.repositoryUrl && !repositoryUrl) setRepositoryUrl(result.repositoryUrl);
-      if (result.defaultBranch && !defaultBranch) setDefaultBranch(result.defaultBranch);
-      setScanned(true);
-    } catch {
-      // scan is best-effort
-    } finally {
-      setScanning(false);
-    }
-  }, [name, description, techStack, repositoryUrl, defaultBranch]);
+    scanFolder.mutate(folderPath, {
+      onSuccess: (result) => {
+        if (result.name && !name) setName(result.name);
+        if (result.description && !description) setDescription(result.description);
+        if (result.techStack && !techStack) setTechStack(result.techStack);
+        if (result.repositoryUrl && !repositoryUrl) setRepositoryUrl(result.repositoryUrl);
+        if (result.defaultBranch && !defaultBranch) setDefaultBranch(result.defaultBranch);
+        setScanned(true);
+      },
+    });
+  }, [name, description, techStack, repositoryUrl, defaultBranch, scanFolder]);
 
   const handleFolderSelect = useCallback((selectedPath: string) => {
     setLocalPath(selectedPath);
     if (!isEditing) {
-      scanFolder(selectedPath);
+      doScan(selectedPath);
     }
-  }, [isEditing, scanFolder]);
+  }, [isEditing, doScan]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +113,6 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       createProject.mutate(data, {
         onSuccess: (created) => {
           onOpenChange(false);
-          // Auto-scan the project in the background after creation
           if (data.localPath) {
             scanProject.mutate(created.id);
           }
@@ -172,23 +166,23 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                     <Button variant="outline" size="icon" className="shrink-0" asChild>
                       <button
                         type="button"
-                        onClick={() => scanFolder(localPath)}
-                        disabled={scanning}
+                        onClick={() => doScan(localPath)}
+                        disabled={scanFolder.isPending}
                         title="Re-scan folder"
                       >
-                        <ScanSearch className={`h-4 w-4 ${scanning ? 'animate-pulse' : ''}`} />
+                        <ScanSearch className={`h-4 w-4 ${scanFolder.isPending ? 'animate-pulse' : ''}`} />
                       </button>
                     </Button>
                   )}
                 </div>
-                {(scanned || scanning) && (
+                {(scanned || scanFolder.isPending) && (
                   <div className="flex items-center gap-2">
                     {scanned && (
                       <Badge variant="secondary" className="text-[10px]">
                         auto-filled from project
                       </Badge>
                     )}
-                    {scanning && (
+                    {scanFolder.isPending && (
                       <Badge variant="secondary" className="text-[10px] animate-pulse">
                         scanning...
                       </Badge>

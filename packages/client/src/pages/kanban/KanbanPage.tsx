@@ -1,37 +1,28 @@
 // React / library
 import { useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  DndContext,
-  DragOverlay,
-  DragStartEvent,
-  DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { Plus, X } from 'lucide-react';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
+import { Plus } from 'lucide-react';
+
 // Components
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { KanbanColumn } from '@/components/kanban/KanbanColumn';
 import { KanbanCard } from '@/components/kanban/KanbanCard';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { StartWorkDialog } from '@/components/workspaces/StartWorkDialog';
+import { KanbanFilterBar } from './KanbanFilterBar';
+
 // Hooks
 import { useTasks, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 import { useAgents } from '@/hooks/use-agents.hook';
 import { useWorkspaces } from '@/hooks/use-workspaces.hook';
 import { useActiveProject } from '@/contexts/ProjectContext';
+import { useKanbanDnd } from './use-kanban-dnd.hook';
+
 // Types
 import type { Task, TaskStatus } from '@my-agents/shared';
+
 // Constants
 import { COLUMNS } from './kanban-page.constants';
 
@@ -43,7 +34,6 @@ export function KanbanPage() {
   const [startWorkTask, setStartWorkTask] = useState<Task | null>(null);
   const { activeProjectId } = useActiveProject();
 
-  // Project comes from the global tab bar; agent filter stays local
   const projectFilter = activeProjectId ?? undefined;
   const agentFilter = searchParams.get('agentId') ?? undefined;
 
@@ -51,15 +41,12 @@ export function KanbanPage() {
     (key: string, value: string | undefined) => {
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
-        if (value) {
-          next.set(key, value);
-        } else {
-          next.delete(key);
-        }
+        if (value) next.set(key, value);
+        else next.delete(key);
         return next;
       });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   const filters = useMemo(() => {
@@ -76,85 +63,30 @@ export function KanbanPage() {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
 
-  // Map from taskId → workspaceId for tasks with an active agent or completed workspace
+  const { sensors, activeTask, handleDragStart, handleDragEnd } = useKanbanDnd(
+    tasks,
+    (taskId, newStatus) => updateTask.mutate({ id: taskId, data: { status: newStatus } }),
+  );
+
   const activeWorkspaceMap = useMemo(
     () => new Map(
       workspaces
         .filter((w) => w.status === 'running' || w.status === 'pending' || w.status === 'completed')
-        .map((w) => [w.taskId, w.id])
+        .map((w) => [w.taskId, w.id]),
     ),
-    [workspaces]
+    [workspaces],
   );
 
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
-
-  function handleDragStart(event: DragStartEvent) {
-    const task = tasks.find((t) => t.id === event.active.id);
-    setActiveTask(task ?? null);
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    setActiveTask(null);
-    if (!over) return;
-
-    const taskId = active.id as string;
-    const newStatus = over.id as TaskStatus;
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task || task.status === newStatus) return;
-
-    // Only allow dragging back to "To Do" (reset).
-    // All forward transitions are controlled:
-    //   To Do → In Progress:   via Play button (StartWork dialog)
-    //   In Progress → In Review: via agent completion
-    //   In Review → Done:        via review approval
-    if (newStatus !== 'To Do') return;
-
-    updateTask.mutate({ id: taskId, data: { status: newStatus } });
-  }
-
-  function handleStartWork(task: Task) {
-    setStartWorkTask(task);
-    setStartWorkDialogOpen(true);
-  }
-
-  function handleEdit(task: Task) {
-    setEditingTask(task);
-    setDialogOpen(true);
-  }
-
-  function handleDelete(id: string) {
-    deleteTask.mutate(id);
-  }
-
-  function handleOpenChange(open: boolean) {
-    setDialogOpen(open);
-    if (!open) setEditingTask(null);
-  }
+  const agentMap = useMemo(() => new Map(agents.map((a) => [a.id, a.name])), [agents]);
+  const projectMap = useMemo(() => new Map(projects.map((p) => [p.id, p.name])), [projects]);
 
   const tasksByStatus = COLUMNS.reduce(
     (acc, status) => {
       acc[status] = tasks.filter((t) => t.status === status);
       return acc;
     },
-    {} as Record<TaskStatus, Task[]>
+    {} as Record<TaskStatus, Task[]>,
   );
-
-  const agentMap = useMemo(
-    () => new Map(agents.map((a) => [a.id, a.name])),
-    [agents],
-  );
-
-  const projectMap = useMemo(
-    () => new Map(projects.map((p) => [p.id, p.name])),
-    [projects],
-  );
-
-  const hasFilters = agentFilter;
 
   if (isLoading) {
     return (
@@ -179,36 +111,12 @@ export function KanbanPage() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Select
-          value={agentFilter ?? '__all__'}
-          onValueChange={(v) => setFilter('agentId', v === '__all__' ? undefined : v)}
-        >
-          <SelectTrigger className="h-8 w-[200px] text-xs">
-            <SelectValue placeholder="All Agents" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">All Agents</SelectItem>
-            {agents.map((a) => (
-              <SelectItem key={a.id} value={a.id}>
-                {a.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {agentFilter && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 text-xs"
-            onClick={() => setSearchParams({})}
-          >
-            <X className="mr-1 h-3 w-3" />
-            Clear filters
-          </Button>
-        )}
-      </div>
+      <KanbanFilterBar
+        agents={agents}
+        agentFilter={agentFilter}
+        onAgentFilterChange={(v) => setFilter('agentId', v)}
+        onClearFilters={() => setSearchParams({})}
+      />
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
@@ -217,9 +125,9 @@ export function KanbanPage() {
               key={status}
               status={status}
               tasks={tasksByStatus[status] ?? []}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onStartWork={handleStartWork}
+              onEdit={(task) => { setEditingTask(task); setDialogOpen(true); }}
+              onDelete={(id) => deleteTask.mutate(id)}
+              onStartWork={(task) => { setStartWorkTask(task); setStartWorkDialogOpen(true); }}
               agentMap={agentMap}
               projectMap={projectMap}
               showProject={!projectFilter}
@@ -237,17 +145,14 @@ export function KanbanPage() {
 
       <TaskDialog
         open={dialogOpen}
-        onOpenChange={handleOpenChange}
+        onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingTask(null); }}
         task={editingTask}
         defaultProjectId={projectFilter}
       />
 
       <StartWorkDialog
         open={startWorkDialogOpen}
-        onOpenChange={(open) => {
-          setStartWorkDialogOpen(open);
-          if (!open) setStartWorkTask(null);
-        }}
+        onOpenChange={(open) => { setStartWorkDialogOpen(open); if (!open) setStartWorkTask(null); }}
         task={startWorkTask}
         agentName={startWorkTask?.agentId ? agentMap.get(startWorkTask.agentId) : undefined}
         projectName={startWorkTask?.projectId ? projectMap.get(startWorkTask.projectId) : undefined}

@@ -1,7 +1,7 @@
 // React / library
 import { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Folder, FolderGit2, ChevronRight, ArrowUp, Search } from 'lucide-react';
+
 // Components
 import {
   Dialog,
@@ -13,10 +13,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-// Utils
-import { api } from '@/lib/api';
+
+// Hooks
+import { useBrowseFilesystem } from '@/hooks/use-projects.hook';
+
 // Types
-import type { BrowseResponse, FolderPickerDialogProps } from './projects.types';
+import type { FolderPickerDialogProps } from './projects.types';
 
 export function FolderPickerDialog({
   open,
@@ -36,14 +38,7 @@ export function FolderPickerDialog({
     }
   }, [open, initialPath]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['filesystem', 'browse', currentPath],
-    queryFn: () =>
-      api.get<BrowseResponse>(
-        `/filesystem/browse${currentPath ? `?path=${encodeURIComponent(currentPath)}` : ''}`,
-      ),
-    enabled: open,
-  });
+  const { data, isLoading } = useBrowseFilesystem(currentPath, open);
 
   const handleNavigate = (dirPath: string) => {
     setCurrentPath(dirPath);

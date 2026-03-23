@@ -1,4 +1,4 @@
-import type { Task } from '@my-agents/shared';
+import type { Task, Workspace } from '@my-agents/shared';
 
 export type StartWorkDialogProps = {
   open: boolean;
@@ -7,4 +7,8 @@ export type StartWorkDialogProps = {
   agentName?: string;
   projectName?: string;
   projectId?: string;
+};
+
+export type WorkspaceCardProps = {
+  workspace: Workspace;
 };

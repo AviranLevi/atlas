@@ -1,12 +1,19 @@
+// React / library
 import { useMemo, useState } from 'react';
-import type { Skill } from '@my-agents/shared';
 import { Zap, Plus, Pencil, Trash2 } from 'lucide-react';
+
+// Components
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { SkillDialog } from '@/components/skills/SkillDialog';
+
+// Hooks
 import { useSkills, useDeleteSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
-import { SkillDialog } from '@/components/skills/SkillDialog';
+
+// Types
+import type { Skill } from '@my-agents/shared';
 
 export function SkillsPage() {
   const { data: skills, isLoading } = useSkills();

@@ -2,11 +2,11 @@
 import { eq, and, isNull, or } from 'drizzle-orm';
 
 // Shared
-import type { Agent, CreateAgent, UpdateAgent } from '@my-agents/shared';
+import type { Agent, CreateAgent, UpdateAgent, Skill, Rule } from '@my-agents/shared';
 
 // DB
 import { db } from '../db/index.js';
-import { agentSkills, agentRules, agentProjects, skills, rules, memory, globalInstructions } from '../db/schema/index.js';
+import { agentSkills, agentRules, agentProjects, skills, rules, memory, globalInstructions, projects } from '../db/schema/index.js';
 
 // Repositories
 import { agentsRepository } from '../db/repositories/index.js';
@@ -225,6 +225,152 @@ export class AgentsService {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to get agent context', { cause: error });
+    }
+  }
+
+  /** Lists skills attached to an agent. */
+  async listSkills(agentId: string): Promise<Skill[]> {
+    const FUNCTION_NAME = 'listSkills';
+    try {
+      const rows = db
+        .select({ skillId: agentSkills.skillId })
+        .from(agentSkills)
+        .where(eq(agentSkills.agentId, agentId))
+        .all();
+
+      const result: Skill[] = [];
+      for (const row of rows) {
+        const skill = db.select().from(skills).where(eq(skills.id, row.skillId)).get();
+        if (skill) result.push(skill as Skill);
+      }
+      return result;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to list agent skills', { cause: error });
+    }
+  }
+
+  /** Attaches a skill to an agent (idempotent). */
+  async attachSkill(agentId: string, skillId: string): Promise<void> {
+    const FUNCTION_NAME = 'attachSkill';
+    try {
+      const existing = db
+        .select()
+        .from(agentSkills)
+        .where(and(eq(agentSkills.agentId, agentId), eq(agentSkills.skillId, skillId)))
+        .get();
+      if (existing) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - skill ${skillId} already attached to agent ${agentId}`);
+        return;
+      }
+      db.insert(agentSkills).values({ agentId, skillId }).run();
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to attach skill to agent', { cause: error });
+    }
+  }
+
+  /** Detaches a skill from an agent. */
+  async detachSkill(agentId: string, skillId: string): Promise<void> {
+    const FUNCTION_NAME = 'detachSkill';
+    try {
+      db.delete(agentSkills)
+        .where(and(eq(agentSkills.agentId, agentId), eq(agentSkills.skillId, skillId)))
+        .run();
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to detach skill from agent', { cause: error });
+    }
+  }
+
+  /** Lists rules attached to an agent. */
+  async listRules(agentId: string): Promise<Rule[]> {
+    const FUNCTION_NAME = 'listRules';
+    try {
+      const rows = db
+        .select({ ruleId: agentRules.ruleId })
+        .from(agentRules)
+        .where(eq(agentRules.agentId, agentId))
+        .all();
+
+      const result: Rule[] = [];
+      for (const row of rows) {
+        const rule = db.select().from(rules).where(eq(rules.id, row.ruleId)).get();
+        if (rule) {
+          result.push({ ...rule, tags: JSON.parse(rule.tags ?? '[]') } as Rule);
+        }
+      }
+      return result;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to list agent rules', { cause: error });
+    }
+  }
+
+  /** Attaches a rule to an agent (idempotent). */
+  async attachRule(agentId: string, ruleId: string): Promise<void> {
+    const FUNCTION_NAME = 'attachRule';
+    try {
+      const existing = db
+        .select()
+        .from(agentRules)
+        .where(and(eq(agentRules.agentId, agentId), eq(agentRules.ruleId, ruleId)))
+        .get();
+      if (existing) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - rule ${ruleId} already attached to agent ${agentId}`);
+        return;
+      }
+      db.insert(agentRules).values({ agentId, ruleId }).run();
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to attach rule to agent', { cause: error });
+    }
+  }
+
+  /** Detaches a rule from an agent. */
+  async detachRule(agentId: string, ruleId: string): Promise<void> {
+    const FUNCTION_NAME = 'detachRule';
+    try {
+      db.delete(agentRules)
+        .where(and(eq(agentRules.agentId, agentId), eq(agentRules.ruleId, ruleId)))
+        .run();
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to detach rule from agent', { cause: error });
+    }
+  }
+
+  /** Returns agent detail with skills, rules, and projects. */
+  async getDetail(agentId: string) {
+    const FUNCTION_NAME = 'getDetail';
+    try {
+      const agent = await this.getById(agentId);
+      const agentSkillsList = await this.listSkills(agentId);
+      const agentRulesList = await this.listRules(agentId);
+
+      const projectRows = db
+        .select()
+        .from(agentProjects)
+        .where(eq(agentProjects.agentId, agentId))
+        .all();
+
+      const agentProjectsList = [];
+      for (const row of projectRows) {
+        const project = db.select().from(projects).where(eq(projects.id, row.projectId)).get();
+        if (project) {
+          agentProjectsList.push({ ...project, role: row.role });
+        }
+      }
+
+      return {
+        agent,
+        skills: agentSkillsList,
+        rules: agentRulesList,
+        projects: agentProjectsList,
+      };
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to get agent detail', { cause: error });
     }
   }
 }

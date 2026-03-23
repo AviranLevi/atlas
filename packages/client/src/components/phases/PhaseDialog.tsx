@@ -1,5 +1,7 @@
+// React / library
 import { useEffect, useState } from 'react';
-import type { PhaseStatus } from '@my-agents/shared';
+
+// Components
 import {
   Dialog,
   DialogContent,
@@ -17,8 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+// Hooks
 import { useCreatePhase, useUpdatePhase } from '@/hooks/use-phases.hook';
+
+// Types
+import type { PhaseStatus } from '@my-agents/shared';
 import type { PhaseDialogProps } from './phases.types';
+
+// Constants
 import { STATUS_LABELS } from './phases.constants';
 
 export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialogProps) {

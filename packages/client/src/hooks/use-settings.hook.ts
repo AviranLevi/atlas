@@ -11,9 +11,11 @@ import type {
   CreateDispatchRule,
   UpdateDispatchRule,
 } from '@my-agents/shared';
+import type { ConnectionInfo } from '@/components/settings/settings.types';
 
 const GLOBAL_INSTRUCTIONS_KEY = ['settings', 'global-instructions'] as const;
 const DISPATCH_RULES_KEY = ['settings', 'dispatch-rules'] as const;
+const MCP_CONNECTION_KEY = ['mcp-connection-info'] as const;
 
 export function useGlobalInstructions() {
   return useQuery({
@@ -73,5 +75,13 @@ export function useDeleteDispatchRule() {
       api.delete(`/settings/dispatch-rules/${id}`),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: DISPATCH_RULES_KEY }),
+  });
+}
+
+/** Returns MCP connection info (SSE URL, config snippets for Cursor/Claude). */
+export function useMcpConnectionInfo() {
+  return useQuery({
+    queryKey: MCP_CONNECTION_KEY,
+    queryFn: () => api.get<ConnectionInfo>('/mcp/connection-info'),
   });
 }

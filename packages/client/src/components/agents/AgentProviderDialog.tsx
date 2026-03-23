@@ -16,14 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import {
   useCreateAgentProvider,
   useUpdateAgentProvider,
   useTestAgentProvider,
 } from '@/hooks/use-agent-providers.hook';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import type { AgentProviderDialogProps, ProviderBadgeProps } from './agents.types';
+import type { AgentProviderDialogProps } from './agents.types';
 import { PROVIDER_LABELS, PROVIDER_MODEL_PLACEHOLDERS } from './agents.constants';
 
 export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProviderDialogProps) {
@@ -202,22 +201,5 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-export function ProviderTypeBadge({ type }: ProviderBadgeProps) {
-  const colors: Record<ProviderType, string> = {
-    anthropic: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    openai: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    'openai-compatible': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    ollama: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  };
-  return (
-    <Badge
-      variant="outline"
-      className={`text-xs font-medium ${colors[type] ?? ''}`}
-    >
-      {PROVIDER_LABELS[type] ?? type}
-    </Badge>
   );
 }

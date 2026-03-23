@@ -1,24 +1,17 @@
+// React / library
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft,
-  GitBranch,
-  GitMerge,
-  Clock,
-  Terminal,
-  Square,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  Circle,
-  RotateCcw,
-  ListPlus,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+
+// Components
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { WorkspaceDetailHeader } from './WorkspaceDetailHeader';
+import { WorkspaceInfoCards } from './WorkspaceInfoCards';
+import { DiffSection } from './diff';
+
+// Hooks
 import {
   useWorkspaceStatus,
   useStopWork,
@@ -26,24 +19,9 @@ import {
   useRerunWorkspace,
 } from '@/hooks/use-workspaces.hook';
 import { useProject } from '@/hooks/use-projects.hook';
+
+// Types
 import type { DiffComment } from '@my-agents/shared';
-import { calcDuration } from '@/lib/format';
-import { statusMeta } from './workspaces-page.constants';
-import { DiffSection } from './diff';
-import { TaskDialog } from '@/components/kanban/TaskDialog';
-
-// ─── Status icon ─────────────────────────────────────────────────────
-
-function StatusIcon({ status, className }: { status: string; className?: string }) {
-  if (status === 'running') return <Loader2 className={cn('animate-spin text-blue-500', className)} />;
-  if (status === 'pending') return <Circle className={cn('text-yellow-500', className)} />;
-  if (status === 'completed') return <CheckCircle2 className={cn('text-green-500', className)} />;
-  if (status === 'merged') return <GitMerge className={cn('text-violet-500', className)} />;
-  if (status === 'failed') return <XCircle className={cn('text-red-500', className)} />;
-  return <Square className={cn('text-gray-400', className)} />;
-}
-
-// ─── Page ────────────────────────────────────────────────────────────
 
 export function WorkspaceDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -75,7 +53,6 @@ export function WorkspaceDetailPage() {
     );
   }
 
-  const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
   const isMerged = workspace.status === 'merged';
   const canReview = workspace.status === 'completed';
@@ -83,16 +60,8 @@ export function WorkspaceDetailPage() {
   const canCleanup = !isActive && !isMerged;
   const comments: DiffComment[] = Array.isArray(workspace.diffComments) ? workspace.diffComments : [];
 
-  const handleRerun = () => {
-    rerun.mutate(
-      { workspaceId: workspace.id, agentRuntimeId: workspace.agentRuntime },
-      { onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`) },
-    );
-  };
-
   return (
     <div className="flex flex-col gap-6">
-      {/* Back nav */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" className="h-8" onClick={() => navigate('/workspaces')}>
           <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
@@ -100,74 +69,23 @@ export function WorkspaceDetailPage() {
         </Button>
       </div>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <StatusIcon status={workspace.status} className="mt-1 h-6 w-6" />
-          <div className="space-y-1">
-            <h1 className="text-xl font-bold tracking-tight">
-              {workspace.taskName ?? 'Unknown task'}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className={meta.badgeClass}>
-                {meta.label}
-              </Badge>
-              {workspace.projectName && (
-                <span className="text-sm text-muted-foreground">{workspace.projectName}</span>
-              )}
-              <span className="text-sm text-muted-foreground">{workspace.agentRuntime}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          {isActive && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-destructive/30 text-destructive hover:bg-destructive/10"
-              onClick={() => stopWork.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
-              disabled={stopWork.isPending}
-            >
-              <Square className="mr-1.5 h-3.5 w-3.5" />
-              Stop Agent
-            </Button>
-          )}
-          {canRerun && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRerun}
-              disabled={rerun.isPending}
-            >
-              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-              {rerun.isPending ? 'Re-running...' : 'Re-run'}
-            </Button>
-          )}
-          {canReview && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setFollowUpOpen(true)}
-            >
-              <ListPlus className="mr-1.5 h-3.5 w-3.5" />
-              Follow-up Task
-            </Button>
-          )}
-          {canCleanup && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => cleanup.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
-              disabled={cleanup.isPending}
-            >
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-              Clean Up
-            </Button>
-          )}
-        </div>
-      </div>
+      <WorkspaceDetailHeader
+        workspace={workspace}
+        isActive={isActive}
+        canReview={canReview}
+        canRerun={canRerun}
+        canCleanup={canCleanup}
+        onStop={() => stopWork.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
+        onRerun={() => rerun.mutate(
+          { workspaceId: workspace.id, agentRuntimeId: workspace.agentRuntime },
+          { onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`) },
+        )}
+        onFollowUp={() => setFollowUpOpen(true)}
+        onCleanup={() => cleanup.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
+        isStopping={stopWork.isPending}
+        isRerunning={rerun.isPending}
+        isCleaning={cleanup.isPending}
+      />
 
       {rerun.isError && (
         <Card className="border-destructive/50">
@@ -177,47 +95,8 @@ export function WorkspaceDetailPage() {
         </Card>
       )}
 
-      {/* Info cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-            <GitBranch className="h-3.5 w-3.5" />
-            Branch
-          </div>
-          <p className="font-mono text-xs truncate" title={workspace.branchName}>
-            {workspace.branchName}
-          </p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-            <Clock className="h-3.5 w-3.5" />
-            Duration
-          </div>
-          <p className="text-sm font-medium">
-            {calcDuration(workspace.startedAt, workspace.completedAt)}
-          </p>
-        </Card>
-        {workspace.pid && (
-          <Card className="p-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Terminal className="h-3.5 w-3.5" />
-              PID
-            </div>
-            <p className="text-sm font-medium">{workspace.pid}</p>
-          </Card>
-        )}
-        <Card className="p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-            <Clock className="h-3.5 w-3.5" />
-            Started
-          </div>
-          <p className="text-xs">
-            {workspace.startedAt ? new Date(workspace.startedAt).toLocaleString() : '—'}
-          </p>
-        </Card>
-      </div>
+      <WorkspaceInfoCards workspace={workspace} />
 
-      {/* Diff view for completed workspaces */}
       {canReview && (
         <div>
           <h2 className="text-lg font-semibold mb-3">Code Changes</h2>
@@ -232,7 +111,6 @@ export function WorkspaceDetailPage() {
         </div>
       )}
 
-      {/* Agent output */}
       {(workspace.fullOutput || workspace.output) && (
         <div>
           <h2 className="text-lg font-semibold mb-3">Agent Output</h2>
@@ -246,7 +124,6 @@ export function WorkspaceDetailPage() {
         </div>
       )}
 
-      {/* Follow-up task dialog */}
       <TaskDialog
         open={followUpOpen}
         onOpenChange={setFollowUpOpen}

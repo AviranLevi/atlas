@@ -119,3 +119,51 @@ export function useGenerateBrief() {
       queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });
 }
+
+const FILESYSTEM_KEY = ['filesystem'] as const;
+
+export type ScanResult = {
+  name: string | null;
+  description: string | null;
+  techStack: string | null;
+  repositoryUrl: string | null;
+  defaultBranch: string | null;
+  packageManager: string | null;
+  cicd: string | null;
+  monorepo: boolean;
+  githubOwner: string | null;
+  githubRepo: string | null;
+};
+
+/** Scans a local folder and returns auto-detected project metadata. */
+export function useScanFolder() {
+  return useMutation({
+    mutationFn: (path: string) =>
+      api.get<ScanResult>(`/filesystem/scan?path=${encodeURIComponent(path)}`),
+  });
+}
+
+export type DirectoryEntry = {
+  name: string;
+  path: string;
+  isGitRepo: boolean;
+};
+
+export type BrowseResponse = {
+  currentPath: string;
+  parentPath: string | null;
+  directories: DirectoryEntry[];
+  isGitRepo: boolean;
+};
+
+/** Browses a filesystem directory, returning its subdirectories. */
+export function useBrowseFilesystem(path: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...FILESYSTEM_KEY, 'browse', path],
+    queryFn: () =>
+      api.get<BrowseResponse>(
+        `/filesystem/browse${path ? `?path=${encodeURIComponent(path)}` : ''}`,
+      ),
+    enabled,
+  });
+}

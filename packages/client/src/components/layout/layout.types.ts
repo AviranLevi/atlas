@@ -1,3 +1,5 @@
+import type { ExecutorStatus } from '@my-agents/shared';
+
 export type NavItem = {
   to: string;
   icon: React.ElementType;
@@ -10,4 +12,27 @@ export type PageHeaderProps = {
   description?: string;
   actions?: React.ReactNode;
   className?: string;
+};
+
+export type AgentStatusPanelProps = {
+  expanded: boolean;
+};
+
+export type ExecutorPopoverProps = {
+  executor: ExecutorStatus;
+  onRecheck: () => void;
+  isRechecking: boolean;
+};
+
+export type CopyCommandProps = {
+  label: string;
+  command: string;
+};
+
+export type TabButtonProps = {
+  active: boolean;
+  onClick: () => void;
+  color: string | null;
+  label: string;
+  icon?: React.ReactNode;
 };

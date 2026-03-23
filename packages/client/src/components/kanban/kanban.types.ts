@@ -1,5 +1,14 @@
 import type { Task, TaskPriority, TaskEstimate } from '@my-agents/shared';
 
+export type KanbanCardActionsProps = {
+  task: Task;
+  onEdit: (task: Task) => void;
+  onDelete: (id: string) => void;
+  onStartWork?: (task: Task) => void;
+  canStartWork?: boolean;
+  activeWorkspaceId?: string;
+};
+
 export type KanbanCardProps = {
   task: Task;
   onEdit: (task: Task) => void;

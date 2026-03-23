@@ -1,5 +1,7 @@
+// React / library
 import { useEffect, useState } from 'react';
-import type { MemoryType, MemoryScope } from '@my-agents/shared';
+
+// Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+// Hooks
 import { useCreateMemory, useUpdateMemory } from '@/hooks/use-memory.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
+
+// Types
+import type { MemoryType, MemoryScope } from '@my-agents/shared';
 import type { MemoryDialogProps } from './memory.types';
+
+// Constants
 import { MEMORY_TYPES, MEMORY_SCOPES } from './memory.constants';
 
 export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) {

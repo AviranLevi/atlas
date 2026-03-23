@@ -1,1 +1,31 @@
+import type { Workspace } from '@my-agents/shared';
+
 export type StatusFilter = 'all' | 'active' | 'completed' | 'failed' | 'stopped' | 'merged';
+
+export type StatusIconProps = {
+  status: string;
+  className?: string;
+};
+
+export type WorkspaceRowProps = {
+  workspace: Workspace;
+};
+
+export type WorkspaceDetailHeaderProps = {
+  workspace: Workspace;
+  isActive: boolean;
+  canReview: boolean;
+  canRerun: boolean;
+  canCleanup: boolean;
+  onStop: () => void;
+  onRerun: () => void;
+  onFollowUp: () => void;
+  onCleanup: () => void;
+  isStopping: boolean;
+  isRerunning: boolean;
+  isCleaning: boolean;
+};
+
+export type WorkspaceInfoCardsProps = {
+  workspace: Workspace;
+};

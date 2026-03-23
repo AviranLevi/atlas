@@ -37,7 +37,10 @@ export function useUpdateAgent() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateAgent }) =>
       api.put<Agent>(`/agents/${id}`, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: AGENTS_KEY }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: AGENTS_KEY });
+      queryClient.invalidateQueries({ queryKey: ['agent-detail'] });
+    },
   });
 }
 

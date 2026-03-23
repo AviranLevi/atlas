@@ -1,155 +1,26 @@
+// React / library
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  Terminal,
-  GitBranch,
-  GitMerge,
-  Clock,
-  Square,
-  Trash2,
-  Activity,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  Circle,
-  FileCode,
-  ChevronRight,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Terminal, Activity } from 'lucide-react';
+
+// Components
 import { Card } from '@/components/ui/card';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import {
-  useWorkspaces,
-  useStopWork,
-  useCleanupWorkspace,
-} from '@/hooks/use-workspaces.hook';
+import { WorkspaceRow } from './WorkspaceRow';
+
+// Hooks
+import { useWorkspaces } from '@/hooks/use-workspaces.hook';
 import { useActiveProject } from '@/contexts/ProjectContext';
-import type { Workspace } from '@my-agents/shared';
+
+// Types
 import type { StatusFilter } from './workspaces-page.types';
-import { statusMeta, filterTabs } from './workspaces-page.constants';
-import { calcDuration } from '@/lib/format';
 
-function StatusIcon({ status }: { status: string }) {
-  if (status === 'running') return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
-  if (status === 'pending') return <Circle className="h-4 w-4 text-yellow-500" />;
-  if (status === 'completed') return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-  if (status === 'merged') return <GitMerge className="h-4 w-4 text-violet-500" />;
-  if (status === 'failed') return <XCircle className="h-4 w-4 text-red-500" />;
-  return <Square className="h-4 w-4 text-gray-400" />;
-}
-
-function WorkspaceRow({ workspace }: { workspace: Workspace }) {
-  const stopWork = useStopWork();
-  const cleanup = useCleanupWorkspace();
-
-  const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
-  const isActive = workspace.status === 'running' || workspace.status === 'pending';
-  const isMerged = workspace.status === 'merged';
-  const canReview = workspace.status === 'completed';
-  const canCleanup = !isActive && !isMerged;
-
-  return (
-    <Card
-      className="border-l-[3px] transition-shadow hover:shadow-md"
-      style={{ borderLeftColor: meta.leftColor }}
-    >
-      <Link
-        to={`/workspaces/${workspace.id}`}
-        className="flex items-center gap-3 p-4"
-      >
-        <div className="shrink-0">
-          <StatusIcon status={workspace.status} />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate text-sm font-semibold">
-              {workspace.taskName ?? 'Unknown task'}
-            </h3>
-            {canReview && (
-              <Badge variant="outline" className="shrink-0 text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
-                <FileCode className="mr-1 h-2.5 w-2.5" />
-                Review
-              </Badge>
-            )}
-          </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
-            <Badge variant="outline" className={`px-1.5 py-0 text-[10px] ${meta.badgeClass}`}>
-              {meta.label}
-            </Badge>
-            {workspace.projectName && <span>{workspace.projectName}</span>}
-            <span>{workspace.agentRuntime}</span>
-            <span className="inline-flex items-center gap-1">
-              <GitBranch className="h-3 w-3" />
-              <span className="max-w-[180px] truncate font-mono">{workspace.branchName}</span>
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {calcDuration(workspace.startedAt, workspace.completedAt)}
-            </span>
-          </div>
-        </div>
-
-        {/* Actions (stop event propagation to avoid navigation) */}
-        <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.preventDefault()}>
-          {isActive && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 border-destructive/30 text-xs text-destructive hover:bg-destructive/10"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    stopWork.mutate(workspace.id);
-                  }}
-                  disabled={stopWork.isPending}
-                >
-                  <Square className="mr-1 h-3 w-3" />
-                  Stop
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Stop agent</TooltipContent>
-            </Tooltip>
-          )}
-          {canCleanup && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    cleanup.mutate(workspace.id);
-                  }}
-                  disabled={cleanup.isPending}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Clean up</TooltipContent>
-            </Tooltip>
-          )}
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </Link>
-    </Card>
-  );
-}
+// Constants
+import { filterTabs } from './workspaces-page.constants';
 
 export function WorkspacesPage() {
   const { data: allWorkspaces = [], isLoading } = useWorkspaces();
   const { activeProjectId } = useActiveProject();
   const [filter, setFilter] = useState<StatusFilter>('all');
 
-  // Scope workspaces by active project tab
   const workspaces = activeProjectId
     ? allWorkspaces.filter((w) => w.projectId === activeProjectId)
     : allWorkspaces;
@@ -171,7 +42,6 @@ export function WorkspacesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Activity className="h-7 w-7 text-muted-foreground" />
         <div>
@@ -182,7 +52,6 @@ export function WorkspacesPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
           { label: 'Active', count: counts.active, color: 'text-blue-600 dark:text-blue-400' },
@@ -198,7 +67,6 @@ export function WorkspacesPage() {
         ))}
       </div>
 
-      {/* Filter tabs */}
       <div className="flex gap-1 border-b">
         {filterTabs.map((tab) => (
           <button
@@ -226,7 +94,6 @@ export function WorkspacesPage() {
         ))}
       </div>
 
-      {/* List */}
       {isLoading ? (
         <div className="flex h-32 items-center justify-center">
           <p className="text-sm text-muted-foreground">Loading workspaces...</p>

@@ -1,8 +1,15 @@
-import type { PhaseStatus } from '@my-agents/shared';
+// React / library
+import { Pencil, Trash2 } from 'lucide-react';
+
+// Components
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
+
+// Types
+import type { PhaseStatus } from '@my-agents/shared';
 import type { PhaseCardProps } from './phases.types';
+
+// Constants
 import { STATUS_LABELS, STATUS_COLORS } from './phases.constants';
 
 export function PhaseCard({ phase, onEdit, onDelete }: PhaseCardProps) {

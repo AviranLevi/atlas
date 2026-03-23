@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateAgent, UpdateAgent } from '@my-agents/shared';
+import type { CreateAgent, UpdateAgent, AttachSkill, AttachRule } from '@my-agents/shared';
 
 // Services
 import { agentsService } from '../services/index.js';
@@ -35,5 +35,49 @@ export async function updateAgent(c: Context) {
 /** Deletes an agent by ID. */
 export async function deleteAgent(c: Context) {
   await agentsService.delete(c.req.param('id')!);
+  return c.body(null, 204);
+}
+
+/** Returns agent detail with skills, rules, and projects. */
+export async function getAgentDetail(c: Context) {
+  const detail = await agentsService.getDetail(c.req.param('id')!);
+  return c.json(detail);
+}
+
+/** Lists skills attached to an agent. */
+export async function listAgentSkills(c: Context) {
+  const skills = await agentsService.listSkills(c.req.param('id')!);
+  return c.json(skills);
+}
+
+/** Attaches a skill to an agent. */
+export async function attachAgentSkill(c: Context) {
+  const { skillId } = (c.req as any).valid('json') as AttachSkill;
+  await agentsService.attachSkill(c.req.param('id')!, skillId);
+  return c.body(null, 201);
+}
+
+/** Detaches a skill from an agent. */
+export async function detachAgentSkill(c: Context) {
+  await agentsService.detachSkill(c.req.param('id')!, c.req.param('skillId')!);
+  return c.body(null, 204);
+}
+
+/** Lists rules attached to an agent. */
+export async function listAgentRules(c: Context) {
+  const rules = await agentsService.listRules(c.req.param('id')!);
+  return c.json(rules);
+}
+
+/** Attaches a rule to an agent. */
+export async function attachAgentRule(c: Context) {
+  const { ruleId } = (c.req as any).valid('json') as AttachRule;
+  await agentsService.attachRule(c.req.param('id')!, ruleId);
+  return c.body(null, 201);
+}
+
+/** Detaches a rule from an agent. */
+export async function detachAgentRule(c: Context) {
+  await agentsService.detachRule(c.req.param('id')!, c.req.param('ruleId')!);
   return c.body(null, 204);
 }
