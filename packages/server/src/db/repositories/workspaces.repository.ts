@@ -19,6 +19,7 @@ type InsertWorkspace = {
   projectId: string;
   agentId?: string | null;
   agentRuntime: string;
+  model?: string | null;
   branchName: string;
   worktreePath: string;
   pid?: number | null;

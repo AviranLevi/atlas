@@ -57,7 +57,7 @@ export function useWorkspaceStatus(id: string | undefined) {
 export function useStartWork() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { taskId: string; agentRuntimeId: string; baseBranch?: string }) =>
+    mutationFn: (data: { taskId: string; agentRuntimeId: string; baseBranch?: string; model?: string; providerId?: string }) =>
       api.post<Workspace>('/workspaces', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });

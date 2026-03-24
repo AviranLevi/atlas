@@ -32,6 +32,7 @@ export const WorkspaceSchema = z.object({
   projectId: z.string().uuid(),
   agentId: z.string().uuid().nullable(),
   agentRuntime: z.string().min(1),
+  model: z.string().nullable(),
   branchName: z.string().min(1),
   worktreePath: z.string().min(1),
   pid: z.number().int().nullable(),
@@ -51,9 +52,22 @@ export const CreateWorkspaceSchema = z.object({
   taskId: z.string().uuid(),
   agentRuntimeId: z.string().min(1),
   baseBranch: z.string().min(1).optional(),
+  model: z.string().min(1).optional(),
+  providerId: z.string().uuid().optional(),
 });
 
 export const McpConfigFormatEnum = z.enum(['claude', 'cursor', 'generic-json', 'none']);
+
+export const ModelPresetSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+  provider: z.string().optional(),
+});
+
+export const ProviderMappingSchema = z.object({
+  providerType: z.string(),
+  envVars: z.record(z.enum(['apiKey', 'baseUrl'])),
+});
 
 export const ExecutorStatusSchema = z.object({
   id: z.string(),
@@ -70,12 +84,19 @@ export const ExecutorStatusSchema = z.object({
     install: z.string(),
     auth: z.string().optional(),
   }).optional(),
+  modelFlag: z.string().optional(),
+  defaultModel: z.string().optional(),
+  modelPresets: z.array(ModelPresetSchema).optional(),
+  providerMapping: z.array(ProviderMappingSchema).optional(),
+  supportsCustomModel: z.boolean().optional(),
 });
 
 export type WorkspaceStatus = z.infer<typeof WorkspaceStatusEnum>;
 export type Workspace = z.infer<typeof WorkspaceSchema>;
 export type CreateWorkspace = z.infer<typeof CreateWorkspaceSchema>;
 export type McpConfigFormat = z.infer<typeof McpConfigFormatEnum>;
+export type ModelPreset = z.infer<typeof ModelPresetSchema>;
+export type ProviderMapping = z.infer<typeof ProviderMappingSchema>;
 export type ExecutorStatus = z.infer<typeof ExecutorStatusSchema>;
 export type DiffComment = z.infer<typeof DiffCommentSchema>;
 export type AddDiffComment = z.infer<typeof AddDiffCommentSchema>;

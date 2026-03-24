@@ -1,5 +1,5 @@
 // React / library
-import { GitBranch, Clock, Terminal } from 'lucide-react';
+import { GitBranch, Clock, Terminal, Cpu } from 'lucide-react';
 
 // Components
 import { Card } from '@/components/ui/card';
@@ -31,6 +31,17 @@ export function WorkspaceInfoCards({ workspace }: WorkspaceInfoCardsProps) {
           {calcDuration(workspace.startedAt, workspace.completedAt)}
         </p>
       </Card>
+      {workspace.model && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <Cpu className="h-3.5 w-3.5" />
+            Model
+          </div>
+          <p className="text-sm font-medium truncate" title={workspace.model}>
+            {workspace.model}
+          </p>
+        </Card>
+      )}
       {workspace.pid && (
         <Card className="p-4">
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">

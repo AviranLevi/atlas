@@ -51,8 +51,8 @@ export async function getWorkspace(c: Context) {
 
 /** Starts a new agent workspace for a task. */
 export async function createWorkspace(c: Context) {
-  const { taskId, agentRuntimeId, baseBranch } = (c.req as any).valid('json') as CreateWorkspace;
-  const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch);
+  const { taskId, agentRuntimeId, baseBranch, model, providerId } = (c.req as any).valid('json') as CreateWorkspace;
+  const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model, providerId);
   return c.json(workspace, 201);
 }
 

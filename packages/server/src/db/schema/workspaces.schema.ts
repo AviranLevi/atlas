@@ -18,6 +18,7 @@ export const workspaces = sqliteTable('workspaces', {
   agentId: text('agent_id')
     .references(() => agents.id),
   agentRuntime: text('agent_runtime').notNull(),
+  model: text('model'),
   branchName: text('branch_name').notNull(),
   worktreePath: text('worktree_path').notNull(),
   pid: integer('pid'),

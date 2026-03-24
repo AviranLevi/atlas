@@ -11,6 +11,7 @@ export const agents = sqliteTable('agents', {
   personality: text('personality'),
   unbreakableRules: text('unbreakable_rules'),
   providerId: text('provider_id').references(() => agentProviders.id),
+  defaultModel: text('default_model'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(timestampDefault),

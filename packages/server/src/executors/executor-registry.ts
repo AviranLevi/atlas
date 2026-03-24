@@ -21,6 +21,13 @@ const KNOWN_EXECUTORS: ExecutorConfig[] = [
     setup: { install: 'npm install -g @anthropic-ai/claude-code', auth: 'claude /login' },
     description: 'Anthropic Claude Code CLI agent with full MCP support',
     docsUrl: 'https://docs.anthropic.com/en/docs/claude-code',
+    modelFlag: '--model',
+    defaultModel: 'sonnet',
+    modelPresets: [
+      { value: 'opus', label: 'Claude Opus 4.6' },
+      { value: 'sonnet', label: 'Claude Sonnet 4.6' },
+      { value: 'haiku', label: 'Claude Haiku 4.5' },
+    ],
   },
   {
     id: 'aider',
@@ -34,6 +41,22 @@ const KNOWN_EXECUTORS: ExecutorConfig[] = [
     setup: { install: 'pip install aider-chat', auth: 'export OPENAI_API_KEY=sk-...' },
     description: 'AI pair programming in your terminal',
     docsUrl: 'https://aider.chat',
+    modelFlag: '--model',
+    modelPresets: [
+      { value: 'anthropic/claude-sonnet-4-6', label: 'Claude Sonnet 4.6', provider: 'anthropic' },
+      { value: 'anthropic/claude-opus-4-6', label: 'Claude Opus 4.6', provider: 'anthropic' },
+      { value: 'gpt-4.1', label: 'GPT-4.1', provider: 'openai' },
+      { value: 'o3', label: 'o3', provider: 'openai' },
+      { value: 'ollama_chat/llama3', label: 'Llama 3 (Ollama)', provider: 'ollama' },
+      { value: 'ollama_chat/codellama', label: 'Code Llama (Ollama)', provider: 'ollama' },
+      { value: 'ollama_chat/deepseek-coder-v2', label: 'DeepSeek Coder V2 (Ollama)', provider: 'ollama' },
+    ],
+    providerMapping: [
+      { providerType: 'anthropic', envVars: { ANTHROPIC_API_KEY: 'apiKey' } },
+      { providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } },
+      { providerType: 'openai-compatible', envVars: { OPENAI_API_KEY: 'apiKey', OPENAI_API_BASE: 'baseUrl' } },
+      { providerType: 'ollama', envVars: { OLLAMA_API_BASE: 'baseUrl' } },
+    ],
   },
   {
     id: 'codex',
@@ -46,6 +69,15 @@ const KNOWN_EXECUTORS: ExecutorConfig[] = [
     setup: { install: 'npm install -g @openai/codex', auth: 'export OPENAI_API_KEY=sk-...' },
     description: 'OpenAI Codex CLI for code generation',
     docsUrl: 'https://github.com/openai/codex',
+    modelFlag: '--model',
+    modelPresets: [
+      { value: 'gpt-5.2-codex', label: 'GPT-5.2 Codex', provider: 'openai' },
+      { value: 'gpt-5.1-codex-mini', label: 'GPT-5.1 Codex Mini', provider: 'openai' },
+      { value: 'o3', label: 'o3', provider: 'openai' },
+    ],
+    providerMapping: [
+      { providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } },
+    ],
   },
   {
     id: 'gemini-cli',
@@ -55,9 +87,16 @@ const KNOWN_EXECUTORS: ExecutorConfig[] = [
     promptDelivery: 'positional',
     mcpConfigFormat: 'generic-json',
     versionFlag: '--version',
-    setup: { install: 'npm install -g @anthropic-ai/gemini-cli', auth: 'gemini auth login' },
+    setup: { install: 'npm install -g @google/gemini-cli', auth: 'gemini auth login' },
     description: 'Google Gemini CLI agent',
     docsUrl: 'https://github.com/google-gemini/gemini-cli',
+    modelFlag: '--model',
+    modelPresets: [
+      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+      { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro (Preview)' },
+      { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash (Preview)' },
+    ],
   },
   {
     id: 'amp',
@@ -67,9 +106,13 @@ const KNOWN_EXECUTORS: ExecutorConfig[] = [
     promptDelivery: 'positional',
     mcpConfigFormat: 'none',
     versionFlag: '--version',
-    setup: { install: 'npm install -g @anthropic-ai/amp' },
+    setup: { install: 'npm install -g @sourcegraph/amp' },
     description: 'Sourcegraph Amp coding agent',
     docsUrl: 'https://ampcode.com',
+    modelFlag: '--model',
+    modelPresets: [
+      { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+    ],
   },
   {
     id: 'opencode',
@@ -82,6 +125,46 @@ const KNOWN_EXECUTORS: ExecutorConfig[] = [
     setup: { install: 'go install github.com/opencode-ai/opencode@latest' },
     description: 'Open source AI coding agent',
     docsUrl: 'https://github.com/opencode-ai/opencode',
+    modelFlag: '--model',
+    modelPresets: [
+      { value: 'anthropic/claude-sonnet-4-6', label: 'Claude Sonnet 4.6', provider: 'anthropic' },
+      { value: 'openai/gpt-4.1', label: 'GPT-4.1', provider: 'openai' },
+    ],
+    providerMapping: [
+      { providerType: 'anthropic', envVars: { ANTHROPIC_API_KEY: 'apiKey' } },
+      { providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } },
+    ],
+  },
+  {
+    id: 'goose',
+    name: 'Goose',
+    command: 'goose',
+    args: ['run', '--no-session', '-q'],
+    promptDelivery: 'flag',
+    promptFlag: '-t',
+    mcpConfigFormat: 'none',
+    versionFlag: '--version',
+    setup: {
+      install: 'curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash',
+      auth: 'goose configure',
+    },
+    description: 'Open source AI agent by Block with multi-provider and local model support',
+    docsUrl: 'https://github.com/block/goose',
+    modelFlag: '--model',
+    modelPresets: [
+      { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', provider: 'anthropic' },
+      { value: 'claude-opus-4-6', label: 'Claude Opus 4.6', provider: 'anthropic' },
+      { value: 'gpt-4.1', label: 'GPT-4.1', provider: 'openai' },
+      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+      { value: 'llama3', label: 'Llama 3 (Ollama)', provider: 'ollama' },
+      { value: 'deepseek-coder-v2', label: 'DeepSeek Coder V2 (Ollama)', provider: 'ollama' },
+    ],
+    providerMapping: [
+      { providerType: 'anthropic', envVars: { ANTHROPIC_API_KEY: 'apiKey' } },
+      { providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } },
+      { providerType: 'openai-compatible', envVars: { OPENAI_API_KEY: 'apiKey', OPENAI_API_BASE: 'baseUrl' } },
+      { providerType: 'ollama', envVars: { OLLAMA_HOST: 'baseUrl' } },
+    ],
   },
 ];
 
@@ -273,6 +356,11 @@ class ExecutorRegistry {
         binaryPath: detection.binaryPath,
         authHint: !detection.authenticated ? e.authHint : undefined,
         setup: e.setup,
+        modelFlag: e.modelFlag,
+        defaultModel: e.defaultModel,
+        modelPresets: e.modelPresets,
+        providerMapping: e.providerMapping,
+        supportsCustomModel: e.supportsCustomModel,
       };
     });
   }

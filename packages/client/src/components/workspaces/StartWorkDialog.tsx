@@ -1,6 +1,6 @@
 // React / library
-import { useState, useEffect } from 'react';
-import { Play, GitBranch } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Play, GitBranch, Cpu } from 'lucide-react';
 
 // Components
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -24,12 +25,111 @@ import {
 // Hooks
 import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
 import { useProjectBranches, useProject } from '@/hooks/use-projects.hook';
+import { useAgent } from '@/hooks/use-agents.hook';
 
 // Types
 import type { StartWorkDialogProps } from './workspaces.types';
+import type { ExecutorStatus } from '@my-agents/shared';
 
 // Constants
-import { RUNTIME_STORAGE_KEY, DEFAULT_BRANCH_VALUE } from './workspaces.constants';
+import {
+  RUNTIME_STORAGE_KEY,
+  MODEL_STORAGE_KEY,
+  DEFAULT_BRANCH_VALUE,
+  DEFAULT_MODEL_VALUE,
+  CUSTOM_MODEL_VALUE,
+} from './workspaces.constants';
+
+function getModelStorageKey(runtimeId: string): string {
+  return `${MODEL_STORAGE_KEY}:${runtimeId}`;
+}
+
+function ModelSection({
+  runtime,
+  agentDefaultModel,
+  selectedModel,
+  customModelText,
+  onModelChange,
+  onCustomTextChange,
+}: {
+  runtime: ExecutorStatus;
+  agentDefaultModel: string | null | undefined;
+  selectedModel: string;
+  customModelText: string;
+  onModelChange: (value: string) => void;
+  onCustomTextChange: (value: string) => void;
+}) {
+  if (!runtime.modelFlag) return null;
+
+  const presets = runtime.modelPresets ?? [];
+  const supportsCustom = runtime.supportsCustomModel !== false;
+  const hasPresets = presets.length > 0;
+
+  if (!hasPresets && supportsCustom) {
+    return (
+      <div className="space-y-2">
+        <Label className="flex items-center gap-1.5">
+          <Cpu className="h-3.5 w-3.5" />
+          Model
+        </Label>
+        <Input
+          placeholder={runtime.defaultModel ?? 'Enter model name...'}
+          value={customModelText}
+          onChange={(e) => onCustomTextChange(e.target.value)}
+        />
+        {agentDefaultModel && (
+          <p className="text-muted-foreground text-xs">
+            Agent default: {agentDefaultModel}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label className="flex items-center gap-1.5">
+        <Cpu className="h-3.5 w-3.5" />
+        Model
+      </Label>
+      <Select value={selectedModel} onValueChange={onModelChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Default model" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={DEFAULT_MODEL_VALUE}>
+            <span className="text-muted-foreground">
+              Default{runtime.defaultModel ? ` (${runtime.defaultModel})` : ''}
+            </span>
+          </SelectItem>
+          {presets.map((preset) => (
+            <SelectItem key={preset.value} value={preset.value}>
+              {preset.label}
+            </SelectItem>
+          ))}
+          {supportsCustom && (
+            <SelectItem value={CUSTOM_MODEL_VALUE}>
+              Custom...
+            </SelectItem>
+          )}
+        </SelectContent>
+      </Select>
+      {selectedModel === CUSTOM_MODEL_VALUE && (
+        <Input
+          placeholder="Enter model name..."
+          value={customModelText}
+          onChange={(e) => onCustomTextChange(e.target.value)}
+          autoFocus
+        />
+      )}
+      {agentDefaultModel && (
+        <p className="text-muted-foreground text-xs">
+          Agent default: {agentDefaultModel}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function StartWorkDialog({
   open,
@@ -42,9 +142,18 @@ export function StartWorkDialog({
   const { data: runtimes = [], isLoading: runtimesLoading } = useAgentRuntimes();
   const { data: branches = [], isLoading: branchesLoading } = useProjectBranches(projectId);
   const { data: project } = useProject(projectId);
+  const { data: agent } = useAgent(task?.agentId ?? undefined);
   const startWork = useStartWork();
+
   const [selectedRuntime, setSelectedRuntime] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<string>(DEFAULT_BRANCH_VALUE);
+  const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL_VALUE);
+  const [customModelText, setCustomModelText] = useState<string>('');
+
+  const currentRuntime = useMemo(
+    () => runtimes.find((r) => r.id === selectedRuntime),
+    [runtimes, selectedRuntime],
+  );
 
   // Restore last used runtime when runtimes are loaded
   useEffect(() => {
@@ -58,6 +167,22 @@ export function StartWorkDialog({
     }
   }, [runtimes, selectedRuntime]);
 
+  // When runtime changes, restore last used model for that runtime
+  useEffect(() => {
+    if (!selectedRuntime) return;
+    const savedModel = localStorage.getItem(getModelStorageKey(selectedRuntime));
+    if (savedModel) {
+      setSelectedModel(savedModel);
+      setCustomModelText('');
+    } else if (agent?.defaultModel) {
+      setSelectedModel(agent.defaultModel);
+      setCustomModelText('');
+    } else {
+      setSelectedModel(DEFAULT_MODEL_VALUE);
+      setCustomModelText('');
+    }
+  }, [selectedRuntime, agent?.defaultModel]);
+
   // Reset branch selection when dialog opens
   useEffect(() => {
     if (open) {
@@ -70,11 +195,35 @@ export function StartWorkDialog({
     localStorage.setItem(RUNTIME_STORAGE_KEY, value);
   };
 
+  const handleModelChange = (value: string) => {
+    setSelectedModel(value);
+    if (value !== DEFAULT_MODEL_VALUE && value !== CUSTOM_MODEL_VALUE) {
+      localStorage.setItem(getModelStorageKey(selectedRuntime), value);
+    }
+    if (value !== CUSTOM_MODEL_VALUE) {
+      setCustomModelText('');
+    }
+  };
+
   const handleStart = () => {
     if (!task || !selectedRuntime) return;
     const baseBranch = selectedBranch !== DEFAULT_BRANCH_VALUE ? selectedBranch : undefined;
+
+    let model: string | undefined;
+    if (selectedModel === CUSTOM_MODEL_VALUE && customModelText.trim()) {
+      model = customModelText.trim();
+    } else if (selectedModel !== DEFAULT_MODEL_VALUE && selectedModel !== CUSTOM_MODEL_VALUE) {
+      model = selectedModel;
+    }
+
     startWork.mutate(
-      { taskId: task.id, agentRuntimeId: selectedRuntime, baseBranch },
+      {
+        taskId: task.id,
+        agentRuntimeId: selectedRuntime,
+        baseBranch,
+        model,
+        providerId: agent?.providerId ?? undefined,
+      },
       {
         onSuccess: () => {
           onOpenChange(false);
@@ -125,7 +274,6 @@ export function StartWorkDialog({
                   <SelectContent>
                     {runtimes
                       .sort((a, b) => {
-                        // Ready first, then installed-but-not-auth, then not installed
                         const score = (r: typeof a) =>
                           r.installed && r.authenticated ? 2 : r.installed ? 1 : 0;
                         return score(b) - score(a);
@@ -160,6 +308,17 @@ export function StartWorkDialog({
                 </Select>
               )}
             </div>
+
+            {currentRuntime?.modelFlag && (
+              <ModelSection
+                runtime={currentRuntime}
+                agentDefaultModel={agent?.defaultModel}
+                selectedModel={selectedModel}
+                customModelText={customModelText}
+                onModelChange={handleModelChange}
+                onCustomTextChange={setCustomModelText}
+              />
+            )}
 
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">

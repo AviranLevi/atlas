@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import type { ExecutorConfig } from './executor.types.js';
+import type { ExecutorConfig, ProviderField } from './executor.types.js';
 import { generateMcpConfig } from './mcp-config-generator.js';
 import { logger } from '../lib/logger.js';
 
@@ -20,11 +20,20 @@ export interface SpawnCallbacks {
   onFailed: (output: string, error?: string) => void;
 }
 
-function buildArgs(executor: ExecutorConfig, prompt: string, mcpConfigPath?: string): string[] {
+export interface SpawnOptions {
+  model?: string;
+  provider?: { type: string; apiKey: string | null; baseUrl: string | null };
+}
+
+function buildArgs(executor: ExecutorConfig, prompt: string, mcpConfigPath?: string, model?: string): string[] {
   const args = [...executor.args];
 
   if (mcpConfigPath && executor.mcpConfigFormat !== 'none') {
     args.unshift('--mcp-config', mcpConfigPath);
+  }
+
+  if (model && executor.modelFlag) {
+    args.push(executor.modelFlag, model);
   }
 
   switch (executor.promptDelivery) {
@@ -41,12 +50,21 @@ function buildArgs(executor: ExecutorConfig, prompt: string, mcpConfigPath?: str
   return args;
 }
 
+/** Resolves a ProviderField reference to the actual value from the provider object. */
+function resolveProviderField(
+  field: ProviderField,
+  provider: NonNullable<SpawnOptions['provider']>,
+): string | null {
+  return field === 'apiKey' ? provider.apiKey : provider.baseUrl;
+}
+
 export function spawnAgent(
   workspaceId: string,
   executor: ExecutorConfig,
   cwd: string,
   prompt: string,
   callbacks: SpawnCallbacks,
+  options: SpawnOptions = {},
 ): SpawnResult {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
@@ -59,14 +77,27 @@ export function spawnAgent(
     mcpConfigPath = generateMcpConfig(workspaceId, executor.mcpConfigFormat);
   }
 
-  const args = buildArgs(executor, prompt, mcpConfigPath);
+  const args = buildArgs(executor, prompt, mcpConfigPath, options.model);
+
+  // Build env: process env → executor static env → provider credential env
+  const env: Record<string, string> = { ...process.env as Record<string, string>, ...executor.env };
+
+  if (options.provider && executor.providerMapping) {
+    const mapping = executor.providerMapping.find((m) => m.providerType === options.provider!.type);
+    if (mapping) {
+      for (const [envKey, field] of Object.entries(mapping.envVars)) {
+        const value = resolveProviderField(field, options.provider);
+        if (value) env[envKey] = value;
+      }
+    }
+  }
 
   logger.info(`${FILE_PATH} :: spawnAgent - spawning ${executor.command} ${args.join(' ').slice(0, 200)}... in ${cwd}`);
 
   const proc = spawn(executor.command, args, {
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...process.env, ...executor.env },
+    env,
   });
 
   const collectOutput = (data: Buffer) => {

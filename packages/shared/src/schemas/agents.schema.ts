@@ -7,6 +7,7 @@ export const AgentSchema = z.object({
   personality: z.string().nullable(),
   unbreakableRules: z.string().nullable(),
   providerId: z.string().uuid().nullable(),
+  defaultModel: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -17,6 +18,7 @@ export const CreateAgentSchema = AgentSchema.pick({
   personality: true,
   unbreakableRules: true,
   providerId: true,
+  defaultModel: true,
 });
 
 export const UpdateAgentSchema = CreateAgentSchema.partial();

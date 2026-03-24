@@ -69,5 +69,17 @@ try {
   // Column already exists — ignore
 }
 
+try {
+  sqlite.exec(`ALTER TABLE workspaces ADD COLUMN model TEXT`);
+} catch {
+  // Column already exists — ignore
+}
+
+try {
+  sqlite.exec(`ALTER TABLE agents ADD COLUMN default_model TEXT`);
+} catch {
+  // Column already exists — ignore
+}
+
 export { schema };
 export type DB = typeof db;

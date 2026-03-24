@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AgentDialog } from '@/components/agents/AgentDialog';
 import { EditableCard } from '@/components/ui/editable-card';
+import { DefaultModelSelector } from './DefaultModelSelector';
 import { AttachableItemsSection } from './AttachableItemsSection';
 import { AssignedProjectsSection } from './AssignedProjectsSection';
 
@@ -104,7 +105,7 @@ export function AgentDetailPage() {
         </div>
       </div>
 
-      {/* Personality & Unbreakable Rules */}
+      {/* Personality, Rules & Model */}
       <div className="grid gap-4 sm:grid-cols-2">
         <EditableCard
           icon={Sparkles}
@@ -121,6 +122,12 @@ export function AgentDetailPage() {
           placeholder="Click to define rules this agent must never break..."
           isPending={updateAgent.isPending}
           onSave={(val) => updateAgent.mutate({ id: agent.id, data: { unbreakableRules: val } })}
+        />
+        <DefaultModelSelector
+          value={agent.defaultModel}
+          provider={provider}
+          isPending={updateAgent.isPending}
+          onSave={(val) => updateAgent.mutate({ id: agent.id, data: { defaultModel: val } })}
         />
       </div>
 

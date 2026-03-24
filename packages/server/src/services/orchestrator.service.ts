@@ -7,7 +7,7 @@ import path from 'path';
 import type { Workspace } from '@my-agents/shared';
 
 // Services
-import { tasksService, projectsService, activityLogService } from './index.js';
+import { tasksService, projectsService, activityLogService, agentProvidersService, agentsService } from './index.js';
 import { WorktreeService } from './worktree.service.js';
 import { PromptBuilderService } from './prompt-builder.service.js';
 
@@ -16,7 +16,7 @@ import { workspacesRepository } from '../db/repositories/index.js';
 
 // Executors
 import { executorRegistry, removeMcpConfig } from '../executors/index.js';
-import { spawnAgent } from '../executors/spawn-agent.js';
+import { spawnAgent, type SpawnOptions } from '../executors/spawn-agent.js';
 
 // Lib
 import { logger } from '../lib/logger.js';
@@ -32,8 +32,54 @@ export class OrchestratorService {
   private worktreeService = new WorktreeService();
   private promptBuilder = new PromptBuilderService();
 
+  /**
+   * Resolves model and provider for a spawn call using the fallback chain:
+   *   model:    explicit → agent.defaultModel → executor.defaultModel → undefined
+   *   provider: explicit providerId → agent.providerId → none
+   */
+  private async resolveSpawnOptions(
+    executor: ReturnType<typeof executorRegistry.getById> & {},
+    agentId: string | null | undefined,
+    explicitModel?: string,
+    explicitProviderId?: string,
+  ): Promise<{ resolvedModel: string | undefined; spawnOpts: SpawnOptions }> {
+    let resolvedModel = explicitModel;
+    let providerIdToLoad = explicitProviderId;
+
+    if (agentId) {
+      try {
+        const agent = await agentsService.getById(agentId);
+        if (!resolvedModel && agent.defaultModel) resolvedModel = agent.defaultModel;
+        if (!providerIdToLoad && agent.providerId) providerIdToLoad = agent.providerId;
+      } catch {
+        // Agent might have been deleted — continue without defaults
+      }
+    }
+
+    if (!resolvedModel && executor.defaultModel) resolvedModel = executor.defaultModel;
+
+    const spawnOpts: SpawnOptions = { model: resolvedModel };
+
+    if (providerIdToLoad && executor.providerMapping?.length) {
+      try {
+        const provider = await agentProvidersService.getById(providerIdToLoad);
+        spawnOpts.provider = { type: provider.type, apiKey: provider.apiKey, baseUrl: provider.baseUrl };
+      } catch {
+        logger.warn(`${FILE_PATH} :: resolveSpawnOptions - provider ${providerIdToLoad} not found, skipping credential injection`);
+      }
+    }
+
+    return { resolvedModel, spawnOpts };
+  }
+
   /** Creates a worktree, spawns the agent process, and opens a workspace. */
-  async startWork(taskId: string, agentRuntimeId: string, baseBranch?: string): Promise<Workspace> {
+  async startWork(
+    taskId: string,
+    agentRuntimeId: string,
+    baseBranch?: string,
+    model?: string,
+    providerId?: string,
+  ): Promise<Workspace> {
     const FUNCTION_NAME = 'startWork';
     try {
       const task = await tasksService.getById(taskId);
@@ -62,6 +108,13 @@ export class OrchestratorService {
         throw new AppError('A workspace is already active for this task', { status: 409 });
       }
 
+      const { resolvedModel, spawnOpts } = await this.resolveSpawnOptions(
+        executor,
+        task.agentId,
+        model,
+        providerId,
+      );
+
       // Resolve which branch to base the worktree on:
       //   1. Explicit baseBranch from the request
       //   2. Project's configured default branch
@@ -80,6 +133,7 @@ export class OrchestratorService {
         projectId: project.id,
         agentId: task.agentId ?? null,
         agentRuntime: agentRuntimeId,
+        model: resolvedModel ?? null,
         branchName,
         worktreePath,
         status: 'pending',
@@ -94,7 +148,6 @@ export class OrchestratorService {
         hasMcpAccess: executor.mcpConfigFormat !== 'none',
       });
 
-      // Use the extracted spawn function
       const cwd = executor.usesProjectRoot ? project.localPath : worktreePath;
       const result = spawnAgent(workspace.id, executor, cwd, prompt, {
         onCompleted: (output) => {
@@ -139,7 +192,7 @@ export class OrchestratorService {
           });
           logger.error(`${FILE_PATH} :: spawnAgent - process failed for workspace ${workspace.id}: ${error}`);
         },
-      });
+      }, spawnOpts);
 
       // Store process reference and mark as running — done after spawnAgent
       // returns so result.process is available.
@@ -159,7 +212,7 @@ export class OrchestratorService {
         agentId: task.agentId,
         eventType: 'agent_started',
         description: `Agent started on task: ${task.name}`,
-        metadata: { agentRuntime: agentRuntimeId, branchName },
+        metadata: { agentRuntime: agentRuntimeId, branchName, model: resolvedModel },
       });
 
       return workspacesRepository.findByIdOrThrow(workspace.id);
@@ -355,6 +408,13 @@ export class OrchestratorService {
 
       const fullPrompt = basePrompt + reviewSection;
 
+      // Resolve model/provider from workspace's recorded model + agent's provider
+      const { spawnOpts } = await this.resolveSpawnOptions(
+        executor,
+        workspace.agentId,
+        workspace.model ?? undefined,
+      );
+
       // Re-spawn the agent on the SAME worktree (not a new one)
       const cwd = executor.usesProjectRoot ? project.localPath : workspace.worktreePath;
       const result = spawnAgent(workspace.id, executor, cwd, fullPrompt, {
@@ -401,12 +461,9 @@ export class OrchestratorService {
             metadata: { error },
           });
         },
-      });
+      }, spawnOpts);
 
       activeProcesses.set(workspace.id, result.process);
-
-      // Keep comments in a snapshot so they can be restored on failure
-      const commentSnapshot = JSON.stringify(comments);
 
       // Mark as running (don't clear comments yet — cleared on success only)
       workspacesRepository.update(workspace.id, {
@@ -610,6 +667,7 @@ export class OrchestratorService {
       }
 
       const taskId = workspace.taskId;
+      const previousModel = workspace.model ?? undefined;
 
       // Clean up the old workspace
       await this.cleanup(workspaceId);
@@ -617,8 +675,8 @@ export class OrchestratorService {
       // Reset task status so startWork can pick it up
       await tasksService.update(taskId, { status: 'To Do' });
 
-      // Start fresh
-      return this.startWork(taskId, agentRuntimeId);
+      // Start fresh, preserving the model from the previous run
+      return this.startWork(taskId, agentRuntimeId, undefined, previousModel);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
