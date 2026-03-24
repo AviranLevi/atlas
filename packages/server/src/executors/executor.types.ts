@@ -53,6 +53,13 @@ export interface ExecutorConfig {
   supportsCustomModel?: boolean;
 }
 
+export interface DetectionResult {
+  installed: boolean;
+  authenticated: boolean;
+  version?: string;
+  binaryPath?: string;
+}
+
 export interface ExecutorStatus {
   id: string;
   name: string;

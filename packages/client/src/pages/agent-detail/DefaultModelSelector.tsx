@@ -1,6 +1,6 @@
 // React / library
 import { useState, useMemo, useCallback } from 'react';
-import { Cpu, Pencil, X, Check } from 'lucide-react';
+import { Cpu, Pencil, X, Check, Loader2 } from 'lucide-react';
 
 // Components
 import { Card } from '@/components/ui/card';
@@ -19,9 +19,10 @@ import {
 
 // Hooks
 import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
+import { useProviderModels } from '@/hooks/use-agent-providers.hook';
 
 // Types
-import type { AgentProvider, ExecutorStatus } from '@my-agents/shared';
+import type { AgentProvider, ExecutorStatus, ProviderModel } from '@my-agents/shared';
 
 const NONE_VALUE = '__none__';
 const CUSTOM_VALUE = '__custom__';
@@ -29,12 +30,12 @@ const CUSTOM_VALUE = '__custom__';
 type ModelOption = {
   value: string;
   label: string;
-  runtimeName: string;
+  source: string;
   providerType?: string;
 };
 
-/** Deduplicates model options, keeping the first occurrence of each value. */
-function collectModels(
+/** Collects model options from static executor presets. */
+function collectPresetModels(
   runtimes: ExecutorStatus[],
   providerType: string | undefined,
 ): { grouped: Map<string, ModelOption[]>; flat: ModelOption[] } {
@@ -47,13 +48,12 @@ function collectModels(
     const group: ModelOption[] = [];
     for (const preset of rt.modelPresets) {
       if (seen.has(preset.value)) continue;
-      // If agent has a provider, only show models that match or have no provider requirement
       if (providerType && preset.provider && preset.provider !== providerType) continue;
       seen.add(preset.value);
       const opt: ModelOption = {
         value: preset.value,
         label: preset.label,
-        runtimeName: rt.name,
+        source: rt.name,
         providerType: preset.provider,
       };
       group.push(opt);
@@ -65,6 +65,32 @@ function collectModels(
   }
 
   return { grouped, flat };
+}
+
+/** Merges dynamic provider models into the grouped map, deduplicating by value. */
+function mergeProviderModels(
+  grouped: Map<string, ModelOption[]>,
+  flat: ModelOption[],
+  providerModels: ProviderModel[],
+  providerName: string,
+  providerType: string,
+): { grouped: Map<string, ModelOption[]>; flat: ModelOption[] } {
+  const seen = new Set(flat.map((m) => m.value));
+  const dynamicGroup: ModelOption[] = [];
+
+  for (const m of providerModels) {
+    if (seen.has(m.value)) continue;
+    seen.add(m.value);
+    const opt: ModelOption = { value: m.value, label: m.label, source: providerName, providerType };
+    dynamicGroup.push(opt);
+    flat.push(opt);
+  }
+
+  const merged = new Map(grouped);
+  if (dynamicGroup.length > 0) {
+    merged.set(`${providerName} (API)`, dynamicGroup);
+  }
+  return { grouped: merged, flat };
 }
 
 export type DefaultModelSelectorProps = {
@@ -81,14 +107,16 @@ export function DefaultModelSelector({
   onSave,
 }: DefaultModelSelectorProps) {
   const { data: runtimes = [] } = useAgentRuntimes();
+  const { data: providerModels = [], isLoading: modelsLoading } = useProviderModels(provider?.id);
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<string>(NONE_VALUE);
   const [customText, setCustomText] = useState('');
 
-  const { grouped, flat } = useMemo(
-    () => collectModels(runtimes, provider?.type),
-    [runtimes, provider?.type],
-  );
+  const { grouped, flat } = useMemo(() => {
+    const presets = collectPresetModels(runtimes, provider?.type);
+    if (providerModels.length === 0 || !provider) return presets;
+    return mergeProviderModels(presets.grouped, [...presets.flat], providerModels, provider.name, provider.type);
+  }, [runtimes, provider, providerModels]);
 
   const startEditing = useCallback(() => {
     if (value) {
@@ -200,8 +228,11 @@ export function DefaultModelSelector({
           )}
 
           {provider && (
-            <p className="text-muted-foreground text-xs">
-              Showing models compatible with provider: <span className="font-medium">{provider.name}</span> ({provider.type})
+            <p className="text-muted-foreground text-xs flex items-center gap-1.5">
+              {modelsLoading && <Loader2 className="h-3 w-3 animate-spin" />}
+              {modelsLoading
+                ? `Loading models from ${provider.name}...`
+                : `Showing models compatible with ${provider.name} (${provider.type})`}
             </p>
           )}
 
@@ -236,7 +267,7 @@ export function DefaultModelSelector({
           onClick={startEditing}
         >
           <p className="text-muted-foreground text-xs italic">
-            Click to set a default model from your installed runtimes...
+            Click to set a default model from your runtimes or provider...
           </p>
         </button>
       )}

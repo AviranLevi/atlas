@@ -43,3 +43,9 @@ export async function testAgentProviderConnection(c: Context) {
   const result = await agentProvidersService.testConnection(c.req.param('id')!);
   return c.json(result);
 }
+
+/** Lists models available from the provider's API. */
+export async function listAgentProviderModels(c: Context) {
+  const models = await agentProvidersService.listModels(c.req.param('id')!);
+  return c.json(models);
+}

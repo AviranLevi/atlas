@@ -3,6 +3,7 @@ import { z } from "zod";
 export const ProviderTypeEnum = z.enum([
   "anthropic",
   "openai",
+  "google",
   "openai-compatible",
   "ollama",
 ]);
@@ -28,7 +29,13 @@ export const CreateAgentProviderSchema = AgentProviderSchema.pick({
 
 export const UpdateAgentProviderSchema = CreateAgentProviderSchema.partial();
 
+export const ProviderModelSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+});
+
 export type ProviderType = z.infer<typeof ProviderTypeEnum>;
 export type AgentProvider = z.infer<typeof AgentProviderSchema>;
 export type CreateAgentProvider = z.infer<typeof CreateAgentProviderSchema>;
 export type UpdateAgentProvider = z.infer<typeof UpdateAgentProviderSchema>;
+export type ProviderModel = z.infer<typeof ProviderModelSchema>;

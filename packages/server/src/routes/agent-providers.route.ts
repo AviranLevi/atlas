@@ -13,11 +13,13 @@ import {
   updateAgentProvider,
   deleteAgentProvider,
   testAgentProviderConnection,
+  listAgentProviderModels,
 } from '../controllers/agent-providers.controller.js';
 
 export const agentProvidersRoute = new Hono()
   .get('/', listAgentProviders)
   .get('/:id', getAgentProvider)
+  .get('/:id/models', listAgentProviderModels)
   .post('/', zValidator('json', CreateAgentProviderSchema), createAgentProvider)
   .put('/:id', zValidator('json', UpdateAgentProviderSchema), updateAgentProvider)
   .delete('/:id', deleteAgentProvider)

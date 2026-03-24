@@ -1,5 +1,5 @@
 // Shared
-import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider } from '@my-agents/shared';
+import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@my-agents/shared';
 
 // Repositories
 import { agentProvidersRepository } from '../db/repositories/index.js';
@@ -7,13 +7,14 @@ import { agentProvidersRepository } from '../db/repositories/index.js';
 // Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
+import { TEST_FNS, LIST_MODEL_FNS } from '../lib/provider-adapters.js';
+import { withTimeout } from '../lib/with-timeout.js';
 
 const FILE_PATH = 'services/agent-providers.service.ts';
 
 export class AgentProvidersService {
   constructor(private readonly repo = agentProvidersRepository) {}
 
-  /** Returns all agent providers. */
   async list(): Promise<AgentProvider[]> {
     const FUNCTION_NAME = 'list';
     try {
@@ -24,7 +25,6 @@ export class AgentProvidersService {
     }
   }
 
-  /** Returns an agent provider by ID. */
   async getById(id: string): Promise<AgentProvider> {
     const FUNCTION_NAME = 'getById';
     try {
@@ -35,7 +35,6 @@ export class AgentProvidersService {
     }
   }
 
-  /** Creates a new agent provider. */
   async create(data: CreateAgentProvider): Promise<AgentProvider> {
     const FUNCTION_NAME = 'create';
     try {
@@ -46,7 +45,6 @@ export class AgentProvidersService {
     }
   }
 
-  /** Updates an agent provider by ID. */
   async update(id: string, data: UpdateAgentProvider): Promise<AgentProvider> {
     const FUNCTION_NAME = 'update';
     try {
@@ -57,7 +55,6 @@ export class AgentProvidersService {
     }
   }
 
-  /** Deletes an agent provider by ID. */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {
@@ -68,54 +65,29 @@ export class AgentProvidersService {
     }
   }
 
-  /** Tests connectivity to an agent provider (Anthropic, OpenAI, or Ollama). */
+  /** Queries the provider API for available models. Returns an empty array on failure. */
+  async listModels(id: string): Promise<ProviderModel[]> {
+    const FUNCTION_NAME = 'listModels';
+    try {
+      const provider = this.repo.findByIdOrThrow(id);
+      const fn = LIST_MODEL_FNS[provider.type];
+      if (!fn) return [];
+      const models = await withTimeout(fn(provider), 15_000, 'Model listing');
+      return models.sort((a, b) => a.label.localeCompare(b.label));
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      return [];
+    }
+  }
+
+  /** Tests connectivity to an agent provider. */
   async testConnection(id: string): Promise<{ ok: boolean; error?: string }> {
     const FUNCTION_NAME = 'testConnection';
     try {
       const provider = this.repo.findByIdOrThrow(id);
-
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Connection timed out after 10s')), 10000)
-      );
-
-      const test = async (): Promise<void> => {
-        switch (provider.type) {
-          case 'anthropic': {
-            const { default: Anthropic } = await import('@anthropic-ai/sdk');
-            const client = new Anthropic({ apiKey: provider.apiKey ?? '' });
-            await client.messages.create({
-              model: provider.modelName,
-              max_tokens: 1,
-              messages: [{ role: 'user', content: 'ping' }],
-            });
-            break;
-          }
-          case 'openai':
-          case 'openai-compatible': {
-            const { default: OpenAI } = await import('openai');
-            const client = new OpenAI({
-              apiKey: provider.apiKey ?? 'none',
-              baseURL: provider.baseUrl ?? undefined,
-            });
-            await client.chat.completions.create({
-              model: provider.modelName,
-              max_tokens: 1,
-              messages: [{ role: 'user', content: 'ping' }],
-            });
-            break;
-          }
-          case 'ollama': {
-            const baseUrl = provider.baseUrl ?? 'http://localhost:11434';
-            const resp = await fetch(`${baseUrl}/api/version`);
-            if (!resp.ok) throw new Error(`Ollama returned ${resp.status}`);
-            break;
-          }
-          default:
-            throw new Error(`Unknown provider type: ${provider.type}`);
-        }
-      };
-
-      await Promise.race([test(), timeout]);
+      const fn = TEST_FNS[provider.type];
+      if (!fn) throw new Error(`Unknown provider type: ${provider.type}`);
+      await withTimeout(fn(provider), 10_000, 'Connection test');
       return { ok: true };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

@@ -1,6 +1,6 @@
 // React / library
 import { useState, useEffect, useMemo } from 'react';
-import { Play, GitBranch, Cpu } from 'lucide-react';
+import { Play, GitBranch, Cpu, Loader2 } from 'lucide-react';
 
 // Components
 import {
@@ -17,7 +17,9 @@ import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -26,10 +28,11 @@ import {
 import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
 import { useProjectBranches, useProject } from '@/hooks/use-projects.hook';
 import { useAgent } from '@/hooks/use-agents.hook';
+import { useProviderModels } from '@/hooks/use-agent-providers.hook';
 
 // Types
 import type { StartWorkDialogProps } from './workspaces.types';
-import type { ExecutorStatus } from '@my-agents/shared';
+import type { ExecutorStatus, ProviderModel } from '@my-agents/shared';
 
 // Constants
 import {
@@ -49,6 +52,8 @@ function ModelSection({
   agentDefaultModel,
   selectedModel,
   customModelText,
+  providerModels,
+  providerModelsLoading,
   onModelChange,
   onCustomTextChange,
 }: {
@@ -56,6 +61,8 @@ function ModelSection({
   agentDefaultModel: string | null | undefined;
   selectedModel: string;
   customModelText: string;
+  providerModels: ProviderModel[];
+  providerModelsLoading: boolean;
   onModelChange: (value: string) => void;
   onCustomTextChange: (value: string) => void;
 }) {
@@ -63,9 +70,15 @@ function ModelSection({
 
   const presets = runtime.modelPresets ?? [];
   const supportsCustom = runtime.supportsCustomModel !== false;
-  const hasPresets = presets.length > 0;
 
-  if (!hasPresets && supportsCustom) {
+  const extraModels = useMemo(() => {
+    const presetValues = new Set(presets.map((p) => p.value));
+    return providerModels.filter((m) => !presetValues.has(m.value));
+  }, [presets, providerModels]);
+
+  const hasAnyModels = presets.length > 0 || extraModels.length > 0;
+
+  if (!hasAnyModels && supportsCustom) {
     return (
       <div className="space-y-2">
         <Label className="flex items-center gap-1.5">
@@ -77,6 +90,11 @@ function ModelSection({
           value={customModelText}
           onChange={(e) => onCustomTextChange(e.target.value)}
         />
+        {providerModelsLoading && (
+          <p className="text-muted-foreground text-xs flex items-center gap-1.5">
+            <Loader2 className="h-3 w-3 animate-spin" /> Loading models from provider...
+          </p>
+        )}
         {agentDefaultModel && (
           <p className="text-muted-foreground text-xs">
             Agent default: {agentDefaultModel}
@@ -102,11 +120,26 @@ function ModelSection({
               Default{runtime.defaultModel ? ` (${runtime.defaultModel})` : ''}
             </span>
           </SelectItem>
-          {presets.map((preset) => (
-            <SelectItem key={preset.value} value={preset.value}>
-              {preset.label}
-            </SelectItem>
-          ))}
+          {presets.length > 0 && (
+            <SelectGroup>
+              <SelectLabel className="text-xs text-muted-foreground">Presets</SelectLabel>
+              {presets.map((preset) => (
+                <SelectItem key={preset.value} value={preset.value}>
+                  {preset.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
+          {extraModels.length > 0 && (
+            <SelectGroup>
+              <SelectLabel className="text-xs text-muted-foreground">From Provider</SelectLabel>
+              {extraModels.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
           {supportsCustom && (
             <SelectItem value={CUSTOM_MODEL_VALUE}>
               Custom...
@@ -121,6 +154,11 @@ function ModelSection({
           onChange={(e) => onCustomTextChange(e.target.value)}
           autoFocus
         />
+      )}
+      {providerModelsLoading && (
+        <p className="text-muted-foreground text-xs flex items-center gap-1.5">
+          <Loader2 className="h-3 w-3 animate-spin" /> Loading models from provider...
+        </p>
       )}
       {agentDefaultModel && (
         <p className="text-muted-foreground text-xs">
@@ -143,6 +181,7 @@ export function StartWorkDialog({
   const { data: branches = [], isLoading: branchesLoading } = useProjectBranches(projectId);
   const { data: project } = useProject(projectId);
   const { data: agent } = useAgent(task?.agentId ?? undefined);
+  const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(agent?.providerId ?? undefined);
   const startWork = useStartWork();
 
   const [selectedRuntime, setSelectedRuntime] = useState<string>('');
@@ -315,6 +354,8 @@ export function StartWorkDialog({
                 agentDefaultModel={agent?.defaultModel}
                 selectedModel={selectedModel}
                 customModelText={customModelText}
+                providerModels={providerModels}
+                providerModelsLoading={providerModelsLoading}
                 onModelChange={handleModelChange}
                 onCustomTextChange={setCustomModelText}
               />

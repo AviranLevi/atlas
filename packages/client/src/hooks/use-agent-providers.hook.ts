@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider } from '@my-agents/shared';
+import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@my-agents/shared';
 
 const PROVIDERS_KEY = ['agent-providers'] as const;
+const PROVIDER_MODELS_KEY = ['agent-provider-models'] as const;
 
 export function useAgentProviders() {
   return useQuery({
@@ -41,5 +42,15 @@ export function useTestAgentProvider() {
   return useMutation({
     mutationFn: (id: string) =>
       api.post<{ ok: boolean; error?: string }>(`/agent-providers/${id}/test`, {}),
+  });
+}
+
+/** Fetches available models from the provider's API. Disabled when no providerId. */
+export function useProviderModels(providerId: string | undefined) {
+  return useQuery({
+    queryKey: [...PROVIDER_MODELS_KEY, providerId],
+    queryFn: () => api.get<ProviderModel[]>(`/agent-providers/${providerId}/models`),
+    enabled: !!providerId,
+    staleTime: 5 * 60 * 1000,
   });
 }
