@@ -20,6 +20,33 @@ const FILE_PATH = 'services/settings.service.ts';
 export class SettingsService {
   constructor(private readonly repo = settingsRepository) {}
 
+  /** Returns the singleton global instructions row, creating one if none exists. */
+  async getOrCreateGlobalInstructions(): Promise<GlobalInstructions> {
+    const FUNCTION_NAME = 'getOrCreateGlobalInstructions';
+    try {
+      const rows = this.repo.findAllGlobalInstructions();
+      if (rows.length > 0) return rows[0];
+      return this.repo.insertGlobalInstructions({ content: '' });
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to get global instructions', { cause: error });
+    }
+  }
+
+  /** Updates the singleton global instructions, creating the row if needed. */
+  async updateOrCreateGlobalInstructions(
+    data: UpdateGlobalInstructions,
+  ): Promise<GlobalInstructions> {
+    const FUNCTION_NAME = 'updateOrCreateGlobalInstructions';
+    try {
+      const current = await this.getOrCreateGlobalInstructions();
+      return this.repo.updateGlobalInstructions(current.id, data);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to update global instructions', { cause: error });
+    }
+  }
+
   /** Lists all global instructions. */
   async listGlobalInstructions(): Promise<GlobalInstructions[]> {
     const FUNCTION_NAME = 'listGlobalInstructions';
@@ -141,6 +168,27 @@ export class SettingsService {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete dispatch rule', { cause: error });
+    }
+  }
+
+  /**
+   * Finds the first dispatch rule whose pattern matches the task name
+   * (case-insensitive substring). Returns the agentId/skillId to assign,
+   * or null if no rule matches.
+   */
+  async resolveDispatchRule(
+    taskName: string,
+  ): Promise<{ agentId: string; skillId: string | null } | null> {
+    const FUNCTION_NAME = 'resolveDispatchRule';
+    try {
+      const rules = this.repo.findAllDispatchRules();
+      const lowerName = taskName.toLowerCase();
+      const match = rules.find((r) => lowerName.includes(r.pattern.toLowerCase()));
+      if (!match) return null;
+      return { agentId: match.agentId, skillId: match.skillId };
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      return null;
     }
   }
 }

@@ -15,6 +15,7 @@ export function GlobalInstructionsCard({
   isDirty,
   isSaving,
   isSaved,
+  error,
   onChange,
   onSave,
 }: GlobalInstructionsCardProps) {
@@ -47,6 +48,7 @@ export function GlobalInstructionsCard({
                 <span className="text-muted-foreground text-sm">Saved!</span>
               )}
             </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
           </>
         )}
       </CardContent>

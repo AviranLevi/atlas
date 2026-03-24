@@ -2,7 +2,7 @@
 import type { Task, CreateTask, UpdateTask } from '@my-agents/shared';
 
 // Services
-import { activityLogService } from './index.js';
+import { activityLogService, settingsService } from './index.js';
 
 // Repositories
 import { tasksRepository, workspacesRepository, reviewsRepository } from '../db/repositories/index.js';
@@ -44,10 +44,19 @@ export class TasksService {
     }
   }
 
-  /** Creates a new task and logs the creation event. */
+  /** Creates a new task, auto-assigns via dispatch rules if needed, and logs the event. */
   async create(data: CreateTask): Promise<Task> {
     const FUNCTION_NAME = 'create';
     try {
+      if (!data.agentId) {
+        const dispatch = await settingsService.resolveDispatchRule(data.name);
+        if (dispatch) {
+          data.agentId = dispatch.agentId;
+          if (!data.skillId && dispatch.skillId) {
+            data.skillId = dispatch.skillId;
+          }
+        }
+      }
       const task = this.repo.insert(data);
       activityLogService.log({
         projectId: task.projectId,

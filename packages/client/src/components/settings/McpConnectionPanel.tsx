@@ -59,6 +59,7 @@ function CollapsibleSection({
         className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
         onClick={() => setOpen((o) => !o)}
         type="button"
+        aria-expanded={open}
       >
         {title}
         {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}

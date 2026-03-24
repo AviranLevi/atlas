@@ -1,7 +1,7 @@
 // External
 import type { Context } from 'hono';
 
-const MCP_HTTP_PORT = 3101;
+const MCP_HTTP_PORT = process.env.MCP_PORT || '3101';
 const MCP_SSE_URL = `http://localhost:${MCP_HTTP_PORT}/sse`;
 const MCP_MESSAGES_URL = `http://localhost:${MCP_HTTP_PORT}/messages`;
 

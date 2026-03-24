@@ -1,5 +1,6 @@
 // React / library
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 
 // Components
@@ -12,6 +13,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { McpConnectionPanel } from '@/components/settings/McpConnectionPanel';
 import { GlobalInstructionsCard } from './GlobalInstructionsCard';
 import { DispatchRulesCard } from './DispatchRulesCard';
@@ -35,7 +37,18 @@ import type { RuleForm } from './settings-page.types';
 // Constants
 import { NONE_SKILL_VALUE, emptyRuleForm } from './settings-page.constants';
 
+const VALID_TABS = ['general', 'dispatch-rules', 'mcp'] as const;
+type SettingsTab = (typeof VALID_TABS)[number];
+
+function isValidTab(value: string | null): value is SettingsTab {
+  return VALID_TABS.includes(value as SettingsTab);
+}
+
 export function SettingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const activeTab: SettingsTab = isValidTab(rawTab) ? rawTab : 'general';
+
   const { data: globalInstructions, isLoading: instructionsLoading } = useGlobalInstructions();
   const updateInstructions = useUpdateGlobalInstructions();
   const { data: rules = [], isLoading: rulesLoading } = useDispatchRules();
@@ -57,6 +70,10 @@ export function SettingsPage() {
       setInstructionsDirty(false);
     }
   }, [globalInstructions?.content]);
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value }, { replace: true });
+  };
 
   const getAgentName = (id: string) => agents.find((a) => a.id === id)?.name ?? 'Unknown';
   const getSkillName = (id: string | null) => (id ? skills.find((s) => s.id === id)?.name ?? '—' : '—');
@@ -81,56 +98,82 @@ export function SettingsPage() {
 
   const isRuleFormValid = ruleForm.pattern.trim() !== '' && ruleForm.agentId !== '';
 
+  const dispatchError = createRule.isError
+    ? (createRule.error?.message ?? 'Failed to create rule')
+    : updateRule.isError
+      ? (updateRule.error?.message ?? 'Failed to update rule')
+      : deleteRule.isError
+        ? (deleteRule.error?.message ?? 'Failed to delete rule')
+        : null;
+
+  const instructionsError = updateInstructions.isError
+    ? (updateInstructions.error?.message ?? 'Failed to save instructions')
+    : null;
+
   return (
     <div>
       <div className="mb-8 flex items-center gap-3">
         <Settings className="h-8 w-8 text-muted-foreground" />
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-1">Global instructions and dispatch rules</p>
+          <p className="text-muted-foreground mt-1">Configure global instructions, dispatch rules, and MCP connections</p>
         </div>
       </div>
 
-      <div className="space-y-8">
-        <McpConnectionPanel />
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList>
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="dispatch-rules">Dispatch Rules</TabsTrigger>
+          <TabsTrigger value="mcp">MCP Connection</TabsTrigger>
+        </TabsList>
 
-        <GlobalInstructionsCard
-          instructions={instructions}
-          isLoading={instructionsLoading}
-          isDirty={instructionsDirty}
-          isSaving={updateInstructions.isPending}
-          isSaved={updateInstructions.isSuccess}
-          onChange={(v) => { setInstructions(v); setInstructionsDirty(true); }}
-          onSave={() => {
-            if (!instructionsDirty) return;
-            updateInstructions.mutate({ content: instructions }, {
-              onSuccess: () => setInstructionsDirty(false),
-            });
-          }}
-        />
+        <TabsContent value="general" className="mt-6">
+          <GlobalInstructionsCard
+            instructions={instructions}
+            isLoading={instructionsLoading}
+            isDirty={instructionsDirty}
+            isSaving={updateInstructions.isPending}
+            isSaved={updateInstructions.isSuccess}
+            error={instructionsError}
+            onChange={(v) => { setInstructions(v); setInstructionsDirty(true); }}
+            onSave={() => {
+              if (!instructionsDirty) return;
+              updateInstructions.mutate({ content: instructions }, {
+                onSuccess: () => setInstructionsDirty(false),
+              });
+            }}
+          />
+        </TabsContent>
 
-        <DispatchRulesCard
-          rules={rules}
-          isLoading={rulesLoading}
-          agents={agents}
-          skills={skills}
-          editingRuleId={editingRuleId}
-          ruleForm={ruleForm}
-          isFormValid={isRuleFormValid}
-          isSaving={createRule.isPending || updateRule.isPending}
-          onFormChange={setRuleForm}
-          onAdd={() => { setRuleForm(emptyRuleForm); setEditingRuleId('new'); }}
-          onEdit={(rule: DispatchRule) => {
-            setRuleForm({ pattern: rule.pattern, agentId: rule.agentId, skillId: rule.skillId ?? NONE_SKILL_VALUE });
-            setEditingRuleId(rule.id);
-          }}
-          onDelete={(id) => setDeleteRuleId(id)}
-          onSave={handleSaveRule}
-          onCancel={handleCancelEdit}
-          getAgentName={getAgentName}
-          getSkillName={getSkillName}
-        />
-      </div>
+        <TabsContent value="dispatch-rules" className="mt-6">
+          <DispatchRulesCard
+            rules={rules}
+            isLoading={rulesLoading}
+            agents={agents}
+            skills={skills}
+            editingRuleId={editingRuleId}
+            ruleForm={ruleForm}
+            isFormValid={isRuleFormValid}
+            isSaving={createRule.isPending || updateRule.isPending}
+            error={dispatchError}
+            onFormChange={setRuleForm}
+            onAdd={() => { setRuleForm(emptyRuleForm); setEditingRuleId('new'); }}
+            onEdit={(rule: DispatchRule) => {
+              setRuleForm({ pattern: rule.pattern, agentId: rule.agentId, skillId: rule.skillId ?? NONE_SKILL_VALUE });
+              setEditingRuleId(rule.id);
+            }}
+            onDelete={(id) => setDeleteRuleId(id)}
+            onSave={handleSaveRule}
+            onCancel={handleCancelEdit}
+            getAgentName={getAgentName}
+            getSkillName={getSkillName}
+          />
+        </TabsContent>
+
+        <TabsContent value="mcp" className="mt-6">
+          <McpConnectionPanel />
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={!!deleteRuleId} onOpenChange={() => setDeleteRuleId(null)}>
         <DialogContent>

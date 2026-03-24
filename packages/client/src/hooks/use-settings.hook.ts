@@ -10,8 +10,8 @@ import type {
   DispatchRule,
   CreateDispatchRule,
   UpdateDispatchRule,
+  McpConnectionInfo,
 } from '@my-agents/shared';
-import type { ConnectionInfo } from '@/components/settings/settings.types';
 
 const GLOBAL_INSTRUCTIONS_KEY = ['settings', 'global-instructions'] as const;
 const DISPATCH_RULES_KEY = ['settings', 'dispatch-rules'] as const;
@@ -21,7 +21,7 @@ export function useGlobalInstructions() {
   return useQuery({
     queryKey: GLOBAL_INSTRUCTIONS_KEY,
     queryFn: () =>
-      api.get<GlobalInstructions>('/settings/global-instructions'),
+      api.get<GlobalInstructions>('/settings/global-instructions/current'),
   });
 }
 
@@ -29,7 +29,7 @@ export function useUpdateGlobalInstructions() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: UpdateGlobalInstructions) =>
-      api.put<GlobalInstructions>('/settings/global-instructions', data),
+      api.put<GlobalInstructions>('/settings/global-instructions/current', data),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: GLOBAL_INSTRUCTIONS_KEY }),
   });
@@ -82,6 +82,6 @@ export function useDeleteDispatchRule() {
 export function useMcpConnectionInfo() {
   return useQuery({
     queryKey: MCP_CONNECTION_KEY,
-    queryFn: () => api.get<ConnectionInfo>('/mcp/connection-info'),
+    queryFn: () => api.get<McpConnectionInfo>('/mcp/connection-info'),
   });
 }

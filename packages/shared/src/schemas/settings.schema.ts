@@ -41,3 +41,14 @@ export const UpdateDispatchRuleSchema = CreateDispatchRuleSchema.partial();
 export type DispatchRule = z.infer<typeof DispatchRuleSchema>;
 export type CreateDispatchRule = z.infer<typeof CreateDispatchRuleSchema>;
 export type UpdateDispatchRule = z.infer<typeof UpdateDispatchRuleSchema>;
+
+export const McpConnectionInfoSchema = z.object({
+  sseUrl: z.string(),
+  messagesUrl: z.string(),
+  cursorConfig: z.record(z.unknown()),
+  claudeDesktopConfig: z.record(z.unknown()),
+  stdioConfig: z.record(z.unknown()),
+  instructions: z.record(z.string()),
+});
+
+export type McpConnectionInfo = z.infer<typeof McpConnectionInfoSchema>;

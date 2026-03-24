@@ -12,6 +12,19 @@ import type {
 // Services
 import { settingsService } from '../services/index.js';
 
+/** Returns the singleton global instructions document. */
+export async function getCurrentGlobalInstructions(c: Context) {
+  const item = await settingsService.getOrCreateGlobalInstructions();
+  return c.json(item);
+}
+
+/** Updates the singleton global instructions document. */
+export async function updateCurrentGlobalInstructions(c: Context) {
+  const data = (c.req as any).valid('json') as UpdateGlobalInstructions;
+  const item = await settingsService.updateOrCreateGlobalInstructions(data);
+  return c.json(item);
+}
+
 /** Lists all global instructions. */
 export async function listGlobalInstructions(c: Context) {
   const items = await settingsService.listGlobalInstructions();

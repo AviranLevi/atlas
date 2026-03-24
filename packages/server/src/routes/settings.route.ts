@@ -12,6 +12,8 @@ import {
 
 // Controllers
 import {
+  getCurrentGlobalInstructions,
+  updateCurrentGlobalInstructions,
   listGlobalInstructions,
   getGlobalInstruction,
   createGlobalInstruction,
@@ -25,6 +27,8 @@ import {
 } from '../controllers/settings.controller.js';
 
 const globalInstructionsRoute = new Hono()
+  .get('/current', getCurrentGlobalInstructions)
+  .put('/current', zValidator('json', UpdateGlobalInstructionsSchema), updateCurrentGlobalInstructions)
   .get('/', listGlobalInstructions)
   .get('/:id', getGlobalInstruction)
   .post('/', zValidator('json', CreateGlobalInstructionsSchema), createGlobalInstruction)

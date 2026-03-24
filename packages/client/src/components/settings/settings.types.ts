@@ -1,8 +1,2 @@
-export type ConnectionInfo = {
-  sseUrl: string;
-  messagesUrl: string;
-  cursorConfig: Record<string, unknown>;
-  claudeDesktopConfig: Record<string, unknown>;
-  stdioConfig: Record<string, unknown>;
-  instructions: Record<string, string>;
-};
+// ConnectionInfo has been moved to @my-agents/shared as McpConnectionInfo.
+// This file is intentionally empty and can be removed.

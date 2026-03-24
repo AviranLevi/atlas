@@ -1,5 +1,4 @@
 import type { Agent, Skill, DispatchRule } from '@my-agents/shared';
-import type { UseMutationResult } from '@tanstack/react-query';
 
 export type RuleForm = {
   pattern: string;
@@ -13,6 +12,7 @@ export type GlobalInstructionsCardProps = {
   isDirty: boolean;
   isSaving: boolean;
   isSaved: boolean;
+  error: string | null;
   onChange: (value: string) => void;
   onSave: () => void;
 };
@@ -37,6 +37,7 @@ export type DispatchRulesCardProps = {
   ruleForm: RuleForm;
   isFormValid: boolean;
   isSaving: boolean;
+  error: string | null;
   onFormChange: (form: RuleForm) => void;
   onAdd: () => void;
   onEdit: (rule: DispatchRule) => void;

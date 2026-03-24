@@ -18,6 +18,7 @@ export function DispatchRulesCard({
   ruleForm,
   isFormValid,
   isSaving,
+  error,
   onFormChange,
   onAdd,
   onEdit,
@@ -33,7 +34,7 @@ export function DispatchRulesCard({
         <div>
           <CardTitle>Dispatch Rules</CardTitle>
           <CardDescription>
-            Define which agent handles which patterns
+            Rules are matched against task names when tasks are created. The first matching rule auto-assigns the agent and skill.
           </CardDescription>
         </div>
         <Button onClick={onAdd} disabled={editingRuleId === 'new'}>
@@ -41,7 +42,7 @@ export function DispatchRulesCard({
           Add Rule
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {isLoading ? (
           <div className="text-muted-foreground py-8 text-center">Loading...</div>
         ) : (
@@ -71,7 +72,9 @@ export function DispatchRulesCard({
                   key={rule.id}
                   className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 border-b px-4 py-3 last:border-b-0"
                 >
-                  <div className="flex items-center text-sm">{rule.pattern}</div>
+                  <div className="flex items-center text-sm">
+                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{rule.pattern}</code>
+                  </div>
                   <div className="flex items-center text-sm">{getAgentName(rule.agentId)}</div>
                   <div className="flex items-center text-sm">{getSkillName(rule.skillId)}</div>
                   <div className="flex gap-1">
@@ -98,8 +101,15 @@ export function DispatchRulesCard({
                 onCancel={onCancel}
               />
             )}
+
+            {rules.length === 0 && editingRuleId !== 'new' && (
+              <div className="text-muted-foreground px-4 py-6 text-center text-sm">
+                No dispatch rules configured. Add a rule to auto-assign agents to tasks.
+              </div>
+            )}
           </div>
         )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
       </CardContent>
     </Card>
   );
