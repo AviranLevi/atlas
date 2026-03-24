@@ -8,6 +8,16 @@ export function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+/** Strip common markdown syntax and truncate for card previews. */
+export function contentPreview(content: string | null, maxLen = 100): string {
+  if (!content) return '';
+  return content
+    .replace(/[#*_`~\[\]>]/g, '')
+    .replace(/\n+/g, ' ')
+    .trim()
+    .slice(0, maxLen);
+}
+
 export function calcDuration(startedAt: string | null, completedAt: string | null): string {
   if (!startedAt) return '--';
   const end = completedAt ? new Date(completedAt).getTime() : Date.now();

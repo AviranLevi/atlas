@@ -1,5 +1,5 @@
 // React / library
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 // Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 
 // Hooks
-import { useCreateMemory, useUpdateMemory } from '@/hooks/use-memory.hook';
+import { useCreateMemory } from '@/hooks/use-memory.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
@@ -26,11 +26,9 @@ import type { MemoryDialogProps } from './memory.types';
 // Constants
 import { MEMORY_TYPES, MEMORY_SCOPES } from './memory.constants';
 
-export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) {
+export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
   const createMemory = useCreateMemory();
-  const updateMemory = useUpdateMemory();
   const { data: projects = [] } = useProjects();
-  const isEditing = !!memory;
 
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
@@ -38,51 +36,38 @@ export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) 
   const [scope, setScope] = useState<MemoryScope>('project');
   const [projectId, setProjectId] = useState<string>('');
 
-  useEffect(() => {
-    if (memory) {
-      setName(memory.name);
-      setContent(memory.content);
-      setType(memory.type);
-      setScope(memory.scope);
-      setProjectId(memory.projectId ?? '');
-    } else {
-      setName('');
-      setContent('');
-      setType('Decision');
-      setScope('project');
-      setProjectId('');
-    }
-  }, [memory, open]);
+  const resetForm = () => {
+    setName('');
+    setContent('');
+    setType('Decision');
+    setScope('project');
+    setProjectId('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
-      name: name.trim(),
-      content: content.trim(),
-      type,
-      scope,
-      ...(scope === 'project' && projectId ? { projectId } : {}),
-    };
-
-    if (isEditing) {
-      updateMemory.mutate(
-        { id: memory.id, data },
-        { onSuccess: () => onOpenChange(false) },
-      );
-    } else {
-      createMemory.mutate(data, {
-        onSuccess: () => onOpenChange(false),
-      });
-    }
+    createMemory.mutate(
+      {
+        name: name.trim(),
+        content: content.trim(),
+        type,
+        scope,
+        ...(scope === 'project' && projectId ? { projectId } : {}),
+      },
+      {
+        onSuccess: () => {
+          resetForm();
+          onOpenChange(false);
+        },
+      },
+    );
   };
 
-  const isPending = createMemory.isPending || updateMemory.isPending;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(val) => { if (!val) resetForm(); onOpenChange(val); }}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Memory' : 'New Memory'}</DialogTitle>
+          <DialogTitle>New Memory</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -115,9 +100,7 @@ export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) 
                 </SelectTrigger>
                 <SelectContent>
                   {MEMORY_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -130,9 +113,7 @@ export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) 
                 </SelectTrigger>
                 <SelectContent>
                   {MEMORY_SCOPES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </SelectItem>
+                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -147,27 +128,18 @@ export function MemoryDialog({ open, onOpenChange, memory }: MemoryDialogProps) 
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" asChild>
-              <button type="button" onClick={() => onOpenChange(false)}>
-                Cancel
-              </button>
+            <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
+              Cancel
             </Button>
-            <Button asChild>
-              <button
-                type="submit"
-                disabled={isPending || !name.trim() || !content.trim()}
-              >
-                {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Memory'}
-              </button>
+            <Button type="submit" disabled={createMemory.isPending || !name.trim() || !content.trim()}>
+              {createMemory.isPending ? 'Creating...' : 'Create Memory'}
             </Button>
           </div>
         </form>

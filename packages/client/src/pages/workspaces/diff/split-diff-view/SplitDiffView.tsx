@@ -10,6 +10,7 @@ export function SplitDiffView({
   parsed,
   file,
   workspaceId,
+  language,
   commentsByLine,
   commentingLine,
   setCommentingLine,
@@ -20,6 +21,7 @@ export function SplitDiffView({
   parsed: ParsedLine[];
   file: DiffFile;
   workspaceId: string;
+  language?: string;
   commentsByLine: Map<number, DiffComment[]>;
   commentingLine: CommentingTarget | null;
   setCommentingLine: (line: CommentingTarget | null) => void;
@@ -84,6 +86,7 @@ export function SplitDiffView({
                 <SplitDiffSide
                   line={row.left}
                   side="left"
+                  language={language}
                   onClickComment={row.left && (row.left.type === 'add' || row.left.type === 'remove' || row.left.type === 'context')
                     ? () => setCommentingLine(isCommentingLeft ? null : { patchIndex: leftIdx!, side: 'left' })
                     : undefined}
@@ -92,6 +95,7 @@ export function SplitDiffView({
                 <SplitDiffSide
                   line={row.right}
                   side="right"
+                  language={language}
                   onClickComment={row.right && (row.right.type === 'add' || row.right.type === 'remove' || row.right.type === 'context')
                     ? () => setCommentingLine(isCommentingRight ? null : { patchIndex: rightIdx!, side: 'right' })
                     : undefined}

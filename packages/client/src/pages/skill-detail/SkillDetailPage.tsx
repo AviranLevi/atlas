@@ -1,18 +1,36 @@
 // React / library
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Zap, Pencil, ListOrdered, LogIn, LogOut, Bot } from 'lucide-react';
+import {
+  ArrowLeft, Zap, ListOrdered, LogIn, LogOut, Bot, Trash2,
+  Check, X, Pencil, FolderOpen,
+} from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { EditableCard } from '@/components/agents/EditableCard';
-import { SkillDialog } from '@/components/skills/SkillDialog';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { EditableCard } from '@/components/ui/editable-card';
 
 // Hooks
 import { useSkillDetail } from '@/hooks/use-skill-detail.hook';
-import { useUpdateSkill } from '@/hooks/use-skills.hook';
+import { useUpdateSkill, useDeleteSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
+
+// Types
+import type { SkillType } from '@my-agents/shared';
+
+// Constants
+import { SKILL_TYPES, NONE } from '@/components/skills/skills.constants';
+import { timeAgo } from '@/lib/format';
 
 export function SkillDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,8 +38,22 @@ export function SkillDetailPage() {
   const { data: detail, isLoading } = useSkillDetail(id);
   const { data: projects = [] } = useProjects();
   const updateSkill = useUpdateSkill();
+  const deleteSkill = useDeleteSkill();
 
-  const [editOpen, setEditOpen] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+
+  const startEditName = useCallback(() => {
+    if (!detail) return;
+    setNameDraft(detail.skill.name);
+    setEditingName(true);
+  }, [detail]);
+
+  const saveName = useCallback(() => {
+    if (!detail || !nameDraft.trim()) return;
+    updateSkill.mutate({ id: detail.skill.id, data: { name: nameDraft.trim() } });
+    setEditingName(false);
+  }, [detail, nameDraft, updateSkill]);
 
   if (isLoading) {
     return (
@@ -44,55 +76,124 @@ export function SkillDetailPage() {
   }
 
   const { skill, agents } = detail;
-  const projectName = skill.projectId
-    ? projects.find((p) => p.id === skill.projectId)?.name
-    : null;
+
+  const handleDelete = () => {
+    if (confirm('Delete this skill? This cannot be undone.')) {
+      deleteSkill.mutate(skill.id, { onSuccess: () => navigate('/skills') });
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" className="w-fit" onClick={() => navigate('/skills')}>
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           Back to Skills
         </Button>
+        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={handleDelete}>
+          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+          Delete
+        </Button>
+      </div>
 
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3">
-            <div className="bg-primary/10 mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
-              <Zap className="text-primary h-5 w-5" />
+      {/* Header with inline-editable name */}
+      <div className="flex items-start gap-3">
+        <div className="bg-primary/10 mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+          <Zap className="text-primary h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1 space-y-2">
+          {editingName ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                className="h-9 text-xl font-bold"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+              />
+              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={saveName}>
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingName(false)}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <div>
+          ) : (
+            <button
+              type="button"
+              className="group flex items-center gap-2 rounded-md transition-colors hover:bg-muted/50 px-1 -mx-1"
+              onClick={startEditName}
+            >
               <h1 className="text-2xl font-bold tracking-tight">{skill.name}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="text-xs">
-                  {skill.type}
-                </Badge>
-                {projectName && (
-                  <Badge variant="outline" className="text-xs">
-                    Project: {projectName}
-                  </Badge>
-                )}
-              </div>
-            </div>
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>Created {timeAgo(skill.createdAt)}</span>
+            <span>·</span>
+            <span>Updated {timeAgo(skill.updatedAt)}</span>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-1.5 h-4 w-4" />
-            Edit
-          </Button>
         </div>
       </div>
 
-      {/* Inline editable cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <EditableCard
-          icon={ListOrdered}
-          label="Steps"
-          value={skill.steps}
-          placeholder="Click to define step-by-step instructions..."
-          isPending={updateSkill.isPending}
-          onSave={(val) => updateSkill.mutate({ id: skill.id, data: { steps: val } })}
-        />
+      {/* Metadata row */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="p-4">
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Type</label>
+          <Select
+            value={skill.type}
+            onValueChange={(v) => updateSkill.mutate({ id: skill.id, data: { type: v as SkillType } })}
+          >
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SKILL_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Card>
+
+        <Card className="p-4">
+          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Project Scope</label>
+          <Select
+            value={skill.projectId ?? NONE}
+            onValueChange={(v) => updateSkill.mutate({ id: skill.id, data: { projectId: v === NONE ? null : v } })}
+          >
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>
+                <span className="flex items-center gap-1.5">Global (all projects)</span>
+              </SelectItem>
+              {projects.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  <span className="flex items-center gap-1.5">
+                    <FolderOpen className="h-3 w-3" />
+                    {p.name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Card>
+      </div>
+
+      {/* Editable content cards */}
+      <EditableCard
+        icon={ListOrdered}
+        label="Steps"
+        value={skill.steps}
+        placeholder="Click to define step-by-step instructions..."
+        isPending={updateSkill.isPending}
+        onSave={(val) => updateSkill.mutate({ id: skill.id, data: { steps: val } })}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <EditableCard
           icon={LogIn}
           label="Input Format"
@@ -127,10 +228,7 @@ export function SkillDetailPage() {
           <div className="flex flex-wrap gap-2">
             {agents.map((agent) => (
               <Link key={agent.id} to={`/agents/${agent.id}`}>
-                <Badge
-                  variant="secondary"
-                  className="cursor-pointer text-xs hover:bg-secondary/80"
-                >
+                <Badge variant="secondary" className="cursor-pointer text-xs hover:bg-secondary/80">
                   {agent.name}
                 </Badge>
               </Link>
@@ -138,8 +236,6 @@ export function SkillDetailPage() {
           </div>
         )}
       </div>
-
-      <SkillDialog open={editOpen} onOpenChange={setEditOpen} skill={skill} />
     </div>
   );
 }

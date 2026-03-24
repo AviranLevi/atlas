@@ -7,7 +7,7 @@ import { ArrowLeft, Bot, Pencil, Sparkles, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AgentDialog } from '@/components/agents/AgentDialog';
-import { EditableCard } from '@/components/agents/EditableCard';
+import { EditableCard } from '@/components/ui/editable-card';
 import { AttachableItemsSection } from './AttachableItemsSection';
 import { AssignedProjectsSection } from './AssignedProjectsSection';
 

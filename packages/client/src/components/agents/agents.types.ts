@@ -17,11 +17,3 @@ export type ProviderBadgeProps = {
   type: ProviderType;
 };
 
-export type EditableCardProps = {
-  icon: React.ElementType;
-  label: string;
-  value: string | null;
-  placeholder: string;
-  onSave: (value: string | null) => void;
-  isPending: boolean;
-};

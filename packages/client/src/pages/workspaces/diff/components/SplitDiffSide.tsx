@@ -2,15 +2,18 @@ import { MessageSquarePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ParsedLine } from '../diff-parser';
 import { LineNum } from './LineNum';
+import { HighlightedLine } from './HighlightedLine';
 
 export function SplitDiffSide({
   line,
   side,
+  language,
   onClickComment,
   isCommenting,
 }: {
   line?: ParsedLine;
   side: 'left' | 'right';
+  language?: string;
   onClickComment?: () => void;
   isCommenting?: boolean;
 }) {
@@ -65,7 +68,9 @@ export function SplitDiffSide({
         )}
       </div>
       <LineNum num={num} />
-      <pre className="flex-1 px-2 py-0 whitespace-pre-wrap break-all min-w-0 overflow-hidden">{line.content}</pre>
+      <pre className="flex-1 px-2 py-0 whitespace-pre-wrap break-all min-w-0 overflow-hidden">
+        <HighlightedLine content={line.content} language={language} />
+      </pre>
     </div>
   );
 }

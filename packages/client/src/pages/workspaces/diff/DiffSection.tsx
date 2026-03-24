@@ -39,6 +39,7 @@ import type { DiffFile } from '@/hooks/use-workspaces.hook';
 import type { DiffComment } from '@my-agents/shared';
 import type { DiffViewMode, CommentingTarget } from './diff-parser';
 import { parsePatch } from './diff-parser';
+import { detectLanguage } from './lang-detect';
 import { UnifiedDiffView } from './unified-diff-view';
 import { SplitDiffView } from './split-diff-view';
 
@@ -73,12 +74,14 @@ function DiffFileRow({
   }, [fileComments]);
 
   const parsed = useMemo(() => (file.patch ? parsePatch(file.patch) : []), [file.patch]);
+  const language = useMemo(() => detectLanguage(file.filename), [file.filename]);
   const hasComments = fileComments.length > 0;
 
   const sharedProps = {
     parsed,
     file,
     workspaceId,
+    language,
     commentsByLine,
     commentingLine,
     setCommentingLine,

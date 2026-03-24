@@ -8,10 +8,16 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 
-// Types
-import type { EditableCardProps } from './agents.types';
+export type EditableCardProps = {
+  icon: React.ElementType;
+  label: string;
+  value: string | null;
+  placeholder: string;
+  onSave: (value: string | null) => void;
+  isPending: boolean;
+};
 
-/** Inline-editable text card for long-form agent fields. Renders Markdown when not editing. */
+/** Inline-editable text card for long-form fields. Renders Markdown when not editing. */
 export function EditableCard({
   icon: Icon,
   label,

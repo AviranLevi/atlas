@@ -1,19 +1,49 @@
 // React / library
-import { useState } from 'react';
-import { Pencil, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Trash2, ChevronRight, ChevronDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { MemoryExpandedRow } from './MemoryExpandedRow';
 
 // Types
-import type { MemoryTableProps } from './memory-page.types';
+import type { MemoryTableProps, SortKey, SortDir } from './memory-page.types';
 
-// Constants
+// Constants & utilities
 import { formatLastUsed, TYPE_BADGE_VARIANTS } from './memory-page.constants';
+import { contentPreview } from '@/lib/format';
 
-export function MemoryTable({ memories, projectMap, onEdit, onDelete }: MemoryTableProps) {
+function SortHeader({
+  label,
+  sortKey,
+  activeSortKey,
+  sortDir,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeSortKey: SortKey;
+  sortDir: SortDir;
+  onSort: (key: SortKey) => void;
+}) {
+  const isActive = activeSortKey === sortKey;
+  return (
+    <button
+      type="button"
+      className="flex items-center gap-1 text-left hover:text-foreground transition-colors"
+      onClick={(e) => { e.stopPropagation(); onSort(sortKey); }}
+    >
+      {label}
+      {isActive && (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+    </button>
+  );
+}
+
+export function MemoryTable({ memories, projectMap, agentMap, onDelete }: MemoryTableProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<SortKey>('lastUsed');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -24,59 +54,86 @@ export function MemoryTable({ memories, projectMap, onEdit, onDelete }: MemoryTa
     });
   };
 
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    const list = [...memories];
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'name') {
+        cmp = a.name.localeCompare(b.name);
+      } else if (sortKey === 'type') {
+        cmp = a.type.localeCompare(b.type);
+      } else if (sortKey === 'lastUsed') {
+        const aVal = a.lastUsed ? new Date(a.lastUsed).getTime() : 0;
+        const bVal = b.lastUsed ? new Date(b.lastUsed).getTime() : 0;
+        cmp = aVal - bVal;
+      } else if (sortKey === 'createdAt') {
+        cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return list;
+  }, [memories, sortKey, sortDir]);
+
+  const headerProps = { activeSortKey: sortKey, sortDir, onSort: handleSort };
+
   return (
     <div className="rounded-md border">
-      <div className="grid grid-cols-[24px_1fr_auto_auto_auto_auto_auto] gap-3 border-b bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground">
+      <div className="grid grid-cols-[24px_1fr_auto_auto_auto_auto_auto_auto] gap-3 border-b bg-muted/50 px-4 py-3 text-xs font-medium text-muted-foreground">
         <div />
-        <div>Name</div>
-        <div>Type</div>
+        <SortHeader label="Name" sortKey="name" {...headerProps} />
+        <SortHeader label="Type" sortKey="type" {...headerProps} />
         <div>Scope</div>
         <div>Project</div>
-        <div>Last Used</div>
+        <div>Agent</div>
+        <SortHeader label="Last Used" sortKey="lastUsed" {...headerProps} />
         <div />
       </div>
 
-      {memories.map((mem) => {
+      {sorted.map((mem) => {
         const isExpanded = expandedIds.has(mem.id);
+        const preview = contentPreview(mem.content, 80);
+        const agentName = mem.agentId ? agentMap.get(mem.agentId) ?? '—' : 'Manual';
+
         return (
           <div key={mem.id} className="border-b last:border-0">
             <div
-              className="grid grid-cols-[24px_1fr_auto_auto_auto_auto_auto] items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
+              className="grid grid-cols-[24px_1fr_auto_auto_auto_auto_auto_auto] items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
               onClick={() => toggleExpand(mem.id)}
             >
               <div className="text-muted-foreground">
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
+                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </div>
+              <div className="min-w-0">
+                <div className="font-medium truncate text-sm">{mem.name}</div>
+                {!isExpanded && preview && (
+                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{preview}</p>
                 )}
               </div>
-              <div className="font-medium truncate">{mem.name}</div>
-              <Badge
-                variant="secondary"
-                className={TYPE_BADGE_VARIANTS[mem.type] ?? ''}
-              >
+              <Badge variant="secondary" className={TYPE_BADGE_VARIANTS[mem.type] ?? ''}>
                 {mem.type}
               </Badge>
-              <Badge variant="outline">
+              <Badge variant="outline" className="text-[11px]">
                 {mem.scope === 'global' ? 'Global' : 'Project'}
               </Badge>
               <span className="text-xs text-muted-foreground truncate max-w-[120px]">
                 {mem.projectId ? projectMap.get(mem.projectId) ?? '—' : '—'}
               </span>
+              <span className="text-xs text-muted-foreground truncate max-w-[100px]">
+                {agentName}
+              </span>
               <span className="text-xs text-muted-foreground whitespace-nowrap">
                 {formatLastUsed(mem.lastUsed)}
               </span>
               <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => onEdit(mem)}
-                  aria-label="Edit memory"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -90,11 +147,7 @@ export function MemoryTable({ memories, projectMap, onEdit, onDelete }: MemoryTa
             </div>
 
             {isExpanded && (
-              <div className="px-4 pb-4 pl-11">
-                <div className="rounded-md bg-muted/40 p-3 text-sm whitespace-pre-wrap leading-relaxed">
-                  {mem.content}
-                </div>
-              </div>
+              <MemoryExpandedRow memory={mem} projectMap={projectMap} agentMap={agentMap} />
             )}
           </div>
         );

@@ -94,8 +94,7 @@ export class RulesService {
   async getDetail(ruleId: string) {
     const FUNCTION_NAME = 'getDetail';
     try {
-      const raw = await this.getById(ruleId);
-      const rule = { ...raw, tags: parseTags((raw as any).tags) };
+      const rule = await this.getById(ruleId);
 
       const rows = db
         .select()

@@ -3,12 +3,13 @@ import { useAddDiffComment, useEditDiffComment, useRemoveDiffComment } from '@/h
 import type { DiffFile } from '@/hooks/use-workspaces.hook';
 import type { DiffComment } from '@my-agents/shared';
 import type { ParsedLine, CommentingTarget } from '../diff-parser';
-import { LineNum, CommentGutter, InlineCommentForm, InlineCommentBubble } from '../components';
+import { LineNum, CommentGutter, InlineCommentForm, InlineCommentBubble, HighlightedLine } from '../components';
 
 export function UnifiedDiffView({
   parsed,
   file,
   workspaceId,
+  language,
   commentsByLine,
   commentingLine,
   setCommentingLine,
@@ -19,6 +20,7 @@ export function UnifiedDiffView({
   parsed: ParsedLine[];
   file: DiffFile;
   workspaceId: string;
+  language?: string;
   commentsByLine: Map<number, DiffComment[]>;
   commentingLine: CommentingTarget | null;
   setCommentingLine: (line: CommentingTarget | null) => void;
@@ -55,7 +57,7 @@ export function UnifiedDiffView({
                   {line.type === 'add' && <span className="select-none text-green-500/50 mr-1">+</span>}
                   {line.type === 'remove' && <span className="select-none text-red-500/50 mr-1">-</span>}
                   {line.type === 'context' && <span className="select-none text-transparent mr-1">&nbsp;</span>}
-                  {line.content}
+                  <HighlightedLine content={line.content} language={language} />
                 </pre>
               </div>
 

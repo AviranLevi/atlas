@@ -1,12 +1,11 @@
 // React / library
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 // Components
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -16,43 +15,31 @@ import {
 } from '@/components/ui/select';
 
 // Hooks
-import { useCreateRule, useUpdateRule } from '@/hooks/use-rules.hook';
+import { useCreateRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { RuleType } from '@my-agents/shared';
+import type { RuleType, Rule } from '@my-agents/shared';
 import type { RuleDialogProps } from './rules.types';
 
 // Constants
 import { RULE_TYPES, NONE } from './rules.constants';
 
-export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
+export function RuleDialog({ open, onOpenChange, onCreated }: RuleDialogProps) {
   const createRule = useCreateRule();
-  const updateRule = useUpdateRule();
   const { data: projects = [] } = useProjects();
-  const isEditing = !!rule;
 
   const [name, setName] = useState('');
   const [type, setType] = useState<RuleType>('General');
   const [tagsStr, setTagsStr] = useState('');
-  const [content, setContent] = useState('');
   const [projectId, setProjectId] = useState<string>(NONE);
 
-  useEffect(() => {
-    if (rule) {
-      setName(rule.name);
-      setType(rule.type);
-      setTagsStr(rule.tags.join(', '));
-      setContent(rule.content ?? '');
-      setProjectId(rule.projectId ?? NONE);
-    } else {
-      setName('');
-      setType('General');
-      setTagsStr('');
-      setContent('');
-      setProjectId(NONE);
-    }
-  }, [rule, open]);
+  const resetForm = () => {
+    setName('');
+    setType('General');
+    setTagsStr('');
+    setProjectId(NONE);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,33 +47,30 @@ export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
-    const data = {
-      name,
-      type,
-      tags,
-      content: content.trim() || null,
-      projectId: projectId === NONE ? null : projectId,
-    };
 
-    if (isEditing) {
-      updateRule.mutate(
-        { id: rule.id, data },
-        { onSuccess: () => onOpenChange(false) },
-      );
-    } else {
-      createRule.mutate(data, {
-        onSuccess: () => onOpenChange(false),
-      });
-    }
+    createRule.mutate(
+      {
+        name,
+        type,
+        tags,
+        content: null,
+        projectId: projectId === NONE ? null : projectId,
+      },
+      {
+        onSuccess: (newRule: Rule) => {
+          resetForm();
+          onOpenChange(false);
+          onCreated?.(newRule);
+        },
+      },
+    );
   };
 
-  const isPending = createRule.isPending || updateRule.isPending;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+    <Dialog open={open} onOpenChange={(val) => { if (!val) resetForm(); onOpenChange(val); }}>
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Rule' : 'New Rule'}</DialogTitle>
+          <DialogTitle>New Rule</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -139,26 +123,12 @@ export function RuleDialog({ open, onOpenChange, rule }: RuleDialogProps) {
               placeholder="e.g., api, errors, conventions"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="content">Content</Label>
-            <Textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Coding standards and conventions..."
-              rows={6}
-            />
-          </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" asChild>
-              <button type="button" onClick={() => onOpenChange(false)}>
-                Cancel
-              </button>
+            <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
+              Cancel
             </Button>
-            <Button asChild>
-              <button type="submit" disabled={isPending || !name.trim()}>
-                {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Rule'}
-              </button>
+            <Button type="submit" disabled={createRule.isPending || !name.trim()}>
+              {createRule.isPending ? 'Creating...' : 'Create Rule'}
             </Button>
           </div>
         </form>
