@@ -6,7 +6,7 @@ import type { Skill, CreateSkill, UpdateSkill } from '@my-agents/shared';
 
 // DB
 import { db } from '../db/index.js';
-import { skills } from '../db/schema/index.js';
+import { skills, agentSkills, agents } from '../db/schema/index.js';
 
 // Repositories
 import { skillsRepository } from '../db/repositories/index.js';
@@ -83,6 +83,33 @@ export class SkillsService {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete skill', { cause: error });
+    }
+  }
+
+  /** Returns a skill with its associated agents. */
+  async getDetail(skillId: string) {
+    const FUNCTION_NAME = 'getDetail';
+    try {
+      const skill = await this.getById(skillId);
+
+      const rows = db
+        .select()
+        .from(agentSkills)
+        .where(eq(agentSkills.skillId, skillId))
+        .all();
+
+      const agentsList = [];
+      for (const row of rows) {
+        const agent = db.select().from(agents).where(eq(agents.id, row.agentId)).get();
+        if (agent) {
+          agentsList.push({ id: agent.id, name: agent.name });
+        }
+      }
+
+      return { skill, agents: agentsList };
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to get skill detail', { cause: error });
     }
   }
 }

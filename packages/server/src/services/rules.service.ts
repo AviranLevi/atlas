@@ -6,12 +6,13 @@ import type { Rule, CreateRule, UpdateRule } from '@my-agents/shared';
 
 // DB
 import { db } from '../db/index.js';
-import { rules } from '../db/schema/index.js';
+import { rules, agentRules, agents } from '../db/schema/index.js';
 
 // Repositories
 import { rulesRepository } from '../db/repositories/index.js';
 
 // Lib
+import { parseTags } from '../lib/parse-tags.js';
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
 
@@ -35,7 +36,7 @@ export class RulesService {
           .all();
         return rows.map((r) => ({
           ...r,
-          tags: JSON.parse(r.tags ?? '[]'),
+          tags: parseTags(r.tags),
         })) as Rule[];
       }
       return this.repo.findAll();
@@ -86,6 +87,34 @@ export class RulesService {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete rule', { cause: error });
+    }
+  }
+
+  /** Returns a rule with its associated agents. */
+  async getDetail(ruleId: string) {
+    const FUNCTION_NAME = 'getDetail';
+    try {
+      const raw = await this.getById(ruleId);
+      const rule = { ...raw, tags: parseTags((raw as any).tags) };
+
+      const rows = db
+        .select()
+        .from(agentRules)
+        .where(eq(agentRules.ruleId, ruleId))
+        .all();
+
+      const agentsList = [];
+      for (const row of rows) {
+        const agent = db.select().from(agents).where(eq(agents.id, row.agentId)).get();
+        if (agent) {
+          agentsList.push({ id: agent.id, name: agent.name });
+        }
+      }
+
+      return { rule, agents: agentsList };
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to get rule detail', { cause: error });
     }
   }
 }

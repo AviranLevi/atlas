@@ -14,6 +14,7 @@ import { agentsRepository } from '../db/repositories/index.js';
 // Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
+import { parseTags } from '../lib/parse-tags.js';
 
 const FILE_PATH = 'services/agents.service.ts';
 
@@ -174,7 +175,7 @@ export class AgentsService {
             .map((rid) => {
               const row = db.select().from(rules).where(eq(rules.id, rid)).get();
               if (!row) return null;
-              return { ...row, tags: JSON.parse(row.tags ?? '[]') };
+              return { ...row, tags: parseTags(row.tags) };
             })
             .filter(Boolean)
         : [];
@@ -209,7 +210,7 @@ export class AgentsService {
           .all();
         projectRules = projectRuleRows.map((row) => ({
           ...row,
-          tags: JSON.parse(row.tags ?? '[]'),
+          tags: parseTags(row.tags),
         }));
       }
 

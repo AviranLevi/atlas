@@ -14,6 +14,7 @@ import { projectsRepository } from '../db/repositories/index.js';
 // Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
+import { parseTags } from '../lib/parse-tags.js';
 
 const FILE_PATH = 'services/projects.service.ts';
 
@@ -189,7 +190,7 @@ export class ProjectsService {
         .all();
       const projectTasks = rawTasks.map((t) => ({
         ...t,
-        tags: typeof t.tags === 'string' ? JSON.parse(t.tags) : t.tags ?? null,
+        tags: typeof t.tags === 'string' ? parseTags(t.tags) : t.tags ?? null,
       }));
 
       const projectMemories = db

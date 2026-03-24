@@ -1,5 +1,6 @@
 // React / library
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Zap, Plus, Pencil, Trash2 } from 'lucide-react';
 
 // Components
@@ -16,6 +17,7 @@ import { useProjects } from '@/hooks/use-projects.hook';
 import type { Skill } from '@my-agents/shared';
 
 export function SkillsPage() {
+  const navigate = useNavigate();
   const { data: skills, isLoading } = useSkills();
   const { data: projects = [] } = useProjects();
   const deleteSkill = useDeleteSkill();
@@ -73,7 +75,8 @@ export function SkillsPage() {
           {skills.map((skill) => (
             <Card
               key={skill.id}
-              className="group relative flex flex-col gap-1.5 p-4 transition-shadow hover:shadow-md"
+              className="group relative flex cursor-pointer flex-col gap-1.5 p-4 transition-shadow hover:shadow-md"
+              onClick={() => navigate(`/skills/${skill.id}`)}
             >
               <div className="flex items-start gap-3">
                 <div className="bg-primary/10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
@@ -95,10 +98,10 @@ export function SkillsPage() {
               </div>
 
               <div className="absolute right-2 top-2 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(skill)} aria-label="Edit skill">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleEdit(skill); }} aria-label="Edit skill">
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(skill.id)} aria-label="Delete skill">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleDelete(skill.id); }} aria-label="Delete skill">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>

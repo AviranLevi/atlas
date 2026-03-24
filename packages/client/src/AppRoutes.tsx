@@ -5,7 +5,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AgentsPage } from '@/pages/agents/AgentsPage';
 import { AgentDetailPage } from '@/pages/agent-detail/AgentDetailPage';
 import { SkillsPage } from '@/pages/skills/SkillsPage';
+import { SkillDetailPage } from '@/pages/skill-detail/SkillDetailPage';
 import { RulesPage } from '@/pages/rules/RulesPage';
+import { RuleDetailPage } from '@/pages/rule-detail/RuleDetailPage';
 import { MemoryPage } from '@/pages/memory/MemoryPage';
 import { ProjectsPage } from '@/pages/projects/ProjectsPage';
 import { ProjectDetailPage } from '@/pages/project-detail/ProjectDetailPage';
@@ -21,7 +23,9 @@ export function AppRoutes() {
       <Route path="/agents" element={<AgentsPage />} />
       <Route path="/agents/:id" element={<AgentDetailPage />} />
       <Route path="/skills" element={<SkillsPage />} />
+      <Route path="/skills/:id" element={<SkillDetailPage />} />
       <Route path="/rules" element={<RulesPage />} />
+      <Route path="/rules/:id" element={<RuleDetailPage />} />
       <Route path="/memory" element={<MemoryPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/projects/:id" element={<ProjectDetailPage />} />

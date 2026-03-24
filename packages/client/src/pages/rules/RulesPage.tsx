@@ -1,5 +1,6 @@
 // React / library
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ScrollText, Plus, Pencil, Trash2 } from 'lucide-react';
 
 // Components
@@ -26,6 +27,7 @@ import type { Rule } from '@my-agents/shared';
 import { RULE_TYPE_OPTIONS } from './rules-page.constants';
 
 export function RulesPage() {
+  const navigate = useNavigate();
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const filters = typeFilter && typeFilter !== 'all' ? { type: typeFilter } : undefined;
   const { data: rules, isLoading } = useRules(filters);
@@ -100,7 +102,8 @@ export function RulesPage() {
           {rules.map((rule) => (
             <Card
               key={rule.id}
-              className="group relative flex flex-col gap-2 p-4 transition-shadow hover:shadow-md"
+              className="group relative flex cursor-pointer flex-col gap-2 p-4 transition-shadow hover:shadow-md"
+              onClick={() => navigate(`/rules/${rule.id}`)}
             >
               <div className="flex items-start gap-3">
                 <div className="bg-primary/10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
@@ -132,10 +135,10 @@ export function RulesPage() {
               )}
 
               <div className="absolute right-2 top-2 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(rule)} aria-label="Edit rule">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleEdit(rule); }} aria-label="Edit rule">
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(rule.id)} aria-label="Delete rule">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleDelete(rule.id); }} aria-label="Delete rule">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>

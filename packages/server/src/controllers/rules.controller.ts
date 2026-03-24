@@ -37,3 +37,9 @@ export async function deleteRule(c: Context) {
   await rulesService.delete(c.req.param('id')!);
   return c.body(null, 204);
 }
+
+/** Returns a rule with its associated agents. */
+export async function getRuleDetail(c: Context) {
+  const detail = await rulesService.getDetail(c.req.param('id')!);
+  return c.json(detail);
+}

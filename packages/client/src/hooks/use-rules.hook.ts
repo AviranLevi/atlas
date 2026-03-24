@@ -49,8 +49,10 @@ export function useUpdateRule() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateRule }) =>
       api.put<Rule>(`/rules/${id}`, data),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: RULES_KEY }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: RULES_KEY });
+      queryClient.invalidateQueries({ queryKey: ['rule-detail'] });
+    },
   });
 }
 

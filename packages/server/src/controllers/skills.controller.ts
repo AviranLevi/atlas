@@ -37,3 +37,9 @@ export async function deleteSkill(c: Context) {
   await skillsService.delete(c.req.param('id')!);
   return c.body(null, 204);
 }
+
+/** Returns a skill with its associated agents. */
+export async function getSkillDetail(c: Context) {
+  const detail = await skillsService.getDetail(c.req.param('id')!);
+  return c.json(detail);
+}

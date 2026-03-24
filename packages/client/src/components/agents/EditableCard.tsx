@@ -6,11 +6,12 @@ import { Pencil, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 
 // Types
 import type { EditableCardProps } from './agents.types';
 
-/** Inline-editable text card for long-form agent fields. */
+/** Inline-editable text card for long-form agent fields. Renders Markdown when not editing. */
 export function EditableCard({
   icon: Icon,
   label,
@@ -57,19 +58,22 @@ export function EditableCard({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={placeholder}
-            rows={8}
-            className="min-h-[120px] resize-y text-sm"
+            rows={10}
+            className="min-h-[160px] resize-y font-mono text-sm"
             autoFocus
           />
-          <div className="flex justify-end gap-1.5">
-            <Button variant="ghost" size="sm" onClick={cancel} disabled={isPending}>
-              <X className="mr-1 h-3.5 w-3.5" />
-              Cancel
-            </Button>
-            <Button size="sm" onClick={save} disabled={isPending}>
-              <Check className="mr-1 h-3.5 w-3.5" />
-              {isPending ? 'Saving...' : 'Save'}
-            </Button>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-muted-foreground">Supports Markdown — headings, **bold**, `code`, ```code blocks```, lists</p>
+            <div className="flex gap-1.5">
+              <Button variant="ghost" size="sm" onClick={cancel} disabled={isPending}>
+                <X className="mr-1 h-3.5 w-3.5" />
+                Cancel
+              </Button>
+              <Button size="sm" onClick={save} disabled={isPending}>
+                <Check className="mr-1 h-3.5 w-3.5" />
+                {isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
           </div>
         </div>
       ) : value ? (
@@ -78,9 +82,7 @@ export function EditableCard({
           className="cursor-pointer rounded-md p-2 text-left transition-colors hover:bg-muted/50"
           onClick={startEditing}
         >
-          <pre className="whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
-            {value}
-          </pre>
+          <MarkdownContent content={value} />
         </button>
       ) : (
         <button

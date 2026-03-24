@@ -6,10 +6,11 @@ import { zValidator } from '@hono/zod-validator';
 import { CreateRuleSchema, UpdateRuleSchema } from '@my-agents/shared';
 
 // Controllers
-import { listRules, getRule, createRule, updateRule, deleteRule } from '../controllers/rules.controller.js';
+import { listRules, getRule, getRuleDetail, createRule, updateRule, deleteRule } from '../controllers/rules.controller.js';
 
 export const rulesRoute = new Hono()
   .get('/', listRules)
+  .get('/:id/detail', getRuleDetail)
   .get('/:id', getRule)
   .post('/', zValidator('json', CreateRuleSchema), createRule)
   .put('/:id', zValidator('json', UpdateRuleSchema), updateRule)

@@ -37,7 +37,10 @@ export function useUpdateSkill() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateSkill }) =>
       api.put<Skill>(`/skills/${id}`, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: SKILLS_KEY }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SKILLS_KEY });
+      queryClient.invalidateQueries({ queryKey: ['skill-detail'] });
+    },
   });
 }
 

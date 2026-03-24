@@ -6,10 +6,11 @@ import { zValidator } from '@hono/zod-validator';
 import { CreateSkillSchema, UpdateSkillSchema } from '@my-agents/shared';
 
 // Controllers
-import { listSkills, getSkill, createSkill, updateSkill, deleteSkill } from '../controllers/skills.controller.js';
+import { listSkills, getSkill, getSkillDetail, createSkill, updateSkill, deleteSkill } from '../controllers/skills.controller.js';
 
 export const skillsRoute = new Hono()
   .get('/', listSkills)
+  .get('/:id/detail', getSkillDetail)
   .get('/:id', getSkill)
   .post('/', zValidator('json', CreateSkillSchema), createSkill)
   .put('/:id', zValidator('json', UpdateSkillSchema), updateSkill)
