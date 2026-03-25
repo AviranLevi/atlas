@@ -81,5 +81,29 @@ try {
   // Column already exists — ignore
 }
 
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS chat_conversations (
+    id TEXT PRIMARY KEY NOT NULL,
+    title TEXT,
+    project_id TEXT REFERENCES projects(id),
+    provider_id TEXT NOT NULL REFERENCES agent_providers(id),
+    model TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`);
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY NOT NULL,
+    conversation_id TEXT NOT NULL REFERENCES chat_conversations(id),
+    role TEXT NOT NULL,
+    content TEXT NOT NULL DEFAULT '',
+    tool_calls TEXT,
+    tool_results TEXT,
+    created_at TEXT NOT NULL
+  )
+`);
+
 export { schema };
 export type DB = typeof db;

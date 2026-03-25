@@ -14,6 +14,7 @@ import { AgentProvidersRepository } from './agent-providers.repository.js';
 import { PhasesRepository } from './phases.repository.js';
 import { ReviewsRepository } from './reviews.repository.js';
 import { ActivityLogRepository } from './activity-log.repository.js';
+import { ChatRepository } from './chat.repository.js';
 
 export const agentsRepository = new AgentsRepository(db);
 export const skillsRepository = new SkillsRepository(db);
@@ -27,3 +28,4 @@ export const agentProvidersRepository = new AgentProvidersRepository(db);
 export const phasesRepository = new PhasesRepository(db);
 export const reviewsRepository = new ReviewsRepository(db);
 export const activityLogRepository = new ActivityLogRepository(db);
+export const chatRepository = new ChatRepository(db);

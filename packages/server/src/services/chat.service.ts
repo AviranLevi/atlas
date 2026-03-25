@@ -1,0 +1,262 @@
+import type { ChatConversation, ChatMessage, CreateConversation } from '@my-agents/shared';
+
+import { chatRepository } from '../db/repositories/index.js';
+import { agentProvidersService, settingsService, projectsService, memoryService } from './index.js';
+import { streamChat, type InternalMessage, type ChatEvent } from '../lib/chat-stream.js';
+import { CHAT_TOOLS, executeTool, type ToolDefinition } from '../lib/chat-tools.js';
+import { logger } from '../lib/logger.js';
+import { AppError } from '../lib/errors.js';
+
+const FILE_PATH = 'services/chat.service.ts';
+const MAX_TOOL_ROUNDS = 10;
+const MAX_RECENT_MEMORIES = 5;
+
+type StreamCallback = (event: string, data: unknown) => void | Promise<void>;
+
+export class ChatService {
+  private readonly repo = chatRepository;
+  private activeStreams = new Map<string, AbortController>();
+
+  async listConversations(projectId?: string | null): Promise<ChatConversation[]> {
+    return this.repo.findAllConversations(projectId);
+  }
+
+  async getConversation(id: string): Promise<ChatConversation> {
+    return this.repo.findConversationByIdOrThrow(id);
+  }
+
+  async createConversation(data: CreateConversation): Promise<ChatConversation> {
+    return this.repo.insertConversation(data);
+  }
+
+  async deleteConversation(id: string): Promise<void> {
+    this.abortStream(id);
+    this.repo.removeConversation(id);
+  }
+
+  async getMessages(conversationId: string): Promise<ChatMessage[]> {
+    return this.repo.findMessagesByConversation(conversationId);
+  }
+
+  abortStream(conversationId: string): void {
+    const controller = this.activeStreams.get(conversationId);
+    if (controller) {
+      controller.abort();
+      this.activeStreams.delete(conversationId);
+    }
+  }
+
+  async sendMessage(
+    conversationId: string,
+    content: string,
+    emit: StreamCallback,
+  ): Promise<void> {
+    const FUNCTION_NAME = 'sendMessage';
+
+    const conversation = this.repo.findConversationByIdOrThrow(conversationId);
+    const provider = await agentProvidersService.getById(conversation.providerId);
+
+    this.repo.insertMessage({ conversationId, role: 'user', content });
+
+    const abortController = new AbortController();
+    this.activeStreams.set(conversationId, abortController);
+
+    try {
+      const systemPrompt = await this.buildSystemPrompt(conversation.projectId);
+      const history = this.repo.findMessagesByConversation(conversationId);
+      let messages = this.toInternalMessages(history);
+
+      let toolRound = 0;
+      let done = false;
+
+      while (!done && toolRound < MAX_TOOL_ROUNDS) {
+        if (abortController.signal.aborted) break;
+
+        const pendingToolCalls: { id: string; name: string; args: Record<string, unknown> }[] = [];
+        let assistantText = '';
+
+        const stream = streamChat(
+          provider,
+          conversation.model,
+          systemPrompt,
+          messages,
+          CHAT_TOOLS,
+          abortController.signal,
+        );
+
+        for await (const event of stream) {
+          if (abortController.signal.aborted) break;
+
+          switch (event.type) {
+            case 'text_delta':
+              assistantText += event.text;
+              await emit('text_delta', { text: event.text });
+              break;
+            case 'tool_call':
+              pendingToolCalls.push({ id: event.id, name: event.name, args: event.args });
+              await emit('tool_call', { id: event.id, name: event.name, args: event.args });
+              break;
+            case 'done':
+              if (pendingToolCalls.length === 0) {
+                done = true;
+              }
+              break;
+          }
+        }
+
+        if (abortController.signal.aborted) break;
+
+        if (pendingToolCalls.length > 0) {
+          const assistantMsg = this.repo.insertMessage({
+            conversationId,
+            role: 'assistant',
+            content: assistantText,
+            toolCalls: pendingToolCalls,
+          });
+
+          const projectContext = await this.getProjectContext(conversation.projectId);
+
+          for (const tc of pendingToolCalls) {
+            const result = await executeTool(tc.name, tc.args, projectContext);
+            await emit('tool_result', { toolCallId: tc.id, name: tc.name, result });
+
+            this.repo.insertMessage({
+              conversationId,
+              role: 'tool',
+              content: JSON.stringify(result),
+              toolResults: [{ toolCallId: tc.id, result }],
+            });
+          }
+
+          messages = this.toInternalMessages(
+            this.repo.findMessagesByConversation(conversationId),
+          );
+          toolRound++;
+        } else {
+          const savedMsg = this.repo.insertMessage({
+            conversationId,
+            role: 'assistant',
+            content: assistantText,
+          });
+          await emit('done', { messageId: savedMsg.id });
+          done = true;
+        }
+      }
+
+      if (toolRound >= MAX_TOOL_ROUNDS && !done) {
+        const savedMsg = this.repo.insertMessage({
+          conversationId,
+          role: 'assistant',
+          content: '(Reached maximum tool call rounds)',
+        });
+        await emit('done', { messageId: savedMsg.id });
+      }
+
+      await this.maybeGenerateTitle(conversation);
+      this.repo.updateConversation(conversationId, {});
+    } catch (error: unknown) {
+      if (abortController.signal.aborted) return;
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      await emit('error', { message: error instanceof Error ? error.message : 'Stream failed' });
+    } finally {
+      this.activeStreams.delete(conversationId);
+    }
+  }
+
+  private async buildSystemPrompt(projectId: string | null): Promise<string> {
+    const sections: string[] = [];
+
+    sections.push(
+      'You are a helpful AI assistant integrated into a project management and AI agent orchestration platform. ' +
+      'You can answer questions about the project, create tasks, agents, rules, skills, and memories using the available tools. ' +
+      'Be concise and direct. When creating entities, confirm what you created.',
+    );
+
+    const globalInstructions = await settingsService.listGlobalInstructions();
+    if (globalInstructions.length > 0) {
+      const content = globalInstructions.map((gi) => gi.content).filter(Boolean).join('\n\n');
+      if (content) sections.push(`## Global Instructions\n\n${content}`);
+    }
+
+    if (projectId) {
+      try {
+        const { project } = await projectsService.getContext(projectId);
+
+        if (project.projectBrief) {
+          sections.push(`## Project Context\n\n${project.projectBrief}`);
+        } else {
+          const projLines: string[] = [`## Project: ${project.name}`];
+          if (project.description) projLines.push(project.description);
+          if (project.techStack) projLines.push(`**Tech Stack:** ${project.techStack}`);
+          sections.push(projLines.join('\n'));
+        }
+
+        if (project.scanData) {
+          const sd = project.scanData;
+          const scanLines: string[] = [];
+          if (sd.languages?.length) scanLines.push(`**Languages:** ${sd.languages.join(', ')}`);
+          if (sd.packageManager) scanLines.push(`**Package Manager:** ${sd.packageManager}`);
+          if (sd.projectType) scanLines.push(`**Type:** ${sd.projectType}`);
+          if (sd.keyDirectories && Object.keys(sd.keyDirectories).length > 0) {
+            const dirs = Object.entries(sd.keyDirectories).map(([k, v]) => `${k}: \`${v}\``).join(', ');
+            scanLines.push(`**Key Directories:** ${dirs}`);
+          }
+          if (scanLines.length > 0) {
+            sections.push(`## Project Structure\n\n${scanLines.join('\n')}`);
+          }
+        }
+
+        const allMemories = await memoryService.listByProject(projectId);
+        const recentMemories = allMemories
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+          .slice(0, MAX_RECENT_MEMORIES);
+        if (recentMemories.length > 0) {
+          const memList = recentMemories
+            .map((m) => `- [${m.type}] **${m.name}**: ${m.content}`)
+            .join('\n');
+          sections.push(`## Recent Project Knowledge\n\n${memList}`);
+        }
+      } catch {
+        // Project context not available -- continue without it
+      }
+    }
+
+    return sections.join('\n\n---\n\n');
+  }
+
+  private toInternalMessages(messages: ChatMessage[]): InternalMessage[] {
+    return messages.map((m) => {
+      if (m.role === 'user') return { role: 'user' as const, content: m.content };
+      if (m.role === 'tool') {
+        const toolCallId = m.toolResults?.[0]?.toolCallId ?? 'unknown';
+        return { role: 'tool' as const, toolCallId, content: m.content };
+      }
+      return {
+        role: 'assistant' as const,
+        content: m.content,
+        toolCalls: m.toolCalls ?? undefined,
+      };
+    });
+  }
+
+  private async getProjectContext(projectId: string | null): Promise<{ projectId?: string | null; projectLocalPath?: string | null }> {
+    if (!projectId) return {};
+    try {
+      const { project } = await projectsService.getContext(projectId);
+      return { projectId, projectLocalPath: project.localPath ?? null };
+    } catch {
+      return { projectId };
+    }
+  }
+
+  private async maybeGenerateTitle(conversation: ChatConversation): Promise<void> {
+    if (conversation.title) return;
+
+    const messages = this.repo.findMessagesByConversation(conversation.id);
+    const firstUserMsg = messages.find((m) => m.role === 'user');
+    if (!firstUserMsg) return;
+
+    const title = firstUserMsg.content.slice(0, 50) + (firstUserMsg.content.length > 50 ? '...' : '');
+    this.repo.updateConversation(conversation.id, { title });
+  }
+}

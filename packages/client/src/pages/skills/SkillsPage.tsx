@@ -197,9 +197,9 @@ export function SkillsPage() {
           </p>
           {!search && projectFilter === PROJECT_SCOPE_ALL && (
             <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm">
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Skill
-            </Button>
+            <Plus className="mr-1.5 h-4 w-4" />
+            Create Skill
+          </Button>
           )}
         </div>
       ) : grouped ? (

@@ -7,12 +7,14 @@ import {
   Settings,
   Activity,
   FolderKanban,
+  MessageSquare,
 } from 'lucide-react';
 import type { NavItem } from './layout.types';
 
 export const navItems: NavItem[] = [
   { to: '/kanban', icon: Columns3, label: 'Kanban' },
   { to: '/workspaces', icon: Activity, label: 'Workspaces', badge: true },
+  { to: '/chat', icon: MessageSquare, label: 'Chat' },
   { to: '/agents', icon: Bot, label: 'Agents' },
   { to: '/skills', icon: Zap, label: 'Skills' },
   { to: '/rules', icon: ScrollText, label: 'Rules' },

@@ -156,7 +156,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="flex flex-1 flex-col overflow-hidden">
         <ProjectTabBar />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex flex-1 flex-col overflow-auto p-6">{children}</main>
       </div>
     </div>
   );

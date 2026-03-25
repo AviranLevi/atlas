@@ -48,11 +48,32 @@ async function listAnthropicModels(provider: AgentProvider): Promise<ProviderMod
   return page.data.map((m) => ({ value: m.id, label: m.display_name ?? m.id }));
 }
 
+const OPENAI_CHAT_PREFIXES = ['gpt-', 'o1', 'o3', 'o4', 'chatgpt-'];
+const DATED_SNAPSHOT_RE = /(-\d{4}(-\d{2}){0,2})$/;
+
+function isOpenAIChatAlias(id: string): boolean {
+  if (!OPENAI_CHAT_PREFIXES.some((p) => id.startsWith(p))) return false;
+  if (DATED_SNAPSHOT_RE.test(id)) return false;
+  if (/image|audio|preview/.test(id)) return false;
+  return true;
+}
+
 async function listOpenAIModels(provider: AgentProvider): Promise<ProviderModel[]> {
+  const client = await createOpenAIClient(provider.apiKey ?? '', provider.baseUrl ?? undefined);
+  const page = await client.models.list();
+  return page.data
+    .filter((m) => isOpenAIChatAlias(m.id))
+    .sort((a, b) => b.created - a.created)
+    .map((m) => ({ value: m.id, label: m.id }));
+}
+
+async function listOpenAICompatibleModels(provider: AgentProvider): Promise<ProviderModel[]> {
   const client = await createOpenAIClient(provider.apiKey ?? '', provider.baseUrl ?? undefined);
   const page = await client.models.list();
   return page.data.map((m) => ({ value: m.id, label: m.id }));
 }
+
+const GOOGLE_DATED_RE = /-\d{3,4}$/;
 
 async function listGoogleModels(provider: AgentProvider): Promise<ProviderModel[]> {
   const resp = await fetch(`${GOOGLE_AI_BASE}/models?key=${provider.apiKey ?? ''}`);
@@ -61,7 +82,12 @@ async function listGoogleModels(provider: AgentProvider): Promise<ProviderModel[
     models: { name: string; displayName?: string; supportedGenerationMethods?: string[] }[];
   };
   return data.models
-    .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
+    .filter((m) => {
+      if (!m.supportedGenerationMethods?.includes('generateContent')) return false;
+      const id = m.name.replace('models/', '');
+      if (GOOGLE_DATED_RE.test(id)) return false;
+      return true;
+    })
     .map((m) => ({
       value: m.name.replace('models/', ''),
       label: m.displayName ?? m.name.replace('models/', ''),
@@ -90,7 +116,7 @@ export const TEST_FNS: Record<string, (p: AgentProvider) => Promise<void>> = {
 export const LIST_MODEL_FNS: Record<string, (p: AgentProvider) => Promise<ProviderModel[]>> = {
   anthropic: listAnthropicModels,
   openai: listOpenAIModels,
-  'openai-compatible': listOpenAIModels,
+  'openai-compatible': listOpenAICompatibleModels,
   google: listGoogleModels,
   ollama: listOllamaModels,
 };

@@ -10,3 +10,4 @@ export * from "./schemas/agent-providers.schema";
 export * from "./schemas/phases.schema";
 export * from "./schemas/reviews.schema";
 export * from "./schemas/search.schema";
+export * from "./schemas/chat.schema";

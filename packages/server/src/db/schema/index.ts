@@ -11,3 +11,4 @@ export { agentProviders } from './agent-providers.schema.js';
 export { phases } from './phases.schema.js';
 export { reviews } from './reviews.schema.js';
 export { activityLog } from './activity-log.schema.js';
+export { chatConversations, chatMessages } from './chat.schema.js';

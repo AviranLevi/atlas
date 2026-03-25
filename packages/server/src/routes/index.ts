@@ -16,6 +16,7 @@ import { mcpConfigRoute } from './mcp-config.route.js';
 import { agentProvidersRoute } from './agent-providers.route.js';
 import { phasesRoute } from './phases.route.js';
 import { reviewsRoute } from './reviews.route.js';
+import { chatRoute } from './chat.route.js';
 
 export const apiRoutes = new Hono()
   .route('/agents', agentsRoute)
@@ -31,4 +32,5 @@ export const apiRoutes = new Hono()
   .route('/mcp', mcpConfigRoute)
   .route('/agent-providers', agentProvidersRoute)
   .route('/phases', phasesRoute)
-  .route('/reviews', reviewsRoute);
+  .route('/reviews', reviewsRoute)
+  .route('/chat', chatRoute);
