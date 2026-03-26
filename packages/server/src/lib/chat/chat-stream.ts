@@ -1,17 +1,6 @@
 import type { AgentProvider } from '@my-agents/shared';
-import { createAnthropicClient, createOpenAIClient, ollamaBaseUrl, GOOGLE_AI_BASE } from './provider-clients.js';
-import type { ToolDefinition } from './chat-tools.js';
-
-export type ChatEvent =
-  | { type: 'text_delta'; text: string }
-  | { type: 'tool_call'; id: string; name: string; args: Record<string, unknown> }
-  | { type: 'tool_call_done' }
-  | { type: 'done'; stopReason: string };
-
-export type InternalMessage =
-  | { role: 'user'; content: string }
-  | { role: 'assistant'; content: string; toolCalls?: { id: string; name: string; args: Record<string, unknown> }[] }
-  | { role: 'tool'; toolCallId: string; content: string };
+import { createAnthropicClient, createOpenAIClient, ollamaBaseUrl, GOOGLE_AI_BASE } from '../providers/provider-clients.js';
+import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 
 export async function* streamChat(
   provider: AgentProvider,

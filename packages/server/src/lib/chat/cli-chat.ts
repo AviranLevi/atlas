@@ -1,24 +1,11 @@
 import { spawn } from 'child_process';
-import type { ExecutorConfig } from '../executors/executor.types.js';
-import { generateMcpConfig, removeMcpConfig } from '../executors/mcp-config-generator.js';
-import { logger } from './logger.js';
+import type { ExecutorConfig } from '../../executors/executor.types.js';
+import { generateMcpConfig, removeMcpConfig } from '../../executors/mcp-config-generator.js';
+import { logger } from '../logger.js';
+import type { CliChatOptions, CliChatResult } from './chat.types.js';
 
-const FILE_PATH = 'lib/cli-chat.ts';
+const FILE_PATH = 'lib/chat/cli-chat.ts';
 const DEFAULT_TIMEOUT_MS = 120_000;
-
-export interface CliChatOptions {
-  executor: ExecutorConfig;
-  prompt: string;
-  cwd?: string;
-  model?: string;
-  timeoutMs?: number;
-  signal?: AbortSignal;
-}
-
-export interface CliChatResult {
-  text: string;
-  exitCode: number | null;
-}
 
 function buildChatArgs(
   executor: ExecutorConfig,

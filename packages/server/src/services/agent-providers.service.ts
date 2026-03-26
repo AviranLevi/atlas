@@ -7,8 +7,8 @@ import { agentProvidersRepository } from '../db/repositories/index.js';
 // Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
-import { TEST_FNS, LIST_MODEL_FNS } from '../lib/provider-adapters.js';
-import { withTimeout } from '../lib/with-timeout.js';
+import { TEST_FNS, LIST_MODEL_FNS } from '../lib/providers/index.js';
+import { withTimeout } from '../lib/utils/index.js';
 
 const FILE_PATH = 'services/agent-providers.service.ts';
 

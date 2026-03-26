@@ -14,7 +14,7 @@ import { projectsRepository } from '../db/repositories/index.js';
 // Lib
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
-import { parseTags } from '../lib/parse-tags.js';
+import { parseTags } from '../lib/utils/index.js';
 
 const FILE_PATH = 'services/projects.service.ts';
 

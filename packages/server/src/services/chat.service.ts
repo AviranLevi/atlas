@@ -2,9 +2,7 @@ import type { ChatConversation, ChatMessage, CreateConversation } from '@my-agen
 
 import { chatRepository } from '../db/repositories/index.js';
 import { agentProvidersService, settingsService, projectsService, memoryService } from './index.js';
-import { streamChat, type InternalMessage, type ChatEvent } from '../lib/chat-stream.js';
-import { CHAT_TOOLS, executeTool, type ToolDefinition } from '../lib/chat-tools.js';
-import { runCliChat, formatCliPrompt } from '../lib/cli-chat.js';
+import { streamChat, type InternalMessage, type ChatEvent, type ToolDefinition, CHAT_TOOLS, executeTool, runCliChat, formatCliPrompt } from '../lib/chat/index.js';
 import { executorRegistry } from '../executors/index.js';
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';

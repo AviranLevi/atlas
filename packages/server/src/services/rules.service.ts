@@ -12,7 +12,7 @@ import { rules, agentRules, agents } from '../db/schema/index.js';
 import { rulesRepository } from '../db/repositories/index.js';
 
 // Lib
-import { parseTags } from '../lib/parse-tags.js';
+import { parseTags } from '../lib/utils/index.js';
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
 

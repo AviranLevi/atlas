@@ -1,8 +1,6 @@
-// External
 import fs from 'fs';
 import path from 'path';
 
-// Shared
 import type {
   CreateAgent,
   CreateMemory,
@@ -12,7 +10,6 @@ import type {
   UpdateTask,
 } from '@my-agents/shared';
 
-// Services
 import {
   tasksService,
   agentsService,
@@ -22,18 +19,12 @@ import {
   searchService,
   projectsService,
   orchestratorService,
-} from '../services/index.js';
+} from '../../services/index.js';
 
-// Lib
-import { logger } from './logger.js';
+import { logger } from '../logger.js';
+import type { ToolDefinition, ToolContext } from './chat.types.js';
 
-const FILE_PATH = 'lib/chat-tools.ts';
-
-export type ToolDefinition = {
-  name: string;
-  description: string;
-  parameters: Record<string, unknown>;
-};
+const FILE_PATH = 'lib/chat/chat-tools.ts';
 
 export const CHAT_TOOLS: ToolDefinition[] = [
   {
@@ -208,11 +199,6 @@ export const CHAT_TOOLS: ToolDefinition[] = [
     parameters: { type: 'object', properties: {} },
   },
 ];
-
-export type ToolContext = {
-  projectId?: string | null;
-  projectLocalPath?: string | null;
-};
 
 function isResolvedPathInsideRoot(root: string, candidate: string): boolean {
   const resolvedRoot = path.resolve(root);

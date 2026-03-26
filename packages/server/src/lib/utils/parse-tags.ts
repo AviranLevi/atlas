@@ -5,7 +5,6 @@
 export function parseTags(raw: string | null | undefined): string[] {
   if (!raw || raw.trim() === '') return [];
 
-  // Try JSON first (for values stored as '["a","b"]')
   if (raw.startsWith('[')) {
     try {
       const parsed = JSON.parse(raw);
@@ -15,6 +14,5 @@ export function parseTags(raw: string | null | undefined): string[] {
     }
   }
 
-  // Comma-separated string (e.g. "nestjs,controllers")
   return raw.split(',').map((t) => t.trim()).filter(Boolean);
 }
