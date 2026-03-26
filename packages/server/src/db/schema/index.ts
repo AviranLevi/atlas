@@ -12,3 +12,4 @@ export { phases } from './phases.schema.js';
 export { reviews } from './reviews.schema.js';
 export { activityLog } from './activity-log.schema.js';
 export { chatConversations, chatMessages } from './chat.schema.js';
+export { preferences } from './preferences.schema.js';

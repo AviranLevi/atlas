@@ -8,6 +8,7 @@ import {
   Activity,
   FolderKanban,
   MessageSquare,
+  Globe,
 } from 'lucide-react';
 import type { NavItem } from './layout.types';
 
@@ -19,6 +20,7 @@ export const navItems: NavItem[] = [
   { to: '/skills', icon: Zap, label: 'Skills' },
   { to: '/rules', icon: ScrollText, label: 'Rules' },
   { to: '/memory', icon: Brain, label: 'Memory' },
+  { to: '/global', icon: Globe, label: 'Global' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

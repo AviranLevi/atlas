@@ -15,6 +15,7 @@ import { KanbanPage } from '@/pages/kanban/KanbanPage';
 import { WorkspacesPage } from '@/pages/workspaces/WorkspacesPage';
 import { WorkspaceDetailPage } from '@/pages/workspaces/WorkspaceDetailPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
+import { GlobalPage } from '@/pages/global/GlobalPage';
 import { ChatPage } from '@/pages/chat/ChatPage';
 
 export function AppRoutes() {
@@ -33,6 +34,7 @@ export function AppRoutes() {
       <Route path="/kanban" element={<KanbanPage />} />
       <Route path="/workspaces" element={<WorkspacesPage />} />
       <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
+      <Route path="/global" element={<GlobalPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/chat" element={<ChatPage />} />
       <Route path="/chat/:id" element={<ChatPage />} />

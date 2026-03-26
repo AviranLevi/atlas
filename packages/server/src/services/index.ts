@@ -16,6 +16,7 @@ import { PromptBuilderService } from './prompt-builder.service.js';
 import { OrchestratorService } from './orchestrator.service.js';
 import { BriefGeneratorService } from './brief-generator.service.js';
 import { ChatService } from './chat.service.js';
+import { PreferencesService } from './preferences.service.js';
 
 export const activityLogService = new ActivityLogService();
 export const agentsService = new AgentsService();
@@ -34,3 +35,4 @@ export const promptBuilderService = new PromptBuilderService();
 export const orchestratorService = new OrchestratorService();
 export const briefGeneratorService = new BriefGeneratorService();
 export const chatService = new ChatService();
+export const preferencesService = new PreferencesService();

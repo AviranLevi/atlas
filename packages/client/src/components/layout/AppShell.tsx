@@ -1,7 +1,7 @@
 // React / library
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { PanelLeftClose, PanelLeftOpen, Sun, Moon } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 // Components
 import { cn } from '@/lib/utils';
@@ -15,7 +15,6 @@ import { AgentStatusPanel } from './AgentStatusPanel';
 import { ProjectTabBar } from './ProjectTabBar';
 
 // Hooks
-import { useTheme } from '@/hooks/use-theme.hook';
 import { useWorkspaces } from '@/hooks/use-workspaces.hook';
 
 // Contexts
@@ -39,7 +38,6 @@ function ActiveWorkspaceDot() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [expanded, setExpanded] = useState(true);
-  const { theme, toggleTheme } = useTheme();
   const { activeProjectId } = useActiveProject();
 
   // Build nav items list — include "Context" only when a project is selected
@@ -75,26 +73,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           )}
           <div className="flex shrink-0 items-center gap-0.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={toggleTheme}
-                  aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="h-4 w-4" />
-                  ) : (
-                    <Moon className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-              </TooltipContent>
-            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
