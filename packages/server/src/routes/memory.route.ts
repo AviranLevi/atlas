@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateMemorySchema, UpdateMemorySchema } from '@my-agents/shared';
+import { CreateMemorySchema, UpdateMemorySchema } from '@atlas/shared';
 
 // Controllers
 import { listMemory, getMemory, createMemory, updateMemory, deleteMemory } from '../controllers/memory.controller.js';

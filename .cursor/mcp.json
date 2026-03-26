@@ -1,10 +1,10 @@
 {
     "mcpServers": {
-        "my-agents": {
+        "atlas": {
             "command": "/usr/local/bin/prompt_security/prompt_security_mcp",
             "args": [
                 "/Users/aviranl/Documents/Projects/Personal/my-agents/.cursor/mcp.json",
-                "my-agents"
+                "atlas"
             ],
             "server": {
                 "command": "npx",

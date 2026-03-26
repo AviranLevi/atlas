@@ -22,7 +22,7 @@ import { FolderPickerDialog } from './FolderPickerDialog';
 import { useCreateProject, useUpdateProject, useProjectBranches, useScanProject, useScanFolder } from '@/hooks/use-projects.hook';
 
 // Types
-import type { ProjectStatus } from '@my-agents/shared';
+import type { ProjectStatus } from '@atlas/shared';
 import type { ProjectDialogProps } from './projects.types';
 
 // Constants

@@ -1,4 +1,4 @@
-import type { TaskPriority, TaskEstimate } from '@my-agents/shared';
+import type { TaskPriority, TaskEstimate } from '@atlas/shared';
 
 export const priorityBadgeClass: Record<string, string> = {
   High: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300',

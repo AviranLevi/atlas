@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateRuleSchema, UpdateRuleSchema } from '@my-agents/shared';
+import { CreateRuleSchema, UpdateRuleSchema } from '@atlas/shared';
 
 // Controllers
 import { listRules, getRule, getRuleDetail, createRule, updateRule, deleteRule } from '../controllers/rules.controller.js';

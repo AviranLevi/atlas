@@ -1,5 +1,5 @@
 // Shared
-import type { Project, ProjectScanData, Memory } from '@my-agents/shared';
+import type { Project, ProjectScanData, Memory } from '@atlas/shared';
 
 // Services
 import { memoryService, projectsService } from '../index.js';

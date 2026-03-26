@@ -8,11 +8,11 @@ import { registerAllTools } from './mcp/register-all.js';
 
 useStderrLogger();
 
-console.error('[MCP] Initializing my-agents MCP server...');
+console.error('[MCP] Initializing atlas MCP server...');
 console.error(`[MCP] cwd: ${process.cwd()}`);
 
 const server = new McpServer({
-  name: 'my-agents',
+  name: 'atlas',
   version: '0.0.1',
 });
 
@@ -27,7 +27,7 @@ try {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[MCP] my-agents MCP server running on stdio');
+  console.error('[MCP] atlas MCP server running on stdio');
 }
 
 main().catch((error) => {

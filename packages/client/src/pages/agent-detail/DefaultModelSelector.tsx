@@ -22,7 +22,7 @@ import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 import { useProviderModels } from '@/hooks/use-agent-providers.hook';
 
 // Types
-import type { AgentProvider, ExecutorStatus, ProviderModel } from '@my-agents/shared';
+import type { AgentProvider, ExecutorStatus, ProviderModel } from '@atlas/shared';
 
 const NONE_VALUE = '__none__';
 const CUSTOM_VALUE = '__custom__';

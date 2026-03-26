@@ -5,7 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { ChatConversation, ChatMessage, CreateConversation } from '@my-agents/shared';
+import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 
 const CONVERSATIONS_KEY = ['chat-conversations'] as const;
 const MESSAGES_KEY = ['chat-messages'] as const;

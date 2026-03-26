@@ -34,7 +34,7 @@ import type {
   UpdateTask,
   TaskPriority,
   TaskEstimate,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 import type { TaskDialogProps } from './kanban.types';
 
 // Constants

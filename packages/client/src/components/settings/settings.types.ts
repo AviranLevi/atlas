@@ -1,2 +1,2 @@
-// ConnectionInfo has been moved to @my-agents/shared as McpConnectionInfo.
+// ConnectionInfo has been moved to @atlas/shared as McpConnectionInfo.
 // This file is intentionally empty and can be removed.

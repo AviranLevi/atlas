@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Phase, CreatePhase, UpdatePhase } from '@my-agents/shared';
+import type { Phase, CreatePhase, UpdatePhase } from '@atlas/shared';
 
 const PHASES_KEY = ['phases'] as const;
 

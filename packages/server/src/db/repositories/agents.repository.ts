@@ -2,7 +2,7 @@
 import { eq, and } from 'drizzle-orm';
 
 // Shared
-import type { Agent, CreateAgent, UpdateAgent, Skill, Rule, Project } from '@my-agents/shared';
+import type { Agent, CreateAgent, UpdateAgent, Skill, Rule, Project } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

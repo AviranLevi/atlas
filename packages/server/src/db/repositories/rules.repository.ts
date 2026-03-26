@@ -2,7 +2,7 @@
 import { eq, or, isNull } from 'drizzle-orm';
 
 // Shared
-import type { CreateRule, UpdateRule, Rule } from '@my-agents/shared';
+import type { CreateRule, UpdateRule, Rule } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

@@ -1,5 +1,5 @@
 // Shared
-import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@my-agents/shared';
+import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@atlas/shared';
 
 // Repositories
 import { agentProvidersRepository } from '../../db/repositories/index.js';

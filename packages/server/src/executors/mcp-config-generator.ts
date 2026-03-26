@@ -37,13 +37,13 @@ export function generateMcpConfig(
 
   switch (format) {
     case 'claude':
-      config = { mcpServers: { 'my-agents': mcpServerEntry } };
+      config = { mcpServers: { 'atlas': mcpServerEntry } };
       break;
     case 'cursor':
-      config = { mcpServers: { 'my-agents': mcpServerEntry } };
+      config = { mcpServers: { 'atlas': mcpServerEntry } };
       break;
     case 'generic-json':
-      config = { mcpServers: { 'my-agents': mcpServerEntry } };
+      config = { mcpServers: { 'atlas': mcpServerEntry } };
       break;
     default:
       return undefined;

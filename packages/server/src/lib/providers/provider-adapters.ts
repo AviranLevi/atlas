@@ -1,4 +1,4 @@
-import type { AgentProvider, ProviderModel } from '@my-agents/shared';
+import type { AgentProvider, ProviderModel } from '@atlas/shared';
 import { createAnthropicClient, createOpenAIClient, ollamaBaseUrl, GOOGLE_AI_BASE } from './provider-clients.js';
 
 // ---------------------------------------------------------------------------

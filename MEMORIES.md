@@ -1,4 +1,4 @@
-# my-agents — Project Memory
+# Atlas — Project Memory
 
 ## What This Is
 A local-first AI agent orchestration hub. Single user now, architected for multi-user later.

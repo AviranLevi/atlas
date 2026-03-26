@@ -1,5 +1,5 @@
-export const RUNTIME_STORAGE_KEY = 'my-agents:last-runtime';
-export const MODEL_STORAGE_KEY = 'my-agents:last-model';
+export const RUNTIME_STORAGE_KEY = 'atlas:last-runtime';
+export const MODEL_STORAGE_KEY = 'atlas:last-model';
 export const DEFAULT_BRANCH_VALUE = '__default__';
 export const DEFAULT_MODEL_VALUE = '__default_model__';
 export const CUSTOM_MODEL_VALUE = '__custom__';

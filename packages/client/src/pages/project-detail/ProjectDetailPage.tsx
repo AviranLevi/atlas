@@ -23,7 +23,7 @@ import { useProjectAgents, useAssignAgent, useUnassignAgent } from '@/hooks/use-
 import { useAgents } from '@/hooks/use-agents.hook';
 
 // Types
-import type { ProjectStatus, Phase } from '@my-agents/shared';
+import type { ProjectStatus, Phase } from '@atlas/shared';
 
 // Constants
 import { statusConfig } from './project-detail-page.constants';

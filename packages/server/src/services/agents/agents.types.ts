@@ -1,4 +1,4 @@
-import type { Agent, Skill, Rule } from '@my-agents/shared';
+import type { Agent, Skill, Rule } from '@atlas/shared';
 
 export type AgentContext = {
   agent: Agent;

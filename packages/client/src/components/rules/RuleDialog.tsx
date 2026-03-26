@@ -19,7 +19,7 @@ import { useCreateRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { RuleType, Rule } from '@my-agents/shared';
+import type { RuleType, Rule } from '@atlas/shared';
 import type { RuleDialogProps } from './rules.types';
 
 // Constants

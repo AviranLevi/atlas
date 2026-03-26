@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Memory, CreateMemory, UpdateMemory } from '@my-agents/shared';
+import type { Memory, CreateMemory, UpdateMemory } from '@atlas/shared';
 
 const MEMORY_KEY = ['memory'] as const;
 

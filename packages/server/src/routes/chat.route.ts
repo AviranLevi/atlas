@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateConversationSchema, SendMessageSchema } from '@my-agents/shared';
+import { CreateConversationSchema, SendMessageSchema } from '@atlas/shared';
 
 // Controllers
 import {

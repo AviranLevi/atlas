@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateTaskSchema, UpdateTaskSchema } from '@my-agents/shared';
+import { CreateTaskSchema, UpdateTaskSchema } from '@atlas/shared';
 
 // Controllers
 import { listTasks, getTask, createTask, updateTask, deleteTask } from '../controllers/tasks.controller.js';

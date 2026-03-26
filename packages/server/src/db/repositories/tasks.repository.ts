@@ -2,7 +2,7 @@
 import { eq, and } from 'drizzle-orm';
 
 // Shared
-import type { CreateTask, UpdateTask, Task } from '@my-agents/shared';
+import type { CreateTask, UpdateTask, Task } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

@@ -1,4 +1,4 @@
-import type { PhaseStatus } from '@my-agents/shared';
+import type { PhaseStatus } from '@atlas/shared';
 
 export const STATUS_LABELS: Record<PhaseStatus, string> = {
   planning: 'Planning',

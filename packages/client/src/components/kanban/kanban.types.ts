@@ -1,4 +1,4 @@
-import type { Task, TaskPriority, TaskEstimate } from '@my-agents/shared';
+import type { Task, TaskPriority, TaskEstimate } from '@atlas/shared';
 
 export type KanbanCardActionsProps = {
   task: Task;

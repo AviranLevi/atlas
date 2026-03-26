@@ -20,6 +20,9 @@ importers:
 
   packages/client:
     dependencies:
+      '@atlas/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@dnd-kit/core':
         specifier: ^6.3
         version: 6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -29,9 +32,6 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2
         version: 3.2.2(react@19.2.4)
-      '@my-agents/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@radix-ui/react-dialog':
         specifier: ^1.1
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -126,6 +126,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.80.0
         version: 0.80.0(zod@3.25.76)
+      '@atlas/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@hono/node-server':
         specifier: ^1.13
         version: 1.19.11(hono@4.12.9)
@@ -135,9 +138,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
         version: 1.28.0(zod@3.25.76)
-      '@my-agents/shared':
-        specifier: workspace:*
-        version: link:../shared
       better-sqlite3:
         specifier: ^11.7
         version: 11.10.0

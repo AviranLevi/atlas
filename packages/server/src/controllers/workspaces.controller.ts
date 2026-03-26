@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateWorkspace, AddDiffComment, RerunWorkspace, CreatePullRequest, EditDiffComment } from '@my-agents/shared';
+import type { CreateWorkspace, AddDiffComment, RerunWorkspace, CreatePullRequest, EditDiffComment } from '@atlas/shared';
 
 // Services
 import { orchestratorService } from '../services/index.js';

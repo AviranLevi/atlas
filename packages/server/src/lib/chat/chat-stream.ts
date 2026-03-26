@@ -1,4 +1,4 @@
-import type { AgentProvider } from '@my-agents/shared';
+import type { AgentProvider } from '@atlas/shared';
 import { createAnthropicClient, createOpenAIClient, ollamaBaseUrl, GOOGLE_AI_BASE } from '../providers/provider-clients.js';
 import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 

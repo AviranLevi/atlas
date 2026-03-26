@@ -24,7 +24,7 @@ import {
 import { useCreatePhase, useUpdatePhase } from '@/hooks/use-phases.hook';
 
 // Types
-import type { PhaseStatus } from '@my-agents/shared';
+import type { PhaseStatus } from '@atlas/shared';
 import type { PhaseDialogProps } from './phases.types';
 
 // Constants

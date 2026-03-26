@@ -1,4 +1,4 @@
-import type { Skill } from '@my-agents/shared';
+import type { Skill } from '@atlas/shared';
 
 export type SkillDialogProps = {
   open: boolean;

@@ -2,7 +2,7 @@
 import { eq } from 'drizzle-orm';
 
 // Shared
-import type { Workspace } from '@my-agents/shared';
+import type { Workspace } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateMemory, UpdateMemory } from '@my-agents/shared';
+import type { CreateMemory, UpdateMemory } from '@atlas/shared';
 
 // Services
 import { memoryService } from '../services/index.js';

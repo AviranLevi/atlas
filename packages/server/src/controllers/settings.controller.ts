@@ -7,7 +7,7 @@ import type {
   UpdateGlobalInstructions,
   CreateDispatchRule,
   UpdateDispatchRule,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 
 // Services
 import { settingsService } from '../services/index.js';

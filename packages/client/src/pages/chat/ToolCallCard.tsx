@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Wrench, ChevronDown, ChevronRight } from 'lucide-react';
-import type { ChatToolCall } from '@my-agents/shared';
+import type { ChatToolCall } from '@atlas/shared';
 
 interface ToolCallCardProps {
   toolCall: ChatToolCall;

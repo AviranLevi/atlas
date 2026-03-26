@@ -22,7 +22,7 @@ import { useSkills, useDeleteSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { Skill } from '@my-agents/shared';
+import type { Skill } from '@atlas/shared';
 
 // Constants & utilities
 import {

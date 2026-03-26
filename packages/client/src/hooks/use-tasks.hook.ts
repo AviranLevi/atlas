@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Task, CreateTask, UpdateTask } from '@my-agents/shared';
+import type { Task, CreateTask, UpdateTask } from '@atlas/shared';
 
 const TASKS_KEY = ['tasks'] as const;
 

@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 
 // Shared
-import type { CreateConversation, SendMessage } from '@my-agents/shared';
+import type { CreateConversation, SendMessage } from '@atlas/shared';
 
 // Services
 import { chatService } from '../services/index.js';

@@ -1,5 +1,5 @@
 // Shared
-import type { Rule, CreateRule, UpdateRule } from '@my-agents/shared';
+import type { Rule, CreateRule, UpdateRule } from '@atlas/shared';
 
 // Types
 import type { RuleDetail } from './rules.types.js';

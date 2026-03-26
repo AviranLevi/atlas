@@ -1,4 +1,4 @@
-import type { ProviderType } from '@my-agents/shared';
+import type { ProviderType } from '@atlas/shared';
 
 export const NONE = '__none__';
 

@@ -28,7 +28,7 @@ import { useAgents } from '@/hooks/use-agents.hook';
 import { cn } from '@/lib/utils';
 
 // Types
-import type { ChecklistItem } from '@my-agents/shared';
+import type { ChecklistItem } from '@atlas/shared';
 import type { ReviewPanelProps } from './reviews.types';
 
 export function ReviewPanel({ taskId }: ReviewPanelProps) {

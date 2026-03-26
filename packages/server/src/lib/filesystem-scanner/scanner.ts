@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Shared
-import type { ProjectScanData } from '@my-agents/shared';
+import type { ProjectScanData } from '@atlas/shared';
 
 // Lib
 import { readJsonFile } from './detectors.js';

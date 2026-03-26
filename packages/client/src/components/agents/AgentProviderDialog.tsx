@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { CreateAgentProvider, ProviderType } from '@my-agents/shared';
+import type { CreateAgentProvider, ProviderType } from '@atlas/shared';
 import {
   Dialog,
   DialogContent,

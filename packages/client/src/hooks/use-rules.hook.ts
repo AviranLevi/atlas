@@ -8,7 +8,7 @@ import type {
   Rule,
   CreateRule,
   UpdateRule,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 
 const RULES_KEY = ['rules'] as const;
 const RULE_DETAIL_KEY = ['rule-detail'] as const;

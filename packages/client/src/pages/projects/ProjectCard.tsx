@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 // Types
-import type { ProjectStatus } from '@my-agents/shared';
+import type { ProjectStatus } from '@atlas/shared';
 import type { ProjectCardProps } from './projects-page.types';
 
 // Constants & utilities

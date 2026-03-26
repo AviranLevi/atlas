@@ -1,4 +1,4 @@
-import type { Agent, Skill, DispatchRule } from '@my-agents/shared';
+import type { Agent, Skill, DispatchRule } from '@atlas/shared';
 
 export type RuleForm = {
   pattern: string;

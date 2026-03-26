@@ -194,7 +194,7 @@ export class PromptBuilderService {
           '',
           '## MCP Tools Available',
           '',
-          'You have access to the "my-agents" MCP server with the following tools:',
+          'You have access to the "atlas" MCP server with the following tools:',
           '- `update_task` -- Update this task\'s status (e.g., to "In Review" or "Done"), add notes',
           '- `create_task` -- Create new tasks on the Kanban board if you discover sub-tasks or bugs',
           '- `create_memory` -- Save important decisions, conventions, or problems discovered',

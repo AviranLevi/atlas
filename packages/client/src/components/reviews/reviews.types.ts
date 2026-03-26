@@ -1,4 +1,4 @@
-import type { ReviewStatus } from '@my-agents/shared';
+import type { ReviewStatus } from '@atlas/shared';
 
 export type ReviewBadgeProps = {
   status: ReviewStatus;

@@ -1,4 +1,4 @@
-import type { Project, ProjectScanData, ProjectStatus, Task, Phase, Agent } from '@my-agents/shared';
+import type { Project, ProjectScanData, ProjectStatus, Task, Phase, Agent } from '@atlas/shared';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 export type ProjectAgent = Agent & { role: string | null };

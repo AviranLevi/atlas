@@ -1,4 +1,4 @@
-import type { Agent, AgentProvider, ProviderType } from '@my-agents/shared';
+import type { Agent, AgentProvider, ProviderType } from '@atlas/shared';
 
 export type AgentDialogProps = {
   open: boolean;

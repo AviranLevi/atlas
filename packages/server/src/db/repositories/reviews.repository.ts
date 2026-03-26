@@ -2,7 +2,7 @@
 import { eq } from 'drizzle-orm';
 
 // Shared
-import type { Review, ChecklistItem } from '@my-agents/shared';
+import type { Review, ChecklistItem } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

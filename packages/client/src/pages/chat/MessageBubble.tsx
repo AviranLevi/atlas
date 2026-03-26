@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@my-agents/shared';
+import type { ChatMessage } from '@atlas/shared';
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { User, Bot, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';

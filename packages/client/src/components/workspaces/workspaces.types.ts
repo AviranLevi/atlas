@@ -1,4 +1,4 @@
-import type { Task, Workspace } from '@my-agents/shared';
+import type { Task, Workspace } from '@atlas/shared';
 
 export type StartWorkDialogProps = {
   open: boolean;

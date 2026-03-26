@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 // Types
-import type { PhaseStatus } from '@my-agents/shared';
+import type { PhaseStatus } from '@atlas/shared';
 import type { PhaseCardProps } from './phases.types';
 
 // Constants

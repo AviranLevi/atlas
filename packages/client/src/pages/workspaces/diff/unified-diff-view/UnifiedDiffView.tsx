@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { useAddDiffComment, useEditDiffComment, useRemoveDiffComment } from '@/hooks/use-workspaces.hook';
 import type { DiffFile } from '@/hooks/use-workspaces.hook';
-import type { DiffComment } from '@my-agents/shared';
+import type { DiffComment } from '@atlas/shared';
 import type { ParsedLine, CommentingTarget } from '../diff-parser';
 import { LineNum, CommentGutter, InlineCommentForm, InlineCommentBubble, HighlightedLine } from '../components';
 

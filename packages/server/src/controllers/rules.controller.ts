@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateRule, UpdateRule } from '@my-agents/shared';
+import type { CreateRule, UpdateRule } from '@atlas/shared';
 
 // Services
 import { rulesService } from '../services/index.js';

@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateWorkspaceSchema, AddDiffCommentSchema, RerunWorkspaceSchema, CreatePullRequestSchema, EditDiffCommentSchema } from '@my-agents/shared';
+import { CreateWorkspaceSchema, AddDiffCommentSchema, RerunWorkspaceSchema, CreatePullRequestSchema, EditDiffCommentSchema } from '@atlas/shared';
 
 // Controllers
 import {

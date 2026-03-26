@@ -1,4 +1,4 @@
-import type { Project } from '@my-agents/shared';
+import type { Project } from '@atlas/shared';
 
 export type ProjectSummary = Project & {
   taskCounts: { todo: number; inProgress: number; inReview: number; done: number; total: number };

@@ -32,7 +32,7 @@ import { useProviderModels } from '@/hooks/use-agent-providers.hook';
 
 // Types
 import type { StartWorkDialogProps } from './workspaces.types';
-import type { ExecutorStatus, ProviderModel } from '@my-agents/shared';
+import type { ExecutorStatus, ProviderModel } from '@atlas/shared';
 
 // Constants
 import {

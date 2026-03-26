@@ -20,7 +20,7 @@ import { useCreateMemory } from '@/hooks/use-memory.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { MemoryType, MemoryScope } from '@my-agents/shared';
+import type { MemoryType, MemoryScope } from '@atlas/shared';
 import type { MemoryDialogProps } from './memory.types';
 
 // Constants

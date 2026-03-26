@@ -1,5 +1,5 @@
 // Shared
-import type { Memory, CreateMemory, UpdateMemory } from '@my-agents/shared';
+import type { Memory, CreateMemory, UpdateMemory } from '@atlas/shared';
 
 // Repositories
 import { memoryRepository } from '../../db/repositories/index.js';

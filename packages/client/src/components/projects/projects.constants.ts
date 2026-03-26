@@ -1,4 +1,4 @@
-import type { ProjectStatus } from '@my-agents/shared';
+import type { ProjectStatus } from '@atlas/shared';
 
 export const STATUSES: { value: ProjectStatus; label: string }[] = [
   { value: 'active', label: 'Active' },

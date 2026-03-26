@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 // Types
-import type { Task } from '@my-agents/shared';
+import type { Task } from '@atlas/shared';
 import type { ProjectTasksTableProps } from './project-detail-page.types';
 
 // Constants & utilities

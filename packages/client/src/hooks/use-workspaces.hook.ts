@@ -8,7 +8,7 @@ import {
 // Lib
 import { api, ApiError } from '@/lib/api';
 // Types
-import type { Workspace, ExecutorStatus } from '@my-agents/shared';
+import type { Workspace, ExecutorStatus } from '@atlas/shared';
 
 const WORKSPACES_KEY = ['workspaces'] as const;
 const RUNTIMES_KEY = ['agent-runtimes'] as const;

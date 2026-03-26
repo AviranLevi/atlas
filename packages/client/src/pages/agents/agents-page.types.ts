@@ -1,4 +1,4 @@
-import type { Agent, AgentProvider } from '@my-agents/shared';
+import type { Agent, AgentProvider } from '@atlas/shared';
 
 export type ProvidersSectionProps = {
   providers: AgentProvider[];

@@ -1,4 +1,4 @@
-import type { Project } from '@my-agents/shared';
+import type { Project } from '@atlas/shared';
 
 export type { ScanResult, BrowseResponse, DirectoryEntry } from '@/hooks/use-projects.hook';
 

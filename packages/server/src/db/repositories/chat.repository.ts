@@ -2,7 +2,7 @@
 import { desc, eq } from 'drizzle-orm';
 
 // Shared
-import type { ChatConversation, ChatMessage, CreateConversation } from '@my-agents/shared';
+import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

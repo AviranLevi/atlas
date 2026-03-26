@@ -1,4 +1,4 @@
-import type { Agent } from '@my-agents/shared';
+import type { Agent } from '@atlas/shared';
 
 export type KanbanFilterBarProps = {
   agents: Agent[];

@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateSkillSchema, UpdateSkillSchema } from '@my-agents/shared';
+import { CreateSkillSchema, UpdateSkillSchema } from '@atlas/shared';
 
 // Controllers
 import { listSkills, getSkill, getSkillDetail, createSkill, updateSkill, deleteSkill } from '../controllers/skills.controller.js';

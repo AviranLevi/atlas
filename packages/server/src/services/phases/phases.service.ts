@@ -1,5 +1,5 @@
 // Shared
-import type { Phase, CreatePhase, UpdatePhase } from '@my-agents/shared';
+import type { Phase, CreatePhase, UpdatePhase } from '@atlas/shared';
 
 // Repositories
 import { phasesRepository } from '../../db/repositories/index.js';

@@ -2,7 +2,7 @@
 import { eq, or, isNull } from 'drizzle-orm';
 
 // Shared
-import type { CreateSkill, UpdateSkill, Skill } from '@my-agents/shared';
+import type { CreateSkill, UpdateSkill, Skill } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

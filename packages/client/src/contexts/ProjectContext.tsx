@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { useProjects } from '@/hooks/use-projects.hook';
-import type { Project } from '@my-agents/shared';
+import type { Project } from '@atlas/shared';
 
 const STORAGE_KEY = 'active-project-id';
 

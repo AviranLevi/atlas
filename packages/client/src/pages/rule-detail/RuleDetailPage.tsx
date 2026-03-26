@@ -26,7 +26,7 @@ import { useUpdateRule, useDeleteRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { RuleType } from '@my-agents/shared';
+import type { RuleType } from '@atlas/shared';
 
 // Constants
 import { RULE_TYPES, NONE } from '@/components/rules/rules.constants';

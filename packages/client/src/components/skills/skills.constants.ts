@@ -1,4 +1,4 @@
-import type { SkillType } from '@my-agents/shared';
+import type { SkillType } from '@atlas/shared';
 
 export const NONE = '__none__';
 

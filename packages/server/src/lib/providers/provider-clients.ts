@@ -1,4 +1,4 @@
-import type { AgentProvider } from '@my-agents/shared';
+import type { AgentProvider } from '@atlas/shared';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 

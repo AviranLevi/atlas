@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import type { ProviderType } from '@my-agents/shared';
+import type { ProviderType } from '@atlas/shared';
 import type { ProviderBadgeProps } from './agents.types';
 import { PROVIDER_LABELS } from './agents.constants';
 

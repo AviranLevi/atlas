@@ -2,7 +2,7 @@
 import { execSync } from 'child_process';
 
 // Shared
-import type { Project, CreateProject, UpdateProject } from '@my-agents/shared';
+import type { Project, CreateProject, UpdateProject } from '@atlas/shared';
 
 // Types
 import type { ProjectSummary, ProjectContext } from './projects.types.js';

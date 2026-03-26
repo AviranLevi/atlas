@@ -13,7 +13,7 @@ import { useAgents, useDeleteAgent } from '@/hooks/use-agents.hook';
 import { useAgentProviders, useDeleteAgentProvider } from '@/hooks/use-agent-providers.hook';
 
 // Types
-import type { Agent, AgentProvider } from '@my-agents/shared';
+import type { Agent, AgentProvider } from '@atlas/shared';
 
 export function AgentsPage() {
   const navigate = useNavigate();

@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateReview, UpdateReview, DecideReview } from '@my-agents/shared';
+import type { CreateReview, UpdateReview, DecideReview } from '@atlas/shared';
 
 // Services
 import { reviewsService } from '../services/index.js';

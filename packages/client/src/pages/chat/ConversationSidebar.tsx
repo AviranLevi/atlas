@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
 import { cn } from '@/lib/utils';
-import type { ChatConversation, AgentProvider, ProviderModel, ChatBackendType, ExecutorStatus } from '@my-agents/shared';
+import type { ChatConversation, AgentProvider, ProviderModel, ChatBackendType, ExecutorStatus } from '@atlas/shared';
 
 interface ConversationSidebarProps {
   conversations: ChatConversation[];

@@ -8,7 +8,7 @@ import {
   UpdateGlobalInstructionsSchema,
   CreateDispatchRuleSchema,
   UpdateDispatchRuleSchema,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 
 // Controllers
 import {

@@ -1,4 +1,4 @@
-import type { Rule } from '@my-agents/shared';
+import type { Rule } from '@atlas/shared';
 
 export type RuleDetail = {
   rule: Rule;

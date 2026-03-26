@@ -6,7 +6,7 @@ import type {
   DispatchRule,
   CreateDispatchRule,
   UpdateDispatchRule,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 
 // Repositories
 import { settingsRepository } from '../../db/repositories/index.js';

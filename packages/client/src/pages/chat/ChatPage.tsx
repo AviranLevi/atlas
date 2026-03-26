@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MessageSquare, Settings, Terminal } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { ChatBackendType } from '@my-agents/shared';
+import type { ChatBackendType } from '@atlas/shared';
 
 import { Button } from '@/components/ui/button';
 import { useActiveProject } from '@/contexts/ProjectContext';

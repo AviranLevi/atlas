@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import type { ChatMessage } from '@my-agents/shared';
+import type { ChatMessage } from '@atlas/shared';
 import { MessageBubble, StreamingBubble } from './MessageBubble';
 import type { StreamingToolCall } from '@/hooks/use-chat.hook';
 

@@ -1,4 +1,4 @@
-# My Agents
+# Atlas
 
 AI agent management platform for orchestrating coding agents, tracking tasks, and managing project knowledge.
 

@@ -1,4 +1,4 @@
-import type { Workspace } from '@my-agents/shared';
+import type { Workspace } from '@atlas/shared';
 
 export type StatusFilter = 'all' | 'active' | 'completed' | 'failed' | 'stopped' | 'merged';
 

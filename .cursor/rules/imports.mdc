@@ -22,7 +22,7 @@ Group imports with blank lines between sections. No blank lines within a section
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 // Shared
-import { CreateAgentSchema, type Agent } from '@my-agents/shared';
+import { CreateAgentSchema, type Agent } from '@atlas/shared';
 // Services
 import { agentService } from '../services/agents.service';
 // DB
@@ -45,7 +45,7 @@ import { AgentRepository } from '../db/repositories/agents.repository.js';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Shared
-import type { Agent } from '@my-agents/shared';
+import type { Agent } from '@atlas/shared';
 // Components
 import { Button } from '@/components/ui/button';
 import { AgentCard } from '@/components/agents/AgentCard';
@@ -58,6 +58,6 @@ import type { AgentListProps } from './AgentList.types';
 ## Rules
 
 - Use `type` imports when importing only types: `import type { Agent } from '...'`.
-- Prefer path aliases: `@my-agents/shared` for shared, `@/` for client src.
+- Prefer path aliases: `@atlas/shared` for shared, `@/` for client src.
 - Keep relative imports for same-module files (`./`, `../`).
 - Section comment headers (`// NPM`, `// Shared`, etc.) are required when 3+ sections exist.

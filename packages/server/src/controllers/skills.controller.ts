@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateSkill, UpdateSkill } from '@my-agents/shared';
+import type { CreateSkill, UpdateSkill } from '@atlas/shared';
 
 // Services
 import { skillsService } from '../services/index.js';

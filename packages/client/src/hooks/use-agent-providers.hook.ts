@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@my-agents/shared';
+import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@atlas/shared';
 
 const PROVIDERS_KEY = ['agent-providers'] as const;
 const PROVIDER_MODELS_KEY = ['agent-provider-models'] as const;

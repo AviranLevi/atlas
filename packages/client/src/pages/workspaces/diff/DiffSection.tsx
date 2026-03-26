@@ -36,7 +36,7 @@ import {
   useRemoveDiffComment,
 } from '@/hooks/use-workspaces.hook';
 import type { DiffFile } from '@/hooks/use-workspaces.hook';
-import type { DiffComment } from '@my-agents/shared';
+import type { DiffComment } from '@atlas/shared';
 import type { DiffViewMode, CommentingTarget } from './diff-parser';
 import { parsePatch } from './diff-parser';
 import { detectLanguage } from './lang-detect';

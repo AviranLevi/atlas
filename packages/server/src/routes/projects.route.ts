@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateProjectSchema, UpdateProjectSchema, AssignAgentSchema } from '@my-agents/shared';
+import { CreateProjectSchema, UpdateProjectSchema, AssignAgentSchema } from '@atlas/shared';
 
 // Controllers
 import {

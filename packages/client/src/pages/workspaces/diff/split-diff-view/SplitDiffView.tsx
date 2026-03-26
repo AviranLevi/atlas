@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAddDiffComment, useEditDiffComment, useRemoveDiffComment } from '@/hooks/use-workspaces.hook';
 import type { DiffFile } from '@/hooks/use-workspaces.hook';
-import type { DiffComment } from '@my-agents/shared';
+import type { DiffComment } from '@atlas/shared';
 import type { ParsedLine, CommentingTarget } from '../diff-parser';
 import { buildSplitRows } from '../diff-parser';
 import { SplitDiffSide, InlineCommentForm, InlineCommentBubble } from '../components';

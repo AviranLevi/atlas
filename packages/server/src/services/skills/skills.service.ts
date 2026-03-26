@@ -1,5 +1,5 @@
 // Shared
-import type { Skill, CreateSkill, UpdateSkill } from '@my-agents/shared';
+import type { Skill, CreateSkill, UpdateSkill } from '@atlas/shared';
 
 // Types
 import type { SkillDetail } from './skills.types.js';

@@ -1,5 +1,5 @@
 // Shared
-import type { Agent, CreateAgent, UpdateAgent, Skill, Rule } from '@my-agents/shared';
+import type { Agent, CreateAgent, UpdateAgent, Skill, Rule } from '@atlas/shared';
 
 // Types
 import type { AgentContext, AgentDetail } from './agents.types.js';

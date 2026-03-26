@@ -1,4 +1,4 @@
-import type { Phase } from '@my-agents/shared';
+import type { Phase } from '@atlas/shared';
 
 export type PhaseCardProps = {
   phase: Phase;

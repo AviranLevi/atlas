@@ -19,7 +19,7 @@ import { useCreateSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { SkillType, Skill } from '@my-agents/shared';
+import type { SkillType, Skill } from '@atlas/shared';
 import type { SkillDialogProps } from './skills.types';
 
 // Constants

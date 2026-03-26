@@ -1,4 +1,4 @@
-import type { ChatConversation, ChatMessage, CreateConversation } from '@my-agents/shared';
+import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 
 import { chatRepository } from '../../db/repositories/index.js';
 import { agentProvidersService, settingsService, projectsService, memoryService } from '../index.js';

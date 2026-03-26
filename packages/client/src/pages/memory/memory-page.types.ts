@@ -1,4 +1,4 @@
-import type { Memory } from '@my-agents/shared';
+import type { Memory } from '@atlas/shared';
 
 export type SortKey = 'name' | 'type' | 'lastUsed' | 'createdAt';
 export type SortDir = 'asc' | 'desc';

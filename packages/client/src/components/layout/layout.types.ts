@@ -1,4 +1,4 @@
-import type { ExecutorStatus } from '@my-agents/shared';
+import type { ExecutorStatus } from '@atlas/shared';
 
 export type NavItem = {
   to: string;

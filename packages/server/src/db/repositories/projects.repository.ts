@@ -2,7 +2,7 @@
 import { eq, sql } from 'drizzle-orm';
 
 // Shared
-import type { CreateProject, UpdateProject, Project } from '@my-agents/shared';
+import type { CreateProject, UpdateProject, Project } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

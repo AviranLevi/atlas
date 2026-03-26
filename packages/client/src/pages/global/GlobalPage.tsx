@@ -26,7 +26,7 @@ import {
 import { useAgents } from '@/hooks/use-agents.hook';
 import { useSkills } from '@/hooks/use-skills.hook';
 
-import type { DispatchRule } from '@my-agents/shared';
+import type { DispatchRule } from '@atlas/shared';
 import type { RuleForm } from '@/pages/settings/settings-page.types';
 import { NONE_SKILL_VALUE, emptyRuleForm } from '@/pages/settings/settings-page.constants';
 

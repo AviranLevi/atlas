@@ -9,7 +9,7 @@ import type {
   CreateDispatchRule,
   UpdateDispatchRule,
   DispatchRule,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';

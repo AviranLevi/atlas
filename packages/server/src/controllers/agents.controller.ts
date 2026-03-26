@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateAgent, UpdateAgent, AttachSkill, AttachRule } from '@my-agents/shared';
+import type { CreateAgent, UpdateAgent, AttachSkill, AttachRule } from '@atlas/shared';
 
 // Services
 import { agentsService } from '../services/index.js';

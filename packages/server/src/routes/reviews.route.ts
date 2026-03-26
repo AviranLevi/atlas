@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { CreateReviewSchema, UpdateReviewSchema, DecideReviewSchema, SubmitAiReviewSchema } from '@my-agents/shared';
+import { CreateReviewSchema, UpdateReviewSchema, DecideReviewSchema, SubmitAiReviewSchema } from '@atlas/shared';
 import {
   listReviews,
   getReview,

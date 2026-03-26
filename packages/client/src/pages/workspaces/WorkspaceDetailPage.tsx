@@ -21,7 +21,7 @@ import {
 import { useProject } from '@/hooks/use-projects.hook';
 
 // Types
-import type { DiffComment } from '@my-agents/shared';
+import type { DiffComment } from '@atlas/shared';
 
 export function WorkspaceDetailPage() {
   const { id } = useParams<{ id: string }>();

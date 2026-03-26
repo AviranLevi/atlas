@@ -1,5 +1,5 @@
 // Shared
-import type { Review, ChecklistItem } from '@my-agents/shared';
+import type { Review, ChecklistItem } from '@atlas/shared';
 
 // Services
 import { activityLogService } from '../index.js';

@@ -19,7 +19,7 @@ import { ProjectCard } from './ProjectCard';
 import { useProjectsWithSummary, useDeleteProject } from '@/hooks/use-projects.hook';
 
 // Types
-import type { Project } from '@my-agents/shared';
+import type { Project } from '@atlas/shared';
 import type { ProjectWithSummary } from '@/hooks/use-projects.hook';
 
 export function ProjectsPage() {

@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateTask, UpdateTask } from '@my-agents/shared';
+import type { CreateTask, UpdateTask } from '@atlas/shared';
 
 // Services
 import { tasksService } from '../services/index.js';

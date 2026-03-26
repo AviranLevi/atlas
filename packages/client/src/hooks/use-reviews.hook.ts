@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Review, UpdateReview, DecideReview, ChecklistItem } from '@my-agents/shared';
+import type { Review, UpdateReview, DecideReview, ChecklistItem } from '@atlas/shared';
 
 const REVIEWS_KEY = ['reviews'] as const;
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
-import type { Task, TaskStatus } from '@my-agents/shared';
+import type { Task, TaskStatus } from '@atlas/shared';
 
 /**
  * Encapsulates drag-and-drop state and handlers for the kanban board.

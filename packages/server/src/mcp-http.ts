@@ -8,7 +8,7 @@ const MCP_HTTP_PORT = 3101;
 
 export function startMcpHttpServer() {
   const mcpServer = new McpServer({
-    name: 'my-agents',
+    name: 'atlas',
     version: '0.0.1',
   });
 

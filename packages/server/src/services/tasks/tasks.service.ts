@@ -1,5 +1,5 @@
 // Shared
-import type { Task, CreateTask, UpdateTask } from '@my-agents/shared';
+import type { Task, CreateTask, UpdateTask } from '@atlas/shared';
 
 // Services
 import { activityLogService, settingsService } from '../index.js';

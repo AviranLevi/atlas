@@ -10,7 +10,7 @@ import type {
   UpdateProject,
   Agent,
   Task,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 
 const PROJECTS_KEY = ['projects'] as const;
 

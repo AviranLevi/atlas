@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MessageSquare, X, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { DiffComment } from '@my-agents/shared';
+import type { DiffComment } from '@atlas/shared';
 import { InlineCommentForm } from './InlineCommentForm';
 
 export function InlineCommentBubble({

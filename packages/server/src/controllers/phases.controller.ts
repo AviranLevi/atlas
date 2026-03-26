@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreatePhase, UpdatePhase } from '@my-agents/shared';
+import type { CreatePhase, UpdatePhase } from '@atlas/shared';
 
 // Services
 import { phasesService } from '../services/index.js';

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { CreatePhaseSchema, UpdatePhaseSchema, ReorderPhaseSchema } from '@my-agents/shared';
+import { CreatePhaseSchema, UpdatePhaseSchema, ReorderPhaseSchema } from '@atlas/shared';
 import {
   listPhases,
   getPhase,

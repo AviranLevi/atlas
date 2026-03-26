@@ -1,4 +1,4 @@
-import type { ProjectStatus } from '@my-agents/shared';
+import type { ProjectStatus } from '@atlas/shared';
 
 export const statusConfig: Record<ProjectStatus, { label: string; className: string }> = {
   active: { label: 'Active', className: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300' },

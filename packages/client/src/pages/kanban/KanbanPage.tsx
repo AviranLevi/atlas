@@ -21,7 +21,7 @@ import { useActiveProject } from '@/contexts/ProjectContext';
 import { useKanbanDnd } from './use-kanban-dnd.hook';
 
 // Types
-import type { Task, TaskStatus } from '@my-agents/shared';
+import type { Task, TaskStatus } from '@atlas/shared';
 
 // Constants
 import { COLUMNS } from './kanban-page.constants';

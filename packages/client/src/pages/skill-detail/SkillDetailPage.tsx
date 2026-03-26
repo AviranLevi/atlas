@@ -26,7 +26,7 @@ import { useUpdateSkill, useDeleteSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { SkillType } from '@my-agents/shared';
+import type { SkillType } from '@atlas/shared';
 
 // Constants
 import { SKILL_TYPES, NONE } from '@/components/skills/skills.constants';

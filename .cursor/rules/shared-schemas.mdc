@@ -64,4 +64,4 @@ export type UpdateAgent = z.infer<typeof UpdateAgentSchema>;
 - Schema names: `PascalCase` ending with `Schema`.
 - Type names: `PascalCase` matching the entity (e.g., `Agent`, `CreateAgent`).
 - Export everything from `packages/shared/src/index.ts`.
-- Import in server/client as `import { Agent, CreateAgentSchema } from '@my-agents/shared'`.
+- Import in server/client as `import { Agent, CreateAgentSchema } from '@atlas/shared'`.

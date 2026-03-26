@@ -8,7 +8,7 @@ import type {
   CreateSkill,
   CreateTask,
   UpdateTask,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 
 import {
   tasksService,

@@ -22,7 +22,7 @@ import { useRules, useDeleteRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { Rule } from '@my-agents/shared';
+import type { Rule } from '@atlas/shared';
 
 // Constants & utilities
 import {

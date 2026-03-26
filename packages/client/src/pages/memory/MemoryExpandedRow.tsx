@@ -19,7 +19,7 @@ import { useUpdateMemory } from '@/hooks/use-memory.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { MemoryType, MemoryScope } from '@my-agents/shared';
+import type { MemoryType, MemoryScope } from '@atlas/shared';
 import type { MemoryExpandedRowProps } from './memory-page.types';
 
 // Constants

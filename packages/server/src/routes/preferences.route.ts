@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { UpdatePreferencesSchema } from '@my-agents/shared';
+import { UpdatePreferencesSchema } from '@atlas/shared';
 import { getPreferences, updatePreferences } from '../controllers/preferences.controller.js';
 
 export const preferencesRoute = new Hono()

@@ -26,7 +26,7 @@ One hook file per entity. Export query and mutation hooks:
 
 ```typescript
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Agent, CreateAgent, UpdateAgent } from '@my-agents/shared';
+import type { Agent, CreateAgent, UpdateAgent } from '@atlas/shared';
 import { api } from '@/lib/api';
 
 const AGENTS_KEY = ['agents'] as const;

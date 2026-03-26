@@ -11,7 +11,7 @@ import type {
   CreateDispatchRule,
   UpdateDispatchRule,
   McpConnectionInfo,
-} from '@my-agents/shared';
+} from '@atlas/shared';
 
 const GLOBAL_INSTRUCTIONS_KEY = ['settings', 'global-instructions'] as const;
 const DISPATCH_RULES_KEY = ['settings', 'dispatch-rules'] as const;

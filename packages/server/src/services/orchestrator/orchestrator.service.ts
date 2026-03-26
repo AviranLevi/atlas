@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Shared
-import type { Workspace } from '@my-agents/shared';
+import type { Workspace } from '@atlas/shared';
 
 // Services
 import { tasksService, projectsService, activityLogService, agentProvidersService, agentsService } from '../index.js';
@@ -851,7 +851,7 @@ export class OrchestratorService {
         task.notes || `Automated changes for: ${task.name}`,
         '',
         '---',
-        `*Created via [my-agents](${project.repositoryUrl}) workspace*`,
+        `*Created via [atlas](${project.repositoryUrl}) workspace*`,
       ].join('\n');
 
       const baseBranch = project.defaultBranch || 'main';

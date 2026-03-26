@@ -30,7 +30,7 @@ packages/server/src/routes/
 ```typescript
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { CreateAgentSchema, UpdateAgentSchema } from '@my-agents/shared';
+import { CreateAgentSchema, UpdateAgentSchema } from '@atlas/shared';
 import { agentService } from '../services/agents.service';
 
 export const agentsRoute = new Hono()

@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Agent, CreateAgent, UpdateAgent, Skill, Rule } from '@my-agents/shared';
+import type { Agent, CreateAgent, UpdateAgent, Skill, Rule } from '@atlas/shared';
 
 const AGENTS_KEY = ['agents'] as const;
 const AGENT_DETAIL_KEY = ['agent-detail'] as const;
