@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+export const ChatBackendTypeEnum = z.enum(["api", "cli"]);
 export const ChatMessageRoleEnum = z.enum(["user", "assistant", "tool"]);
 
 export const ChatToolCallSchema = z.object({
@@ -17,8 +18,10 @@ export const ChatConversationSchema = z.object({
   id: z.string().uuid(),
   title: z.string().nullable(),
   projectId: z.string().uuid().nullable(),
-  providerId: z.string().uuid(),
-  model: z.string(),
+  backendType: ChatBackendTypeEnum,
+  providerId: z.string().uuid().nullable(),
+  executorId: z.string().nullable(),
+  model: z.string().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -35,14 +38,17 @@ export const ChatMessageSchema = z.object({
 
 export const CreateConversationSchema = z.object({
   projectId: z.string().uuid().nullable().optional(),
-  providerId: z.string().uuid(),
-  model: z.string().min(1),
+  backendType: ChatBackendTypeEnum.default("api"),
+  providerId: z.string().uuid().nullable().optional(),
+  executorId: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
 });
 
 export const SendMessageSchema = z.object({
   content: z.string().min(1),
 });
 
+export type ChatBackendType = z.infer<typeof ChatBackendTypeEnum>;
 export type ChatMessageRole = z.infer<typeof ChatMessageRoleEnum>;
 export type ChatToolCall = z.infer<typeof ChatToolCallSchema>;
 export type ChatToolResult = z.infer<typeof ChatToolResultSchema>;

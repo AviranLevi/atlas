@@ -4,6 +4,8 @@ import { chatRepository } from '../db/repositories/index.js';
 import { agentProvidersService, settingsService, projectsService, memoryService } from './index.js';
 import { streamChat, type InternalMessage, type ChatEvent } from '../lib/chat-stream.js';
 import { CHAT_TOOLS, executeTool, type ToolDefinition } from '../lib/chat-tools.js';
+import { runCliChat, formatCliPrompt } from '../lib/cli-chat.js';
+import { executorRegistry } from '../executors/index.js';
 import { logger } from '../lib/logger.js';
 import { AppError } from '../lib/errors.js';
 
@@ -51,12 +53,30 @@ export class ChatService {
     content: string,
     emit: StreamCallback,
   ): Promise<void> {
-    const FUNCTION_NAME = 'sendMessage';
-
     const conversation = this.repo.findConversationByIdOrThrow(conversationId);
-    const provider = await agentProvidersService.getById(conversation.providerId);
-
     this.repo.insertMessage({ conversationId, role: 'user', content });
+
+    if (conversation.backendType === 'cli') {
+      await this.sendMessageCli(conversation, content, emit);
+    } else {
+      await this.sendMessageApi(conversation, content, emit);
+    }
+  }
+
+  private async sendMessageApi(
+    conversation: ChatConversation,
+    content: string,
+    emit: StreamCallback,
+  ): Promise<void> {
+    const FUNCTION_NAME = 'sendMessageApi';
+    const conversationId = conversation.id;
+
+    if (!conversation.providerId) {
+      await emit('error', { message: 'No provider configured for this conversation' });
+      return;
+    }
+
+    const provider = await agentProvidersService.getById(conversation.providerId);
 
     const abortController = new AbortController();
     this.activeStreams.set(conversationId, abortController);
@@ -77,7 +97,7 @@ export class ChatService {
 
         const stream = streamChat(
           provider,
-          conversation.model,
+          conversation.model ?? 'default',
           systemPrompt,
           messages,
           CHAT_TOOLS,
@@ -107,7 +127,7 @@ export class ChatService {
         if (abortController.signal.aborted) break;
 
         if (pendingToolCalls.length > 0) {
-          const assistantMsg = this.repo.insertMessage({
+          this.repo.insertMessage({
             conversationId,
             role: 'assistant',
             content: assistantText,
@@ -158,6 +178,78 @@ export class ChatService {
       if (abortController.signal.aborted) return;
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       await emit('error', { message: error instanceof Error ? error.message : 'Stream failed' });
+    } finally {
+      this.activeStreams.delete(conversationId);
+    }
+  }
+
+  private async sendMessageCli(
+    conversation: ChatConversation,
+    content: string,
+    emit: StreamCallback,
+  ): Promise<void> {
+    const FUNCTION_NAME = 'sendMessageCli';
+    const conversationId = conversation.id;
+
+    if (!conversation.executorId) {
+      await emit('error', { message: 'No CLI executor configured for this conversation' });
+      return;
+    }
+
+    const executor = executorRegistry.getById(conversation.executorId);
+    if (!executor) {
+      await emit('error', { message: `CLI executor "${conversation.executorId}" not found` });
+      return;
+    }
+
+    const abortController = new AbortController();
+    this.activeStreams.set(conversationId, abortController);
+
+    try {
+      const systemPrompt = await this.buildSystemPrompt(conversation.projectId);
+      const history = this.repo.findMessagesByConversation(conversationId);
+      const previousMessages = history
+        .filter((m) => m.role !== 'tool')
+        .slice(0, -1)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const fullPrompt = formatCliPrompt(systemPrompt, previousMessages, content);
+
+      let projectCwd: string | undefined;
+      if (conversation.projectId) {
+        try {
+          const { project } = await projectsService.getContext(conversation.projectId);
+          projectCwd = project.localPath ?? undefined;
+        } catch {
+          // Fall through to default cwd
+        }
+      }
+
+      await emit('text_delta', { text: '' });
+
+      const result = await runCliChat({
+        executor,
+        prompt: fullPrompt,
+        cwd: projectCwd,
+        model: conversation.model ?? executor.defaultModel,
+        signal: abortController.signal,
+      });
+
+      const savedMsg = this.repo.insertMessage({
+        conversationId,
+        role: 'assistant',
+        content: result.text,
+      });
+
+      await emit('text_delta', { text: result.text });
+      await emit('done', { messageId: savedMsg.id });
+
+      await this.maybeGenerateTitle(conversation);
+      this.repo.updateConversation(conversationId, {});
+    } catch (error: unknown) {
+      if (abortController.signal.aborted) return;
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      await emit('error', { message: error instanceof Error ? error.message : 'CLI chat failed' });
     } finally {
       this.activeStreams.delete(conversationId);
     }

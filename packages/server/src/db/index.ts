@@ -81,13 +81,28 @@ try {
   // Column already exists — ignore
 }
 
+// One-time migration: recreate chat tables if they have the old schema (provider_id NOT NULL).
+// SQLite doesn't support ALTER COLUMN, so we must drop and recreate.
+{
+  const tableInfo = sqlite.pragma('table_info(chat_conversations)') as Array<{ name: string; notnull: number }>;
+  const providerCol = tableInfo.find((c) => c.name === 'provider_id');
+  const needsMigration = providerCol?.notnull === 1 || !tableInfo.find((c) => c.name === 'backend_type');
+
+  if (needsMigration && tableInfo.length > 0) {
+    sqlite.exec(`DROP TABLE IF EXISTS chat_messages`);
+    sqlite.exec(`DROP TABLE IF EXISTS chat_conversations`);
+  }
+}
+
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS chat_conversations (
     id TEXT PRIMARY KEY NOT NULL,
     title TEXT,
     project_id TEXT REFERENCES projects(id),
-    provider_id TEXT NOT NULL REFERENCES agent_providers(id),
-    model TEXT NOT NULL,
+    backend_type TEXT NOT NULL DEFAULT 'api',
+    provider_id TEXT REFERENCES agent_providers(id),
+    executor_id TEXT,
+    model TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   )

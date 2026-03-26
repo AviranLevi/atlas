@@ -9,10 +9,10 @@ export const chatConversations = sqliteTable('chat_conversations', {
     .$defaultFn(uuidDefault),
   title: text('title'),
   projectId: text('project_id').references(() => projects.id),
-  providerId: text('provider_id')
-    .notNull()
-    .references(() => agentProviders.id),
-  model: text('model').notNull(),
+  backendType: text('backend_type').notNull().$defaultFn(() => 'api'),
+  providerId: text('provider_id').references(() => agentProviders.id),
+  executorId: text('executor_id'),
+  model: text('model'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(timestampDefault),
