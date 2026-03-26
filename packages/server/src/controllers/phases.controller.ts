@@ -7,6 +7,9 @@ import type { CreatePhase, UpdatePhase } from '@my-agents/shared';
 // Services
 import { phasesService } from '../services/index.js';
 
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
+
 /** Lists phases for a project. Requires projectId query param. */
 export async function listPhases(c: Context) {
   const projectId = c.req.query('projectId');
@@ -26,14 +29,14 @@ export async function getPhase(c: Context) {
 
 /** Creates a new phase. */
 export async function createPhase(c: Context) {
-  const data = (c.req as any).valid('json') as CreatePhase;
+  const data = getValidatedBody<CreatePhase>(c);
   const item = await phasesService.create(data);
   return c.json(item, 201);
 }
 
 /** Updates a phase by ID. */
 export async function updatePhase(c: Context) {
-  const item = await phasesService.update(c.req.param('id')!, (c.req as any).valid('json') as UpdatePhase);
+  const item = await phasesService.update(c.req.param('id')!, getValidatedBody<UpdatePhase>(c));
   return c.json(item);
 }
 
@@ -45,7 +48,7 @@ export async function deletePhase(c: Context) {
 
 /** Updates the order index of a phase. */
 export async function reorderPhase(c: Context) {
-  const { newIndex } = (c.req as any).valid('json') as { newIndex: number };
+  const { newIndex } = getValidatedBody<{ newIndex: number }>(c);
   const item = await phasesService.update(c.req.param('id')!, { orderIndex: newIndex });
   return c.json(item);
 }

@@ -5,7 +5,7 @@ import { agentsService, projectsService, tasksService, settingsService, memorySe
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/prompt-builder.service.ts';
+const FILE_PATH = 'services/prompt-builder/prompt-builder.service.ts';
 
 /**
  * Max number of individual memories to include in the prompt.

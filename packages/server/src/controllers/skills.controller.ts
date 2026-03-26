@@ -7,6 +7,9 @@ import type { CreateSkill, UpdateSkill } from '@my-agents/shared';
 // Services
 import { skillsService } from '../services/index.js';
 
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
+
 /** Lists all skills. */
 export async function listSkills(c: Context) {
   const skills = await skillsService.list();
@@ -21,14 +24,14 @@ export async function getSkill(c: Context) {
 
 /** Creates a new skill. */
 export async function createSkill(c: Context) {
-  const data = (c.req as any).valid('json') as CreateSkill;
+  const data = getValidatedBody<CreateSkill>(c);
   const skill = await skillsService.create(data);
   return c.json(skill, 201);
 }
 
 /** Updates a skill by ID. */
 export async function updateSkill(c: Context) {
-  const skill = await skillsService.update(c.req.param('id')!, (c.req as any).valid('json') as UpdateSkill);
+  const skill = await skillsService.update(c.req.param('id')!, getValidatedBody<UpdateSkill>(c));
   return c.json(skill);
 }
 

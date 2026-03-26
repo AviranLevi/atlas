@@ -43,7 +43,7 @@ export function KanbanCard({
 
   const metaRow = (
     <div className="flex flex-wrap gap-1.5">
-      <Badge variant="outline" className={cn('text-xs', priorityBadgeClass[task.priority])}>
+      <Badge variant="outline" className={cn('text-xs', priorityBadgeClass[task.priority ?? 'Medium'])}>
         {task.priority}
       </Badge>
       <Badge variant="outline" className="text-xs">{task.estimate}</Badge>

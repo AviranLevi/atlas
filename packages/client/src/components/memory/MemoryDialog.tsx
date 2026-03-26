@@ -141,6 +141,9 @@ export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
             <Button type="submit" disabled={createMemory.isPending || !name.trim() || !content.trim()}>
               {createMemory.isPending ? 'Creating...' : 'Create Memory'}
             </Button>
+            {createMemory.isError && (
+              <p className="text-sm text-destructive">{(createMemory.error as Error).message}</p>
+            )}
           </div>
         </form>
       </DialogContent>

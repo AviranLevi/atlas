@@ -7,6 +7,9 @@ import type { CreateAgent, UpdateAgent, AttachSkill, AttachRule } from '@my-agen
 // Services
 import { agentsService } from '../services/index.js';
 
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
+
 /** Lists all agents. */
 export async function listAgents(c: Context) {
   const agents = await agentsService.list();
@@ -21,14 +24,14 @@ export async function getAgent(c: Context) {
 
 /** Creates a new agent. */
 export async function createAgent(c: Context) {
-  const data = (c.req as any).valid('json') as CreateAgent;
+  const data = getValidatedBody<CreateAgent>(c);
   const agent = await agentsService.create(data);
   return c.json(agent, 201);
 }
 
 /** Updates an agent by ID. */
 export async function updateAgent(c: Context) {
-  const agent = await agentsService.update(c.req.param('id')!, (c.req as any).valid('json') as UpdateAgent);
+  const agent = await agentsService.update(c.req.param('id')!, getValidatedBody<UpdateAgent>(c));
   return c.json(agent);
 }
 
@@ -52,7 +55,7 @@ export async function listAgentSkills(c: Context) {
 
 /** Attaches a skill to an agent. */
 export async function attachAgentSkill(c: Context) {
-  const { skillId } = (c.req as any).valid('json') as AttachSkill;
+  const { skillId } = getValidatedBody<AttachSkill>(c);
   await agentsService.attachSkill(c.req.param('id')!, skillId);
   return c.body(null, 201);
 }
@@ -71,7 +74,7 @@ export async function listAgentRules(c: Context) {
 
 /** Attaches a rule to an agent. */
 export async function attachAgentRule(c: Context) {
-  const { ruleId } = (c.req as any).valid('json') as AttachRule;
+  const { ruleId } = getValidatedBody<AttachRule>(c);
   await agentsService.attachRule(c.req.param('id')!, ruleId);
   return c.body(null, 201);
 }

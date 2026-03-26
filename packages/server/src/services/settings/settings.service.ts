@@ -15,7 +15,7 @@ import { settingsRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/settings.service.ts';
+const FILE_PATH = 'services/settings/settings.service.ts';
 
 export class SettingsService {
   constructor(private readonly repo = settingsRepository) {}

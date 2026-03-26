@@ -11,7 +11,7 @@ import { agentsRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/agents.service.ts';
+const FILE_PATH = 'services/agents/agents.service.ts';
 
 export class AgentsService {
   constructor(private readonly repo = agentsRepository) {}

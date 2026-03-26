@@ -25,7 +25,7 @@ import { spawnAgent, type SpawnOptions } from '../../executors/spawn-agent.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/orchestrator.service.ts';
+const FILE_PATH = 'services/orchestrator/orchestrator.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
 const ARCHIVE_DIR = path.resolve(process.cwd(), 'data', 'archived-logs');
 

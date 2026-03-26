@@ -83,12 +83,11 @@ export function useChatStream(conversationId: string | undefined) {
     abortRef.current = controller;
 
     try {
-      const resp = await fetch(`/api/v1/chat/conversations/${conversationId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-        signal: controller.signal,
-      });
+      const resp = await api.stream(
+        `/chat/conversations/${conversationId}/messages`,
+        { content },
+        controller.signal,
+      );
 
       if (!resp.ok) {
         const body = await resp.json().catch(() => ({ error: 'Request failed' }));
@@ -177,7 +176,7 @@ export function useChatStream(conversationId: string | undefined) {
   const abort = useCallback(() => {
     abortRef.current?.abort();
     if (conversationId) {
-      fetch(`/api/v1/chat/conversations/${conversationId}/stream`, { method: 'DELETE' }).catch(() => {});
+      api.fireAndForget(`/chat/conversations/${conversationId}/stream`);
     }
     setState('idle');
     setStreamingText('');

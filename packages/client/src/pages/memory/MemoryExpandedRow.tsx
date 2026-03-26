@@ -37,7 +37,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
   const [contentDraft, setContentDraft] = useState('');
 
   const startEditName = useCallback(() => {
-    setNameDraft(memory.name);
+    setNameDraft(memory.name ?? '');
     setEditingName(true);
   }, [memory.name]);
 
@@ -132,7 +132,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
         <div>
           <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Type</label>
           <Select
-            value={memory.type}
+            value={memory.type ?? undefined}
             onValueChange={(v) => updateMemory.mutate({ id: memory.id, data: { type: v as MemoryType } })}
           >
             <SelectTrigger className="h-8 text-xs">
@@ -149,7 +149,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
         <div>
           <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Scope</label>
           <Select
-            value={memory.scope}
+            value={memory.scope ?? undefined}
             onValueChange={(v) => updateMemory.mutate({ id: memory.id, data: { scope: v as MemoryScope } })}
           >
             <SelectTrigger className="h-8 text-xs">

@@ -122,6 +122,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   };
 
   const isPending = createProject.isPending || updateProject.isPending;
+  const submitMutation = isEditing ? updateProject : createProject;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -303,6 +304,9 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                   {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Project'}
                 </button>
               </Button>
+            )}
+            {submitMutation.isError && (
+              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
             )}
           </div>
 

@@ -1,6 +1,14 @@
+// External
 import type { Context } from 'hono';
+
+// Shared
 import type { CreateProject, UpdateProject, AssignAgent } from '@my-agents/shared';
+
+// Services
 import { projectsService, briefGeneratorService, agentsService } from '../services/index.js';
+
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
 
 /** Lists all projects. Pass include=summary for task/agent counts. */
 export async function listProjects(c: Context) {
@@ -33,7 +41,7 @@ export async function getProject(c: Context) {
 
 /** Creates a new project. */
 export async function createProject(c: Context) {
-  const data = (c.req as any).valid('json') as CreateProject;
+  const data = getValidatedBody<CreateProject>(c);
   const project = await projectsService.create(data);
   return c.json(project, 201);
 }
@@ -56,10 +64,7 @@ export async function generateProjectBrief(c: Context) {
 
 /** Updates a project by ID. */
 export async function updateProject(c: Context) {
-  const project = await projectsService.update(
-    c.req.param('id')!,
-    (c.req as any).valid('json') as UpdateProject
-  );
+  const project = await projectsService.update(c.req.param('id')!, getValidatedBody<UpdateProject>(c));
   return c.json(project);
 }
 
@@ -77,7 +82,7 @@ export async function listProjectAgents(c: Context) {
 
 /** Assigns an agent to a project with an optional role. */
 export async function assignProjectAgent(c: Context) {
-  const { agentId, role } = (c.req as any).valid('json') as AssignAgent;
+  const { agentId, role } = getValidatedBody<AssignAgent>(c);
   await agentsService.assignToProject(agentId, c.req.param('id')!, role);
   return c.json({ ok: true }, 201);
 }

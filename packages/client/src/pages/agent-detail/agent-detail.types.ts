@@ -1,7 +1,7 @@
 export type AttachableItem = {
   id: string;
   name: string;
-  type: string;
+  type: string | null;
 };
 
 export type AttachableItemsSectionProps = {

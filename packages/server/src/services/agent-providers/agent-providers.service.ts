@@ -10,7 +10,7 @@ import { AppError } from '../../lib/errors.js';
 import { TEST_FNS, LIST_MODEL_FNS } from '../../lib/providers/index.js';
 import { withTimeout } from '../../lib/utils/index.js';
 
-const FILE_PATH = 'services/agent-providers.service.ts';
+const FILE_PATH = 'services/agent-providers/agent-providers.service.ts';
 
 export class AgentProvidersService {
   constructor(private readonly repo = agentProvidersRepository) {}

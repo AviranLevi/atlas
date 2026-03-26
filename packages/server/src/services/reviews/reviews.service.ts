@@ -11,7 +11,7 @@ import { reviewsRepository, tasksRepository } from '../../db/repositories/index.
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/reviews.service.ts';
+const FILE_PATH = 'services/reviews/reviews.service.ts';
 
 export class ReviewsService {
   constructor(private readonly repo = reviewsRepository) {}

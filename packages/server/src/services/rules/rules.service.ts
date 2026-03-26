@@ -11,7 +11,7 @@ import { rulesRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/rules.service.ts';
+const FILE_PATH = 'services/rules/rules.service.ts';
 
 export class RulesService {
   constructor(private readonly repo = rulesRepository) {}

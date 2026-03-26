@@ -14,7 +14,7 @@ export const SkillTypeEnum = z.enum([
 export const SkillSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100),
-  type: SkillTypeEnum,
+  type: SkillTypeEnum.nullable(),
   steps: z.string().nullable(),
   inputFormat: z.string().nullable(),
   outputFormat: z.string().nullable(),

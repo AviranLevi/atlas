@@ -65,8 +65,8 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followU
   useEffect(() => {
     if (task) {
       setName(task.name);
-      setPriority(task.priority);
-      setEstimate(task.estimate);
+      setPriority(task.priority ?? 'Medium');
+      setEstimate(task.estimate ?? 'M');
       setDefinitionOfDone(task.definitionOfDone ?? '');
       setNotes(task.notes ?? '');
       setAgentId(task.agentId ?? NONE_VALUE);
@@ -123,6 +123,7 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followU
   };
 
   const isPending = createTask.isPending || updateTask.isPending;
+  const submitMutation = isEditing ? updateTask : createTask;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -290,6 +291,9 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followU
                 {isEditing ? 'Update' : 'Create'}
               </button>
             </Button>
+            {submitMutation.isError && (
+              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
+            )}
           </div>
         </form>
       </DialogContent>

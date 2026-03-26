@@ -27,7 +27,7 @@ import {
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/system.service.ts';
+const FILE_PATH = 'services/system/system.service.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverPackageRoot = path.resolve(__dirname, '../../..');

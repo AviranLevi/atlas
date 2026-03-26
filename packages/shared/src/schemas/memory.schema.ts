@@ -11,10 +11,10 @@ export const MemoryScopeEnum = z.enum(["global", "project"]);
 
 export const MemorySchema = z.object({
   id: z.string().uuid(),
-  name: z.string().min(1).max(200),
-  content: z.string().min(1),
-  type: MemoryTypeEnum,
-  scope: MemoryScopeEnum,
+  name: z.string().max(200).nullable(),
+  content: z.string(),
+  type: MemoryTypeEnum.nullable(),
+  scope: MemoryScopeEnum.nullable(),
   lastUsed: z.string().datetime().nullable(),
   projectId: z.string().uuid().nullable(),
   agentId: z.string().uuid().nullable(),

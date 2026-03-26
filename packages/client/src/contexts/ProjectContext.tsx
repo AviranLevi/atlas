@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { useProjects } from '@/hooks/use-projects.hook';
 import type { Project } from '@my-agents/shared';
 
@@ -39,12 +39,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     ? projects.find((p) => p.id === activeProjectId) ?? null
     : null;
 
-  // If the stored project doesn't exist in the list anymore, clear it
-  if (activeProjectId && !activeProject && projects.length > 0) {
-    // Stored project was deleted — reset to All
-    setActiveProjectIdRaw(null);
-    localStorage.removeItem(STORAGE_KEY);
-  }
+  useEffect(() => {
+    if (activeProjectId && !activeProject && projects.length > 0) {
+      setActiveProjectIdRaw(null);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [activeProjectId, activeProject, projects.length]);
 
   return (
     <ProjectCtx.Provider

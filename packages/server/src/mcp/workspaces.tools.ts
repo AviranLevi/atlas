@@ -22,9 +22,12 @@ export function registerWorkspaceTools(server: McpServer) {
     inputSchema: z.object({
       taskId: z.string().uuid().describe('The task UUID to start work on'),
       agentRuntimeId: z.string().min(1).describe('Agent runtime ID (e.g. "claude-code", "aider", "codex")'),
+      baseBranch: z.string().min(1).optional().describe('Git branch to create the worktree from (defaults to project default branch)'),
+      model: z.string().min(1).optional().describe('LLM model override for the agent'),
+      providerId: z.string().uuid().optional().describe('Provider UUID for API-key resolution'),
     }),
-  }, async ({ taskId, agentRuntimeId }) => {
-    const workspace = await orchestratorService.startWork(taskId, agentRuntimeId);
+  }, async ({ taskId, agentRuntimeId, baseBranch, model, providerId }) => {
+    const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model, providerId);
     return { content: [{ type: 'text' as const, text: JSON.stringify(workspace, null, 2) }] };
   });
 

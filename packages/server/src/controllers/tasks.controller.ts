@@ -7,6 +7,9 @@ import type { CreateTask, UpdateTask } from '@my-agents/shared';
 // Services
 import { tasksService } from '../services/index.js';
 
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
+
 /** Lists tasks, optionally filtered by status, projectId, or agentId. */
 export async function listTasks(c: Context) {
   const status = c.req.query('status');
@@ -24,14 +27,14 @@ export async function getTask(c: Context) {
 
 /** Creates a new task. */
 export async function createTask(c: Context) {
-  const data = (c.req as any).valid('json') as CreateTask;
+  const data = getValidatedBody<CreateTask>(c);
   const task = await tasksService.create(data);
   return c.json(task, 201);
 }
 
 /** Updates a task by ID. */
 export async function updateTask(c: Context) {
-  const task = await tasksService.update(c.req.param('id')!, (c.req as any).valid('json') as UpdateTask);
+  const task = await tasksService.update(c.req.param('id')!, getValidatedBody<UpdateTask>(c));
   return c.json(task);
 }
 

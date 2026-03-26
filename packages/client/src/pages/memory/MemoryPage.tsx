@@ -58,7 +58,7 @@ export function MemoryPage() {
     if (!search.trim()) return memories;
     const q = search.toLowerCase();
     return memories.filter(
-      (m) => m.name.toLowerCase().includes(q) || m.content.toLowerCase().includes(q),
+      (m) => (m.name ?? '').toLowerCase().includes(q) || m.content.toLowerCase().includes(q),
     );
   }, [memories, search]);
 

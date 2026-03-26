@@ -6,7 +6,7 @@ import { streamChat, type InternalMessage, type ChatEvent, type ToolDefinition, 
 import { executorRegistry } from '../../executors/index.js';
 import { logger } from '../../lib/logger.js';
 
-const FILE_PATH = 'services/chat.service.ts';
+const FILE_PATH = 'services/chat/chat.service.ts';
 const MAX_TOOL_ROUNDS = 10;
 const MAX_RECENT_MEMORIES = 5;
 

@@ -56,6 +56,19 @@ export const CreateWorkspaceSchema = z.object({
   providerId: z.string().uuid().optional(),
 });
 
+export const RerunWorkspaceSchema = z.object({
+  agentRuntimeId: z.string().min(1),
+});
+
+export const CreatePullRequestSchema = z.object({
+  title: z.string().optional(),
+  body: z.string().optional(),
+});
+
+export const EditDiffCommentSchema = z.object({
+  body: z.string().min(1),
+});
+
 export const McpConfigFormatEnum = z.enum(['claude', 'cursor', 'generic-json', 'none']);
 
 export const ModelPresetSchema = z.object({
@@ -100,3 +113,6 @@ export type ProviderMapping = z.infer<typeof ProviderMappingSchema>;
 export type ExecutorStatus = z.infer<typeof ExecutorStatusSchema>;
 export type DiffComment = z.infer<typeof DiffCommentSchema>;
 export type AddDiffComment = z.infer<typeof AddDiffCommentSchema>;
+export type RerunWorkspace = z.infer<typeof RerunWorkspaceSchema>;
+export type CreatePullRequest = z.infer<typeof CreatePullRequestSchema>;
+export type EditDiffComment = z.infer<typeof EditDiffCommentSchema>;

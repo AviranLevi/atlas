@@ -14,7 +14,7 @@ import { AppError } from '../../lib/errors.js';
 /** Statuses that mean "an agent should not be running for this task". */
 const INACTIVE_STATUSES = new Set(['To Do', 'Done', 'Blocked']);
 
-const FILE_PATH = 'services/tasks.service.ts';
+const FILE_PATH = 'services/tasks/tasks.service.ts';
 
 export class TasksService {
   constructor(private readonly repo = tasksRepository) {}

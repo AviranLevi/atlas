@@ -73,6 +73,7 @@ export function AgentDialog({ open, onOpenChange, agent, onCreated }: AgentDialo
   };
 
   const isPending = createAgent.isPending || updateAgent.isPending;
+  const submitMutation = isEditing ? updateAgent : createAgent;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,6 +126,9 @@ export function AgentDialog({ open, onOpenChange, agent, onCreated }: AgentDialo
             <Button type="submit" disabled={isPending || !name.trim()}>
               {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Agent'}
             </Button>
+            {submitMutation.isError && (
+              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
+            )}
           </div>
         </form>
       </DialogContent>

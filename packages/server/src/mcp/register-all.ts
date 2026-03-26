@@ -10,9 +10,11 @@ import { registerSearchTools } from './search.tools.js';
 import { registerWorkspaceTools } from './workspaces.tools.js';
 import { registerPhaseTools } from './phases.tools.js';
 import { registerReviewTools } from './reviews.tools.js';
+import { registerAgentProviderTools } from './agent-providers.tools.js';
 
 export function registerAllTools(server: McpServer) {
   registerAgentTools(server);
+  registerAgentProviderTools(server);
   registerTaskTools(server);
   registerMemoryTools(server);
   registerProjectTools(server);

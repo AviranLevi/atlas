@@ -14,7 +14,7 @@ import { projectsRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/projects.service.ts';
+const FILE_PATH = 'services/projects/projects.service.ts';
 
 export class ProjectsService {
   constructor(private readonly repo = projectsRepository) {}

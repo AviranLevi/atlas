@@ -8,7 +8,7 @@ import { memoryService, projectsService } from '../index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/brief-generator.service.ts';
+const FILE_PATH = 'services/brief-generator/brief-generator.service.ts';
 
 /**
  * Max number of memories to include inline in the brief.
@@ -121,9 +121,10 @@ export class BriefGeneratorService {
       // Group by type
       const byType = new Map<string, Memory[]>();
       for (const m of selected) {
-        const list = byType.get(m.type) ?? [];
+        const key = m.type ?? 'Other';
+        const list = byType.get(key) ?? [];
         list.push(m);
-        byType.set(m.type, list);
+        byType.set(key, list);
       }
 
       lines.push('\n## Project Knowledge');

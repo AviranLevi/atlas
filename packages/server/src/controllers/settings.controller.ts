@@ -12,6 +12,9 @@ import type {
 // Services
 import { settingsService } from '../services/index.js';
 
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
+
 /** Returns the singleton global instructions document. */
 export async function getCurrentGlobalInstructions(c: Context) {
   const item = await settingsService.getOrCreateGlobalInstructions();
@@ -20,7 +23,7 @@ export async function getCurrentGlobalInstructions(c: Context) {
 
 /** Updates the singleton global instructions document. */
 export async function updateCurrentGlobalInstructions(c: Context) {
-  const data = (c.req as any).valid('json') as UpdateGlobalInstructions;
+  const data = getValidatedBody<UpdateGlobalInstructions>(c);
   const item = await settingsService.updateOrCreateGlobalInstructions(data);
   return c.json(item);
 }
@@ -39,7 +42,7 @@ export async function getGlobalInstruction(c: Context) {
 
 /** Creates a new global instruction. */
 export async function createGlobalInstruction(c: Context) {
-  const data = (c.req as any).valid('json') as CreateGlobalInstructions;
+  const data = getValidatedBody<CreateGlobalInstructions>(c);
   const item = await settingsService.createGlobalInstructions(data);
   return c.json(item, 201);
 }
@@ -48,7 +51,7 @@ export async function createGlobalInstruction(c: Context) {
 export async function updateGlobalInstruction(c: Context) {
   const item = await settingsService.updateGlobalInstructions(
     c.req.param('id')!,
-    (c.req as any).valid('json') as UpdateGlobalInstructions
+    getValidatedBody<UpdateGlobalInstructions>(c),
   );
   return c.json(item);
 }
@@ -73,7 +76,7 @@ export async function getDispatchRule(c: Context) {
 
 /** Creates a new dispatch rule. */
 export async function createDispatchRule(c: Context) {
-  const data = (c.req as any).valid('json') as CreateDispatchRule;
+  const data = getValidatedBody<CreateDispatchRule>(c);
   const item = await settingsService.createDispatchRule(data);
   return c.json(item, 201);
 }
@@ -82,7 +85,7 @@ export async function createDispatchRule(c: Context) {
 export async function updateDispatchRule(c: Context) {
   const item = await settingsService.updateDispatchRule(
     c.req.param('id')!,
-    (c.req as any).valid('json') as UpdateDispatchRule
+    getValidatedBody<UpdateDispatchRule>(c),
   );
   return c.json(item);
 }

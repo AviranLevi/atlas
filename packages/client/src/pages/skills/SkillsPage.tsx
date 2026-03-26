@@ -75,9 +75,10 @@ export function SkillsPage() {
     if (typeFilter !== 'all') return null;
     const map = new Map<string, Skill[]>();
     for (const skill of filtered) {
-      const group = map.get(skill.type) ?? [];
+      const typeKey = skill.type ?? 'Unknown';
+      const group = map.get(typeKey) ?? [];
       group.push(skill);
-      map.set(skill.type, group);
+      map.set(typeKey, group);
     }
     return map;
   }, [filtered, typeFilter]);
@@ -88,7 +89,7 @@ export function SkillsPage() {
   };
 
   const renderCard = (skill: Skill) => {
-    const borderColor = SKILL_TYPE_COLORS[skill.type] ?? 'border-l-gray-300';
+    const borderColor = SKILL_TYPE_COLORS[skill.type ?? ''] ?? 'border-l-gray-300';
     const preview = contentPreview(skill.steps);
 
     return (

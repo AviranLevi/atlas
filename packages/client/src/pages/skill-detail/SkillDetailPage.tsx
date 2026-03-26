@@ -143,7 +143,7 @@ export function SkillDetailPage() {
         <Card className="p-4">
           <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Type</label>
           <Select
-            value={skill.type}
+            value={skill.type ?? undefined}
             onValueChange={(v) => updateSkill.mutate({ id: skill.id, data: { type: v as SkillType } })}
           >
             <SelectTrigger className="h-8 text-xs">

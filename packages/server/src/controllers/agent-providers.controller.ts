@@ -7,6 +7,9 @@ import type { CreateAgentProvider, UpdateAgentProvider } from '@my-agents/shared
 // Services
 import { agentProvidersService } from '../services/index.js';
 
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
+
 /** Lists all agent providers. */
 export async function listAgentProviders(c: Context) {
   const items = await agentProvidersService.list();
@@ -21,14 +24,14 @@ export async function getAgentProvider(c: Context) {
 
 /** Creates a new agent provider. */
 export async function createAgentProvider(c: Context) {
-  const data = (c.req as any).valid('json') as CreateAgentProvider;
+  const data = getValidatedBody<CreateAgentProvider>(c);
   const item = await agentProvidersService.create(data);
   return c.json(item, 201);
 }
 
 /** Updates an agent provider by ID. */
 export async function updateAgentProvider(c: Context) {
-  const item = await agentProvidersService.update(c.req.param('id')!, (c.req as any).valid('json') as UpdateAgentProvider);
+  const item = await agentProvidersService.update(c.req.param('id')!, getValidatedBody<UpdateAgentProvider>(c));
   return c.json(item);
 }
 

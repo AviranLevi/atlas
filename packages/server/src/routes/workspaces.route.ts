@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateWorkspaceSchema, AddDiffCommentSchema } from '@my-agents/shared';
+import { CreateWorkspaceSchema, AddDiffCommentSchema, RerunWorkspaceSchema, CreatePullRequestSchema, EditDiffCommentSchema } from '@my-agents/shared';
 
 // Controllers
 import {
@@ -39,10 +39,10 @@ export const workspacesRoute = new Hono()
   .post('/:id/request-changes', requestWorkspaceChanges)
   .post('/:id/merge', mergeWorkspace)
   .post('/:id/complete', completeWorkspace)
-  .post('/:id/rerun', rerunWorkspace)
-  .post('/:id/create-pr', createWorkspacePullRequest)
+  .post('/:id/rerun', zValidator('json', RerunWorkspaceSchema), rerunWorkspace)
+  .post('/:id/create-pr', zValidator('json', CreatePullRequestSchema), createWorkspacePullRequest)
   .post('/:id/comments', zValidator('json', AddDiffCommentSchema), addWorkspaceComment)
-  .post('/:id/comments/:commentId', editWorkspaceComment)
+  .post('/:id/comments/:commentId', zValidator('json', EditDiffCommentSchema), editWorkspaceComment)
   .delete('/:id/comments/:commentId', removeWorkspaceComment)
   .post('/:id/stop', stopWorkspace)
   .delete('/:id', deleteWorkspace);

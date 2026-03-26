@@ -68,9 +68,9 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
     list.sort((a, b) => {
       let cmp = 0;
       if (sortKey === 'name') {
-        cmp = a.name.localeCompare(b.name);
+        cmp = (a.name ?? '').localeCompare(b.name ?? '');
       } else if (sortKey === 'type') {
-        cmp = a.type.localeCompare(b.type);
+        cmp = (a.type ?? '').localeCompare(b.type ?? '');
       } else if (sortKey === 'lastUsed') {
         const aVal = a.lastUsed ? new Date(a.lastUsed).getTime() : 0;
         const bVal = b.lastUsed ? new Date(b.lastUsed).getTime() : 0;
@@ -118,7 +118,7 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
                   <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{preview}</p>
                 )}
               </div>
-              <Badge variant="secondary" className={TYPE_BADGE_VARIANTS[mem.type] ?? ''}>
+              <Badge variant="secondary" className={TYPE_BADGE_VARIANTS[mem.type ?? ''] ?? ''}>
                 {mem.type}
               </Badge>
               <Badge variant="outline" className="text-[11px]">

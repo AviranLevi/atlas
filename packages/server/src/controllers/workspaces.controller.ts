@@ -2,13 +2,16 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateWorkspace, AddDiffComment } from '@my-agents/shared';
+import type { CreateWorkspace, AddDiffComment, RerunWorkspace, CreatePullRequest, EditDiffComment } from '@my-agents/shared';
 
 // Services
 import { orchestratorService } from '../services/index.js';
 
 // Executors
 import { executorRegistry } from '../executors/index.js';
+
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
 
 /** Lists all registered agent runtimes. */
 export async function listAgentRuntimes(c: Context) {
@@ -51,7 +54,7 @@ export async function getWorkspace(c: Context) {
 
 /** Starts a new agent workspace for a task. */
 export async function createWorkspace(c: Context) {
-  const { taskId, agentRuntimeId, baseBranch, model, providerId } = (c.req as any).valid('json') as CreateWorkspace;
+  const { taskId, agentRuntimeId, baseBranch, model, providerId } = getValidatedBody<CreateWorkspace>(c);
   const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model, providerId);
   return c.json(workspace, 201);
 }
@@ -82,28 +85,28 @@ export async function completeWorkspace(c: Context) {
 
 /** Re-runs a workspace with a (possibly different) agent runtime. */
 export async function rerunWorkspace(c: Context) {
-  const { agentRuntimeId } = await c.req.json<{ agentRuntimeId: string }>();
+  const { agentRuntimeId } = getValidatedBody<RerunWorkspace>(c);
   const workspace = await orchestratorService.rerun(c.req.param('id')!, agentRuntimeId);
   return c.json(workspace, 201);
 }
 
 /** Creates a GitHub pull request for the workspace branch. */
 export async function createWorkspacePullRequest(c: Context) {
-  const { title, body } = await c.req.json<{ title?: string; body?: string }>();
+  const { title, body } = getValidatedBody<CreatePullRequest>(c);
   const result = await orchestratorService.createPullRequest(c.req.param('id')!, { title, body });
   return c.json(result, 201);
 }
 
 /** Adds a diff comment to a workspace. */
 export function addWorkspaceComment(c: Context) {
-  const data = (c.req as any).valid('json') as AddDiffComment;
+  const data = getValidatedBody<AddDiffComment>(c);
   const workspace = orchestratorService.addDiffComment(c.req.param('id')!, data);
   return c.json(workspace, 201);
 }
 
 /** Edits an existing diff comment in a workspace. */
 export async function editWorkspaceComment(c: Context) {
-  const { body } = await c.req.json<{ body: string }>();
+  const { body } = getValidatedBody<EditDiffComment>(c);
   const workspace = orchestratorService.editDiffComment(
     c.req.param('id')!,
     c.req.param('commentId')!,

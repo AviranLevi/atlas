@@ -7,7 +7,7 @@ import fs from 'fs';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/worktree.service.ts';
+const FILE_PATH = 'services/worktree/worktree.service.ts';
 const WORKSPACES_DIR = '.agent-workspaces';
 
 export interface DiffFile {

@@ -54,7 +54,7 @@ export function ProjectTasksTable({ tasks, onNavigateToKanban }: ProjectTasksTab
                       </span>
                     </td>
                     <td className="hidden px-3 py-2 sm:table-cell">
-                      <Badge variant="outline" className={`text-xs ${priorityBadgeClass[task.priority] ?? ''}`}>
+                      <Badge variant="outline" className={`text-xs ${priorityBadgeClass[task.priority ?? 'Medium'] ?? ''}`}>
                         {task.priority}
                       </Badge>
                     </td>

@@ -72,6 +72,7 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
   };
 
   const isPending = createPhase.isPending || updatePhase.isPending;
+  const submitMutation = isEditing ? updatePhase : createPhase;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,6 +125,9 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
             <Button type="submit" disabled={isPending || !name.trim()}>
               {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Phase'}
             </Button>
+            {submitMutation.isError && (
+              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
+            )}
           </div>
         </form>
       </DialogContent>

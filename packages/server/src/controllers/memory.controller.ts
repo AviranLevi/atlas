@@ -7,6 +7,9 @@ import type { CreateMemory, UpdateMemory } from '@my-agents/shared';
 // Services
 import { memoryService } from '../services/index.js';
 
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
+
 /** Lists memory entries, optionally filtered by type, scope, or projectId. */
 export async function listMemory(c: Context) {
   const type = c.req.query('type');
@@ -24,14 +27,14 @@ export async function getMemory(c: Context) {
 
 /** Creates a new memory entry. */
 export async function createMemory(c: Context) {
-  const data = (c.req as any).valid('json') as CreateMemory;
+  const data = getValidatedBody<CreateMemory>(c);
   const mem = await memoryService.create(data);
   return c.json(mem, 201);
 }
 
 /** Updates a memory entry by ID. */
 export async function updateMemory(c: Context) {
-  const mem = await memoryService.update(c.req.param('id')!, (c.req as any).valid('json') as UpdateMemory);
+  const mem = await memoryService.update(c.req.param('id')!, getValidatedBody<UpdateMemory>(c));
   return c.json(mem);
 }
 

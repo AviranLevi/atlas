@@ -11,7 +11,7 @@ import { skillsRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/skills.service.ts';
+const FILE_PATH = 'services/skills/skills.service.ts';
 
 export class SkillsService {
   constructor(private readonly repo = skillsRepository) {}

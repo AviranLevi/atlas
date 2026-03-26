@@ -5,7 +5,7 @@ import { preferencesRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/preferences.service.ts';
+const FILE_PATH = 'services/preferences/preferences.service.ts';
 
 export class PreferencesService {
   constructor(private readonly repo = preferencesRepository) {}

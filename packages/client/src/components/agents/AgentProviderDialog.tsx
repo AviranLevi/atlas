@@ -85,6 +85,7 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
   const showBaseUrl = type === 'openai-compatible' || type === 'ollama';
   const showApiKey = type !== 'ollama';
   const isPending = createProvider.isPending || updateProvider.isPending;
+  const submitMutation = isEditing ? updateProvider : createProvider;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,6 +198,9 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
             <Button type="submit" disabled={isPending || !name.trim() || !modelName.trim()}>
               {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Provider'}
             </Button>
+            {submitMutation.isError && (
+              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
+            )}
           </div>
         </form>
       </DialogContent>

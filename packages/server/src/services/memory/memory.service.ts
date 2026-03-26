@@ -8,7 +8,7 @@ import { memoryRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/memory.service.ts';
+const FILE_PATH = 'services/memory/memory.service.ts';
 
 export class MemoryService {
   constructor(private readonly repo = memoryRepository) {}

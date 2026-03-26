@@ -29,4 +29,18 @@ export const api = {
   put: <T>(path: string, data: unknown) =>
     request<T>(path, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
+  /** Raw streaming POST -- returns the Response for manual body reading. */
+  stream: (path: string, data: unknown, signal?: AbortSignal): Promise<Response> =>
+    fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      signal,
+    }),
+  /** Fire-and-forget DELETE (e.g. abort stream). Logs errors instead of swallowing. */
+  fireAndForget: (path: string, method: string = 'DELETE'): void => {
+    fetch(`${BASE_URL}${path}`, { method }).catch((err) => {
+      console.warn(`[api] fire-and-forget ${method} ${path} failed:`, err);
+    });
+  },
 };

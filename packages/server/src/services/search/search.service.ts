@@ -8,7 +8,7 @@ import { searchRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/search.service.ts';
+const FILE_PATH = 'services/search/search.service.ts';
 
 export class SearchService {
   constructor(private readonly repo = searchRepository) {}

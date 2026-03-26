@@ -10,12 +10,20 @@
     "build": "pnpm --filter @my-agents/shared build && pnpm --filter @my-agents/server build && pnpm --filter @my-agents/client build",
     "mcp": "pnpm --filter @my-agents/server mcp",
     "db:generate": "pnpm --filter @my-agents/server db:generate",
-    "db:migrate": "pnpm --filter @my-agents/server db:migrate"
+    "db:migrate": "pnpm --filter @my-agents/server db:migrate",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm --filter @my-agents/shared build && pnpm --filter @my-agents/server exec tsc --noEmit && pnpm --filter @my-agents/client exec tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "engines": {
     "node": ">=24"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "@biomejs/biome": "^2.4.9",
+    "concurrently": "^9.2.1",
+    "vitest": "^4.1.1"
   }
 }

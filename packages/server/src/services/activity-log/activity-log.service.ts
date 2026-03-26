@@ -6,7 +6,7 @@ import type { ActivityLogEntry } from '../../db/repositories/activity-log.reposi
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/activity-log.service.ts';
+const FILE_PATH = 'services/activity-log/activity-log.service.ts';
 
 export class ActivityLogService {
   constructor(private readonly repo = activityLogRepository) {}

@@ -116,6 +116,9 @@ export function SkillDialog({ open, onOpenChange, onCreated }: SkillDialogProps)
             <Button type="submit" disabled={createSkill.isPending || !name.trim()}>
               {createSkill.isPending ? 'Creating...' : 'Create Skill'}
             </Button>
+            {createSkill.isError && (
+              <p className="text-sm text-destructive">{(createSkill.error as Error).message}</p>
+            )}
           </div>
         </form>
       </DialogContent>

@@ -8,7 +8,7 @@ import { phasesRepository } from '../../db/repositories/index.js';
 import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/phases.service.ts';
+const FILE_PATH = 'services/phases/phases.service.ts';
 
 export class PhasesService {
   constructor(private readonly repo = phasesRepository) {}
