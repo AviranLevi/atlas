@@ -65,7 +65,7 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
       );
     } else {
       createPhase.mutate(
-        { projectId, ...data },
+        { projectId, orderIndex: 0, ...data },
         { onSuccess: () => onOpenChange(false) }
       );
     }

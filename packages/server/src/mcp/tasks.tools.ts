@@ -62,7 +62,10 @@ export function registerTaskTools(server: McpServer) {
       skillId: z.string().uuid().optional().describe('Assign a skill for execution'),
     }),
   }, async (args) => {
-    const task = await tasksService.create(args);
+    const task = await tasksService.create({
+      ...args,
+      status: args.status ?? 'To Do',
+    });
     return { content: [{ type: 'text' as const, text: JSON.stringify(task, null, 2) }] };
   });
 

@@ -62,7 +62,10 @@ export function registerMemoryTools(server: McpServer) {
   }, async (args) => {
     try {
       console.error(`[MCP] create_memory called: name="${args.name}", type=${args.type}, scope=${args.scope ?? 'project'}, projectId=${args.projectId ?? 'none'}`);
-      const entry = await memoryService.create(args);
+      const entry = await memoryService.create({
+        ...args,
+        scope: args.scope ?? 'project',
+      });
       console.error(`[MCP] create_memory SUCCESS: id=${entry.id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(entry, null, 2) }] };
     } catch (error) {
