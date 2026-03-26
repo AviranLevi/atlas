@@ -7,9 +7,9 @@
     "declaration": false,
     "declarationMap": false,
     "paths": {
-      "@/*": ["./src/*"],
-      "@my-agents/shared": ["../shared/src"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [{ "path": "../shared" }]
 }
