@@ -1,10 +1,10 @@
 // Repositories
-import { activityLogRepository } from '../db/repositories/index.js';
-import type { ActivityLogEntry } from '../db/repositories/activity-log.repository.js';
+import { activityLogRepository } from '../../db/repositories/index.js';
+import type { ActivityLogEntry } from '../../db/repositories/activity-log.repository.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/activity-log.service.ts';
 

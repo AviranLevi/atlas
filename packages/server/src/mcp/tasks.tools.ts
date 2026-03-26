@@ -1,14 +1,6 @@
-// NPM
 import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-// Services
 import { tasksService } from '../services/index.js';
-// DB
-import { db } from '../db/index.js';
-import { tasks } from '../db/schema/index.js';
-// Types
-import type { Task } from '@my-agents/shared';
 
 export function registerTaskTools(server: McpServer) {
   server.registerTool('list_tasks', {
@@ -18,23 +10,8 @@ export function registerTaskTools(server: McpServer) {
       projectId: z.string().uuid().optional().describe('Filter by project UUID'),
       agentId: z.string().uuid().optional().describe('Filter by assigned agent UUID'),
     }),
-  }, async ({ status, projectId, agentId }) => {
-    const conditions = [];
-    if (status) conditions.push(eq(tasks.status, status));
-    if (projectId) conditions.push(eq(tasks.projectId, projectId));
-    if (agentId) conditions.push(eq(tasks.agentId, agentId));
-
-    let result: Task[];
-    if (conditions.length > 0) {
-      result = db
-        .select()
-        .from(tasks)
-        .where(conditions.length === 1 ? conditions[0] : and(...conditions))
-        .all() as Task[];
-    } else {
-      result = await tasksService.list();
-    }
-
+  }, async (filters) => {
+    const result = await tasksService.list(filters);
     return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
   });
 

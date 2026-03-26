@@ -1,11 +1,10 @@
 import type { ChatConversation, ChatMessage, CreateConversation } from '@my-agents/shared';
 
-import { chatRepository } from '../db/repositories/index.js';
-import { agentProvidersService, settingsService, projectsService, memoryService } from './index.js';
-import { streamChat, type InternalMessage, type ChatEvent, type ToolDefinition, CHAT_TOOLS, executeTool, runCliChat, formatCliPrompt } from '../lib/chat/index.js';
-import { executorRegistry } from '../executors/index.js';
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { chatRepository } from '../../db/repositories/index.js';
+import { agentProvidersService, settingsService, projectsService, memoryService } from '../index.js';
+import { streamChat, type InternalMessage, type ChatEvent, type ToolDefinition, CHAT_TOOLS, executeTool, runCliChat, formatCliPrompt } from '../../lib/chat/index.js';
+import { executorRegistry } from '../../executors/index.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/chat.service.ts';
 const MAX_TOOL_ROUNDS = 10;

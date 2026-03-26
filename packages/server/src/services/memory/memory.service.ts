@@ -2,11 +2,11 @@
 import type { Memory, CreateMemory, UpdateMemory } from '@my-agents/shared';
 
 // Repositories
-import { memoryRepository } from '../db/repositories/index.js';
+import { memoryRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/memory.service.ts';
 
@@ -16,7 +16,7 @@ export class MemoryService {
   /**
    * Lists memory entries, optionally filtered by type, scope, or projectId.
    */
-  async list(filters?: { type?: string; scope?: string; projectId?: string }): Promise<Memory[]> {
+  async list(filters?: { type?: string; scope?: string; projectId?: string; agentId?: string }): Promise<Memory[]> {
     const FUNCTION_NAME = 'list';
     try {
       if (filters?.projectId) {
@@ -33,7 +33,7 @@ export class MemoryService {
 
   private applyFilters(
     memories: Memory[],
-    filters?: { type?: string; scope?: string },
+    filters?: { type?: string; scope?: string; agentId?: string },
   ): Memory[] {
     let result = memories;
     if (filters?.type) {
@@ -41,6 +41,9 @@ export class MemoryService {
     }
     if (filters?.scope) {
       result = result.filter((m) => m.scope === filters.scope);
+    }
+    if (filters?.agentId) {
+      result = result.filter((m) => m.agentId === filters.agentId);
     }
     return result;
   }

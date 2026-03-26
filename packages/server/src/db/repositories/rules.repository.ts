@@ -1,16 +1,17 @@
 // External
-import { eq } from 'drizzle-orm';
+import { eq, or, isNull } from 'drizzle-orm';
 
 // Shared
 import type { CreateRule, UpdateRule, Rule } from '@my-agents/shared';
 
 // DB
 import type { DB } from '../index.js';
-import { rules } from '../schema/index.js';
+import { rules, agentRules, agents } from '../schema/index.js';
 
 // Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { parseTags } from '../../lib/utils/index.js';
 
 const FILE_PATH = 'db/repositories/rules.repository.ts';
 
@@ -114,6 +115,48 @@ export class RulesRepository {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete rule', { cause: error });
+    }
+  }
+
+  /** Returns rules for a project plus global rules (null projectId), with tags parsed. */
+  findByProjectOrGlobal(projectId: string): Rule[] {
+    const FUNCTION_NAME = 'findByProjectOrGlobal';
+    try {
+      const rows = this.db
+        .select()
+        .from(rules)
+        .where(or(eq(rules.projectId, projectId), isNull(rules.projectId)))
+        .all();
+      return rows.map((r) => ({
+        ...r,
+        tags: parseTags(r.tags),
+      })) as Rule[];
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query rules by project', { cause: error });
+    }
+  }
+
+  /** Returns agents that use this rule. */
+  findAgentsByRuleId(ruleId: string): { id: string; name: string }[] {
+    const FUNCTION_NAME = 'findAgentsByRuleId';
+    try {
+      const rows = this.db
+        .select()
+        .from(agentRules)
+        .where(eq(agentRules.ruleId, ruleId))
+        .all();
+      const result: { id: string; name: string }[] = [];
+      for (const row of rows) {
+        const agent = this.db.select().from(agents).where(eq(agents.id, row.agentId)).get();
+        if (agent) {
+          result.push({ id: agent.id, name: agent.name });
+        }
+      }
+      return result;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query agents by rule', { cause: error });
     }
   }
 }

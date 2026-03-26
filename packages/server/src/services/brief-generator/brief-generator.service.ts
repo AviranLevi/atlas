@@ -2,11 +2,11 @@
 import type { Project, ProjectScanData, Memory } from '@my-agents/shared';
 
 // Services
-import { memoryService, projectsService } from './index.js';
+import { memoryService, projectsService } from '../index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/brief-generator.service.ts';
 

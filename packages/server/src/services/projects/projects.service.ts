@@ -1,20 +1,18 @@
 // External
-import { eq, sql } from 'drizzle-orm';
+import { execSync } from 'child_process';
 
 // Shared
 import type { Project, CreateProject, UpdateProject } from '@my-agents/shared';
 
-// DB
-import { db } from '../db/index.js';
-import { agentProjects, agents, tasks, memory, projects, workspaces, phases } from '../db/schema/index.js';
+// Types
+import type { ProjectSummary, ProjectContext } from './projects.types.js';
 
 // Repositories
-import { projectsRepository } from '../db/repositories/index.js';
+import { projectsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
-import { parseTags } from '../lib/utils/index.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/projects.service.ts';
 
@@ -71,13 +69,7 @@ export class ProjectsService {
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {
-      // Delete children in dependency order to avoid FK violations
-      db.delete(workspaces).where(eq(workspaces.projectId, id)).run();
-      db.delete(tasks).where(eq(tasks.projectId, id)).run();
-      db.delete(phases).where(eq(phases.projectId, id)).run();
-      db.delete(memory).where(eq(memory.projectId, id)).run();
-      db.delete(agentProjects).where(eq(agentProjects.projectId, id)).run();
-      this.repo.remove(id);
+      this.repo.removeWithRelations(id);
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - deleted project ${id} and all related records`);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -86,44 +78,13 @@ export class ProjectsService {
   }
 
   /** Lists all projects with task count breakdown and agent count. */
-  async listWithSummary() {
+  async listWithSummary(): Promise<ProjectSummary[]> {
     const FUNCTION_NAME = 'listWithSummary';
     try {
       const allProjects = this.repo.findAll();
 
-      const taskCountRows = db
-        .select({
-          projectId: tasks.projectId,
-          status: tasks.status,
-          count: sql<number>`count(*)`.as('count'),
-        })
-        .from(tasks)
-        .groupBy(tasks.projectId, tasks.status)
-        .all();
-
-      const agentCountRows = db
-        .select({
-          projectId: agentProjects.projectId,
-          count: sql<number>`count(*)`.as('count'),
-        })
-        .from(agentProjects)
-        .groupBy(agentProjects.projectId)
-        .all();
-
-      const taskCountMap = new Map<string, Record<string, number>>();
-      for (const row of taskCountRows) {
-        if (!row.projectId) continue;
-        if (!taskCountMap.has(row.projectId)) taskCountMap.set(row.projectId, {});
-        taskCountMap.get(row.projectId)![row.status ?? ''] = Number(row.count);
-      }
-
-      const agentCountMap = new Map<string, number>();
-      for (const row of agentCountRows) {
-        agentCountMap.set(row.projectId, Number(row.count));
-      }
-
       return allProjects.map((p) => {
-        const counts = taskCountMap.get(p.id) ?? {};
+        const counts = this.repo.countTasksByProject(p.id);
         const todo = counts['To Do'] ?? 0;
         const inProgress = counts['In Progress'] ?? 0;
         const inReview = counts['In Review'] ?? 0;
@@ -131,7 +92,7 @@ export class ProjectsService {
         return {
           ...p,
           taskCounts: { todo, inProgress, inReview, done, total: todo + inProgress + inReview + done },
-          agentCount: agentCountMap.get(p.id) ?? 0,
+          agentCount: this.repo.countAgentsByProject(p.id),
         };
       });
     } catch (error: unknown) {
@@ -169,35 +130,13 @@ export class ProjectsService {
    * Returns the full context for a project: details, assigned agents,
    * project tasks, and project-scoped memories.
    */
-  async getContext(projectId: string) {
+  async getContext(projectId: string): Promise<ProjectContext> {
     const FUNCTION_NAME = 'getContext';
     try {
       const project = await this.getById(projectId);
-
-      const agentProjectRows = db
-        .select({ agentId: agentProjects.agentId })
-        .from(agentProjects)
-        .where(eq(agentProjects.projectId, projectId))
-        .all();
-      const assignedAgents = agentProjectRows
-        .map((r) => db.select().from(agents).where(eq(agents.id, r.agentId)).get())
-        .filter(Boolean);
-
-      const rawTasks = db
-        .select()
-        .from(tasks)
-        .where(eq(tasks.projectId, projectId))
-        .all();
-      const projectTasks = rawTasks.map((t) => ({
-        ...t,
-        tags: typeof t.tags === 'string' ? parseTags(t.tags) : t.tags ?? null,
-      }));
-
-      const projectMemories = db
-        .select()
-        .from(memory)
-        .where(eq(memory.projectId, projectId))
-        .all();
+      const assignedAgents = this.repo.findAgentsByProjectId(projectId);
+      const projectTasks = this.repo.findTasksByProjectId(projectId);
+      const projectMemories = this.repo.findMemoriesByProjectId(projectId);
 
       return {
         project,
@@ -208,6 +147,58 @@ export class ProjectsService {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to get project context', { cause: error });
+    }
+  }
+
+  /** Returns git branches for a project's local repository. */
+  async getBranches(projectId: string): Promise<string[]> {
+    const FUNCTION_NAME = 'getBranches';
+    try {
+      const project = await this.getById(projectId);
+      if (!project.localPath) return [];
+      const output = execSync('git branch -a --format="%(refname:short)"', {
+        cwd: project.localPath,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }).trim();
+      const branches = output
+        .split('\n')
+        .filter(Boolean)
+        .map((b) => b.replace(/^origin\//, ''))
+        .filter((b) => !b.startsWith('HEAD') && !b.startsWith('agents/'));
+      return [...new Set(branches)];
+    } catch {
+      return [];
+    }
+  }
+
+  /** Deep-scans the project directory, updates metadata, and regenerates the brief. */
+  async scanAndUpdate(projectId: string): Promise<Project> {
+    const FUNCTION_NAME = 'scanAndUpdate';
+    try {
+      const { deepScanProject } = await import('../../lib/filesystem-scanner/index.js');
+      const project = await this.getById(projectId);
+      if (!project.localPath) {
+        throw new AppError('Project has no local path', { status: 400 });
+      }
+      const scanData = deepScanProject(project.localPath);
+      const updates: Record<string, unknown> = { scanData };
+      if (!project.techStack) {
+        const techs = [
+          ...(scanData.languages ?? []),
+          ...(scanData.dependencies?.filter((d: string) =>
+            ['react', 'vue', 'svelte', 'angular', 'next', 'nuxt', 'express', 'fastify', 'hono', 'nestjs',
+             'drizzle-orm', 'prisma', 'tailwindcss', 'vite', 'electron'].includes(d)
+          ) ?? []),
+        ];
+        if (techs.length) updates.techStack = techs.join(', ');
+      }
+      await this.update(projectId, updates);
+      return await this.getById(projectId);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to scan project', { cause: error });
     }
   }
 }

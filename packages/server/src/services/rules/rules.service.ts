@@ -1,20 +1,15 @@
-// External
-import { eq, or, isNull } from 'drizzle-orm';
-
 // Shared
 import type { Rule, CreateRule, UpdateRule } from '@my-agents/shared';
 
-// DB
-import { db } from '../db/index.js';
-import { rules, agentRules, agents } from '../db/schema/index.js';
+// Types
+import type { RuleDetail } from './rules.types.js';
 
 // Repositories
-import { rulesRepository } from '../db/repositories/index.js';
+import { rulesRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { parseTags } from '../lib/utils/index.js';
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/rules.service.ts';
 
@@ -25,21 +20,19 @@ export class RulesService {
    * Retrieves all rules, optionally filtered by projectId.
    * When projectId is provided, returns rules where projectId matches OR projectId is null (global).
    */
-  async list(projectId?: string): Promise<Rule[]> {
+  async list(filters?: { projectId?: string; type?: string }): Promise<Rule[]> {
     const FUNCTION_NAME = 'list';
     try {
-      if (projectId) {
-        const rows = db
-          .select()
-          .from(rules)
-          .where(or(eq(rules.projectId, projectId), isNull(rules.projectId)))
-          .all();
-        return rows.map((r) => ({
-          ...r,
-          tags: parseTags(r.tags),
-        })) as Rule[];
+      let result: Rule[];
+      if (filters?.projectId) {
+        result = this.repo.findByProjectOrGlobal(filters.projectId);
+      } else {
+        result = this.repo.findAll();
       }
-      return this.repo.findAll();
+      if (filters?.type) {
+        result = result.filter((r) => r.type === filters.type);
+      }
+      return result;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to list rules', { cause: error });
@@ -91,25 +84,11 @@ export class RulesService {
   }
 
   /** Returns a rule with its associated agents. */
-  async getDetail(ruleId: string) {
+  async getDetail(ruleId: string): Promise<RuleDetail> {
     const FUNCTION_NAME = 'getDetail';
     try {
       const rule = await this.getById(ruleId);
-
-      const rows = db
-        .select()
-        .from(agentRules)
-        .where(eq(agentRules.ruleId, ruleId))
-        .all();
-
-      const agentsList = [];
-      for (const row of rows) {
-        const agent = db.select().from(agents).where(eq(agents.id, row.agentId)).get();
-        if (agent) {
-          agentsList.push({ id: agent.id, name: agent.name });
-        }
-      }
-
+      const agentsList = this.repo.findAgentsByRuleId(ruleId);
       return { rule, agents: agentsList };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

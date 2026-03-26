@@ -30,7 +30,12 @@ export const CreatePhaseSchema = z.object({
 
 export const UpdatePhaseSchema = CreatePhaseSchema.omit({ projectId: true }).partial();
 
+export const ReorderPhaseSchema = z.object({
+  newIndex: z.number().int().min(0),
+});
+
 export type PhaseStatus = z.infer<typeof PhaseStatusEnum>;
 export type Phase = z.infer<typeof PhaseSchema>;
 export type CreatePhase = z.infer<typeof CreatePhaseSchema>;
 export type UpdatePhase = z.infer<typeof UpdatePhaseSchema>;
+export type ReorderPhase = z.infer<typeof ReorderPhaseSchema>;

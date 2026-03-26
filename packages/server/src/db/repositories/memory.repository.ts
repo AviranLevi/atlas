@@ -1,5 +1,5 @@
 // External
-import { eq, or, isNull } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 
 // Shared
 import type { CreateMemory, UpdateMemory, Memory } from '@my-agents/shared';

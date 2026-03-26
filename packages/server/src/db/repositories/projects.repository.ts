@@ -1,16 +1,17 @@
 // External
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 // Shared
 import type { CreateProject, UpdateProject, Project } from '@my-agents/shared';
 
 // DB
 import type { DB } from '../index.js';
-import { projects } from '../schema/index.js';
+import { projects, tasks, agentProjects, agents, memory, workspaces, phases } from '../schema/index.js';
 
 // Lib
 import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { parseTags } from '../../lib/utils/index.js';
 
 const FILE_PATH = 'db/repositories/projects.repository.ts';
 
@@ -110,6 +111,114 @@ export class ProjectsRepository {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete project', { cause: error });
+    }
+  }
+
+  /** Returns task counts keyed by status for a project. */
+  countTasksByProject(projectId: string): Record<string, number> {
+    const FUNCTION_NAME = 'countTasksByProject';
+    try {
+      const rows = this.db
+        .select({
+          status: tasks.status,
+          count: sql<number>`count(*)`.as('count'),
+        })
+        .from(tasks)
+        .where(eq(tasks.projectId, projectId))
+        .groupBy(tasks.status)
+        .all();
+      const counts: Record<string, number> = {};
+      for (const row of rows) {
+        counts[row.status ?? ''] = Number(row.count);
+      }
+      return counts;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to count tasks by project', { cause: error });
+    }
+  }
+
+  /** Returns the number of agents assigned to a project. */
+  countAgentsByProject(projectId: string): number {
+    const FUNCTION_NAME = 'countAgentsByProject';
+    try {
+      const row = this.db
+        .select({ count: sql<number>`count(*)`.as('count') })
+        .from(agentProjects)
+        .where(eq(agentProjects.projectId, projectId))
+        .get();
+      return Number(row?.count ?? 0);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to count agents by project', { cause: error });
+    }
+  }
+
+  /** Returns agents assigned to a project. */
+  findAgentsByProjectId(projectId: string): Record<string, unknown>[] {
+    const FUNCTION_NAME = 'findAgentsByProjectId';
+    try {
+      const agentProjectRows = this.db
+        .select({ agentId: agentProjects.agentId })
+        .from(agentProjects)
+        .where(eq(agentProjects.projectId, projectId))
+        .all();
+      const assigned: Record<string, unknown>[] = [];
+      for (const r of agentProjectRows) {
+        const row = this.db.select().from(agents).where(eq(agents.id, r.agentId)).get();
+        if (row) assigned.push(row as Record<string, unknown>);
+      }
+      return assigned;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query project agents', { cause: error });
+    }
+  }
+
+  /** Returns tasks for a project with tags parsed. */
+  findTasksByProjectId(projectId: string): Record<string, unknown>[] {
+    const FUNCTION_NAME = 'findTasksByProjectId';
+    try {
+      const rawTasks = this.db.select().from(tasks).where(eq(tasks.projectId, projectId)).all();
+      return rawTasks.map((t) => ({
+        ...t,
+        tags: typeof t.tags === 'string' ? parseTags(t.tags) : (t.tags ?? null),
+      })) as Record<string, unknown>[];
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query project tasks', { cause: error });
+    }
+  }
+
+  /** Returns memories scoped to a project. */
+  findMemoriesByProjectId(projectId: string): Record<string, unknown>[] {
+    const FUNCTION_NAME = 'findMemoriesByProjectId';
+    try {
+      return this.db.select().from(memory).where(eq(memory.projectId, projectId)).all() as Record<
+        string,
+        unknown
+      >[];
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query project memories', { cause: error });
+    }
+  }
+
+  /**
+   * Deletes related rows then the project (workspaces, tasks, phases, memory, agent links).
+   */
+  removeWithRelations(id: string): void {
+    const FUNCTION_NAME = 'removeWithRelations';
+    try {
+      this.db.delete(workspaces).where(eq(workspaces.projectId, id)).run();
+      this.db.delete(tasks).where(eq(tasks.projectId, id)).run();
+      this.db.delete(phases).where(eq(phases.projectId, id)).run();
+      this.db.delete(memory).where(eq(memory.projectId, id)).run();
+      this.db.delete(agentProjects).where(eq(agentProjects.projectId, id)).run();
+      this.remove(id);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to delete project and relations', { cause: error });
     }
   }
 }

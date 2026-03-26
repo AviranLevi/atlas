@@ -1,15 +1,6 @@
-// External
 import type { Context } from 'hono';
-import { execSync } from 'child_process';
-
-// Shared
 import type { CreateProject, UpdateProject, AssignAgent } from '@my-agents/shared';
-
-// Services
 import { projectsService, briefGeneratorService, agentsService } from '../services/index.js';
-
-// Lib
-import { deepScanProject } from '../lib/filesystem-scanner/index.js';
 
 /** Lists all projects. Pass include=summary for task/agent counts. */
 export async function listProjects(c: Context) {
@@ -24,23 +15,8 @@ export async function listProjects(c: Context) {
 
 /** Returns git branches for a project's local repository. */
 export async function getProjectBranches(c: Context) {
-  const project = await projectsService.getById(c.req.param('id')!);
-  if (!project.localPath) return c.json([]);
-  try {
-    const output = execSync('git branch -a --format="%(refname:short)"', {
-      cwd: project.localPath,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
-    const branches = output
-      .split('\n')
-      .filter(Boolean)
-      .map((b) => b.replace(/^origin\//, ''))
-      .filter((b) => !b.startsWith('HEAD') && !b.startsWith('agents/'));
-    return c.json([...new Set(branches)]);
-  } catch {
-    return c.json([]);
-  }
+  const branches = await projectsService.getBranches(c.req.param('id')!);
+  return c.json(branches);
 }
 
 /** Returns the full context for a project (agents, tasks, memories). */
@@ -64,25 +40,10 @@ export async function createProject(c: Context) {
 
 /** Deep-scans the project directory, updates metadata, and regenerates the brief. */
 export async function scanProject(c: Context) {
-  const project = await projectsService.getById(c.req.param('id')!);
-  if (!project.localPath) {
-    return c.json({ error: 'Project has no local path' }, 400);
-  }
-  const scanData = deepScanProject(project.localPath);
-  const updates: Record<string, unknown> = { scanData };
-  if (!project.techStack) {
-    const techs = [
-      ...(scanData.languages ?? []),
-      ...(scanData.dependencies?.filter((d) =>
-        ['react', 'vue', 'svelte', 'angular', 'next', 'nuxt', 'express', 'fastify', 'hono', 'nestjs',
-         'drizzle-orm', 'prisma', 'tailwindcss', 'vite', 'electron'].includes(d)
-      ) ?? []),
-    ];
-    if (techs.length) updates.techStack = techs.join(', ');
-  }
-  await projectsService.update(c.req.param('id')!, updates);
-  await briefGeneratorService.generateAndSave(c.req.param('id')!);
-  const final = await projectsService.getById(c.req.param('id')!);
+  const projectId = c.req.param('id')!;
+  const project = await projectsService.scanAndUpdate(projectId);
+  await briefGeneratorService.generateAndSave(projectId);
+  const final = await projectsService.getById(projectId);
   return c.json(final);
 }
 

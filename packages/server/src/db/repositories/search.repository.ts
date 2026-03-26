@@ -1,35 +1,29 @@
 // External
-import { like, or, sql } from 'drizzle-orm';
+import { like, or } from 'drizzle-orm';
 
 // DB
-import { db } from '../db/index.js';
-import { agents, skills, rules, memory, tasks, projects } from '../db/schema/index.js';
+import type { DB } from '../index.js';
+import { agents, skills, rules, memory, tasks, projects } from '../schema/index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
-const FILE_PATH = 'services/search.service.ts';
+import type { SearchResult } from '../../services/search/search.types.js';
 
-export type SearchResult = {
-  type: 'agent' | 'skill' | 'rule' | 'memory' | 'task' | 'project';
-  id: string;
-  name: string;
-  snippet?: string;
-};
+const FILE_PATH = 'db/repositories/search.repository.ts';
 
-export class SearchService {
-  /**
-   * Full-text search across all entities using SQLite LIKE.
-   * @param query - The search query string.
-   */
-  search(query: string): SearchResult[] {
-    const FUNCTION_NAME = 'search';
+export class SearchRepository {
+  constructor(private readonly db: DB) {}
+
+  /** Full-text search across entities using SQLite LIKE. */
+  searchAll(query: string): SearchResult[] {
+    const FUNCTION_NAME = 'searchAll';
     try {
       const pattern = `%${query}%`;
       const results: SearchResult[] = [];
 
-      const agentRows = db
+      const agentRows = this.db
         .select({ id: agents.id, name: agents.name, description: agents.description })
         .from(agents)
         .where(or(like(agents.name, pattern), like(agents.description, pattern), like(agents.personality, pattern)))
@@ -38,7 +32,7 @@ export class SearchService {
         results.push({ type: 'agent', id: r.id, name: r.name, snippet: r.description ?? undefined });
       }
 
-      const skillRows = db
+      const skillRows = this.db
         .select({ id: skills.id, name: skills.name, steps: skills.steps })
         .from(skills)
         .where(or(like(skills.name, pattern), like(skills.steps, pattern)))
@@ -47,7 +41,7 @@ export class SearchService {
         results.push({ type: 'skill', id: r.id, name: r.name, snippet: r.steps ?? undefined });
       }
 
-      const ruleRows = db
+      const ruleRows = this.db
         .select({ id: rules.id, name: rules.name, content: rules.content })
         .from(rules)
         .where(or(like(rules.name, pattern), like(rules.content, pattern)))
@@ -56,16 +50,21 @@ export class SearchService {
         results.push({ type: 'rule', id: r.id, name: r.name, snippet: r.content?.slice(0, 200) ?? undefined });
       }
 
-      const memoryRows = db
+      const memoryRows = this.db
         .select({ id: memory.id, name: memory.name, content: memory.content })
         .from(memory)
         .where(or(like(memory.name, pattern), like(memory.content, pattern)))
         .all();
       for (const r of memoryRows) {
-        results.push({ type: 'memory', id: r.id, name: r.name ?? 'Untitled', snippet: r.content?.slice(0, 200) ?? undefined });
+        results.push({
+          type: 'memory',
+          id: r.id,
+          name: r.name ?? 'Untitled',
+          snippet: r.content?.slice(0, 200) ?? undefined,
+        });
       }
 
-      const taskRows = db
+      const taskRows = this.db
         .select({ id: tasks.id, name: tasks.name, notes: tasks.notes })
         .from(tasks)
         .where(or(like(tasks.name, pattern), like(tasks.notes, pattern)))
@@ -74,7 +73,7 @@ export class SearchService {
         results.push({ type: 'task', id: r.id, name: r.name, snippet: r.notes ?? undefined });
       }
 
-      const projectRows = db
+      const projectRows = this.db
         .select({ id: projects.id, name: projects.name, description: projects.description })
         .from(projects)
         .where(or(like(projects.name, pattern), like(projects.description, pattern)))

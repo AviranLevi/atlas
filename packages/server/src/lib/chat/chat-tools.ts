@@ -247,7 +247,7 @@ export async function executeTool(
         return await rulesService.create(data);
       }
       case 'list_rules':
-        return await rulesService.list(context.projectId ?? undefined);
+        return await rulesService.list({ projectId: context.projectId ?? undefined });
       case 'create_skill': {
         const raw = args as Record<string, unknown>;
         const data = {
@@ -260,7 +260,7 @@ export async function executeTool(
         return await skillsService.create(data);
       }
       case 'list_skills':
-        return await skillsService.list(context.projectId ?? undefined);
+        return await skillsService.list({ projectId: context.projectId ?? undefined });
       case 'create_memory': {
         const scope = args.scope as string;
         if (scope === 'project' && !context.projectId) {

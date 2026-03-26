@@ -1,19 +1,15 @@
-// External
-import { eq, or, isNull } from 'drizzle-orm';
-
 // Shared
 import type { Skill, CreateSkill, UpdateSkill } from '@my-agents/shared';
 
-// DB
-import { db } from '../db/index.js';
-import { skills, agentSkills, agents } from '../db/schema/index.js';
+// Types
+import type { SkillDetail } from './skills.types.js';
 
 // Repositories
-import { skillsRepository } from '../db/repositories/index.js';
+import { skillsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/skills.service.ts';
 
@@ -24,18 +20,19 @@ export class SkillsService {
    * Retrieves all skills, optionally filtered by projectId.
    * When projectId is provided, returns skills where projectId matches OR projectId is null (global).
    */
-  async list(projectId?: string): Promise<Skill[]> {
+  async list(filters?: { projectId?: string; type?: string }): Promise<Skill[]> {
     const FUNCTION_NAME = 'list';
     try {
-      if (projectId) {
-        const rows = db
-          .select()
-          .from(skills)
-          .where(or(eq(skills.projectId, projectId), isNull(skills.projectId)))
-          .all();
-        return rows as Skill[];
+      let result: Skill[];
+      if (filters?.projectId) {
+        result = this.repo.findByProjectOrGlobal(filters.projectId);
+      } else {
+        result = this.repo.findAll();
       }
-      return this.repo.findAll();
+      if (filters?.type) {
+        result = result.filter((s) => s.type === filters.type);
+      }
+      return result;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to list skills', { cause: error });
@@ -87,25 +84,11 @@ export class SkillsService {
   }
 
   /** Returns a skill with its associated agents. */
-  async getDetail(skillId: string) {
+  async getDetail(skillId: string): Promise<SkillDetail> {
     const FUNCTION_NAME = 'getDetail';
     try {
       const skill = await this.getById(skillId);
-
-      const rows = db
-        .select()
-        .from(agentSkills)
-        .where(eq(agentSkills.skillId, skillId))
-        .all();
-
-      const agentsList = [];
-      for (const row of rows) {
-        const agent = db.select().from(agents).where(eq(agents.id, row.agentId)).get();
-        if (agent) {
-          agentsList.push({ id: agent.id, name: agent.name });
-        }
-      }
-
+      const agentsList = this.repo.findAgentsBySkillId(skillId);
       return { skill, agents: agentsList };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

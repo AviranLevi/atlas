@@ -2,14 +2,14 @@
 import type { Review, ChecklistItem } from '@my-agents/shared';
 
 // Services
-import { activityLogService } from './index.js';
+import { activityLogService } from '../index.js';
 
 // Repositories
-import { reviewsRepository, tasksRepository } from '../db/repositories/index.js';
+import { reviewsRepository, tasksRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/reviews.service.ts';
 

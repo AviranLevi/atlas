@@ -2,14 +2,14 @@
 import type { Task, CreateTask, UpdateTask } from '@my-agents/shared';
 
 // Services
-import { activityLogService, settingsService } from './index.js';
+import { activityLogService, settingsService } from '../index.js';
 
 // Repositories
-import { tasksRepository, workspacesRepository, reviewsRepository } from '../db/repositories/index.js';
+import { tasksRepository, workspacesRepository, reviewsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 /** Statuses that mean "an agent should not be running for this task". */
 const INACTIVE_STATUSES = new Set(['To Do', 'Done', 'Blocked']);
@@ -89,7 +89,7 @@ export class TasksService {
         // Auto-create review when task enters "In Review"
         if (data.status === 'In Review') {
           // Lazy import to avoid circular dependency at module init time
-          import('./reviews.service.js').then(({ ReviewsService }) => {
+          import('../reviews/reviews.service.js').then(({ ReviewsService }) => {
             const reviewsService = new ReviewsService();
             reviewsService.createForTask(id).catch((err) => {
               logger.error(`${FILE_PATH} :: auto-create review`, err);
@@ -107,7 +107,7 @@ export class TasksService {
             (activeWorkspace.status === 'running' || activeWorkspace.status === 'pending')
           ) {
             // Lazy import to break the potential circular dep with orchestrator
-            import('./orchestrator.service.js').then(({ OrchestratorService }) => {
+            import('../orchestrator/orchestrator.service.js').then(({ OrchestratorService }) => {
               const orchestrator = new OrchestratorService();
               // Pass resetTaskStatus=false — we're already handling the task status here
               orchestrator.stopWork(activeWorkspace.id, false).catch((err) => {

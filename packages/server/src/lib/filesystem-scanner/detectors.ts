@@ -2,6 +2,16 @@
 import fs from 'fs';
 import path from 'path';
 
+/** Checks for C# projects by scanning for .csproj/.sln files in the directory. */
+function hasCSharpProject(dirPath: string): boolean {
+  try {
+    const entries = fs.readdirSync(dirPath);
+    return entries.some((e) => e.endsWith('.csproj') || e.endsWith('.sln'));
+  } catch {
+    return false;
+  }
+}
+
 /** Reads and parses a JSON file, returning null on any error. */
 export function readJsonFile(filePath: string): Record<string, unknown> | null {
   try {
@@ -99,7 +109,7 @@ export function detectTechStack(dirPath: string): string | null {
   if (exists('requirements.txt') || exists('pyproject.toml') || exists('setup.py')) techs.push('Python');
   if (exists('Gemfile')) techs.push('Ruby');
   if (exists('pom.xml') || exists('build.gradle') || exists('build.gradle.kts')) techs.push('Java');
-  if (exists('*.csproj') || exists('*.sln')) techs.push('C#');
+  if (hasCSharpProject(dirPath)) techs.push('C#');
   if (exists('docker-compose.yml') || exists('docker-compose.yaml') || exists('Dockerfile')) techs.push('Docker');
 
   return techs.length > 0 ? techs.join(', ') : null;

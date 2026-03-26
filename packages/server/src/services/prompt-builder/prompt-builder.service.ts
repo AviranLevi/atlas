@@ -1,9 +1,9 @@
 // Services
-import { agentsService, projectsService, tasksService, settingsService, memoryService } from './index.js';
+import { agentsService, projectsService, tasksService, settingsService, memoryService } from '../index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/prompt-builder.service.ts';
 
@@ -157,7 +157,7 @@ export class PromptBuilderService {
         if (params.agentId) {
           const agentContext = await agentsService.getContext(params.agentId);
           for (const m of agentContext.memories) {
-            agentMemoryIds.add(m.id);
+            agentMemoryIds.add(m.id as string);
           }
         }
         const uniqueProjectMemories = projectMemories.filter((m) => !agentMemoryIds.has(m.id));
@@ -251,7 +251,7 @@ export class PromptBuilderService {
     if (agentId) {
       const agentContext = await agentsService.getContext(agentId);
       for (const m of agentContext.memories) {
-        agentMemoryIds.add(m.id);
+        agentMemoryIds.add(m.id as string);
       }
     }
 

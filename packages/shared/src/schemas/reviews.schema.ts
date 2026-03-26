@@ -46,4 +46,12 @@ export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
 export type Review = z.infer<typeof ReviewSchema>;
 export type CreateReview = z.infer<typeof CreateReviewSchema>;
 export type UpdateReview = z.infer<typeof UpdateReviewSchema>;
+export const SubmitAiReviewSchema = z.object({
+  agentId: z.string().uuid(),
+  decision: z.enum(["approved", "changes_requested"]),
+  notes: z.string().nullable().optional(),
+  checklistUpdates: z.array(z.object({ item: z.string(), checked: z.boolean() })).optional(),
+});
+
 export type DecideReview = z.infer<typeof DecideReviewSchema>;
+export type SubmitAiReview = z.infer<typeof SubmitAiReviewSchema>;

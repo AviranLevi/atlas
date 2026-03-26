@@ -7,20 +7,23 @@ import path from 'path';
 import type { Workspace } from '@my-agents/shared';
 
 // Services
-import { tasksService, projectsService, activityLogService, agentProvidersService, agentsService } from './index.js';
-import { WorktreeService } from './worktree.service.js';
-import { PromptBuilderService } from './prompt-builder.service.js';
+import { tasksService, projectsService, activityLogService, agentProvidersService, agentsService } from '../index.js';
+import { WorktreeService } from '../worktree/worktree.service.js';
+import { PromptBuilderService } from '../prompt-builder/prompt-builder.service.js';
+
+// Types
+import type { DiffResult } from './orchestrator.types.js';
 
 // Repositories
-import { workspacesRepository } from '../db/repositories/index.js';
+import { workspacesRepository } from '../../db/repositories/index.js';
 
 // Executors
-import { executorRegistry, removeMcpConfig } from '../executors/index.js';
-import { spawnAgent, type SpawnOptions } from '../executors/spawn-agent.js';
+import { executorRegistry, removeMcpConfig } from '../../executors/index.js';
+import { spawnAgent, type SpawnOptions } from '../../executors/spawn-agent.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/orchestrator.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
@@ -494,7 +497,7 @@ export class OrchestratorService {
   }
 
   /** Returns the git diff for a workspace (empty if worktree is gone). */
-  async getDiff(workspaceId: string) {
+  async getDiff(workspaceId: string): Promise<DiffResult> {
     const FUNCTION_NAME = 'getDiff';
     try {
       const workspace = workspacesRepository.findByIdOrThrow(workspaceId);

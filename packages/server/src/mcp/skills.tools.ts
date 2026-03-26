@@ -1,14 +1,6 @@
-// NPM
 import { z } from 'zod';
-import { eq } from 'drizzle-orm';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-// Services
 import { skillsService } from '../services/index.js';
-// DB
-import { db } from '../db/index.js';
-import { skills } from '../db/schema/index.js';
-// Types
-import type { Skill } from '@my-agents/shared';
 
 export function registerSkillTools(server: McpServer) {
   server.registerTool('list_skills', {
@@ -28,13 +20,8 @@ export function registerSkillTools(server: McpServer) {
         .optional()
         .describe('Filter by skill type'),
     }),
-  }, async ({ type }) => {
-    let result: Skill[];
-    if (type) {
-      result = db.select().from(skills).where(eq(skills.type, type)).all() as Skill[];
-    } else {
-      result = await skillsService.list();
-    }
+  }, async (filters) => {
+    const result = await skillsService.list(filters);
     return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
   });
 

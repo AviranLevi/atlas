@@ -2,13 +2,13 @@
 import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@my-agents/shared';
 
 // Repositories
-import { agentProvidersRepository } from '../db/repositories/index.js';
+import { agentProvidersRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
-import { TEST_FNS, LIST_MODEL_FNS } from '../lib/providers/index.js';
-import { withTimeout } from '../lib/utils/index.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
+import { TEST_FNS, LIST_MODEL_FNS } from '../../lib/providers/index.js';
+import { withTimeout } from '../../lib/utils/index.js';
 
 const FILE_PATH = 'services/agent-providers.service.ts';
 

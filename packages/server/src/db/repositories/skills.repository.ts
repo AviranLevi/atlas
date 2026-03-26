@@ -1,12 +1,12 @@
 // External
-import { eq } from 'drizzle-orm';
+import { eq, or, isNull } from 'drizzle-orm';
 
 // Shared
 import type { CreateSkill, UpdateSkill, Skill } from '@my-agents/shared';
 
 // DB
 import type { DB } from '../index.js';
-import { skills } from '../schema/index.js';
+import { skills, agentSkills, agents } from '../schema/index.js';
 
 // Lib
 import { logger } from '../../lib/logger.js';
@@ -86,6 +86,45 @@ export class SkillsRepository {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete skill', { cause: error });
+    }
+  }
+
+  /** Returns skills for a project plus global skills (null projectId). */
+  findByProjectOrGlobal(projectId: string): Skill[] {
+    const FUNCTION_NAME = 'findByProjectOrGlobal';
+    try {
+      const rows = this.db
+        .select()
+        .from(skills)
+        .where(or(eq(skills.projectId, projectId), isNull(skills.projectId)))
+        .all();
+      return rows as Skill[];
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query skills by project', { cause: error });
+    }
+  }
+
+  /** Returns agents that use this skill. */
+  findAgentsBySkillId(skillId: string): { id: string; name: string }[] {
+    const FUNCTION_NAME = 'findAgentsBySkillId';
+    try {
+      const rows = this.db
+        .select()
+        .from(agentSkills)
+        .where(eq(agentSkills.skillId, skillId))
+        .all();
+      const result: { id: string; name: string }[] = [];
+      for (const row of rows) {
+        const agent = this.db.select().from(agents).where(eq(agents.id, row.agentId)).get();
+        if (agent) {
+          result.push({ id: agent.id, name: agent.name });
+        }
+      }
+      return result;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query agents by skill', { cause: error });
     }
   }
 }

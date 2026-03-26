@@ -4,8 +4,8 @@ import path from 'path';
 import fs from 'fs';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/worktree.service.ts';
 const WORKSPACES_DIR = '.agent-workspaces';

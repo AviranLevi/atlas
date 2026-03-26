@@ -1,12 +1,6 @@
-// External
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
-
-// Shared
-import { CreatePhaseSchema, UpdatePhaseSchema } from '@my-agents/shared';
-
-// Controllers
+import { CreatePhaseSchema, UpdatePhaseSchema, ReorderPhaseSchema } from '@my-agents/shared';
 import {
   listPhases,
   getPhase,
@@ -22,4 +16,4 @@ export const phasesRoute = new Hono()
   .post('/', zValidator('json', CreatePhaseSchema), createPhase)
   .put('/:id', zValidator('json', UpdatePhaseSchema), updatePhase)
   .delete('/:id', deletePhase)
-  .post('/:id/reorder', zValidator('json', z.object({ newIndex: z.number().int().min(0) })), reorderPhase);
+  .post('/:id/reorder', zValidator('json', ReorderPhaseSchema), reorderPhase);

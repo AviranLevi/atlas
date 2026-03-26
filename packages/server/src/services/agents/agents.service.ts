@@ -1,20 +1,15 @@
-// External
-import { eq, and, isNull, or } from 'drizzle-orm';
-
 // Shared
 import type { Agent, CreateAgent, UpdateAgent, Skill, Rule } from '@my-agents/shared';
 
-// DB
-import { db } from '../db/index.js';
-import { agentSkills, agentRules, agentProjects, skills, rules, memory, globalInstructions, projects } from '../db/schema/index.js';
+// Types
+import type { AgentContext, AgentDetail } from './agents.types.js';
 
 // Repositories
-import { agentsRepository } from '../db/repositories/index.js';
+import { agentsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../lib/logger.js';
-import { AppError } from '../lib/errors.js';
-import { parseTags } from '../lib/utils/index.js';
+import { logger } from '../../lib/logger.js';
+import { AppError } from '../../lib/errors.js';
 
 const FILE_PATH = 'services/agents.service.ts';
 
@@ -80,18 +75,7 @@ export class AgentsService {
   async listByProject(projectId: string): Promise<(Agent & { role: string | null })[]> {
     const FUNCTION_NAME = 'listByProject';
     try {
-      const rows = db
-        .select()
-        .from(agentProjects)
-        .where(eq(agentProjects.projectId, projectId))
-        .all();
-
-      const result: (Agent & { role: string | null })[] = [];
-      for (const row of rows) {
-        const agent = await this.getById(row.agentId);
-        result.push({ ...agent, role: row.role });
-      }
-      return result;
+      return this.repo.findAgentsByProjectIdWithRole(projectId);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to list agents by project', { cause: error });
@@ -102,16 +86,12 @@ export class AgentsService {
   async assignToProject(agentId: string, projectId: string, role?: string | null): Promise<void> {
     const FUNCTION_NAME = 'assignToProject';
     try {
-      const existing = db
-        .select()
-        .from(agentProjects)
-        .where(and(eq(agentProjects.agentId, agentId), eq(agentProjects.projectId, projectId)))
-        .get();
+      const existing = this.repo.findAgentProject(agentId, projectId);
       if (existing) {
         logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - agent ${agentId} already assigned to project ${projectId}`);
         return;
       }
-      db.insert(agentProjects).values({ agentId, projectId, role: role ?? null }).run();
+      this.repo.insertAgentProject(agentId, projectId, role ?? null);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to assign agent to project', { cause: error });
@@ -122,9 +102,7 @@ export class AgentsService {
   async unassignFromProject(agentId: string, projectId: string): Promise<void> {
     const FUNCTION_NAME = 'unassignFromProject';
     try {
-      db.delete(agentProjects)
-        .where(and(eq(agentProjects.agentId, agentId), eq(agentProjects.projectId, projectId)))
-        .run();
+      this.repo.deleteAgentProject(agentId, projectId);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to unassign agent from project', { cause: error });
@@ -135,10 +113,7 @@ export class AgentsService {
   async updateProjectRole(agentId: string, projectId: string, role: string | null): Promise<void> {
     const FUNCTION_NAME = 'updateProjectRole';
     try {
-      db.update(agentProjects)
-        .set({ role })
-        .where(and(eq(agentProjects.agentId, agentId), eq(agentProjects.projectId, projectId)))
-        .run();
+      this.repo.updateAgentProjectRole(agentId, projectId, role);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to update agent project role', { cause: error });
@@ -150,77 +125,29 @@ export class AgentsService {
    * assigned skills/rules, and agent-scoped memories.
    * When projectId is provided, also returns project-scoped skills and rules.
    */
-  async getContext(agentId: string, projectId?: string) {
+  async getContext(agentId: string, projectId?: string): Promise<AgentContext> {
     const FUNCTION_NAME = 'getContext';
     try {
       const agent = await this.getById(agentId);
+      const resolvedSkills = this.repo.findSkillsByAgentId(agentId);
+      const resolvedRules = this.repo.findRulesByAgentId(agentId);
+      const memories = this.repo.findMemoriesByAgentId(agentId);
+      const globalInstructionsContent = this.repo.findGlobalInstructions();
 
-      const agentSkillRows = db
-        .select({ skillId: agentSkills.skillId })
-        .from(agentSkills)
-        .where(eq(agentSkills.agentId, agentId))
-        .all();
-      const resolvedSkills = agentSkillRows
-        .map((r) => db.select().from(skills).where(eq(skills.id, r.skillId)).get())
-        .filter(Boolean);
-
-      const agentRuleRows = db
-        .select({ ruleId: agentRules.ruleId })
-        .from(agentRules)
-        .where(eq(agentRules.agentId, agentId))
-        .all();
-      const ruleIds = agentRuleRows.map((r) => r.ruleId);
-      const resolvedRules = ruleIds.length
-        ? ruleIds
-            .map((rid) => {
-              const row = db.select().from(rules).where(eq(rules.id, rid)).get();
-              if (!row) return null;
-              return { ...row, tags: parseTags(row.tags) };
-            })
-            .filter(Boolean)
-        : [];
-
-      const memories = db
-        .select()
-        .from(memory)
-        .where(eq(memory.agentId, agentId))
-        .all();
-
-      const globalInstructionRows = db.select().from(globalInstructions).all();
-      const globalInstructionsContent = globalInstructionRows
-        .map((r) => r.content)
-        .filter(Boolean)
-        .join('\n\n');
-
-      // Fetch project-scoped skills and rules when projectId is provided
-      let projectSkills: typeof resolvedSkills = [];
-      let projectRules: typeof resolvedRules = [];
-
+      let projectSkills: Skill[] = [];
+      let projectRules: Rule[] = [];
       if (projectId) {
-        projectSkills = db
-          .select()
-          .from(skills)
-          .where(eq(skills.projectId, projectId))
-          .all();
-
-        const projectRuleRows = db
-          .select()
-          .from(rules)
-          .where(eq(rules.projectId, projectId))
-          .all();
-        projectRules = projectRuleRows.map((row) => ({
-          ...row,
-          tags: parseTags(row.tags),
-        }));
+        projectSkills = this.repo.findSkillsByProjectId(projectId);
+        projectRules = this.repo.findRulesByProjectId(projectId);
       }
 
       return {
         agent,
         globalInstructions: globalInstructionsContent,
-        skills: resolvedSkills,
-        rules: resolvedRules,
-        projectSkills,
-        projectRules,
+        skills: resolvedSkills as Record<string, unknown>[],
+        rules: resolvedRules as Record<string, unknown>[],
+        projectSkills: projectSkills as Record<string, unknown>[],
+        projectRules: projectRules as Record<string, unknown>[],
         memories,
       };
     } catch (error: unknown) {
@@ -233,18 +160,7 @@ export class AgentsService {
   async listSkills(agentId: string): Promise<Skill[]> {
     const FUNCTION_NAME = 'listSkills';
     try {
-      const rows = db
-        .select({ skillId: agentSkills.skillId })
-        .from(agentSkills)
-        .where(eq(agentSkills.agentId, agentId))
-        .all();
-
-      const result: Skill[] = [];
-      for (const row of rows) {
-        const skill = db.select().from(skills).where(eq(skills.id, row.skillId)).get();
-        if (skill) result.push(skill as Skill);
-      }
-      return result;
+      return this.repo.findSkillsByAgentId(agentId);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to list agent skills', { cause: error });
@@ -255,16 +171,11 @@ export class AgentsService {
   async attachSkill(agentId: string, skillId: string): Promise<void> {
     const FUNCTION_NAME = 'attachSkill';
     try {
-      const existing = db
-        .select()
-        .from(agentSkills)
-        .where(and(eq(agentSkills.agentId, agentId), eq(agentSkills.skillId, skillId)))
-        .get();
-      if (existing) {
+      if (this.repo.findAgentSkill(agentId, skillId)) {
         logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - skill ${skillId} already attached to agent ${agentId}`);
         return;
       }
-      db.insert(agentSkills).values({ agentId, skillId }).run();
+      this.repo.insertAgentSkill(agentId, skillId);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to attach skill to agent', { cause: error });
@@ -275,9 +186,7 @@ export class AgentsService {
   async detachSkill(agentId: string, skillId: string): Promise<void> {
     const FUNCTION_NAME = 'detachSkill';
     try {
-      db.delete(agentSkills)
-        .where(and(eq(agentSkills.agentId, agentId), eq(agentSkills.skillId, skillId)))
-        .run();
+      this.repo.deleteAgentSkill(agentId, skillId);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to detach skill from agent', { cause: error });
@@ -288,20 +197,7 @@ export class AgentsService {
   async listRules(agentId: string): Promise<Rule[]> {
     const FUNCTION_NAME = 'listRules';
     try {
-      const rows = db
-        .select({ ruleId: agentRules.ruleId })
-        .from(agentRules)
-        .where(eq(agentRules.agentId, agentId))
-        .all();
-
-      const result: Rule[] = [];
-      for (const row of rows) {
-        const rule = db.select().from(rules).where(eq(rules.id, row.ruleId)).get();
-        if (rule) {
-          result.push({ ...rule, tags: JSON.parse(rule.tags ?? '[]') } as Rule);
-        }
-      }
-      return result;
+      return this.repo.findRulesByAgentId(agentId);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to list agent rules', { cause: error });
@@ -312,16 +208,11 @@ export class AgentsService {
   async attachRule(agentId: string, ruleId: string): Promise<void> {
     const FUNCTION_NAME = 'attachRule';
     try {
-      const existing = db
-        .select()
-        .from(agentRules)
-        .where(and(eq(agentRules.agentId, agentId), eq(agentRules.ruleId, ruleId)))
-        .get();
-      if (existing) {
+      if (this.repo.findAgentRule(agentId, ruleId)) {
         logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - rule ${ruleId} already attached to agent ${agentId}`);
         return;
       }
-      db.insert(agentRules).values({ agentId, ruleId }).run();
+      this.repo.insertAgentRule(agentId, ruleId);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to attach rule to agent', { cause: error });
@@ -332,9 +223,7 @@ export class AgentsService {
   async detachRule(agentId: string, ruleId: string): Promise<void> {
     const FUNCTION_NAME = 'detachRule';
     try {
-      db.delete(agentRules)
-        .where(and(eq(agentRules.agentId, agentId), eq(agentRules.ruleId, ruleId)))
-        .run();
+      this.repo.deleteAgentRule(agentId, ruleId);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to detach rule from agent', { cause: error });
@@ -342,32 +231,19 @@ export class AgentsService {
   }
 
   /** Returns agent detail with skills, rules, and projects. */
-  async getDetail(agentId: string) {
+  async getDetail(agentId: string): Promise<AgentDetail> {
     const FUNCTION_NAME = 'getDetail';
     try {
       const agent = await this.getById(agentId);
-      const agentSkillsList = await this.listSkills(agentId);
-      const agentRulesList = await this.listRules(agentId);
-
-      const projectRows = db
-        .select()
-        .from(agentProjects)
-        .where(eq(agentProjects.agentId, agentId))
-        .all();
-
-      const agentProjectsList = [];
-      for (const row of projectRows) {
-        const project = db.select().from(projects).where(eq(projects.id, row.projectId)).get();
-        if (project) {
-          agentProjectsList.push({ ...project, role: row.role });
-        }
-      }
+      const agentSkillsList = this.repo.findSkillsByAgentId(agentId);
+      const agentRulesList = this.repo.findRulesByAgentId(agentId);
+      const agentProjectsList = this.repo.findProjectsByAgentId(agentId);
 
       return {
         agent,
         skills: agentSkillsList,
         rules: agentRulesList,
-        projects: agentProjectsList,
+        projects: agentProjectsList as Record<string, unknown>[],
       };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
