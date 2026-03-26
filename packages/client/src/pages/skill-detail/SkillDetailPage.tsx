@@ -21,7 +21,7 @@ import {
 import { EditableCard } from '@/components/ui/editable-card';
 
 // Hooks
-import { useSkillDetail } from '@/hooks/use-skill-detail.hook';
+import { useSkillDetail } from '@/hooks/use-skills.hook';
 import { useUpdateSkill, useDeleteSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 

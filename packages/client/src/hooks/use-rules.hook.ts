@@ -11,6 +11,16 @@ import type {
 } from '@my-agents/shared';
 
 const RULES_KEY = ['rules'] as const;
+const RULE_DETAIL_KEY = ['rule-detail'] as const;
+
+interface RuleDetail {
+  rule: Rule;
+  agents: { id: string; name: string }[];
+}
+
+// ---------------------------------------------------------------------------
+// List / CRUD
+// ---------------------------------------------------------------------------
 
 export function useRules(filters?: { type?: string; tag?: string }) {
   const params = new URLSearchParams();
@@ -51,7 +61,7 @@ export function useUpdateRule() {
       api.put<Rule>(`/rules/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: RULES_KEY });
-      queryClient.invalidateQueries({ queryKey: ['rule-detail'] });
+      queryClient.invalidateQueries({ queryKey: RULE_DETAIL_KEY });
     },
   });
 }
@@ -62,5 +72,17 @@ export function useDeleteRule() {
     mutationFn: (id: string) => api.delete(`/rules/${id}`),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: RULES_KEY }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Detail (rule + associated agents)
+// ---------------------------------------------------------------------------
+
+export function useRuleDetail(id: string | undefined) {
+  return useQuery({
+    queryKey: [...RULE_DETAIL_KEY, id],
+    queryFn: () => api.get<RuleDetail>(`/rules/${id}/detail`),
+    enabled: !!id,
   });
 }

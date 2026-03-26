@@ -7,6 +7,16 @@ import { api } from '@/lib/api';
 import type { Skill, CreateSkill, UpdateSkill } from '@my-agents/shared';
 
 const SKILLS_KEY = ['skills'] as const;
+const SKILL_DETAIL_KEY = ['skill-detail'] as const;
+
+interface SkillDetail {
+  skill: Skill;
+  agents: { id: string; name: string }[];
+}
+
+// ---------------------------------------------------------------------------
+// List / CRUD
+// ---------------------------------------------------------------------------
 
 export function useSkills() {
   return useQuery({
@@ -39,7 +49,7 @@ export function useUpdateSkill() {
       api.put<Skill>(`/skills/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SKILLS_KEY });
-      queryClient.invalidateQueries({ queryKey: ['skill-detail'] });
+      queryClient.invalidateQueries({ queryKey: SKILL_DETAIL_KEY });
     },
   });
 }
@@ -49,5 +59,17 @@ export function useDeleteSkill() {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/skills/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: SKILLS_KEY }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Detail (skill + associated agents)
+// ---------------------------------------------------------------------------
+
+export function useSkillDetail(id: string | undefined) {
+  return useQuery({
+    queryKey: [...SKILL_DETAIL_KEY, id],
+    queryFn: () => api.get<SkillDetail>(`/skills/${id}/detail`),
+    enabled: !!id,
   });
 }

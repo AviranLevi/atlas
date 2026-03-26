@@ -14,7 +14,7 @@ import { AssignedProjectsSection } from './AssignedProjectsSection';
 
 // Hooks
 import { useUpdateAgent } from '@/hooks/use-agents.hook';
-import { useAgentDetail, useAttachSkill, useDetachSkill, useAttachRule, useDetachRule } from '@/hooks/use-agent-detail.hook';
+import { useAgentDetail, useAttachSkill, useDetachSkill, useAttachRule, useDetachRule } from '@/hooks/use-agents.hook';
 import { useSkills } from '@/hooks/use-skills.hook';
 import { useRules } from '@/hooks/use-rules.hook';
 import { useAgentProviders } from '@/hooks/use-agent-providers.hook';

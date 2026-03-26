@@ -21,7 +21,7 @@ import {
 import { EditableCard } from '@/components/ui/editable-card';
 
 // Hooks
-import { useRuleDetail } from '@/hooks/use-rule-detail.hook';
+import { useRuleDetail } from '@/hooks/use-rules.hook';
 import { useUpdateRule, useDeleteRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
