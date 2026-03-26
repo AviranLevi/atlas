@@ -16,7 +16,7 @@
     "@hono/node-server": "^1.13",
     "@hono/zod-validator": "^0.4",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@my-agents/shared": "*",
+    "@my-agents/shared": "workspace:*",
     "better-sqlite3": "^11.7",
     "drizzle-orm": "^0.38",
     "hono": "^4.7",

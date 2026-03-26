@@ -7,6 +7,7 @@ dist
 *.db-wal
 *.db-shm
 .DS_Store
+package-lock.json
 
 # Runtime data (logs, MCP configs, archived logs)
 data/
