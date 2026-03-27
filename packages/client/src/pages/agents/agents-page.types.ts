@@ -12,6 +12,7 @@ export type AgentsSectionProps = {
   agents: Agent[] | undefined;
   isLoading: boolean;
   onCreate: () => void;
+  onImport: () => void;
   onEdit: (e: React.MouseEvent, agent: Agent) => void;
   onDelete: (e: React.MouseEvent, id: string) => void;
   onNavigate: (id: string) => void;

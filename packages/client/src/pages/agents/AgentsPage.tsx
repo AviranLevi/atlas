@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 // Components
 import { AgentDialog } from '@/components/agents/AgentDialog';
 import { AgentProviderDialog } from '@/components/agents/AgentProviderDialog';
+import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
 import { ProvidersSection } from './ProvidersSection';
 import { AgentsSection } from './AgentsSection';
 
@@ -26,6 +27,7 @@ export function AgentsPage() {
   const [editingAgent, setEditingAgent] = useState<Agent | undefined>();
   const [providerDialogOpen, setProviderDialogOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<AgentProvider | undefined>();
+  const [importOpen, setImportOpen] = useState(false);
 
   const handleCreateAgent = () => {
     setEditingAgent(undefined);
@@ -75,6 +77,7 @@ export function AgentsPage() {
         agents={agents}
         isLoading={isLoading}
         onCreate={handleCreateAgent}
+        onImport={() => setImportOpen(true)}
         onEdit={handleEditAgent}
         onDelete={handleDeleteAgent}
         onNavigate={(id) => navigate(`/agents/${id}`)}
@@ -92,6 +95,8 @@ export function AgentsPage() {
         onOpenChange={setProviderDialogOpen}
         provider={editingProvider}
       />
+
+      <ImportPackageDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

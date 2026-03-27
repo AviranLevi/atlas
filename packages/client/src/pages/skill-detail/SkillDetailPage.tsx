@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Zap, ListOrdered, LogIn, LogOut, Bot, Trash2,
-  Check, X, Pencil, FolderOpen,
+  Check, X, Pencil, FolderOpen, Download,
 } from 'lucide-react';
 
 // Components
@@ -91,10 +91,20 @@ export function SkillDetailPage() {
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           Back to Skills
         </Button>
-        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={handleDelete}>
-          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-          Delete
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(`/api/v1/packages/export/skill/${skill.id}`, '_blank')}
+          >
+            <Download className="mr-1.5 h-3.5 w-3.5" />
+            Export
+          </Button>
+          <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={handleDelete}>
+            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+            Delete
+          </Button>
+        </div>
       </div>
 
       {/* Header with inline-editable name */}

@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ScrollText, FileText, Bot, Trash2,
-  Check, X, Pencil, FolderOpen,
+  Check, X, Pencil, FolderOpen, Download,
 } from 'lucide-react';
 
 // Components
@@ -109,10 +109,20 @@ export function RuleDetailPage() {
           <ArrowLeft className="mr-1.5 h-4 w-4" />
           Back to Rules
         </Button>
-        <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={handleDelete}>
-          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-          Delete
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(`/api/v1/packages/export/rule/${rule.id}`, '_blank')}
+          >
+            <Download className="mr-1.5 h-3.5 w-3.5" />
+            Export
+          </Button>
+          <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={handleDelete}>
+            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+            Delete
+          </Button>
+        </div>
       </div>
 
       {/* Header with inline-editable name */}

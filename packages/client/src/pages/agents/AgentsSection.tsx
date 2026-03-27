@@ -1,5 +1,5 @@
 // React / library
-import { Bot, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Bot, Plus, Pencil, Trash2, Upload } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ export function AgentsSection({
   agents,
   isLoading,
   onCreate,
+  onImport,
   onEdit,
   onDelete,
   onNavigate,
@@ -23,10 +24,16 @@ export function AgentsSection({
           <h1 className="text-2xl font-bold tracking-tight">Agents</h1>
           <p className="text-muted-foreground mt-0.5 text-sm">Manage your AI agent configurations</p>
         </div>
-        <Button onClick={onCreate} size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          New Agent
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onImport}>
+            <Upload className="mr-1.5 h-4 w-4" />
+            Import
+          </Button>
+          <Button onClick={onCreate} size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            New Agent
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (

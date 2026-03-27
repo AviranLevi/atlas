@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Download } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -60,21 +59,6 @@ export function DataManagementTab() {
           <Download className="mr-2 h-4 w-4" />
           Download
         </Button>
-      </ActionCard>
-
-      <ActionCard
-        title="Import Database"
-        description="Restore from a previously exported database file. This will replace all current data."
-      >
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            type="file"
-            accept=".sqlite,.db,application/octet-stream"
-            disabled
-            className="text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50"
-          />
-          <Badge variant="secondary">Coming Soon</Badge>
-        </div>
       </ActionCard>
 
       <ActionCard

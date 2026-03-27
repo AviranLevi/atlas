@@ -15,3 +15,4 @@ export * from './skills.controller.js';
 export * from './system.controller.js';
 export * from './tasks.controller.js';
 export * from './workspaces.controller.js';
+export * from './package.controller.js';

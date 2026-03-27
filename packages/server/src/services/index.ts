@@ -18,6 +18,7 @@ import { ChatService } from './chat/chat.service.js';
 import { PreferencesService } from './preferences/preferences.service.js';
 import { SystemService } from './system/system.service.js';
 import { FilesystemService } from './filesystem/filesystem.service.js';
+import { PackageService } from './package/package.service.js';
 
 export const activityLogService = new ActivityLogService();
 export const agentsService = new AgentsService();
@@ -39,6 +40,7 @@ export const chatService = new ChatService();
 export const preferencesService = new PreferencesService();
 export const systemService = new SystemService();
 export const filesystemService = new FilesystemService();
+export const packageService = new PackageService();
 
 export type { AgentContext, AgentDetail } from './agents/agents.types.js';
 export type { SkillDetail } from './skills/skills.types.js';
@@ -48,3 +50,4 @@ export type { DiffResult } from './orchestrator/orchestrator.types.js';
 export type { SearchResult } from './search/search.types.js';
 export type { DiffFile } from './worktree/worktree.service.js';
 export type { SystemInfo } from './system/system.service.js';
+export type { ImportPreview, ImportSummary } from './package/package.types.js';

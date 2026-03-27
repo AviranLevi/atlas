@@ -1,7 +1,7 @@
 // React / library
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bot, Pencil, Sparkles, BookOpen } from 'lucide-react';
+import { ArrowLeft, Bot, Pencil, Sparkles, BookOpen, Download } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -98,10 +98,20 @@ export function AgentDetailPage() {
               )}
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-1.5 h-4 w-4" />
-            Edit
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(`/api/v1/packages/export/agent/${agent.id}`, '_blank')}
+            >
+              <Download className="mr-1.5 h-4 w-4" />
+              Export
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="mr-1.5 h-4 w-4" />
+              Edit
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -19,6 +19,7 @@ import { reviewsRoute } from './reviews.route.js';
 import { chatRoute } from './chat.route.js';
 import { systemRoute } from './system.route.js';
 import { preferencesRoute } from './preferences.route.js';
+import { packageRoute } from './package.route.js';
 
 export const apiRoutes = new Hono()
   .route('/agents', agentsRoute)
@@ -37,4 +38,5 @@ export const apiRoutes = new Hono()
   .route('/reviews', reviewsRoute)
   .route('/chat', chatRoute)
   .route('/system', systemRoute)
-  .route('/preferences', preferencesRoute);
+  .route('/preferences', preferencesRoute)
+  .route('/packages', packageRoute);

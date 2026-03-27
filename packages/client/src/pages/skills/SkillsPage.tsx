@@ -1,7 +1,7 @@
 // React / library
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Plus, Trash2, Search, FolderOpen } from 'lucide-react';
+import { Zap, Plus, Trash2, Search, FolderOpen, Upload } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { SkillDialog } from '@/components/skills/SkillDialog';
+import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
 
 // Hooks
 import { useSkills, useDeleteSkill } from '@/hooks/use-skills.hook';
@@ -43,6 +44,7 @@ export function SkillsPage() {
   const { data: projects = [] } = useProjects();
   const deleteSkill = useDeleteSkill();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const projectMap = useMemo(
     () => new Map(projects.map((p) => [p.id, p.name])),
@@ -145,10 +147,16 @@ export function SkillsPage() {
             Define reusable skill templates for agents
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          New Skill
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            <Upload className="mr-1.5 h-4 w-4" />
+            Import
+          </Button>
+          <Button onClick={() => setDialogOpen(true)} size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            New Skill
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -227,6 +235,8 @@ export function SkillsPage() {
         onOpenChange={setDialogOpen}
         onCreated={(skill) => navigate(`/skills/${skill.id}`)}
       />
+
+      <ImportPackageDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
