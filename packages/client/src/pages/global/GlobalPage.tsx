@@ -1,7 +1,10 @@
+// React / library
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Globe } from 'lucide-react';
 
+// Components
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { GlobalInstructionsCard } from '@/pages/settings/GlobalInstructionsCard';
 import { DispatchRulesCard } from '@/pages/settings/DispatchRulesCard';
 
+// Hooks / context
 import {
   useGlobalInstructions,
   useUpdateGlobalInstructions,
@@ -26,8 +30,11 @@ import {
 import { useAgents } from '@/hooks/use-agents.hook';
 import { useSkills } from '@/hooks/use-skills.hook';
 
+// Types
 import type { DispatchRule } from '@atlas/shared';
 import type { RuleForm } from '@/pages/settings/settings-page.types';
+
+// Constants
 import { NONE_SKILL_VALUE, emptyRuleForm } from '@/pages/settings/settings-page.constants';
 
 const VALID_TABS = ['general', 'dispatch-rules'] as const;
@@ -81,11 +88,18 @@ export function GlobalPage() {
       pattern: ruleForm.pattern,
       agentId: ruleForm.agentId,
       skillId: ruleForm.skillId === NONE_SKILL_VALUE ? null : ruleForm.skillId,
+      autoStart: ruleForm.autoStart,
     };
     if (editingRuleId === 'new') {
-      createRule.mutate(payload, { onSuccess: handleCancelEdit });
+      createRule.mutate(payload, {
+        onSuccess: () => { handleCancelEdit(); toast.success('Dispatch rule created'); },
+        onError: (err) => toast.error(err.message ?? 'Failed to create rule'),
+      });
     } else if (editingRuleId) {
-      updateRule.mutate({ id: editingRuleId, data: payload }, { onSuccess: handleCancelEdit });
+      updateRule.mutate({ id: editingRuleId, data: payload }, {
+        onSuccess: () => { handleCancelEdit(); toast.success('Dispatch rule updated'); },
+        onError: (err) => toast.error(err.message ?? 'Failed to update rule'),
+      });
     }
   };
 
@@ -127,13 +141,13 @@ export function GlobalPage() {
             isLoading={instructionsLoading}
             isDirty={instructionsDirty}
             isSaving={updateInstructions.isPending}
-            isSaved={updateInstructions.isSuccess}
             error={instructionsError}
             onChange={(v) => { setInstructions(v); setInstructionsDirty(true); }}
             onSave={() => {
               if (!instructionsDirty) return;
               updateInstructions.mutate({ content: instructions }, {
-                onSuccess: () => setInstructionsDirty(false),
+                onSuccess: () => { setInstructionsDirty(false); toast.success('Instructions saved'); },
+                onError: (err) => toast.error(err.message ?? 'Failed to save instructions'),
               });
             }}
           />
@@ -153,7 +167,7 @@ export function GlobalPage() {
             onFormChange={setRuleForm}
             onAdd={() => { setRuleForm(emptyRuleForm); setEditingRuleId('new'); }}
             onEdit={(rule: DispatchRule) => {
-              setRuleForm({ pattern: rule.pattern, agentId: rule.agentId, skillId: rule.skillId ?? NONE_SKILL_VALUE });
+              setRuleForm({ pattern: rule.pattern, agentId: rule.agentId, skillId: rule.skillId ?? NONE_SKILL_VALUE, autoStart: rule.autoStart });
               setEditingRuleId(rule.id);
             }}
             onDelete={(id) => setDeleteRuleId(id)}
@@ -177,7 +191,15 @@ export function GlobalPage() {
             <Button variant="outline" onClick={() => setDeleteRuleId(null)}>Cancel</Button>
             <Button
               variant="destructive"
-              onClick={() => { if (deleteRuleId) { deleteRule.mutate(deleteRuleId); setDeleteRuleId(null); } }}
+              onClick={() => {
+                if (deleteRuleId) {
+                  deleteRule.mutate(deleteRuleId, {
+                    onSuccess: () => toast.success('Dispatch rule deleted'),
+                    onError: (err) => toast.error(err.message ?? 'Failed to delete rule'),
+                  });
+                  setDeleteRuleId(null);
+                }
+              }}
               disabled={deleteRule.isPending}
             >
               {deleteRule.isPending ? 'Deleting...' : 'Delete'}

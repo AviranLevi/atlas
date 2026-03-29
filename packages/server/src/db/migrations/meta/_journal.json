@@ -50,6 +50,20 @@
       "when": 1743014400000,
       "tag": "0006_add_indexes_and_unique_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1743100800000,
+      "tag": "0007_dispatch_rule_auto_start",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1743187200000,
+      "tag": "0008_task_source_field",
+      "breakpoints": true
     }
   ]
 }

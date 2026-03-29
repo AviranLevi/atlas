@@ -2,7 +2,7 @@ import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/s
 
 import { chatRepository } from '../../db/repositories/index.js';
 import { agentProvidersService, settingsService, projectsService, memoryService } from '../index.js';
-import { streamChat, type InternalMessage, type ChatEvent, type ToolDefinition, CHAT_TOOLS, executeTool, runCliChat, formatCliPrompt } from '../../lib/chat/index.js';
+import { streamChat, type InternalMessage, type ChatEvent, type ToolDefinition, CHAT_TOOLS, executeTool, streamCliChat, formatCliPrompt } from '../../lib/chat/index.js';
 import { executorRegistry } from '../../executors/index.js';
 import { logger } from '../../lib/logger.js';
 
@@ -224,13 +224,16 @@ export class ChatService {
 
       await emit('text_delta', { text: '' });
 
-      const result = await runCliChat({
-        executor,
-        prompt: fullPrompt,
-        cwd: projectCwd,
-        model: conversation.model ?? executor.defaultModel,
-        signal: abortController.signal,
-      });
+      const result = await streamCliChat(
+        {
+          executor,
+          prompt: fullPrompt,
+          cwd: projectCwd,
+          model: conversation.model ?? executor.defaultModel,
+          signal: abortController.signal,
+        },
+        (chunk) => { emit('text_delta', { text: chunk }); },
+      );
 
       const savedMsg = this.repo.insertMessage({
         conversationId,
@@ -238,7 +241,6 @@ export class ChatService {
         content: result.text,
       });
 
-      await emit('text_delta', { text: result.text });
       await emit('done', { messageId: savedMsg.id });
 
       await this.maybeGenerateTitle(conversation);

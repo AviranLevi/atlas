@@ -35,8 +35,10 @@ export const UpdateReviewSchema = z.object({
   notes: z.string().nullable().optional(),
 });
 
+export const ReviewDecisionEnum = z.enum(["approved", "changes_requested"]);
+
 export const DecideReviewSchema = z.object({
-  decision: z.enum(["approved", "changes_requested"]),
+  decision: ReviewDecisionEnum,
   notes: z.string().nullable().optional(),
 });
 
@@ -48,10 +50,17 @@ export type CreateReview = z.infer<typeof CreateReviewSchema>;
 export type UpdateReview = z.infer<typeof UpdateReviewSchema>;
 export const SubmitAiReviewSchema = z.object({
   agentId: z.string().uuid(),
-  decision: z.enum(["approved", "changes_requested"]),
+  decision: ReviewDecisionEnum,
   notes: z.string().nullable().optional(),
   checklistUpdates: z.array(z.object({ item: z.string(), checked: z.boolean() })).optional(),
 });
 
+export const StartAiReviewSchema = z.object({
+  agentRuntimeId: z.string().min(1),
+  autoFix: z.boolean().optional().default(false),
+});
+
+export type ReviewDecision = z.infer<typeof ReviewDecisionEnum>;
 export type DecideReview = z.infer<typeof DecideReviewSchema>;
 export type SubmitAiReview = z.infer<typeof SubmitAiReviewSchema>;
+export type StartAiReview = z.infer<typeof StartAiReviewSchema>;

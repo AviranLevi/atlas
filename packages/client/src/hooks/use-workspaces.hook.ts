@@ -4,6 +4,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useState, useEffect, useRef } from 'react';
 
 // Lib
 import { api, ApiError } from '@/lib/api';
@@ -87,17 +88,8 @@ export function useCleanupWorkspace() {
   });
 }
 
-export interface DiffFile {
-  filename: string;
-  additions: number;
-  deletions: number;
-  patch?: string;
-}
-
-export interface DiffResult {
-  files: DiffFile[];
-  summary: { additions: number; deletions: number; filesChanged: number };
-}
+export type { DiffFile, DiffResult } from '@/components/workspaces/workspaces.types';
+import type { DiffResult } from '@/components/workspaces/workspaces.types';
 
 export function useWorkspaceDiff(workspaceId: string | undefined) {
   return useQuery({
@@ -135,8 +127,8 @@ export function useCompleteWorkspace() {
 export function useRerunWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ workspaceId, agentRuntimeId }: { workspaceId: string; agentRuntimeId: string }) =>
-      api.post<Workspace>(`/workspaces/${workspaceId}/rerun`, { agentRuntimeId }),
+    mutationFn: ({ workspaceId, agentRuntimeId, model }: { workspaceId: string; agentRuntimeId: string; model?: string }) =>
+      api.post<Workspace>(`/workspaces/${workspaceId}/rerun`, { agentRuntimeId, model }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -172,7 +164,7 @@ export function useAddDiffComment() {
   return useMutation({
     mutationFn: ({ workspaceId, comment }: {
       workspaceId: string;
-      comment: { filename: string; lineNumber: number; lineContent: string; body: string };
+      comment: { filename: string; lineNumber: number; lineContent: string; body: string; parentId?: string };
     }) => api.post<Workspace>(`/workspaces/${workspaceId}/comments`, comment),
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, workspaceId] });
@@ -212,4 +204,50 @@ export function useActiveWorkspaceForTask(taskId: string | undefined) {
   return workspaces.find(
     (w) => w.taskId === taskId && (w.status === 'running' || w.status === 'pending')
   );
+}
+
+/**
+ * Streams live log output from a running workspace via SSE.
+ * Returns the accumulated log text while active; null when idle.
+ */
+export function useWorkspaceLogStream(workspaceId: string | undefined, isActive: boolean) {
+  const [log, setLog] = useState<string | null>(null);
+  const esRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    if (!workspaceId || !isActive) {
+      setLog(null);
+      return;
+    }
+
+    setLog('');
+    const es = new EventSource(`/api/v1/workspaces/${workspaceId}/logs/stream`);
+    esRef.current = es;
+
+    es.addEventListener('log', (e) => {
+      try {
+        const chunk = JSON.parse((e as MessageEvent).data) as string;
+        setLog((prev) => (prev ?? '') + chunk);
+      } catch {
+        setLog((prev) => (prev ?? '') + (e as MessageEvent).data);
+      }
+    });
+
+    es.addEventListener('done', () => {
+      es.close();
+      esRef.current = null;
+    });
+
+    es.onerror = () => {
+      es.close();
+      esRef.current = null;
+    };
+
+    return () => {
+      es.close();
+      esRef.current = null;
+    };
+  }, [workspaceId, isActive]);
+
+  return log;
 }

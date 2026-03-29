@@ -11,6 +11,7 @@ export function UnifiedDiffView({
   workspaceId,
   language,
   commentsByLine,
+  repliesByParentId,
   commentingLine,
   setCommentingLine,
   addComment,
@@ -22,6 +23,7 @@ export function UnifiedDiffView({
   workspaceId: string;
   language?: string;
   commentsByLine: Map<number, DiffComment[]>;
+  repliesByParentId: Map<string, DiffComment[]>;
   commentingLine: CommentingTarget | null;
   setCommentingLine: (line: CommentingTarget | null) => void;
   addComment: ReturnType<typeof useAddDiffComment>;
@@ -65,10 +67,18 @@ export function UnifiedDiffView({
                 <InlineCommentBubble
                   key={c.id}
                   comment={c}
+                  replies={repliesByParentId.get(c.id) ?? []}
                   onDelete={() => removeComment.mutate({ workspaceId, commentId: c.id })}
                   onEdit={(body) => editComment.mutate({ workspaceId, commentId: c.id, body })}
+                  onReply={(body) =>
+                    addComment.mutate({
+                      workspaceId,
+                      comment: { filename: file.filename, lineNumber: line.patchIndex, lineContent: line.content, body, parentId: c.id },
+                    })
+                  }
                   isDeleting={removeComment.isPending}
                   isEditing={editComment.isPending}
+                  isReplying={addComment.isPending}
                 />
               ))}
 

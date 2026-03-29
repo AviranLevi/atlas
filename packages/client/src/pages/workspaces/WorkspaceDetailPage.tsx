@@ -1,7 +1,7 @@
 // React / library
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -10,15 +10,19 @@ import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { WorkspaceDetailHeader } from './WorkspaceDetailHeader';
 import { WorkspaceInfoCards } from './WorkspaceInfoCards';
 import { DiffSection } from './diff';
+import { AiReviewDialog } from './AiReviewDialog';
+import { RerunDialog } from '@/components/workspaces/RerunDialog';
+import { LogOutput } from './LogOutput';
 
 // Hooks
 import {
   useWorkspaceStatus,
   useStopWork,
   useCleanupWorkspace,
-  useRerunWorkspace,
+  useWorkspaceLogStream,
 } from '@/hooks/use-workspaces.hook';
 import { useProject } from '@/hooks/use-projects.hook';
+import { useReview, useStartAiReview } from '@/hooks/use-reviews.hook';
 
 // Types
 import type { DiffComment } from '@atlas/shared';
@@ -29,9 +33,14 @@ export function WorkspaceDetailPage() {
   const { data: workspace, isLoading, error } = useWorkspaceStatus(id);
   const stopWork = useStopWork();
   const cleanup = useCleanupWorkspace();
-  const rerun = useRerunWorkspace();
   const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [aiReviewOpen, setAiReviewOpen] = useState(false);
+  const [rerunOpen, setRerunOpen] = useState(false);
   const { data: project } = useProject(workspace?.projectId);
+  const { data: review } = useReview(workspace?.taskId);
+  const startAiReview = useStartAiReview();
+  const isActive = workspace?.status === 'running' || workspace?.status === 'pending';
+  const streamedLog = useWorkspaceLogStream(workspace?.id, isActive);
 
   if (isLoading) {
     return (
@@ -53,7 +62,6 @@ export function WorkspaceDetailPage() {
     );
   }
 
-  const isActive = workspace.status === 'running' || workspace.status === 'pending';
   const isMerged = workspace.status === 'merged';
   const canReview = workspace.status === 'completed';
   const canRerun = workspace.status === 'failed' || workspace.status === 'stopped' || workspace.status === 'completed';
@@ -76,33 +84,60 @@ export function WorkspaceDetailPage() {
         canRerun={canRerun}
         canCleanup={canCleanup}
         onStop={() => stopWork.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
-        onRerun={() => rerun.mutate(
-          { workspaceId: workspace.id, agentRuntimeId: workspace.agentRuntime },
-          { onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`) },
-        )}
+        onRerun={() => setRerunOpen(true)}
         onFollowUp={() => setFollowUpOpen(true)}
         onCleanup={() => cleanup.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
         isStopping={stopWork.isPending}
-        isRerunning={rerun.isPending}
+        isRerunning={false}
         isCleaning={cleanup.isPending}
       />
-
-      {rerun.isError && (
-        <Card className="border-destructive/50">
-          <CardContent className="p-3 text-sm text-destructive">
-            Re-run failed: {(rerun.error as Error).message ?? 'Unknown error'}
-          </CardContent>
-        </Card>
-      )}
 
       <WorkspaceInfoCards workspace={workspace} />
 
       {canReview && (
         <div>
-          <h2 className="text-lg font-semibold mb-3">Code Changes</h2>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">Code Changes</h2>
+              {review?.status === 'approved' && (
+                <span className="flex items-center gap-1 text-xs font-medium text-green-500">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  AI Approved
+                </span>
+              )}
+              {review?.status === 'changes_requested' && (
+                <span className="flex items-center gap-1 text-xs font-medium text-destructive">
+                  <XCircle className="h-3.5 w-3.5" />
+                  Changes Requested
+                </span>
+              )}
+              {review?.status === 'pending' && review.reviewerType === 'agent' && (
+                <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  AI Review Pending
+                </span>
+              )}
+            </div>
+            {review?.status === 'pending' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAiReviewOpen(true)}
+                disabled={startAiReview.isPending || workspace.status === 'running'}
+              >
+                {startAiReview.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                Run AI Review
+              </Button>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground mb-3">
             Hover over a line and click the comment icon to leave inline feedback.
           </p>
+          {startAiReview.isError && (
+            <p className="text-sm text-destructive mb-3">
+              AI review failed: {(startAiReview.error as Error).message}
+            </p>
+          )}
           <DiffSection
             workspaceId={workspace.id}
             comments={comments}
@@ -111,18 +146,45 @@ export function WorkspaceDetailPage() {
         </div>
       )}
 
-      {(workspace.fullOutput || workspace.output) && (
+      {(isActive || workspace.fullOutput || workspace.output) && (
         <div>
-          <h2 className="text-lg font-semibold mb-3">Agent Output</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-lg font-semibold">Agent Output</h2>
+            {isActive && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Live
+              </span>
+            )}
+          </div>
           <Card>
             <CardContent className="p-0">
-              <pre className="max-h-[500px] overflow-auto p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap">
-                {workspace.fullOutput ?? workspace.output}
-              </pre>
+              <LogOutput text={isActive ? (streamedLog ?? '') : (workspace.fullOutput ?? workspace.output ?? '')} />
             </CardContent>
           </Card>
         </div>
       )}
+
+      {review && (
+        <AiReviewDialog
+          open={aiReviewOpen}
+          onOpenChange={setAiReviewOpen}
+          isPending={startAiReview.isPending}
+          onStart={(autoFix) => {
+            startAiReview.mutate(
+              { id: review.id, agentRuntimeId: workspace.agentRuntime, autoFix },
+              { onSuccess: () => setAiReviewOpen(false) },
+            );
+          }}
+        />
+      )}
+
+      <RerunDialog
+        open={rerunOpen}
+        onOpenChange={setRerunOpen}
+        workspace={workspace}
+        onSuccess={(newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`)}
+      />
 
       <TaskDialog
         open={followUpOpen}

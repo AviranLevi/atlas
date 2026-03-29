@@ -1,29 +1,9 @@
-import { Plus, Trash2, MessageSquare, Loader2, Terminal, Cloud, TriangleAlert } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Loader2, Terminal, Cloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
 import { cn } from '@/lib/utils';
-import type { ChatConversation, AgentProvider, ProviderModel, ChatBackendType, ExecutorStatus } from '@atlas/shared';
-
-interface ConversationSidebarProps {
-  conversations: ChatConversation[];
-  activeId?: string;
-  onSelect: (id: string) => void;
-  onNewChat: () => void;
-  onDelete: (id: string) => void;
-  backendType: ChatBackendType;
-  onBackendTypeChange: (type: ChatBackendType) => void;
-  providers: AgentProvider[];
-  selectedProviderId: string;
-  onProviderChange: (id: string) => void;
-  selectedModel: string;
-  onModelChange: (model: string) => void;
-  models: ProviderModel[];
-  modelsLoading: boolean;
-  executors: ExecutorStatus[];
-  selectedExecutorId: string;
-  onExecutorChange: (id: string) => void;
-}
+import type { ConversationSidebarProps } from './chat-page.types';
 
 export function ConversationSidebar({
   conversations,
@@ -188,12 +168,6 @@ export function ConversationSidebar({
               </Select>
             </div>
 
-            <div className="flex gap-1.5 items-start rounded-md bg-yellow-500/10 border border-yellow-500/20 px-2 py-1.5">
-              <TriangleAlert className="h-3 w-3 shrink-0 text-yellow-500 mt-0.5" />
-              <p className="text-[10px] text-yellow-200/80 leading-tight">
-                CLI mode has no streaming -- responses arrive all at once. For the best experience, use API mode.
-              </p>
-            </div>
           </>
         )}
       </div>

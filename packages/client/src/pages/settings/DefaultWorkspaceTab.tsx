@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +26,6 @@ export function DefaultWorkspaceTab() {
 
   const [executorId, setExecutorId] = useState('');
   const [branchPattern, setBranchPattern] = useState('');
-  const [savedFlash, setSavedFlash] = useState(false);
 
   useEffect(() => {
     if (!prefs) return;
@@ -43,10 +43,8 @@ export function DefaultWorkspaceTab() {
   const handleSave = () => {
     const next = { ...(prefs ?? {}), [DEFAULT_EXECUTOR_KEY]: executorId, [BRANCH_PATTERN_KEY]: branchPattern };
     updatePrefs.mutate(next, {
-      onSuccess: () => {
-        setSavedFlash(true);
-        window.setTimeout(() => setSavedFlash(false), 2000);
-      },
+      onSuccess: () => toast.success('Settings saved'),
+      onError: (err) => toast.error(err.message ?? 'Failed to save settings'),
     });
   };
 
@@ -98,16 +96,10 @@ export function DefaultWorkspaceTab() {
         >
           {updatePrefs.isPending ? 'Saving…' : 'Save'}
         </Button>
-        {savedFlash && (
-          <span className="text-sm text-muted-foreground">Saved.</span>
-        )}
-        {dirty && !updatePrefs.isPending && !savedFlash && (
+        {dirty && !updatePrefs.isPending && (
           <span className="text-sm text-amber-600 dark:text-amber-500">Unsaved changes</span>
         )}
       </div>
-      {updatePrefs.isError && (
-        <p className="text-sm text-destructive">{updatePrefs.error.message}</p>
-      )}
     </div>
   );
 }

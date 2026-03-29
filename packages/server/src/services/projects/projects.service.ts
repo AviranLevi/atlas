@@ -2,6 +2,7 @@
 import { execSync } from 'child_process';
 
 // Shared
+import { TASK_STATUS } from '@atlas/shared';
 import type { Project, CreateProject, UpdateProject } from '@atlas/shared';
 
 // Types
@@ -85,10 +86,10 @@ export class ProjectsService {
 
       return allProjects.map((p) => {
         const counts = this.repo.countTasksByProject(p.id);
-        const todo = counts['To Do'] ?? 0;
-        const inProgress = counts['In Progress'] ?? 0;
-        const inReview = counts['In Review'] ?? 0;
-        const done = counts['Done'] ?? 0;
+        const todo = counts[TASK_STATUS.TODO] ?? 0;
+        const inProgress = counts[TASK_STATUS.IN_PROGRESS] ?? 0;
+        const inReview = counts[TASK_STATUS.IN_REVIEW] ?? 0;
+        const done = counts[TASK_STATUS.DONE] ?? 0;
         return {
           ...p,
           taskCounts: { todo, inProgress, inReview, done, total: todo + inProgress + inReview + done },

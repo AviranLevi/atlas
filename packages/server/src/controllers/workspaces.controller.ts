@@ -1,5 +1,8 @@
 // External
 import type { Context } from 'hono';
+import { streamSSE } from 'hono/streaming';
+import fs from 'fs';
+import path from 'path';
 
 // Shared
 import type { CreateWorkspace, AddDiffComment, RerunWorkspace, CreatePullRequest, EditDiffComment } from '@atlas/shared';
@@ -83,10 +86,10 @@ export async function completeWorkspace(c: Context) {
   return c.json(workspace);
 }
 
-/** Re-runs a workspace with a (possibly different) agent runtime. */
+/** Re-runs a workspace with a (possibly different) agent runtime and model. */
 export async function rerunWorkspace(c: Context) {
-  const { agentRuntimeId } = getValidatedBody<RerunWorkspace>(c);
-  const workspace = await orchestratorService.rerun(c.req.param('id')!, agentRuntimeId);
+  const { agentRuntimeId, model } = getValidatedBody<RerunWorkspace>(c);
+  const workspace = await orchestratorService.rerun(c.req.param('id')!, agentRuntimeId, model);
   return c.json(workspace, 201);
 }
 
@@ -134,4 +137,70 @@ export async function stopWorkspace(c: Context) {
 export async function deleteWorkspace(c: Context) {
   await orchestratorService.cleanup(c.req.param('id')!);
   return c.body(null, 204);
+}
+
+const LOG_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
+
+/** Streams the live log output of a running workspace via SSE. */
+export async function streamWorkspaceLogs(c: Context) {
+  const workspaceId = c.req.param('id')!;
+  const logFile = path.join(LOG_DIR, `${workspaceId}.log`);
+
+  return streamSSE(c, async (stream) => {
+    let offset = 0;
+    let aborted = false;
+    stream.onAbort(() => { aborted = true; });
+
+    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+    const sendNewBytes = async () => {
+      try {
+        if (!fs.existsSync(logFile)) return;
+        const stat = fs.statSync(logFile);
+        if (stat.size <= offset) return;
+        const buf = Buffer.alloc(stat.size - offset);
+        const fd = fs.openSync(logFile, 'r');
+        fs.readSync(fd, buf, 0, buf.length, offset);
+        fs.closeSync(fd);
+        offset = stat.size;
+        await stream.writeSSE({ event: 'log', data: JSON.stringify(buf.toString('utf-8')) });
+      } catch {
+        // file may not exist yet or be mid-write — ignore
+      }
+    };
+
+    const isWorkspaceActive = async () => {
+      try {
+        const { workspacesRepository } = await import('../db/repositories/index.js');
+        const ws = workspacesRepository.findById(workspaceId);
+        return !!ws && (ws.status === 'running' || ws.status === 'pending');
+      } catch {
+        return false;
+      }
+    };
+
+    // Poll loop — runs until workspace is inactive or client disconnects
+    let pingCounter = 0;
+    while (!aborted) {
+      await sendNewBytes();
+
+      // Check workspace status every ~1s (every 3 poll ticks of 300ms)
+      pingCounter++;
+      if (pingCounter % 3 === 0) {
+        const active = await isWorkspaceActive();
+        if (!active) {
+          await sendNewBytes(); // flush any final bytes written after last poll
+          await stream.writeSSE({ event: 'done', data: '' });
+          break;
+        }
+      }
+
+      // Keep-alive ping every ~15s (every 50 ticks)
+      if (pingCounter % 50 === 0) {
+        await stream.writeSSE({ event: 'ping', data: '' });
+      }
+
+      await sleep(300);
+    }
+  });
 }

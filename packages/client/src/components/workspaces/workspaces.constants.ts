@@ -4,6 +4,16 @@ export const DEFAULT_BRANCH_VALUE = '__default__';
 export const DEFAULT_MODEL_VALUE = '__default_model__';
 export const CUSTOM_MODEL_VALUE = '__custom__';
 
+export function getModelStorageKey(runtimeId: string): string {
+  return `${MODEL_STORAGE_KEY}:${runtimeId}`;
+}
+
+export const ESTIMATE_MODEL_HINT: Record<string, string> = {
+  S: 'Haiku',
+  M: 'Sonnet',
+  L: 'Opus',
+};
+
 export function runningDuration(startedAt: string | null): string {
   if (!startedAt) return '--';
   const diff = Date.now() - new Date(startedAt).getTime();
@@ -14,6 +24,14 @@ export function runningDuration(startedAt: string | null): string {
   const hours = Math.floor(minutes / 60);
   return `${hours}h ${minutes % 60}m`;
 }
+
+export const ACTIVE_STATUSES: ReadonlySet<string> = new Set(['running', 'pending']);
+
+export const WORKSPACE_TRANSITIONS: Record<string, { kind: 'success' | 'error'; verb: string }> = {
+  completed: { kind: 'success', verb: 'completed' },
+  merged:    { kind: 'success', verb: 'merged' },
+  failed:    { kind: 'error',   verb: 'failed' },
+};
 
 export const statusConfig: Record<string, { label: string; className: string }> = {
   pending: {

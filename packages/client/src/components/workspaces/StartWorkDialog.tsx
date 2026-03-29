@@ -1,6 +1,6 @@
 // React / library
 import { useState, useEffect, useMemo } from 'react';
-import { Play, GitBranch, Cpu, Loader2 } from 'lucide-react';
+import { Play, Lightbulb } from 'lucide-react';
 
 // Components
 import {
@@ -11,18 +11,10 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ModelSection } from './ModelSection';
+import { TaskSummary } from './TaskSummary';
+import { RuntimeSelect } from './RuntimeSelect';
+import { BranchSelect } from './BranchSelect';
 
 // Hooks
 import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
@@ -32,142 +24,16 @@ import { useProviderModels } from '@/hooks/use-agent-providers.hook';
 
 // Types
 import type { StartWorkDialogProps } from './workspaces.types';
-import type { ExecutorStatus, ProviderModel } from '@atlas/shared';
 
 // Constants
 import {
   RUNTIME_STORAGE_KEY,
-  MODEL_STORAGE_KEY,
   DEFAULT_BRANCH_VALUE,
   DEFAULT_MODEL_VALUE,
   CUSTOM_MODEL_VALUE,
+  ESTIMATE_MODEL_HINT,
+  getModelStorageKey,
 } from './workspaces.constants';
-
-function getModelStorageKey(runtimeId: string): string {
-  return `${MODEL_STORAGE_KEY}:${runtimeId}`;
-}
-
-function ModelSection({
-  runtime,
-  agentDefaultModel,
-  selectedModel,
-  customModelText,
-  providerModels,
-  providerModelsLoading,
-  onModelChange,
-  onCustomTextChange,
-}: {
-  runtime: ExecutorStatus;
-  agentDefaultModel: string | null | undefined;
-  selectedModel: string;
-  customModelText: string;
-  providerModels: ProviderModel[];
-  providerModelsLoading: boolean;
-  onModelChange: (value: string) => void;
-  onCustomTextChange: (value: string) => void;
-}) {
-  if (!runtime.modelFlag) return null;
-
-  const presets = runtime.modelPresets ?? [];
-  const supportsCustom = runtime.supportsCustomModel !== false;
-
-  const extraModels = useMemo(() => {
-    const presetValues = new Set(presets.map((p) => p.value));
-    return providerModels.filter((m) => !presetValues.has(m.value));
-  }, [presets, providerModels]);
-
-  const hasAnyModels = presets.length > 0 || extraModels.length > 0;
-
-  if (!hasAnyModels && supportsCustom) {
-    return (
-      <div className="space-y-2">
-        <Label className="flex items-center gap-1.5">
-          <Cpu className="h-3.5 w-3.5" />
-          Model
-        </Label>
-        <Input
-          placeholder={runtime.defaultModel ?? 'Enter model name...'}
-          value={customModelText}
-          onChange={(e) => onCustomTextChange(e.target.value)}
-        />
-        {providerModelsLoading && (
-          <p className="text-muted-foreground text-xs flex items-center gap-1.5">
-            <Loader2 className="h-3 w-3 animate-spin" /> Loading models from provider...
-          </p>
-        )}
-        {agentDefaultModel && (
-          <p className="text-muted-foreground text-xs">
-            Agent default: {agentDefaultModel}
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <Label className="flex items-center gap-1.5">
-        <Cpu className="h-3.5 w-3.5" />
-        Model
-      </Label>
-      <Select value={selectedModel} onValueChange={onModelChange}>
-        <SelectTrigger>
-          <SelectValue placeholder="Default model" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={DEFAULT_MODEL_VALUE}>
-            <span className="text-muted-foreground">
-              Default{runtime.defaultModel ? ` (${runtime.defaultModel})` : ''}
-            </span>
-          </SelectItem>
-          {presets.length > 0 && (
-            <SelectGroup>
-              <SelectLabel className="text-xs text-muted-foreground">Presets</SelectLabel>
-              {presets.map((preset) => (
-                <SelectItem key={preset.value} value={preset.value}>
-                  {preset.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          )}
-          {extraModels.length > 0 && (
-            <SelectGroup>
-              <SelectLabel className="text-xs text-muted-foreground">From Provider</SelectLabel>
-              {extraModels.map((m) => (
-                <SelectItem key={m.value} value={m.value}>
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          )}
-          {supportsCustom && (
-            <SelectItem value={CUSTOM_MODEL_VALUE}>
-              Custom...
-            </SelectItem>
-          )}
-        </SelectContent>
-      </Select>
-      {selectedModel === CUSTOM_MODEL_VALUE && (
-        <Input
-          placeholder="Enter model name..."
-          value={customModelText}
-          onChange={(e) => onCustomTextChange(e.target.value)}
-          autoFocus
-        />
-      )}
-      {providerModelsLoading && (
-        <p className="text-muted-foreground text-xs flex items-center gap-1.5">
-          <Loader2 className="h-3 w-3 animate-spin" /> Loading models from provider...
-        </p>
-      )}
-      {agentDefaultModel && (
-        <p className="text-muted-foreground text-xs">
-          Agent default: {agentDefaultModel}
-        </p>
-      )}
-    </div>
-  );
-}
 
 export function StartWorkDialog({
   open,
@@ -194,7 +60,6 @@ export function StartWorkDialog({
     [runtimes, selectedRuntime],
   );
 
-  // Restore last used runtime when runtimes are loaded
   useEffect(() => {
     if (runtimes.length === 0 || selectedRuntime) return;
     const saved = localStorage.getItem(RUNTIME_STORAGE_KEY);
@@ -206,27 +71,21 @@ export function StartWorkDialog({
     }
   }, [runtimes, selectedRuntime]);
 
-  // When runtime changes, restore last used model for that runtime
   useEffect(() => {
     if (!selectedRuntime) return;
     const savedModel = localStorage.getItem(getModelStorageKey(selectedRuntime));
     if (savedModel) {
       setSelectedModel(savedModel);
-      setCustomModelText('');
     } else if (agent?.defaultModel) {
       setSelectedModel(agent.defaultModel);
-      setCustomModelText('');
     } else {
       setSelectedModel(DEFAULT_MODEL_VALUE);
-      setCustomModelText('');
     }
+    setCustomModelText('');
   }, [selectedRuntime, agent?.defaultModel]);
 
-  // Reset branch selection when dialog opens
   useEffect(() => {
-    if (open) {
-      setSelectedBranch(DEFAULT_BRANCH_VALUE);
-    }
+    if (open) setSelectedBranch(DEFAULT_BRANCH_VALUE);
   }, [open]);
 
   const handleRuntimeChange = (value: string) => {
@@ -239,9 +98,7 @@ export function StartWorkDialog({
     if (value !== DEFAULT_MODEL_VALUE && value !== CUSTOM_MODEL_VALUE) {
       localStorage.setItem(getModelStorageKey(selectedRuntime), value);
     }
-    if (value !== CUSTOM_MODEL_VALUE) {
-      setCustomModelText('');
-    }
+    if (value !== CUSTOM_MODEL_VALUE) setCustomModelText('');
   };
 
   const handleStart = () => {
@@ -263,11 +120,7 @@ export function StartWorkDialog({
         model,
         providerId: agent?.providerId ?? undefined,
       },
-      {
-        onSuccess: () => {
-          onOpenChange(false);
-        },
-      },
+      { onSuccess: () => onOpenChange(false) },
     );
   };
 
@@ -288,65 +141,14 @@ export function StartWorkDialog({
 
         {task && (
           <div className="space-y-4">
-            <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
-              <p className="font-medium text-sm">{task.name}</p>
-              {projectName && (
-                <p className="text-muted-foreground text-xs">Project: {projectName}</p>
-              )}
-              {agentName && (
-                <p className="text-muted-foreground text-xs">Agent: {agentName}</p>
-              )}
-              {task.priority && (
-                <p className="text-muted-foreground text-xs">Priority: {task.priority}</p>
-              )}
-            </div>
+            <TaskSummary name={task.name} projectName={projectName} agentName={agentName} priority={task.priority} />
 
-            <div className="space-y-2">
-              <Label>Agent Runtime</Label>
-              {runtimesLoading ? (
-                <p className="text-muted-foreground text-sm">Loading runtimes...</p>
-              ) : (
-                <Select value={selectedRuntime} onValueChange={handleRuntimeChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a runtime..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {runtimes
-                      .sort((a, b) => {
-                        const score = (r: typeof a) =>
-                          r.installed && r.authenticated ? 2 : r.installed ? 1 : 0;
-                        return score(b) - score(a);
-                      })
-                      .map((rt) => (
-                        <SelectItem
-                          key={rt.id}
-                          value={rt.id}
-                          disabled={!rt.installed || !rt.authenticated}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>{rt.name}</span>
-                            {!rt.installed && (
-                              <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                                Not installed
-                              </Badge>
-                            )}
-                            {rt.installed && !rt.authenticated && (
-                              <Badge variant="outline" className="text-[10px] border-yellow-300 text-yellow-600 dark:border-yellow-700 dark:text-yellow-400">
-                                {rt.authHint ?? 'Not authenticated'}
-                              </Badge>
-                            )}
-                            {rt.mcpConfigFormat !== 'none' && rt.installed && rt.authenticated && (
-                              <Badge variant="secondary" className="text-[10px]">
-                                MCP
-                              </Badge>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+            <RuntimeSelect
+              runtimes={runtimes}
+              isLoading={runtimesLoading}
+              value={selectedRuntime}
+              onChange={handleRuntimeChange}
+            />
 
             {currentRuntime?.modelFlag && (
               <ModelSection
@@ -361,36 +163,20 @@ export function StartWorkDialog({
               />
             )}
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <GitBranch className="h-3.5 w-3.5" />
-                Base Branch
-              </Label>
-              {branchesLoading ? (
-                <p className="text-muted-foreground text-sm">Loading branches...</p>
-              ) : (
-                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={DEFAULT_BRANCH_VALUE}>
-                      <span className="text-muted-foreground">
-                        Default ({defaultBranchLabel})
-                      </span>
-                    </SelectItem>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch} value={branch}>
-                        {branch}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <p className="text-muted-foreground text-xs">
-                The worktree will branch off from this base.
+            {task.estimate && ESTIMATE_MODEL_HINT[task.estimate] && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Lightbulb className="h-3 w-3 shrink-0" />
+                Task size <strong>{task.estimate}</strong> — {ESTIMATE_MODEL_HINT[task.estimate]} recommended
               </p>
-            </div>
+            )}
+
+            <BranchSelect
+              branches={branches}
+              isLoading={branchesLoading}
+              value={selectedBranch}
+              onChange={setSelectedBranch}
+              defaultLabel={defaultBranchLabel}
+            />
 
             {startWork.isError && (
               <p className="text-destructive text-sm">
@@ -399,19 +185,15 @@ export function StartWorkDialog({
             )}
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" asChild>
-                <button type="button" onClick={() => onOpenChange(false)}>
-                  Cancel
-                </button>
+              <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+                Cancel
               </Button>
-              <Button asChild>
-                <button
-                  type="button"
-                  onClick={handleStart}
-                  disabled={!selectedRuntime || startWork.isPending}
-                >
-                  {startWork.isPending ? 'Starting...' : 'Start Agent'}
-                </button>
+              <Button
+                type="button"
+                onClick={handleStart}
+                disabled={!selectedRuntime || startWork.isPending}
+              >
+                {startWork.isPending ? 'Starting...' : 'Start Agent'}
               </Button>
             </div>
           </div>

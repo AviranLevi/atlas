@@ -2,7 +2,6 @@ import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { uuidDefault, timestampDefault } from '../helpers/index.js';
 import { projects } from './projects.schema.js';
 import { agents } from './agents.schema.js';
-import { skills } from './skills.schema.js';
 import { phases } from './phases.schema.js';
 
 export const tasks = sqliteTable('tasks', {
@@ -18,8 +17,8 @@ export const tasks = sqliteTable('tasks', {
   notes: text('notes'),
   projectId: text('project_id').references(() => projects.id),
   agentId: text('agent_id').references(() => agents.id),
-  skillId: text('skill_id').references(() => skills.id),
   phaseId: text('phase_id').references(() => phases.id),
+  source: text('source'),
   tags: text('tags'),
   createdAt: text('created_at')
     .notNull()

@@ -15,6 +15,7 @@ export const DiffCommentSchema = z.object({
   lineNumber: z.number().int(),
   lineContent: z.string(),
   body: z.string().min(1),
+  parentId: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string().optional(),
 });
@@ -24,6 +25,7 @@ export const AddDiffCommentSchema = z.object({
   lineNumber: z.number().int(),
   lineContent: z.string(),
   body: z.string().min(1),
+  parentId: z.string().optional(),
 });
 
 export const WorkspaceSchema = z.object({
@@ -58,6 +60,7 @@ export const CreateWorkspaceSchema = z.object({
 
 export const RerunWorkspaceSchema = z.object({
   agentRuntimeId: z.string().min(1),
+  model: z.string().min(1).optional(),
 });
 
 export const CreatePullRequestSchema = z.object({

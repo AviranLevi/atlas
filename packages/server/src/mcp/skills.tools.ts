@@ -1,22 +1,13 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { SkillTypeEnum } from '@atlas/shared';
 import { skillsService } from '../services/index.js';
 
-export function registerSkillTools(server: McpServer) {
+export function registerSkillTools(server: McpServer): void {
   server.registerTool('list_skills', {
     description: 'List available skills, optionally filtered by type',
     inputSchema: z.object({
-      type: z
-        .enum([
-          'Planning',
-          'Coding',
-          'Review',
-          'Architecture / Data',
-          'Planning / Roadmapping',
-          'Design / Systems',
-          'Design',
-          'Design / Balancing',
-        ])
+      type: SkillTypeEnum
         .optional()
         .describe('Filter by skill type'),
     }),

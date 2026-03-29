@@ -1,5 +1,5 @@
 // React / library
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Zap } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -47,10 +47,11 @@ export function DispatchRulesCard({
           <div className="text-muted-foreground py-8 text-center">Loading...</div>
         ) : (
           <div className="rounded-md border">
-            <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 border-b bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground">
+            <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 border-b bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground">
               <div>Pattern</div>
               <div>Agent</div>
               <div>Skill</div>
+              <div><Zap className="h-3.5 w-3.5" /></div>
               <div />
             </div>
 
@@ -70,13 +71,18 @@ export function DispatchRulesCard({
               ) : (
                 <div
                   key={rule.id}
-                  className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 border-b px-4 py-3 last:border-b-0"
+                  className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 border-b px-4 py-3 last:border-b-0"
                 >
                   <div className="flex items-center text-sm">
                     <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{rule.pattern}</code>
                   </div>
                   <div className="flex items-center text-sm">{getAgentName(rule.agentId)}</div>
                   <div className="flex items-center text-sm">{getSkillName(rule.skillId)}</div>
+                  <div className="flex items-center">
+                    {rule.autoStart && (
+                      <Zap className="h-4 w-4 text-yellow-500" aria-label="Auto-start enabled" />
+                    )}
+                  </div>
                   <div className="flex gap-1">
                     <Button size="icon" variant="ghost" onClick={() => onEdit(rule)} aria-label="Edit">
                       <Pencil className="h-4 w-4" />

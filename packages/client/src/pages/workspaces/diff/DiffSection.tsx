@@ -63,12 +63,23 @@ function DiffFileRow({
   const removeComment = useRemoveDiffComment();
 
   const fileComments = comments.filter((c) => c.filename === file.filename);
+  const topLevelComments = useMemo(() => fileComments.filter((c) => !c.parentId), [fileComments]);
   const commentsByLine = useMemo(() => {
     const map = new Map<number, DiffComment[]>();
-    for (const c of fileComments) {
+    for (const c of topLevelComments) {
       const arr = map.get(c.lineNumber) ?? [];
       arr.push(c);
       map.set(c.lineNumber, arr);
+    }
+    return map;
+  }, [topLevelComments]);
+  const repliesByParentId = useMemo(() => {
+    const map = new Map<string, DiffComment[]>();
+    for (const c of fileComments) {
+      if (!c.parentId) continue;
+      const arr = map.get(c.parentId) ?? [];
+      arr.push(c);
+      map.set(c.parentId, arr);
     }
     return map;
   }, [fileComments]);
@@ -83,6 +94,7 @@ function DiffFileRow({
     workspaceId,
     language,
     commentsByLine,
+    repliesByParentId,
     commentingLine,
     setCommentingLine,
     addComment,

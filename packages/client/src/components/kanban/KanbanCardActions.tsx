@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 
 // Types
+import { TASK_STATUS } from '@atlas/shared';
 import type { KanbanCardActionsProps } from './kanban.types';
 
 export function KanbanCardActions({
@@ -23,7 +24,7 @@ export function KanbanCardActions({
 }: KanbanCardActionsProps) {
   return (
     <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
-      {activeWorkspaceId && task.status !== 'In Review' && (
+      {activeWorkspaceId && task.status !== TASK_STATUS.IN_REVIEW && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -41,7 +42,7 @@ export function KanbanCardActions({
           <TooltipContent>Agent running — view workspace</TooltipContent>
         </Tooltip>
       )}
-      {activeWorkspaceId && task.status === 'In Review' && (
+      {activeWorkspaceId && task.status === TASK_STATUS.IN_REVIEW && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -59,7 +60,7 @@ export function KanbanCardActions({
           <TooltipContent>Review changes</TooltipContent>
         </Tooltip>
       )}
-      {canStartWork && task.status === 'To Do' && onStartWork && (
+      {canStartWork && task.status === TASK_STATUS.TODO && onStartWork && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

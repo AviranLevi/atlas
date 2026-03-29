@@ -1,4 +1,5 @@
 // Shared
+import { TASK_STATUS } from '@atlas/shared';
 import type { Task, CreateTask, UpdateTask } from '@atlas/shared';
 
 // Services
@@ -12,7 +13,7 @@ import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
 
 /** Statuses that mean "an agent should not be running for this task". */
-const INACTIVE_STATUSES = new Set(['To Do', 'Done', 'Blocked']);
+const INACTIVE_STATUSES: ReadonlySet<string> = new Set([TASK_STATUS.BACKLOG, TASK_STATUS.TODO, TASK_STATUS.DONE, TASK_STATUS.BLOCKED]);
 
 const FILE_PATH = 'services/tasks/tasks.service.ts';
 
@@ -48,13 +49,13 @@ export class TasksService {
   async create(data: CreateTask): Promise<Task> {
     const FUNCTION_NAME = 'create';
     try {
+      let autoStart = false;
       if (!data.agentId) {
         const dispatch = await settingsService.resolveDispatchRule(data.name);
         if (dispatch) {
           data.agentId = dispatch.agentId;
-          if (!data.skillId && dispatch.skillId) {
-            data.skillId = dispatch.skillId;
-          }
+          data.source = 'dispatch';
+          autoStart = dispatch.autoStart;
         }
       }
       const task = this.repo.insert(data);
@@ -65,6 +66,20 @@ export class TasksService {
         description: `Task created: ${task.name}`,
         metadata: { status: task.status },
       });
+      if (autoStart) {
+        import('../orchestrator/orchestrator.service.js').then(async ({ OrchestratorService }) => {
+          try {
+            const { executorRegistry } = await import('../../executors/index.js');
+            const installed = await executorRegistry.listInstalled();
+            if (installed.length > 0) {
+              const orchestrator = new OrchestratorService();
+              await orchestrator.startWork(task.id, installed[0].id);
+            }
+          } catch (err) {
+            logger.error(`${FILE_PATH} :: auto-start workspace via dispatch rule`, err);
+          }
+        });
+      }
       return task;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -87,7 +102,7 @@ export class TasksService {
           metadata: { from: previous.status, to: data.status },
         });
         // Auto-create review when task enters "In Review"
-        if (data.status === 'In Review') {
+        if (data.status === TASK_STATUS.IN_REVIEW) {
           // Lazy import to avoid circular dependency at module init time
           import('../reviews/reviews.service.js').then(({ ReviewsService }) => {
             const reviewsService = new ReviewsService();

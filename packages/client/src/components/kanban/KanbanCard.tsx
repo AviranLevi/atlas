@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ReviewBadge } from '@/components/reviews/ReviewBadge';
 import { KanbanCardActions } from './KanbanCardActions';
+import { TaskSourceBadge } from './TaskSourceBadge';
 
 // Hooks
 import { useReview } from '@/hooks/use-reviews.hook';
@@ -15,6 +16,7 @@ import { useReview } from '@/hooks/use-reviews.hook';
 import { timeAgo } from '@/lib/format';
 
 // Types
+import { TASK_STATUS } from '@atlas/shared';
 import type { KanbanCardProps } from './kanban.types';
 
 // Constants
@@ -39,7 +41,7 @@ export function KanbanCard({
     isDragging,
   } = useDraggable({ id: task.id });
 
-  const { data: review } = useReview(task.status === 'In Review' ? task.id : '');
+  const { data: review } = useReview(task.status === TASK_STATUS.IN_REVIEW ? task.id : '');
 
   const metaRow = (
     <div className="flex flex-wrap gap-1.5">
@@ -77,6 +79,7 @@ export function KanbanCard({
           {showProject && projectName && (
             <span className="max-w-[80px] truncate">{projectName}</span>
           )}
+          <TaskSourceBadge source={task.source ?? null} />
         </div>
         <span>{timeAgo(task.createdAt)}</span>
       </div>

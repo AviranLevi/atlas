@@ -14,7 +14,6 @@ export function GlobalInstructionsCard({
   isLoading,
   isDirty,
   isSaving,
-  isSaved,
   error,
   onChange,
   onSave,
@@ -44,9 +43,6 @@ export function GlobalInstructionsCard({
                 <Save className={`mr-2 h-4 w-4 ${isSaving ? 'animate-pulse' : ''}`} />
                 {isSaving ? 'Saving...' : 'Save'}
               </Button>
-              {!isDirty && !isSaving && isSaved && (
-                <span className="text-muted-foreground text-sm">Saved!</span>
-              )}
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </>

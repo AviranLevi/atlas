@@ -15,7 +15,8 @@ function buildChatArgs(
 ): string[] {
   const args = [...executor.args];
 
-  if (mcpConfigPath && executor.mcpConfigFormat !== 'none') {
+  // Gemini CLI reads MCP config from ~/.gemini/settings.json — no CLI flag needed
+  if (mcpConfigPath && executor.mcpConfigFormat !== 'none' && executor.mcpConfigFormat !== 'gemini') {
     args.unshift('--mcp-config', mcpConfigPath);
   }
 
@@ -38,10 +39,66 @@ function buildChatArgs(
 }
 
 /**
- * Sends a one-shot prompt to a CLI agent and returns the full response.
- * No streaming -- the entire output is collected and returned at once.
+ * Parses a single stream-json line from a CLI agent (Claude Code or Gemini CLI format).
+ * Returns human-readable text + metadata, or null to skip the line.
  */
-export function runCliChat(options: CliChatOptions): Promise<CliChatResult> {
+export function parseCliStreamJsonLine(
+  line: string,
+): { text: string; isFinal: boolean; skipLog?: boolean } | null {
+  if (!line.trim()) return null;
+  try {
+    const event = JSON.parse(line);
+
+    // ── Claude Code format ──────────────────────────────────────────────────
+    if (event.type === 'assistant' && Array.isArray(event.message?.content)) {
+      const parts: string[] = [];
+      for (const block of event.message.content) {
+        if (block.type === 'text' && block.text) {
+          parts.push(block.text);
+        } else if (block.type === 'tool_use' && block.name) {
+          const input = block.input ?? {};
+          const hint = input.command ?? input.file_path ?? input.pattern ?? input.query ?? input.url ?? '';
+          const summary = hint ? `${hint}`.slice(0, 100) : '';
+          parts.push(`▸ ${block.name}${summary ? `  ${summary}` : ''}`);
+        }
+      }
+      return parts.length ? { text: parts.join('\n'), isFinal: false } : null;
+    }
+    // Claude Code final result — stored in DB, not written to log
+    if (event.type === 'result' && typeof event.result === 'string') {
+      return { text: event.result, isFinal: true, skipLog: true };
+    }
+
+    // ── Gemini CLI format ───────────────────────────────────────────────────
+    // Gemini only emits delta:true for all assistant text
+    if (event.type === 'message' && event.role === 'assistant' && event.content) {
+      return { text: event.content, isFinal: false };
+    }
+    if (event.type === 'tool_use' && event.tool_name) {
+      const params = event.parameters ?? {};
+      const hint = params.command ?? params.file_path ?? params.path ?? params.pattern ?? params.query ?? params.url ?? '';
+      const summary = hint ? `${hint}`.slice(0, 100) : '';
+      return { text: `▸ ${event.tool_name}${summary ? `  ${summary}` : ''}`, isFinal: false };
+    }
+    // Gemini result event signals completion; final output is accumulated text
+    if (event.type === 'result' && event.status !== undefined) {
+      return { text: '', isFinal: true, skipLog: true };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sends a one-shot prompt to a CLI agent, streaming output chunks via `onChunk` as they arrive.
+ * Returns the full accumulated response text when the process exits.
+ */
+export function streamCliChat(
+  options: CliChatOptions,
+  onChunk: (text: string) => void,
+): Promise<CliChatResult> {
   const { executor, prompt, cwd, model, timeoutMs = DEFAULT_TIMEOUT_MS, signal } = options;
 
   const configId = `chat-${Date.now()}`;
@@ -53,7 +110,7 @@ export function runCliChat(options: CliChatOptions): Promise<CliChatResult> {
   const args = buildChatArgs(executor, prompt, mcpConfigPath, model);
   const env = { ...process.env as Record<string, string>, ...executor.env };
 
-  logger.info(`${FILE_PATH} :: runCliChat - ${executor.command} ${args.join(' ').slice(0, 200)}...`);
+  logger.info(`${FILE_PATH} :: streamCliChat - ${executor.command} ${args.join(' ').slice(0, 200)}...`);
 
   return new Promise<CliChatResult>((resolve, reject) => {
     const proc = spawn(executor.command, args, {
@@ -62,10 +119,34 @@ export function runCliChat(options: CliChatOptions): Promise<CliChatResult> {
       env,
     });
 
-    let stdout = '';
+    let streamJsonBuffer = '';
+    let fullText = '';
+    let finalText = '';
     let stderr = '';
 
-    proc.stdout?.on('data', (data: Buffer) => { stdout += data.toString(); });
+    const handleRaw = (raw: string) => {
+      if (executor.outputFormat === 'stream-json') {
+        streamJsonBuffer += raw;
+        const lines = streamJsonBuffer.split('\n');
+        streamJsonBuffer = lines.pop() ?? '';
+        for (const line of lines) {
+          const parsed = parseCliStreamJsonLine(line);
+          if (!parsed) continue;
+          if (parsed.isFinal) {
+            finalText = parsed.text;
+          } else if (parsed.text) {
+            const chunk = parsed.text + '\n';
+            fullText += chunk;
+            onChunk(chunk);
+          }
+        }
+      } else {
+        fullText += raw;
+        onChunk(raw);
+      }
+    };
+
+    proc.stdout?.on('data', (data: Buffer) => handleRaw(data.toString()));
     proc.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
 
     if (executor.promptDelivery === 'stdin') {
@@ -99,16 +180,16 @@ export function runCliChat(options: CliChatOptions): Promise<CliChatResult> {
       clearTimeout(timer);
       signal?.removeEventListener('abort', onAbort);
       if (mcpConfigPath) {
-        removeMcpConfig(configId);
+        removeMcpConfig(configId, executor.mcpConfigFormat);
       }
     }
 
     proc.on('close', (code) => {
       cleanup();
-      const text = stdout.trim();
+      const text = (finalText || fullText).trim();
       if (code !== 0 && !text) {
         const errorMsg = stderr.trim() || `CLI exited with code ${code}`;
-        logger.error(`${FILE_PATH} :: runCliChat`, errorMsg);
+        logger.error(`${FILE_PATH} :: streamCliChat`, errorMsg);
         reject(new Error(errorMsg));
         return;
       }
@@ -117,10 +198,18 @@ export function runCliChat(options: CliChatOptions): Promise<CliChatResult> {
 
     proc.on('error', (err) => {
       cleanup();
-      logger.error(`${FILE_PATH} :: runCliChat spawn error`, err);
+      logger.error(`${FILE_PATH} :: streamCliChat spawn error`, err);
       reject(err);
     });
   });
+}
+
+/**
+ * Sends a one-shot prompt to a CLI agent and returns the full response.
+ * No streaming — the entire output is collected and returned at once.
+ */
+export function runCliChat(options: CliChatOptions): Promise<CliChatResult> {
+  return streamCliChat(options, () => {});
 }
 
 /**

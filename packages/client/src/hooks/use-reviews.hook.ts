@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Review, UpdateReview, DecideReview, ChecklistItem } from '@atlas/shared';
+import type { Review, UpdateReview, DecideReview, ChecklistItem, Workspace } from '@atlas/shared';
 
 const REVIEWS_KEY = ['reviews'] as const;
 
@@ -9,6 +9,7 @@ export function useReview(taskId: string | undefined) {
     queryKey: [...REVIEWS_KEY, taskId],
     queryFn: () => api.get<Review | null>(`/reviews?taskId=${taskId}`),
     enabled: !!taskId,
+    refetchInterval: 5000,
   });
 }
 
@@ -37,6 +38,19 @@ export function useDecideReview() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
+/** Spawns a reviewer agent on the workspace for this review's task. */
+export function useStartAiReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, agentRuntimeId, autoFix }: { id: string; agentRuntimeId: string; autoFix?: boolean }) =>
+      api.post<Workspace>(`/reviews/${id}/start-ai-review`, { agentRuntimeId, autoFix }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+      queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
     },
   });
 }

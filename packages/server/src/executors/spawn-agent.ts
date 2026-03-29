@@ -4,10 +4,12 @@ import path from 'path';
 import type { ExecutorConfig, ProviderField } from './executor.types.js';
 import { generateMcpConfig } from './mcp-config-generator.js';
 import { logger } from '../lib/logger.js';
+import { parseCliStreamJsonLine } from '../lib/chat/cli-chat.js';
 
 const FILE_PATH = 'executors/spawn-agent.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
 const MAX_DB_OUTPUT_LINES = 50;
+
 
 export interface SpawnResult {
   process: ChildProcess;
@@ -28,7 +30,8 @@ export interface SpawnOptions {
 function buildArgs(executor: ExecutorConfig, prompt: string, mcpConfigPath?: string, model?: string): string[] {
   const args = [...executor.args];
 
-  if (mcpConfigPath && executor.mcpConfigFormat !== 'none') {
+  // Gemini CLI reads MCP config from ~/.gemini/settings.json — no CLI flag needed
+  if (mcpConfigPath && executor.mcpConfigFormat !== 'none' && executor.mcpConfigFormat !== 'gemini') {
     args.unshift('--mcp-config', mcpConfigPath);
   }
 
@@ -100,13 +103,36 @@ export function spawnAgent(
     env,
   });
 
+  let streamJsonBuffer = '';
+  let finalResult = '';
+
   const collectOutput = (data: Buffer) => {
-    const text = data.toString();
-    logStream.write(text);
-    const lines = text.split('\n');
-    outputLines.push(...lines);
-    while (outputLines.length > MAX_DB_OUTPUT_LINES) {
-      outputLines.shift();
+    const raw = data.toString();
+
+    if (executor.outputFormat === 'stream-json') {
+      streamJsonBuffer += raw;
+      const lines = streamJsonBuffer.split('\n');
+      streamJsonBuffer = lines.pop() ?? ''; // keep incomplete last line
+
+      for (const line of lines) {
+        const parsed = parseCliStreamJsonLine(line);
+        if (!parsed) continue;
+        if (parsed.isFinal) {
+          finalResult = parsed.text;
+        }
+        if (!parsed.skipLog) {
+          const entry = parsed.text + '\n';
+          logStream.write(entry);
+          const entryLines = entry.split('\n');
+          outputLines.push(...entryLines);
+          while (outputLines.length > MAX_DB_OUTPUT_LINES) outputLines.shift();
+        }
+      }
+    } else {
+      logStream.write(raw);
+      const lines = raw.split('\n');
+      outputLines.push(...lines);
+      while (outputLines.length > MAX_DB_OUTPUT_LINES) outputLines.shift();
     }
   };
 
@@ -120,7 +146,9 @@ export function spawnAgent(
 
   proc.on('close', (code) => {
     logStream.end();
-    const finalOutput = outputLines.join('\n');
+    const finalOutput = executor.outputFormat === 'stream-json'
+      ? (finalResult || outputLines.join('\n'))
+      : outputLines.join('\n');
     if (code === 0) {
       callbacks.onCompleted(finalOutput);
     } else {

@@ -9,7 +9,7 @@ export function AboutTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Agents Manager</h2>
+        <h2 className="text-xl font-semibold tracking-tight">Atlas</h2>
         <p className="mt-1 font-mono text-sm text-muted-foreground">v0.0.1</p>
       </div>
 

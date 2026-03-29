@@ -1,14 +1,15 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { MemoryTypeEnum, MemoryScopeEnum } from '@atlas/shared';
 import { memoryService } from '../services/index.js';
 import { logger } from '../lib/logger.js';
 
-export function registerMemoryTools(server: McpServer) {
+export function registerMemoryTools(server: McpServer): void {
   server.registerTool('list_memories', {
     description: 'List memory entries with optional filters by scope, type, projectId, or agentId',
     inputSchema: z.object({
-      scope: z.enum(['global', 'project']).optional().describe('Filter by memory scope'),
-      type: z.enum(['Decision', 'Convention', 'Preference', 'Problem']).optional().describe('Filter by memory type'),
+      scope: MemoryScopeEnum.optional().describe('Filter by memory scope'),
+      type: MemoryTypeEnum.optional().describe('Filter by memory type'),
       projectId: z.string().uuid().optional().describe('Filter by project UUID'),
       agentId: z.string().uuid().optional().describe('Filter by agent UUID'),
     }),
@@ -24,15 +25,15 @@ export function registerMemoryTools(server: McpServer) {
     inputSchema: z.object({
       name: z.string().min(1).max(200).describe('Memory name/title'),
       content: z.string().min(1).describe('Memory content'),
-      type: z.enum(['Decision', 'Convention', 'Preference', 'Problem']).describe('Memory type'),
-      scope: z.enum(['global', 'project']).optional().describe('Scope (defaults to "project")'),
+      type: MemoryTypeEnum.describe('Memory type'),
+      scope: MemoryScopeEnum.optional().describe('Scope (defaults to "project")'),
       projectId: z.string().uuid().optional().describe('Associated project UUID'),
       agentId: z.string().uuid().optional().describe('Associated agent UUID'),
     }),
   }, async (args) => {
     const entry = await memoryService.create({
       ...args,
-      scope: args.scope ?? 'project',
+      scope: args.scope ?? MemoryScopeEnum.Enum.project,
     });
     logger.info(`[MCP] create_memory: id=${entry.id}, name="${entry.name}"`);
     return { content: [{ type: 'text' as const, text: JSON.stringify(entry, null, 2) }] };
@@ -44,7 +45,7 @@ export function registerMemoryTools(server: McpServer) {
       id: z.string().uuid().describe('The memory UUID to update'),
       name: z.string().min(1).max(200).optional().describe('Updated name'),
       content: z.string().min(1).optional().describe('Updated content'),
-      type: z.enum(['Decision', 'Convention', 'Preference', 'Problem']).optional().describe('Updated type'),
+      type: MemoryTypeEnum.optional().describe('Updated type'),
     }),
   }, async ({ id, ...data }) => {
     const entry = await memoryService.update(id, data);

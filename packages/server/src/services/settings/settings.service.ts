@@ -8,6 +8,9 @@ import type {
   UpdateDispatchRule,
 } from '@atlas/shared';
 
+// External
+import { minimatch } from 'minimatch';
+
 // Repositories
 import { settingsRepository } from '../../db/repositories/index.js';
 
@@ -172,20 +175,27 @@ export class SettingsService {
   }
 
   /**
-   * Finds the first dispatch rule whose pattern matches the task name
-   * (case-insensitive substring). Returns the agentId/skillId to assign,
-   * or null if no rule matches.
+   * Finds the first dispatch rule whose pattern matches the task name.
+   * Supports glob patterns (e.g. `feature/*`, `bug-*`) via minimatch,
+   * with fallback to case-insensitive substring for plain-string patterns.
+   * Returns the agentId/skillId/autoStart to assign, or null if no rule matches.
    */
   async resolveDispatchRule(
     taskName: string,
-  ): Promise<{ agentId: string; skillId: string | null } | null> {
+  ): Promise<{ agentId: string; skillId: string | null; autoStart: boolean } | null> {
     const FUNCTION_NAME = 'resolveDispatchRule';
     try {
       const rules = this.repo.findAllDispatchRules();
       const lowerName = taskName.toLowerCase();
-      const match = rules.find((r) => lowerName.includes(r.pattern.toLowerCase()));
+      const match = rules.find((r) => {
+        const lowerPattern = r.pattern.toLowerCase();
+        return (
+          minimatch(lowerName, lowerPattern, { nocase: true }) ||
+          lowerName.includes(lowerPattern)
+        );
+      });
       if (!match) return null;
-      return { agentId: match.agentId, skillId: match.skillId };
+      return { agentId: match.agentId, skillId: match.skillId, autoStart: match.autoStart ?? false };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       return null;

@@ -11,61 +11,111 @@ A local-first AI agent orchestration hub. Single user now, architected for multi
 
 ## Architecture
 
-### Monorepo (npm workspaces)
+### Monorepo (pnpm workspaces)
 - `packages/server` — Hono + Node.js + SQLite + Drizzle ORM, port 3100
-- `packages/client` — React 19 + Vite + TailwindCSS, port 5173
+- `packages/client` — React 19 + Vite + TailwindCSS 4, port 5173
 - `packages/shared` — Zod schemas + TypeScript types shared between server and client
 
+Package scope: `@atlas/shared`, `@atlas/server`, `@atlas/client`
+
 ### Key Tech Choices
-- **Runtime**: `tsx` for server (not compiled), `vite` for client dev
-- **ORM**: Drizzle ORM with SQLite (`better-sqlite3`), migrations via SQL files (NOT drizzle-kit — it has path resolution bugs in git worktrees)
+- **Package manager**: pnpm (workspace protocol `workspace:*` for internal deps)
+- **Node.js**: >= 24 (`.nvmrc` at root)
+- **Runtime**: `tsx` for server dev, `vite` for client dev
+- **ORM**: Drizzle ORM with SQLite (`better-sqlite3`), migrations via SQL files + runtime schema patches
 - **State**: TanStack Query v5 for all client data fetching
 - **MCP transport**: Two servers — stdio (original) + HTTP/SSE on port 3101
+- **Linter/Formatter**: Biome (replaces ESLint + Prettier)
+- **Test runner**: Vitest (package service tests written; expanding coverage)
+
+### Server Layers
+```
+Routes (thin HTTP + zValidator) → Controllers (delegation) → Services (business logic) → Repositories (data access) → Drizzle/SQLite
+MCP Tools (stdio/SSE) ────────────────────────────────────┘
+```
+
+- **Routes**: request validation + delegation only. No business logic.
+- **Controllers**: extract validated params, call services, format HTTP responses.
+- **Services**: all business logic. Each in its own subfolder with a `.types.ts` file. May call multiple repositories.
+- **Repositories**: single-table data access. No cross-entity logic.
+- **MCP Tools**: Zod-validated input using shared Zod enums (`TaskStatusEnum`, `SkillTypeEnum`, etc.), delegates to services. No business logic.
 
 ---
 
-## Database Schema
+## Database
 
-### Original tables
-- `agents` — AI agent profiles (name, description, personality, rules)
-- `tasks` — Kanban tasks with status, priority, estimate, DoD
-- `projects` — Projects with localPath for worktree creation
-- `skills` — Reusable agent skills
-- `dispatch_rules` — Pattern-based agent routing rules
-- `memory` — Project/global memory entries
-- `workspaces` — Agent execution environments (process tracking)
-- `settings` — Key-value global settings
+### Tables
+| Table | Description |
+|---|---|
+| `agents` | AI agent profiles (name, description, personality, provider_id) |
+| `agent_skills` | Junction: agent ↔ skill |
+| `agent_rules` | Junction: agent ↔ rule (was `dispatch_rules`) |
+| `agent_projects` | Junction: agent ↔ project |
+| `agent_providers` | API keys + model configs (anthropic, openai, openai-compatible, ollama) |
+| `tasks` | Kanban tasks with status, priority, estimate, DoD, phase_id |
+| `projects` | Projects with localPath for worktree creation |
+| `skills` | Reusable agent skills |
+| `skill_resources` | Junction: skill ↔ resource |
+| `rules` | Rules (global and project-scoped) |
+| `memory` | Project/global memory entries |
+| `workspaces` | Agent execution environments (process tracking) |
+| `settings` | Key-value global settings |
+| `global_instructions` | Global instruction entries |
+| `phases` | Project milestones with order_index, status, progress tracking |
+| `reviews` | Task review system with JSON checklist, reviewer type, decision |
+| `activity_log` | Write-only audit trail (no FK references, best-effort) |
+| `chat_conversations` | Chat conversation metadata |
+| `chat_messages` | Chat messages with role, content, tool calls |
+| `preferences` | User preferences (key-value) |
 
-### New tables (migration 0003)
-- `agent_providers` — API keys and model configs (anthropic, openai, openai-compatible, ollama)
-- `phases` — Project milestones with order_index, status, progress tracking
-- `reviews` — Task review system with JSON checklist, reviewer type, decision
-- `activity_log` — Write-only audit trail (no FK references, best-effort)
+### Migrations (SQL files in `db/migrations/`)
+- `0000` — Initial schema (agents, tasks, projects, skills, memory, settings, etc.)
+- `0001` — Add project status, color, tags
+- `0002` — Add localPath to projects, workspaces table
+- `0003` — Add agent_providers, phases, reviews, activity_log
+- `0004` — Chat conversations + messages tables
+- `0005` — Chat and preferences table recreation (idempotent)
+- `0006` — Secondary indexes on FK/filter columns, unique constraints on junction tables
+- `0007` — Dispatch rule auto-start column
+- `0008` — Task source field
 
-### Schema modifications
-- `agents.provider_id` → FK to `agent_providers.id`
-- `tasks.phase_id` → FK to `phases.id`
-- `workspaces` now returns `taskName` + `projectName` via LEFT JOIN (enriched at query time)
+### Schema Patches (`db/schema-patches.ts`)
+Runtime `ALTER TABLE ADD COLUMN` statements wrapped in try/catch for columns that may already exist. Applied after migrations on startup. Used for incremental schema changes that can't be cleanly expressed as Drizzle migrations (e.g., columns added via manual hacks before migrations existed).
+
+### DB Initialization (`db/index.ts`)
+1. Opens SQLite with WAL mode + foreign keys
+2. Runs Drizzle migrations
+3. Applies schema patches
+4. Exports `db` instance and `schema`
 
 ---
 
 ## MCP Integration
 
-### Stdio MCP (original)
-- `packages/server/src/mcp.ts` — standalone stdio server
-- Tools: create_task, update_task, list_tasks, add_memory, list_memories, get_project_context
+### Stdio MCP (`mcp.ts`)
+Standalone stdio server for IDE integration (Cursor, Claude Code).
 
-### HTTP/SSE MCP (new, port 3101)
-- `packages/server/src/mcp-http.ts` — standalone Node.js http.createServer (NOT Hono — SSEServerTransport requires raw IncomingMessage/ServerResponse)
-- Session registry: `Map<sessionId, SSEServerTransport>`
-- GET /sse → creates transport, POST /messages → routes to session
+### HTTP/SSE MCP (`mcp-http.ts`)
+Standalone Node.js `http.createServer` (NOT Hono — `SSEServerTransport` requires raw `IncomingMessage`/`ServerResponse`). Session registry with `Map<sessionId, SSEServerTransport>`.
 
-### New MCP tools added
-- `list_phases`, `get_phase` — phase browsing for agents
-- `get_review`, `submit_review` — review workflow for agents
+### Registered MCP Tools
+| File | Tools |
+|---|---|
+| `agents.tools.ts` | list_agents, get_agent |
+| `agent-providers.tools.ts` | list_providers, get_provider, list_provider_models |
+| `tasks.tools.ts` | create_task, update_task, list_tasks |
+| `memory.tools.ts` | add_memory, list_memories |
+| `projects.tools.ts` | get_project_context |
+| `skills.tools.ts` | list_skills, get_skill |
+| `rules.tools.ts` | list_rules, get_rule |
+| `phases.tools.ts` | list_phases, get_phase |
+| `reviews.tools.ts` | get_review, submit_review |
+| `search.tools.ts` | search |
+| `settings.tools.ts` | get_settings |
+| `workspaces.tools.ts` | start_workspace (with baseBranch, model, providerId) |
 
-### MCP Config endpoint
-- `GET /api/v1/mcp/connection-info` — returns SSE URL, Cursor config, Claude Desktop config, stdio config for Settings UI
+### MCP Config Endpoint
+`GET /api/v1/mcp/connection-info` — returns SSE URL, Cursor config, Claude Desktop config, stdio config for Settings UI.
 
 ---
 
@@ -113,21 +163,99 @@ A local-first AI agent orchestration hub. Single user now, architected for multi
 - Changes requested → task status → "In Progress"
 
 ### AI reviews
-- `POST /api/v1/reviews/:id/ai-review` — placeholder for AI-driven review flow
+- `POST /api/v1/reviews/:id/ai-review` → spawns a reviewer agent via `orchestratorService.startAiReviewForTask()`
+- Reviewer receives diff + task context + DoD checklist, calls `submit_review` MCP tool
+- Optional `autoFix` flag lets the reviewer fix issues directly before submitting
 
 ### Circular dependency fix
 - `reviews.service.ts` needs `tasksRepository`
 - `tasks.service.ts` needs `ReviewsService`
-- **Fix**: `tasks.service.ts` uses `await import('./reviews.service.js')` (lazy dynamic import) so circular ref only exists at call-time
+- **Fix**: `tasks.service.ts` uses `await import(...)` (lazy dynamic import) so circular ref only exists at call-time
 
 ---
 
-## Development Phases
+## Chat System
 
-- Phases are project milestones with `name`, `description`, `status`, `order_index`
-- `phases.repository.ts` uses LEFT JOIN to count tasks per phase (`taskCount`, `doneCount`)
-- Deleting a phase NULLifies `tasks.phase_id` (no cascade delete)
-- Progress = doneCount / taskCount shown as progress bar in `PhaseCard`
+- `/chat` page with conversation sidebar, message list, tool call rendering
+- Server: `chat.service.ts` handles streaming via providers (Anthropic/OpenAI)
+- Client: `use-chat.hook.ts` uses `api.stream()` for SSE-style streaming
+- Tools available in chat: project context, task management, memory, file browsing
+- Chat conversations and messages persisted to SQLite
+
+---
+
+## Package Import / Export
+
+### Format
+Portable JSON packages (`.atlas.json` convention, any `.json` accepted on import). Validated by `AtlasPackageSchema` in `@atlas/shared`.
+
+```json
+{
+  "atlas": "1.0",
+  "type": "agent" | "skill" | "rule",
+  "name": "...",
+  "version": "1.0.0",
+  "agent": { ... },      // optional — derived from CreateAgentSchema minus providerId/defaultModel
+  "skills": [ ... ],     // optional — derived from CreateSkillSchema minus projectId
+  "rules": [ ... ]       // optional — derived from CreateRuleSchema minus projectId
+}
+```
+
+A single package can bundle an agent with its skills and rules. No IDs, timestamps, project scoping, or API keys are included.
+
+### Export
+- Export buttons on agent, skill, and rule detail pages → `GET /api/v1/packages/export/{agent|skill|rule}/:id`
+- Returns a downloadable `.atlas.json` file with Content-Disposition header
+- Agent export includes associated skills, rules, and a provider hint (type + model, no API key)
+
+### Import
+- Import buttons on Agents, Skills, and Rules list pages (not in Settings)
+- Two-step dialog: upload → review/resolve conflicts
+- `POST /api/v1/packages/import/preview` — validates package, detects name conflicts, matches provider hints
+- `POST /api/v1/packages/import` — executes import with user-chosen resolutions (create/overwrite/rename)
+- Upload step includes type badges, bundle explanation, and syntax-highlighted JSON format example
+
+### Server
+- `PackageService` in `services/package/` handles export stripping and import logic
+- `package.controller.ts` + `package.route.ts` for HTTP layer
+- Tests: `package.service.test.ts` covers export, import, conflicts, validation
+
+---
+
+## Client UI
+
+### Pages
+| Route | Page | Description |
+|---|---|---|
+| `/agents` | AgentsPage | Agent cards + AI Providers section |
+| `/agents/:id` | AgentDetailPage | Agent detail with skills, rules, projects, model selector |
+| `/kanban` | KanbanPage | Drag-and-drop board with active workspace indicators |
+| `/workspaces` | WorkspacesPage | Full workspace management with status tabs |
+| `/projects` | ProjectsPage | Project cards |
+| `/projects/:id` | ProjectDetailPage | Project detail with phases, tasks |
+| `/skills` | SkillsPage | Skills list |
+| `/skills/:id` | SkillDetailPage | Skill detail |
+| `/rules` | RulesPage | Rules list |
+| `/rules/:id` | RuleDetailPage | Rule detail |
+| `/memory` | MemoryPage | Memory entries with expandable rows |
+| `/chat` | ChatPage | Chat interface with conversation history |
+| `/global` | GlobalPage | Global instructions |
+| `/settings` | SettingsPage | MCP connection panel + settings |
+
+### Component Organization
+Each component directory contains:
+- `ComponentName.tsx` — the component
+- `directory.types.ts` — all types for that directory
+- `directory.constants.ts` — constants and config objects
+
+### Key Components
+- `KanbanCard` — shows `ReviewBadge` for "In Review" tasks, pulsing terminal icon for active agents
+- `StartWorkDialog` — agent selection, branch, model, provider for launching workspaces. Uses extracted `ModelSection`, `TaskSummary`, `RuntimeSelect`, `BranchSelect` sub-components with types in `workspaces.types.ts`
+- `McpConnectionPanel` — SSE URL, Cursor config, Claude Desktop config with copy buttons
+- `AgentProviderDialog` — dynamic fields (baseUrl for openai-compatible/ollama, apiKey hidden for ollama)
+- `PhaseCard` — progress bar, status badge, hover edit/delete
+- `ReviewPanel` — checklist toggle, notes, Approve/Request Changes buttons
+- All mutation dialogs display error feedback on failure
 
 ---
 
@@ -152,70 +280,81 @@ A local-first AI agent orchestration hub. Single user now, architected for multi
 
 ---
 
-## Client UI
-
-### Pages
-| Route | Page | Description |
-|---|---|---|
-| `/agents` | AgentsPage | Agent cards + AI Providers section at top |
-| `/kanban` | KanbanPage | Drag-and-drop board with active workspace indicators |
-| `/workspaces` | WorkspacesPage | Full workspace management page with status tabs |
-| `/projects/:id` | ProjectDetailPage | Project detail with Phases section |
-| `/settings` | SettingsPage | MCP connection panel + global instructions + dispatch rules |
-
-### Key components
-- `KanbanCard` — shows `ReviewBadge` for "In Review" tasks, pulsing terminal icon for tasks with active agent
-- `WorkspacesPage` — replaces the old sidebar panel; shows task name (from JOIN), filter tabs, collapsible output
-- `McpConnectionPanel` — SSE URL, Cursor config, Claude Desktop config with copy buttons
-- `AgentProviderDialog` — dynamic fields (baseUrl shown for openai-compatible/ollama, apiKey hidden for ollama)
-- `PhaseCard` — progress bar, status badge, hover edit/delete
-- `ReviewPanel` — checklist toggle, notes, Approve/Request Changes buttons
-
-### WorkspaceStatusPanel → WorkspacesPage migration
-- `WorkspaceStatusPanel` removed from KanbanPage bottom
-- Replaced by `/workspaces` page with full feature set
-- Nav badge shows active agent count with live blue dot
-
----
-
 ## Known Issues / Workarounds
 
-### drizzle-kit OOM in git worktrees
-- `npm run db:generate` fails with "Cannot find module '../helpers/index.js'" in worktree paths
+### drizzle-kit in git worktrees
+- `drizzle-kit generate` can fail with path resolution bugs in worktree paths
 - **Fix**: Write migration SQL manually + update `meta/_journal.json`
-
-### tsc --noEmit heap OOM
-- Large AI SDK types (@anthropic-ai/sdk, openai) cause OOM during full type check
-- **Fix**: Use `npx tsx packages/server/src/index.ts` directly; type errors in these packages are pre-existing and not runtime issues
 
 ### MCP SSE + Hono incompatibility
 - `SSEServerTransport` requires raw Node.js `IncomingMessage`/`ServerResponse`
 - Hono abstracts these, so SSE server runs as separate `http.createServer` on port 3101
 
+### Shared constants
+- `TASK_STATUS` constant object (`BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `BLOCKED`) defined in `@atlas/shared` with `as const satisfies`
+- Used across both client (kanban, task dialogs) and server (orchestrator, tasks, reviews, projects services)
+- MCP tools import shared Zod enums directly (`TaskStatusEnum`, `SkillTypeEnum`, `MemoryScopeEnum`, etc.) — zero inline `z.enum` duplication
+
+### `as any` casts remaining
+- `orchestrator.service.ts` — 5 casts (Drizzle insert type mismatches)
+- `workspaces.repository.ts` — 3 casts (JOIN row enrichment typing)
+- `projects.repository.ts` — 1 cast (serialized insert)
+- `hono-helpers.ts` — 2 casts (intentional, zValidator runtime augmentation)
+- Client: zero `as any` casts
+
 ---
 
-## File Structure (key paths)
+## File Structure
 ```
 packages/
   server/src/
+    controllers/        ← HTTP request handling, delegates to services
     db/
-      schema/           ← Drizzle schemas (all tables)
-      repositories/     ← DB access layer
-      migrations/       ← SQL migration files (manual)
-    services/           ← Business logic
-    routes/             ← Hono route handlers
-    mcp/                ← MCP tool registrations
-    mcp-http.ts         ← HTTP/SSE MCP server
-    mcp.ts              ← stdio MCP server
+      schema/           ← Drizzle table definitions (16 tables)
+      repositories/     ← DB access layer (16 repositories)
+      migrations/       ← SQL migration files (0000–0008)
+      schema-patches.ts ← Runtime ALTER TABLE patches
+      index.ts          ← DB initialization
+    services/           ← Business logic (21 services, each in own subfolder; 7 have dedicated .types.ts files)
+    routes/             ← Hono route definitions + zValidator middleware
+    mcp/                ← MCP tool registrations (13 tool files + register-all.ts)
+    executors/          ← Agent process spawning + detection
+    lib/
+      chat/             ← Chat streaming, tools
+      providers/        ← Provider clients + adapters
+      filesystem-scanner/ ← Project scanning
+      utils/            ← Shared utilities (withTimeout, parseTags, etc.)
+      errors.ts         ← AppError class
+      logger.ts         ← Structured logger
+      hono-helpers.ts   ← Type-safe zValidator wrappers
+    mcp.ts              ← Stdio MCP server entry
+    mcp-http.ts         ← HTTP/SSE MCP server entry
+    index.ts            ← Hono app + HTTP server entry
   client/src/
-    pages/              ← Page components
+    pages/              ← 14 page directories
     components/
-      agents/           ← AgentDialog, AgentProviderDialog
+      agents/           ← AgentDialog, AgentProviderDialog, ProviderTypeBadge
       kanban/           ← KanbanCard, KanbanColumn, TaskDialog
       phases/           ← PhaseCard, PhaseDialog
       reviews/          ← ReviewBadge, ReviewPanel
       settings/         ← McpConnectionPanel
-      workspaces/       ← StartWorkDialog, WorkspaceStatusPanel (legacy)
-    hooks/              ← TanStack Query hooks for every entity
-  shared/src/schemas/   ← Zod schemas + TypeScript types
+      workspaces/       ← StartWorkDialog
+      memory/           ← MemoryDialog
+      projects/         ← ProjectDialog
+      skills/           ← SkillDialog
+      rules/            ← RuleDialog
+      packages/         ← ImportPackageDialog, UploadStep, ReviewStep, ConflictItem
+      layout/           ← Layout, nav, sidebar
+      ui/               ← shadcn/ui primitives
+    hooks/              ← 18 TanStack Query hook files
+    contexts/           ← ProjectContext (active project state)
+    lib/
+      api.ts            ← Centralized API client (get, post, put, delete, stream, fireAndForget)
+      utils.ts          ← cn() utility
+      format.ts         ← timeAgo, calcDuration formatters
+  shared/src/
+    schemas/            ← 15 Zod schema files (agents, tasks, projects, skills, rules, memory, package, etc.)
+    index.ts            ← Barrel re-export
+data/
+  agents.db             ← SQLite database (gitignored)
 ```

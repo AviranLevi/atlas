@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { KanbanCard } from './KanbanCard';
 import type { KanbanColumnProps } from './kanban.types';
+import { COLUMN_STYLES, DEFAULT_COLUMN_STYLE } from './kanban.constants';
 
 export function KanbanColumn({
   status,
@@ -17,17 +18,19 @@ export function KanbanColumn({
   activeWorkspaceMap,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: status });
+  const { column: columnStyle, heading: headingStyle } = COLUMN_STYLES[status] ?? DEFAULT_COLUMN_STYLE;
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'flex min-w-0 flex-1 flex-col rounded-lg border border-border bg-muted/30 p-4 transition-colors',
+        'flex min-w-0 flex-1 flex-col rounded-lg border p-4 transition-colors',
+        columnStyle,
         isOver && 'bg-accent/50'
       )}
     >
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-semibold">{status}</h3>
+        <h3 className={cn('font-semibold', headingStyle)}>{status}</h3>
         <Badge variant="secondary">{tasks.length}</Badge>
       </div>
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto">

@@ -4,6 +4,7 @@ export type RuleForm = {
   pattern: string;
   agentId: string;
   skillId: string;
+  autoStart: boolean;
 };
 
 export type GlobalInstructionsCardProps = {
@@ -11,7 +12,6 @@ export type GlobalInstructionsCardProps = {
   isLoading: boolean;
   isDirty: boolean;
   isSaving: boolean;
-  isSaved: boolean;
   error: string | null;
   onChange: (value: string) => void;
   onSave: () => void;

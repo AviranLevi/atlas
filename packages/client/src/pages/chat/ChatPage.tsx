@@ -1,10 +1,18 @@
+// React / library
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { MessageSquare, Settings, Terminal } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { MessageSquare, Settings, Terminal, Loader2 } from 'lucide-react';
+
+// Types
 import type { ChatBackendType } from '@atlas/shared';
 
+// Components
 import { Button } from '@/components/ui/button';
+import { ConversationSidebar } from './ConversationSidebar';
+import { MessageList } from './MessageList';
+import { ChatInput } from './ChatInput';
+
+// Hooks / context
 import { useActiveProject } from '@/contexts/ProjectContext';
 import { useAgentProviders, useProviderModels } from '@/hooks/use-agent-providers.hook';
 import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
@@ -17,17 +25,13 @@ import {
   useChatStream,
 } from '@/hooks/use-chat.hook';
 
-import { ConversationSidebar } from './ConversationSidebar';
-import { MessageList } from './MessageList';
-import { ChatInput } from './ChatInput';
-
 export function ChatPage() {
   const { id: conversationId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { activeProjectId } = useActiveProject();
 
-  const { data: providers = [] } = useAgentProviders();
-  const { data: executors = [] } = useAgentRuntimes();
+  const { data: providers = [], isLoading: providersLoading } = useAgentProviders();
+  const { data: executors = [], isLoading: executorsLoading } = useAgentRuntimes();
   const { data: conversations = [] } = useConversations(activeProjectId);
   const { data: messages = [] } = useConversationMessages(conversationId);
   const { data: activeConversation } = useConversation(conversationId);
@@ -165,6 +169,14 @@ export function ChatPage() {
   }, [conversationId, backendType, selectedProviderId, selectedModel, selectedExecutorId, activeProjectId, createConversation, navigate, send]);
 
   const hasAnyBackend = providers.length > 0 || installedExecutors.length > 0;
+
+  if (providersLoading || executorsLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!hasAnyBackend) {
     return (

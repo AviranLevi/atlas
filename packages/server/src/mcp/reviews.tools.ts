@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { ReviewDecisionEnum, ChecklistItemSchema } from '@atlas/shared';
 import { reviewsService } from '../services/index.js';
 
-export function registerReviewTools(server: McpServer) {
+export function registerReviewTools(server: McpServer): void {
   server.registerTool('get_review', {
     description: 'Get the review for a task including checklist and current status',
     inputSchema: z.object({
@@ -18,10 +19,10 @@ export function registerReviewTools(server: McpServer) {
       'Submit a review decision for a task. Use this when you have reviewed the code changes and are ready to approve or request changes.',
     inputSchema: z.object({
       reviewId: z.string().uuid().describe('The review UUID'),
-      decision: z.enum(['approved', 'changes_requested']).describe('The review decision'),
+      decision: ReviewDecisionEnum.describe('The review decision'),
       notes: z.string().optional().describe('Review feedback or notes for the developer'),
       checklistUpdates: z
-        .array(z.object({ item: z.string(), checked: z.boolean() }))
+        .array(ChecklistItemSchema)
         .optional()
         .describe('Update checklist item completion status'),
     }),

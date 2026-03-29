@@ -1,6 +1,9 @@
 // Shared
 import type { Memory, CreateMemory, UpdateMemory } from '@atlas/shared';
 
+// Services
+import { briefGeneratorService } from '../index.js';
+
 // Repositories
 import { memoryRepository } from '../../db/repositories/index.js';
 
@@ -70,22 +73,34 @@ export class MemoryService {
     }
   }
 
-  /** Creates a new memory entry. */
+  /** Creates a new memory entry and triggers a non-blocking brief refresh if project-scoped. */
   async create(data: CreateMemory): Promise<Memory> {
     const FUNCTION_NAME = 'create';
     try {
-      return this.repo.insert(data);
+      const memory = this.repo.insert(data);
+      if (data.projectId) {
+        briefGeneratorService.generateAndSave(data.projectId).catch((err: unknown) => {
+          logger.error(`${FILE_PATH} :: create - brief generation failed`, err);
+        });
+      }
+      return memory;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to create memory', { cause: error });
     }
   }
 
-  /** Updates a memory entry by ID. */
+  /** Updates a memory entry by ID and triggers a non-blocking brief refresh if project-scoped. */
   async update(id: string, data: UpdateMemory): Promise<Memory> {
     const FUNCTION_NAME = 'update';
     try {
-      return this.repo.update(id, data);
+      const memory = this.repo.update(id, data);
+      if (memory.projectId) {
+        briefGeneratorService.generateAndSave(memory.projectId).catch((err: unknown) => {
+          logger.error(`${FILE_PATH} :: update - brief generation failed`, err);
+        });
+      }
+      return memory;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to update memory', { cause: error });

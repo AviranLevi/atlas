@@ -42,7 +42,16 @@ let state: ThemeState =
   typeof window !== 'undefined' ? createInitialState() : serverSnapshot;
 
 function applyTheme(resolved: ResolvedTheme): void {
-  document.documentElement.classList.toggle('dark', resolved === 'dark');
+  // Suppress all CSS transitions during the switch so every token updates
+  // in a single paint rather than animating from the old values.
+  const root = document.documentElement;
+  root.classList.add('theme-switching');
+  root.classList.toggle('dark', resolved === 'dark');
+  // Two rAFs: first lets the browser process the class change, second
+  // lets it paint, after which transitions are safe to re-enable.
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => root.classList.remove('theme-switching')),
+  );
 }
 
 if (typeof window !== 'undefined') {

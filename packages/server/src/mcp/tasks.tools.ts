@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { TaskStatusEnum, TaskPriorityEnum, TaskEstimateEnum, TASK_STATUS } from '@atlas/shared';
 import { tasksService } from '../services/index.js';
 
-export function registerTaskTools(server: McpServer) {
+export function registerTaskTools(server: McpServer): void {
   server.registerTool('list_tasks', {
     description: 'List tasks with optional filters by status, projectId, or agentId',
     inputSchema: z.object({
-      status: z.enum(['To Do', 'In Progress', 'In Review', 'Done']).optional().describe('Filter by task status'),
+      status: TaskStatusEnum.optional().describe('Filter by task status'),
       projectId: z.string().uuid().optional().describe('Filter by project UUID'),
       agentId: z.string().uuid().optional().describe('Filter by assigned agent UUID'),
     }),
@@ -29,19 +30,19 @@ export function registerTaskTools(server: McpServer) {
     description: 'Create a new task on the Kanban board',
     inputSchema: z.object({
       name: z.string().min(1).max(200).describe('Task name'),
-      status: z.enum(['To Do', 'In Progress', 'In Review', 'Done']).optional().describe('Initial status (defaults to "To Do")'),
-      priority: z.enum(['Low', 'Medium', 'High']).optional().describe('Task priority'),
-      estimate: z.enum(['S', 'M', 'L']).optional().describe('Size estimate'),
+      status: TaskStatusEnum.optional().describe('Initial status (defaults to "To Do")'),
+      priority: TaskPriorityEnum.optional().describe('Task priority'),
+      estimate: TaskEstimateEnum.optional().describe('Size estimate'),
       definitionOfDone: z.string().optional().describe('Criteria for task completion'),
       notes: z.string().optional().describe('Additional notes or context'),
       projectId: z.string().uuid().optional().describe('Assign to a project'),
       agentId: z.string().uuid().optional().describe('Assign to an agent'),
-      skillId: z.string().uuid().optional().describe('Assign a skill for execution'),
     }),
   }, async (args) => {
     const task = await tasksService.create({
       ...args,
-      status: args.status ?? 'To Do',
+      status: args.status ?? TASK_STATUS.TODO,
+      source: 'agent',
     });
     return { content: [{ type: 'text' as const, text: JSON.stringify(task, null, 2) }] };
   });
@@ -53,14 +54,13 @@ export function registerTaskTools(server: McpServer) {
     inputSchema: z.object({
       id: z.string().uuid().describe('The task UUID to update'),
       name: z.string().min(1).max(200).optional().describe('Updated task name'),
-      status: z.enum(['To Do', 'In Progress', 'In Review', 'Done']).optional().describe('New status'),
-      priority: z.enum(['Low', 'Medium', 'High']).optional().describe('Updated priority'),
-      estimate: z.enum(['S', 'M', 'L']).optional().describe('Updated estimate'),
+      status: TaskStatusEnum.optional().describe('New status'),
+      priority: TaskPriorityEnum.optional().describe('Updated priority'),
+      estimate: TaskEstimateEnum.optional().describe('Updated estimate'),
       definitionOfDone: z.string().optional().describe('Updated completion criteria'),
       notes: z.string().optional().describe('Updated notes'),
       projectId: z.string().uuid().nullable().optional().describe('Reassign project'),
       agentId: z.string().uuid().nullable().optional().describe('Reassign agent'),
-      skillId: z.string().uuid().nullable().optional().describe('Reassign skill'),
     }),
   }, async ({ id, ...data }) => {
     const task = await tasksService.update(id, data);

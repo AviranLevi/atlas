@@ -26,6 +26,7 @@ export const DispatchRuleSchema = z.object({
   pattern: z.string(),
   agentId: z.string().uuid(),
   skillId: z.string().uuid().nullable(),
+  autoStart: z.boolean(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -34,6 +35,7 @@ export const CreateDispatchRuleSchema = DispatchRuleSchema.pick({
   pattern: true,
   agentId: true,
   skillId: true,
+  autoStart: true,
 });
 
 export const UpdateDispatchRuleSchema = CreateDispatchRuleSchema.partial();

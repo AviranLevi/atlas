@@ -25,6 +25,7 @@ import {
   removeWorkspaceComment,
   stopWorkspace,
   deleteWorkspace,
+  streamWorkspaceLogs,
 } from '../controllers/workspaces.controller.js';
 
 export const workspacesRoute = new Hono()
@@ -35,6 +36,7 @@ export const workspacesRoute = new Hono()
   .get('/', listWorkspaces)
   .get('/:id', getWorkspace)
   .post('/', zValidator('json', CreateWorkspaceSchema), createWorkspace)
+  .get('/:id/logs/stream', streamWorkspaceLogs)
   .get('/:id/diff', getWorkspaceDiff)
   .post('/:id/request-changes', requestWorkspaceChanges)
   .post('/:id/merge', mergeWorkspace)

@@ -2,10 +2,10 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateReview, UpdateReview, DecideReview } from '@atlas/shared';
+import type { CreateReview, UpdateReview, DecideReview, SubmitAiReview } from '@atlas/shared';
 
 // Services
-import { reviewsService } from '../services/index.js';
+import { reviewsService, orchestratorService } from '../services/index.js';
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
@@ -47,13 +47,16 @@ export async function decideReview(c: Context) {
 }
 
 /** Submits an AI agent's review decision with optional checklist updates. */
-export async function submitAiReview(c: Context) {
-  const data = getValidatedBody<{
-    agentId: string;
-    decision: 'approved' | 'changes_requested';
-    notes?: string | null;
-    checklistUpdates?: { item: string; checked: boolean }[];
-  }>(c);
+export async function submitAiReview(c: Context): Promise<Response> {
+  const data = getValidatedBody<SubmitAiReview>(c);
   const review = await reviewsService.submitAiReview(c.req.param('id')!, data);
   return c.json(review);
+}
+
+/** Spawns a reviewer agent on the workspace for this review's task. */
+export async function startAiReview(c: Context): Promise<Response> {
+  const { agentRuntimeId, autoFix } = getValidatedBody<{ agentRuntimeId: string; autoFix?: boolean }>(c);
+  const review = await reviewsService.getById(c.req.param('id')!);
+  const updatedWorkspace = await orchestratorService.startAiReviewForTask(review.taskId, agentRuntimeId, autoFix ?? false);
+  return c.json(updatedWorkspace);
 }

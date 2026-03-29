@@ -12,6 +12,7 @@ export function SplitDiffView({
   workspaceId,
   language,
   commentsByLine,
+  repliesByParentId,
   commentingLine,
   setCommentingLine,
   addComment,
@@ -23,6 +24,7 @@ export function SplitDiffView({
   workspaceId: string;
   language?: string;
   commentsByLine: Map<number, DiffComment[]>;
+  repliesByParentId: Map<string, DiffComment[]>;
   commentingLine: CommentingTarget | null;
   setCommentingLine: (line: CommentingTarget | null) => void;
   addComment: ReturnType<typeof useAddDiffComment>;
@@ -43,15 +45,23 @@ export function SplitDiffView({
           const isCommentingLeft = leftIdx != null && commentingLine?.patchIndex === leftIdx && commentingLine?.side === 'left';
           const isCommentingRight = rightIdx != null && commentingLine?.patchIndex === rightIdx && commentingLine?.side === 'right';
 
-          const renderComments = (comments: DiffComment[]) =>
+          const renderComments = (comments: DiffComment[], patchLine?: ParsedLine) =>
             comments.map((c) => (
               <InlineCommentBubble
                 key={c.id}
                 comment={c}
+                replies={repliesByParentId.get(c.id) ?? []}
                 onDelete={() => removeComment.mutate({ workspaceId, commentId: c.id })}
                 onEdit={(body) => editComment.mutate({ workspaceId, commentId: c.id, body })}
+                onReply={patchLine ? (body) =>
+                  addComment.mutate({
+                    workspaceId,
+                    comment: { filename: file.filename, lineNumber: patchLine.patchIndex, lineContent: patchLine.content, body, parentId: c.id },
+                  })
+                  : undefined}
                 isDeleting={removeComment.isPending}
                 isEditing={editComment.isPending}
+                isReplying={addComment.isPending}
               />
             ));
 
@@ -106,11 +116,11 @@ export function SplitDiffView({
               {hasExtras && (
                 <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                   <div className="border-r border-border/30 min-w-0">
-                    {renderComments(leftComments)}
+                    {renderComments(leftComments, row.left ?? undefined)}
                     {isCommentingLeft && row.left && renderForm(row.left)}
                   </div>
                   <div className="min-w-0">
-                    {renderComments(rightComments)}
+                    {renderComments(rightComments, row.right ?? undefined)}
                     {isCommentingRight && row.right && renderForm(row.right)}
                   </div>
                 </div>

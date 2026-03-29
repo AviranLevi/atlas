@@ -1,6 +1,6 @@
 export type PromptDelivery = 'flag' | 'positional' | 'stdin';
 
-export type McpConfigFormat = 'claude' | 'cursor' | 'generic-json' | 'none';
+export type McpConfigFormat = 'claude' | 'cursor' | 'generic-json' | 'gemini' | 'none';
 
 export type ProviderField = 'apiKey' | 'baseUrl';
 
@@ -51,6 +51,8 @@ export interface ExecutorConfig {
   providerMapping?: ProviderMapping[];
   /** Whether the UI should allow free-text model input. Defaults to true. */
   supportsCustomModel?: boolean;
+  /** Output format emitted by the executor. 'stream-json' enables incremental log parsing. */
+  outputFormat?: 'text' | 'stream-json';
 }
 
 export interface DetectionResult {

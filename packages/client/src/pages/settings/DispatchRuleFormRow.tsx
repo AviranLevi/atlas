@@ -1,5 +1,5 @@
 // React / library
-import { Save, X } from 'lucide-react';
+import { Save, X, Zap } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -30,11 +30,11 @@ export function DispatchRuleFormRow({
   onCancel,
 }: DispatchRuleFormRowProps) {
   return (
-    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 border-b px-4 py-3 last:border-b-0">
+    <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 border-b px-4 py-3 last:border-b-0">
       <Input
         value={form.pattern}
         onChange={(e) => onChange({ ...form, pattern: e.target.value })}
-        placeholder="Pattern"
+        placeholder="Pattern (e.g. feature/*)"
       />
       <Select
         value={form.agentId}
@@ -67,6 +67,17 @@ export function DispatchRuleFormRow({
           ))}
         </SelectContent>
       </Select>
+      <div className="flex items-center">
+        <Button
+          size="icon"
+          variant={form.autoStart ? 'default' : 'ghost'}
+          onClick={() => onChange({ ...form, autoStart: !form.autoStart })}
+          aria-label={form.autoStart ? 'Auto-start enabled' : 'Auto-start disabled'}
+          title="Auto-start: automatically start the agent when a task matches this rule"
+        >
+          <Zap className="h-4 w-4" />
+        </Button>
+      </div>
       <div className="flex gap-1">
         <Button
           size="icon"

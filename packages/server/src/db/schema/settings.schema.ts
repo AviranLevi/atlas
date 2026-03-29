@@ -1,4 +1,4 @@
-import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { uuidDefault, timestampDefault } from '../helpers/index.js';
 import { agents } from './agents.schema.js';
 import { skills } from './skills.schema.js';
@@ -20,6 +20,7 @@ export const dispatchRules = sqliteTable('dispatch_rules', {
   pattern: text('pattern').notNull(),
   agentId: text('agent_id').references(() => agents.id),
   skillId: text('skill_id').references(() => skills.id),
+  autoStart: integer('auto_start', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(timestampDefault),

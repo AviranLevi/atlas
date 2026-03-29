@@ -1,4 +1,5 @@
 // Shared
+import { TASK_STATUS } from '@atlas/shared';
 import type { Review, ChecklistItem } from '@atlas/shared';
 
 // Services
@@ -110,7 +111,7 @@ export class ReviewsService {
       });
 
       // Transition task based on decision
-      const newStatus = decision === 'approved' ? 'Done' : 'In Progress';
+      const newStatus = decision === 'approved' ? TASK_STATUS.DONE : TASK_STATUS.IN_PROGRESS;
       tasksRepository.update(review.taskId, { status: newStatus });
 
       activityLogService.log({

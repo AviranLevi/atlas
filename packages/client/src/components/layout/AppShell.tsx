@@ -1,7 +1,7 @@
 // React / library
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose } from 'lucide-react';
 
 // Components
 import { cn } from '@/lib/utils';
@@ -13,28 +13,14 @@ import {
 } from '@/components/ui/tooltip';
 import { AgentStatusPanel } from './AgentStatusPanel';
 import { ProjectTabBar } from './ProjectTabBar';
-
-// Hooks
-import { useWorkspaces } from '@/hooks/use-workspaces.hook';
+import { AtlasLogo } from '@/components/icons/AtlasLogo.icon';
+import { ActiveWorkspaceDot } from './ActiveWorkspaceDot';
 
 // Contexts
 import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Constants
 import { navItems, projectContextNavItem } from './layout.constants';
-
-function ActiveWorkspaceDot() {
-  const { data: workspaces = [] } = useWorkspaces();
-  const activeCount = workspaces.filter(
-    (w) => w.status === 'running' || w.status === 'pending'
-  ).length;
-  if (activeCount === 0) return null;
-  return (
-    <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-500 text-[8px] font-bold text-white">
-      {activeCount}
-    </span>
-  );
-}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [expanded, setExpanded] = useState(true);
@@ -54,7 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     : navItems;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <aside
         className={cn(
           'sticky top-0 flex h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background transition-[width] duration-200',
@@ -67,33 +53,45 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             expanded ? 'justify-between' : 'justify-center'
           )}
         >
-          {expanded && (
-            <span className="truncate text-sm font-semibold text-sidebar-foreground">
-              Agents Manager
-            </span>
-          )}
-          <div className="flex shrink-0 items-center gap-0.5">
+          {expanded ? (
+            <>
+              <div className="flex items-center gap-2 min-w-0">
+                <AtlasLogo className="h-5 w-5 shrink-0 text-sidebar-foreground" />
+                <span className="truncate text-sm font-semibold tracking-wide text-sidebar-foreground">
+                  Atlas
+                </span>
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => setExpanded(false)}
+                    aria-label="Collapse sidebar"
+                  >
+                    <PanelLeftClose className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Collapse sidebar</TooltipContent>
+              </Tooltip>
+            </>
+          ) : (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => setExpanded((p) => !p)}
-                  aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+                  onClick={() => setExpanded(true)}
+                  aria-label="Expand sidebar"
                 >
-                  {expanded ? (
-                    <PanelLeftClose className="h-4 w-4" />
-                  ) : (
-                    <PanelLeftOpen className="h-4 w-4" />
-                  )}
+                  <AtlasLogo className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                {expanded ? 'Collapse sidebar' : 'Expand sidebar'}
-              </TooltipContent>
+              <TooltipContent side="right">Atlas</TooltipContent>
             </Tooltip>
-          </div>
+          )}
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">

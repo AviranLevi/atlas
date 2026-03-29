@@ -6,4 +6,5 @@ export const emptyRuleForm: RuleForm = {
   pattern: '',
   agentId: '',
   skillId: NONE_SKILL_VALUE,
+  autoStart: false,
 };

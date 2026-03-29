@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Shared
+import { TASK_STATUS } from '@atlas/shared';
 import type { Workspace } from '@atlas/shared';
 
 // Services
@@ -160,7 +161,7 @@ export class OrchestratorService {
             output,
             completedAt: new Date().toISOString(),
           });
-          tasksService.update(ws.taskId, { status: 'In Review' }).catch((e) => {
+          tasksService.update(ws.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
             logger.warn(`${FILE_PATH} :: spawnAgent - failed to move task to In Review`, e);
           });
           activityLogService.log({
@@ -181,7 +182,7 @@ export class OrchestratorService {
             output,
             completedAt: new Date().toISOString(),
           });
-          tasksService.update(ws.taskId, { status: 'To Do' }).catch((e) => {
+          tasksService.update(ws.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
             logger.warn(`${FILE_PATH} :: spawnAgent - failed to reset task status`, e);
           });
           activityLogService.log({
@@ -206,7 +207,7 @@ export class OrchestratorService {
         startedAt: new Date().toISOString(),
       });
 
-      await tasksService.update(taskId, { status: 'In Progress' });
+      await tasksService.update(taskId, { status: TASK_STATUS.IN_PROGRESS });
 
       activityLogService.log({
         projectId: project.id,
@@ -254,7 +255,7 @@ export class OrchestratorService {
       // Keep the task status in sync: reset to "To Do" so the user
       // doesn't see "In Progress" for a task whose agent was stopped.
       if (resetTaskStatus) {
-        await tasksService.update(workspace.taskId, { status: 'To Do' });
+        await tasksService.update(workspace.taskId, { status: TASK_STATUS.TODO });
       }
 
       activityLogService.log({
@@ -344,7 +345,7 @@ export class OrchestratorService {
         fs.unlinkSync(logFile);
       }
 
-      removeMcpConfig(workspaceId);
+      removeMcpConfig(workspaceId, executorRegistry.getById(workspace.agentRuntime)?.mcpConfigFormat);
 
       workspacesRepository.remove(workspaceId);
     } catch (error: unknown) {
@@ -430,7 +431,7 @@ export class OrchestratorService {
             completedAt: new Date().toISOString(),
             diffComments: JSON.stringify([]),
           } as any);
-          tasksService.update(workspace.taskId, { status: 'In Review' }).catch((e) => {
+          tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
             logger.warn(`${FILE_PATH} :: requestChanges - failed to move task to In Review`, e);
           });
           activityLogService.log({
@@ -451,7 +452,7 @@ export class OrchestratorService {
             output,
             completedAt: new Date().toISOString(),
           });
-          tasksService.update(workspace.taskId, { status: 'In Review' }).catch((e) => {
+          tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
             logger.warn(`${FILE_PATH} :: requestChanges - failed to reset task to In Review`, e);
           });
           activityLogService.log({
@@ -476,7 +477,7 @@ export class OrchestratorService {
         completedAt: null,
       } as any);
 
-      await tasksService.update(workspace.taskId, { status: 'In Progress' });
+      await tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_PROGRESS });
 
       activityLogService.log({
         projectId: project.id,
@@ -553,7 +554,7 @@ export class OrchestratorService {
       this.worktreeService.merge(workspace.worktreePath, project.localPath, workspace.branchName);
 
       // Move task to Done
-      await tasksService.update(workspace.taskId, { status: 'Done' });
+      await tasksService.update(workspace.taskId, { status: TASK_STATUS.DONE });
 
       // Archive the workspace log (backup copy with descriptive name)
       const archivedLogPath = this.archiveLog(workspaceId, workspace);
@@ -565,7 +566,7 @@ export class OrchestratorService {
         logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree already removed`);
       }
 
-      removeMcpConfig(workspaceId);
+      removeMcpConfig(workspaceId, executorRegistry.getById(workspace.agentRuntime)?.mcpConfigFormat);
 
       // Mark as merged (keep the DB record for history)
       const merged = workspacesRepository.update(workspaceId, {
@@ -607,7 +608,7 @@ export class OrchestratorService {
       const project = await projectsService.getById(workspace.projectId);
 
       // Move task to Done
-      await tasksService.update(workspace.taskId, { status: 'Done' });
+      await tasksService.update(workspace.taskId, { status: TASK_STATUS.DONE });
 
       // Archive the workspace log
       const archivedLogPath = this.archiveLog(workspaceId, workspace);
@@ -631,7 +632,7 @@ export class OrchestratorService {
         }
       }
 
-      removeMcpConfig(workspaceId);
+      removeMcpConfig(workspaceId, executorRegistry.getById(workspace.agentRuntime)?.mcpConfigFormat);
 
       // Mark as merged (same final status for history consistency)
       const completed = workspacesRepository.update(workspaceId, {
@@ -660,7 +661,7 @@ export class OrchestratorService {
   /**
    * Re-run a failed or completed workspace: clean up old one, start fresh.
    */
-  async rerun(workspaceId: string, agentRuntimeId: string): Promise<Workspace> {
+  async rerun(workspaceId: string, agentRuntimeId: string, model?: string): Promise<Workspace> {
     const FUNCTION_NAME = 'rerun';
     try {
       const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
@@ -670,16 +671,16 @@ export class OrchestratorService {
       }
 
       const taskId = workspace.taskId;
-      const previousModel = workspace.model ?? undefined;
+      // Use the explicitly provided model, or fall back to the previous run's model
+      const resolvedModel = model ?? workspace.model ?? undefined;
 
       // Clean up the old workspace
       await this.cleanup(workspaceId);
 
       // Reset task status so startWork can pick it up
-      await tasksService.update(taskId, { status: 'To Do' });
+      await tasksService.update(taskId, { status: TASK_STATUS.TODO });
 
-      // Start fresh, preserving the model from the previous run
-      return this.startWork(taskId, agentRuntimeId, undefined, previousModel);
+      return this.startWork(taskId, agentRuntimeId, undefined, resolvedModel);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
@@ -687,8 +688,131 @@ export class OrchestratorService {
     }
   }
 
-  /** Adds a review comment to a workspace diff. */
-  addDiffComment(workspaceId: string, comment: { filename: string; lineNumber: number; lineContent: string; body: string }): Workspace {
+  /**
+   * Spawns a reviewer agent on an existing completed workspace.
+   * Finds the most recent workspace for a task and starts an AI review on it.
+   */
+  async startAiReviewForTask(taskId: string, agentRuntimeId: string, autoFix = false): Promise<Workspace> {
+    const workspace = workspacesRepository.findByTaskId(taskId);
+    if (!workspace) {
+      throw new AppError('No workspace found for this task', { status: 404 });
+    }
+    return this.startAiReview(workspace.id, agentRuntimeId, autoFix);
+  }
+
+  /**
+   * The agent receives the diff + task context + DoD checklist and is instructed
+   * to call the `submit_review` MCP tool with its decision.
+   */
+  async startAiReview(workspaceId: string, agentRuntimeId: string, autoFix = false): Promise<Workspace> {
+    const FUNCTION_NAME = 'startAiReview';
+    try {
+      const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+
+      if (workspace.status !== 'completed') {
+        throw new AppError('AI review can only be started on completed workspaces', { status: 400 });
+      }
+
+      const executor = executorRegistry.getById(agentRuntimeId);
+      if (!executor) {
+        throw new AppError(`Unknown agent runtime: ${agentRuntimeId}`, { status: 400 });
+      }
+
+      const task = await tasksService.getById(workspace.taskId);
+
+      // Lazy import to avoid circular dependency
+      const { reviewsService } = await import('../index.js');
+      const review = await reviewsService.getByTask(workspace.taskId);
+
+      const diff = await this.getDiff(workspaceId);
+      const diffText = diff.files.map((f) => `### ${f.filename}\n\`\`\`diff\n${f.patch ?? '(no patch)'}\n\`\`\``).join('\n\n');
+
+      const checklist = review?.checklist ?? [];
+      const checklistText = checklist.length > 0
+        ? checklist.map((c) => `- [${c.checked ? 'x' : ' '}] ${c.item}`).join('\n')
+        : '(no checklist items defined)';
+
+      const reviewPrompt = [
+        `# Code Review Task`,
+        ``,
+        `You are a code reviewer. Your job is to review the code changes below against the task requirements and definition of done.`,
+        ``,
+        `## Task: ${task.name}`,
+        task.notes ? `\n**Notes:**\n${task.notes}` : '',
+        ``,
+        `## Definition of Done`,
+        checklistText,
+        ``,
+        `## Code Changes`,
+        diffText,
+        ``,
+        `## Instructions`,
+        `Review the diff carefully. For each definition of done item, determine whether the code satisfies it.`,
+        autoFix
+          ? [
+              `If all requirements are met, call \`submit_review\` with decision "approved".`,
+              `If any requirements are NOT met, fix the issues directly in the code, commit your changes, then call \`submit_review\` with decision "approved" and notes describing what you fixed.`,
+              `Only use "changes_requested" if you are unable to fix an issue yourself.`,
+            ].join('\n')
+          : [
+              `Then call the \`submit_review\` MCP tool with:`,
+              `- decision: "approved" if all requirements are met, or "changes_requested" if any are missing`,
+              `- notes: a brief summary of your findings`,
+              `- checklistUpdates: an array marking each item as checked/unchecked based on what the diff implements`,
+            ].join('\n'),
+        ``,
+        `The reviewId is: "${review?.id ?? 'unknown'}"`,
+      ].filter(Boolean).join('\n');
+
+      const { resolvedModel, spawnOpts } = await this.resolveSpawnOptions(executor, task.agentId, undefined, undefined);
+
+      const cwd = executor.usesProjectRoot
+        ? (await projectsService.getById(workspace.projectId)).localPath ?? workspace.worktreePath
+        : workspace.worktreePath;
+
+      const result = spawnAgent(workspaceId, executor, cwd, reviewPrompt, {
+        onCompleted: (output) => {
+          activeProcesses.delete(workspaceId);
+          workspacesRepository.update(workspaceId, { status: 'completed', output, completedAt: new Date().toISOString() });
+          activityLogService.log({
+            projectId: workspace.projectId,
+            taskId: workspace.taskId,
+            workspaceId,
+            eventType: 'agent_completed',
+            description: 'AI reviewer completed',
+            metadata: {},
+          });
+        },
+        onFailed: (output, error) => {
+          activeProcesses.delete(workspaceId);
+          workspacesRepository.update(workspaceId, { status: 'failed', output, completedAt: new Date().toISOString() });
+          logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - reviewer agent failed`, error);
+        },
+        ...spawnOpts,
+      });
+
+      activeProcesses.set(workspaceId, result.process);
+      workspacesRepository.update(workspaceId, { pid: result.process.pid ?? null, status: 'running' });
+
+      activityLogService.log({
+        projectId: workspace.projectId,
+        taskId: workspace.taskId,
+        workspaceId,
+        eventType: 'agent_started',
+        description: 'AI reviewer started',
+        metadata: { agentRuntime: agentRuntimeId },
+      });
+
+      return workspacesRepository.findByIdOrThrow(workspaceId);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to start AI review', { cause: error });
+    }
+  }
+
+  /** Adds a review comment (or reply) to a workspace diff. */
+  addDiffComment(workspaceId: string, comment: { filename: string; lineNumber: number; lineContent: string; body: string; parentId?: string }): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];
     const newComment = {
@@ -790,7 +914,7 @@ export class OrchestratorService {
       });
 
       // Reset the associated task so it surfaces back in the kanban
-      tasksService.update(ws.taskId, { status: 'To Do' }).catch((e) => {
+      tasksService.update(ws.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
         logger.warn(`${FILE_PATH} :: reconcileOnStartup - failed to reset task status for workspace ${ws.id}`, e);
       });
     }

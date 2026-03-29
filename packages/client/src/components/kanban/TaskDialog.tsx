@@ -1,7 +1,3 @@
-// React / library
-import { useEffect, useState } from 'react';
-
-// Components
 import {
   Dialog,
   DialogContent,
@@ -12,288 +8,115 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { ReviewPanel } from '@/components/reviews/ReviewPanel';
+import { TaskAdvancedFields } from './TaskAdvancedFields';
+import { TaskCoreFields } from './TaskCoreFields';
 
-// Hooks
-import { useAgents } from '@/hooks/use-agents.hook';
-import { useSkills } from '@/hooks/use-skills.hook';
-import { useProjects } from '@/hooks/use-projects.hook';
-import { usePhases } from '@/hooks/use-phases.hook';
-import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks.hook';
-
-// Types
-import type {
-  CreateTask,
-  UpdateTask,
-  TaskPriority,
-  TaskEstimate,
-} from '@atlas/shared';
+import { TASK_STATUS } from '@atlas/shared';
 import type { TaskDialogProps } from './kanban.types';
+import { NONE_VALUE } from './kanban.constants';
+import { useTaskForm } from './use-task-form.hook';
 
-// Constants
-import { PRIORITIES, ESTIMATES, NONE_VALUE } from './kanban.constants';
-
-export function TaskDialog({ open, onOpenChange, task, defaultProjectId, followUpContext }: TaskDialogProps) {
-  const [name, setName] = useState('');
-  const [priority, setPriority] = useState<TaskPriority>('Medium');
-  const [estimate, setEstimate] = useState<TaskEstimate>('M');
-  const [definitionOfDone, setDefinitionOfDone] = useState('');
-  const [notes, setNotes] = useState('');
-  const [agentId, setAgentId] = useState<string>(NONE_VALUE);
-  const [skillId, setSkillId] = useState<string>(NONE_VALUE);
-  const [projectId, setProjectId] = useState<string>(NONE_VALUE);
-  const [tagsInput, setTagsInput] = useState('');
-  const [phaseId, setPhaseId] = useState<string>(NONE_VALUE);
-
-  const { data: agents = [] } = useAgents();
-  const { data: skills = [] } = useSkills();
-  const { data: projects = [] } = useProjects();
-  const effectiveProjectId = projectId === NONE_VALUE ? '' : projectId;
-  const { data: phases = [] } = usePhases(effectiveProjectId);
-  const createTask = useCreateTask();
-  const updateTask = useUpdateTask();
-
-  const isEditing = !!task;
-
-  useEffect(() => {
-    if (task) {
-      setName(task.name);
-      setPriority(task.priority ?? 'Medium');
-      setEstimate(task.estimate ?? 'M');
-      setDefinitionOfDone(task.definitionOfDone ?? '');
-      setNotes(task.notes ?? '');
-      setAgentId(task.agentId ?? NONE_VALUE);
-      setSkillId(task.skillId ?? NONE_VALUE);
-      setProjectId(task.projectId ?? NONE_VALUE);
-      setPhaseId(task.phaseId ?? NONE_VALUE);
-      setTagsInput(task.tags?.join(', ') ?? '');
-    } else {
-      setName(followUpContext ? `Follow-up: ${followUpContext.originalTaskName}` : '');
-      setPriority('Medium');
-      setEstimate('M');
-      setDefinitionOfDone('');
-      setNotes(followUpContext ? `Follow-up from: ${followUpContext.originalTaskName}` : '');
-      setAgentId(NONE_VALUE);
-      setSkillId(NONE_VALUE);
-      // Auto-select: explicit default > single project > none
-      const autoProject = defaultProjectId ?? (projects.length === 1 ? projects[0].id : undefined);
-      setProjectId(autoProject ?? NONE_VALUE);
-      setPhaseId(NONE_VALUE);
-      setTagsInput(followUpContext ? 'follow-up' : '');
-    }
-  }, [task, open, defaultProjectId, projects, followUpContext]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || projectId === NONE_VALUE) return;
-
-    const parsedTags = tagsInput.trim()
-      ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
-      : null;
-
-    const resolveOptional = (v: string) => (v === NONE_VALUE ? null : v);
-
-    const base = {
-      name: name.trim(),
-      priority,
-      estimate,
-      definitionOfDone: definitionOfDone.trim() || null,
-      notes: notes.trim() || null,
-      tags: parsedTags,
-      agentId: resolveOptional(agentId),
-      skillId: resolveOptional(skillId),
-      projectId: resolveOptional(projectId),
-      phaseId: resolveOptional(phaseId),
-    };
-
-    const onSuccess = () => onOpenChange(false);
-
-    if (isEditing) {
-      updateTask.mutate({ id: task.id, data: base satisfies UpdateTask }, { onSuccess });
-    } else {
-      createTask.mutate({ ...base, status: 'To Do' } satisfies CreateTask, { onSuccess });
-    }
-  };
-
-  const isPending = createTask.isPending || updateTask.isPending;
-  const submitMutation = isEditing ? updateTask : createTask;
+export function TaskDialog({ open, onOpenChange, task, defaultProjectId, defaultStatus, followUpContext }: TaskDialogProps) {
+  const form = useTaskForm({
+    task, open, defaultProjectId, defaultStatus, followUpContext,
+    onClose: () => onOpenChange(false),
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Task' : followUpContext ? 'Create Follow-up Task' : 'New Task'}</DialogTitle>
+          <DialogTitle>
+            {form.isEditing ? 'Edit Task' : followUpContext ? 'Create Follow-up Task' : 'New Task'}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="space-y-2">
+
+        <form onSubmit={form.handleSubmit} className="flex flex-col gap-5">
+          <div className="space-y-1.5">
             <Label htmlFor="task-name">Name</Label>
             <Input
               id="task-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Task name"
+              value={form.name}
+              onChange={(e) => form.setName(e.target.value)}
+              placeholder="What needs to be done?"
+              className="text-base"
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                value={priority}
-                onValueChange={(v) => setPriority(v as TaskPriority)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Estimate</Label>
-              <Select
-                value={estimate}
-                onValueChange={(v) => setEstimate(v as TaskEstimate)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Estimate" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ESTIMATES.map((e) => (
-                    <SelectItem key={e} value={e}>
-                      {e}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-dod">Definition of Done</Label>
+
+          <TaskCoreFields
+            projectId={form.projectId}
+            onProjectChange={form.handleProjectChange}
+            agentId={form.agentId}
+            onAgentChange={form.setAgentId}
+            status={form.status}
+            onStatusChange={form.setStatus}
+            priority={form.priority}
+            onPriorityChange={form.setPriority}
+            estimate={form.estimate}
+            onEstimateChange={form.setEstimate}
+            projects={form.projects}
+            agents={form.agents}
+          />
+
+          <div className="space-y-1.5">
+            <Label htmlFor="task-dod">
+              Definition of Done
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                — what does success look like for the agent?
+              </span>
+            </Label>
             <Textarea
               id="task-dod"
-              value={definitionOfDone}
-              onChange={(e) => setDefinitionOfDone(e.target.value)}
-              placeholder="Criteria for completion"
-              rows={3}
+              value={form.definitionOfDone}
+              onChange={(e) => form.setDefinitionOfDone(e.target.value)}
+              placeholder="List the criteria the agent should meet. Be specific — this drives what the agent works toward."
+              rows={5}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-notes">Notes</Label>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="task-notes">
+              Notes
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                — extra context, constraints, or background
+              </span>
+            </Label>
             <Textarea
               id="task-notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Additional notes"
+              value={form.notes}
+              onChange={(e) => form.setNotes(e.target.value)}
+              placeholder="Links, prior attempts, edge cases to consider…"
               rows={3}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-tags">Tags</Label>
-            <Input
-              id="task-tags"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="bug, feature, refactor (comma-separated)"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Agent</Label>
-            <Select value={agentId} onValueChange={setAgentId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select agent" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE_VALUE}>None</SelectItem>
-                {agents.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Skill</Label>
-            <Select value={skillId} onValueChange={setSkillId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select skill" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE_VALUE}>None</SelectItem>
-                {skills.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>
-              Project <span className="text-destructive">*</span>
-            </Label>
-            <Select value={projectId} onValueChange={(v) => { setProjectId(v); setPhaseId(NONE_VALUE); }}>
-              <SelectTrigger className={projectId === NONE_VALUE ? 'border-destructive/50' : ''}>
-                <SelectValue placeholder="Select project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {projectId === NONE_VALUE && (
-              <p className="text-xs text-destructive">A project is required to run tasks</p>
-            )}
-          </div>
-          {effectiveProjectId && phases.length > 0 && (
-            <div className="space-y-2">
-              <Label>Phase</Label>
-              <Select value={phaseId} onValueChange={setPhaseId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select phase" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE_VALUE}>None</SelectItem>
-                  {phases.map((ph) => (
-                    <SelectItem key={ph.id} value={ph.id}>
-                      {ph.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          {isEditing && task.status === 'In Review' && (
+
+          <TaskAdvancedFields
+            tagsInput={form.tagsInput}
+            onTagsChange={form.setTagsInput}
+            phaseId={form.phaseId}
+            onPhaseChange={form.setPhaseId}
+            phases={form.phases}
+            noneValue={NONE_VALUE}
+          />
+
+          {form.isEditing && task?.status === TASK_STATUS.IN_REVIEW && (
             <ReviewPanel taskId={task.id} />
           )}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} asChild>
-              <button type="button">Cancel</button>
-            </Button>
-            <Button asChild>
-              <button type="submit" disabled={isPending || !name.trim() || projectId === NONE_VALUE}>
-                {isEditing ? 'Update' : 'Create'}
-              </button>
-            </Button>
-            {submitMutation.isError && (
-              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            {form.submitError && (
+              <p className="mr-auto text-sm text-destructive">
+                {form.submitError.message}
+              </p>
             )}
+            <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={form.isPending || !form.canSubmit}>
+              {form.isPending ? 'Saving…' : form.isEditing ? 'Update' : 'Create'}
+            </Button>
           </div>
         </form>
       </DialogContent>
