@@ -4,35 +4,14 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type {
-  Project,
-  CreateProject,
-  UpdateProject,
-  Agent,
-  Task,
-} from '@atlas/shared';
+import type { Project, CreateProject, UpdateProject } from '@atlas/shared';
+import type { ProjectWithSummary, ProjectContext } from '@/pages/projects/projects-page.types';
+import type { ScanResult, BrowseResponse } from '@/components/projects/projects.types';
+
+export type { ProjectWithSummary, ProjectContext } from '@/pages/projects/projects-page.types';
+export type { ScanResult, DirectoryEntry, BrowseResponse } from '@/components/projects/projects.types';
 
 const PROJECTS_KEY = ['projects'] as const;
-
-type TaskCounts = {
-  todo: number;
-  inProgress: number;
-  inReview: number;
-  done: number;
-  total: number;
-};
-
-export type ProjectWithSummary = Project & {
-  taskCounts: TaskCounts;
-  agentCount: number;
-};
-
-export type ProjectContext = {
-  project: Project;
-  agents: Agent[];
-  tasks: Task[];
-  memories: Array<Record<string, unknown>>;
-};
 
 export function useProjects() {
   return useQuery({
@@ -122,19 +101,6 @@ export function useGenerateBrief() {
 
 const FILESYSTEM_KEY = ['filesystem'] as const;
 
-export type ScanResult = {
-  name: string | null;
-  description: string | null;
-  techStack: string | null;
-  repositoryUrl: string | null;
-  defaultBranch: string | null;
-  packageManager: string | null;
-  cicd: string | null;
-  monorepo: boolean;
-  githubOwner: string | null;
-  githubRepo: string | null;
-};
-
 /** Scans a local folder and returns auto-detected project metadata. */
 export function useScanFolder() {
   return useMutation({
@@ -142,19 +108,6 @@ export function useScanFolder() {
       api.get<ScanResult>(`/filesystem/scan?path=${encodeURIComponent(path)}`),
   });
 }
-
-export type DirectoryEntry = {
-  name: string;
-  path: string;
-  isGitRepo: boolean;
-};
-
-export type BrowseResponse = {
-  currentPath: string;
-  parentPath: string | null;
-  directories: DirectoryEntry[];
-  isGitRepo: boolean;
-};
 
 /** Browses a filesystem directory, returning its subdirectories. */
 export function useBrowseFilesystem(path: string, enabled: boolean) {

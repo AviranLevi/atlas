@@ -6,6 +6,9 @@ import {
 } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
+import type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat-page.types';
+
+export type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat-page.types';
 
 const CONVERSATIONS_KEY = ['chat-conversations'] as const;
 const MESSAGES_KEY = ['chat-messages'] as const;
@@ -50,16 +53,6 @@ export function useDeleteConversation() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY }),
   });
 }
-
-export type ChatStreamState = 'idle' | 'streaming' | 'error';
-
-export type StreamingToolCall = {
-  id: string;
-  name: string;
-  args: Record<string, unknown>;
-  result?: unknown;
-  status: 'pending' | 'done';
-};
 
 export function useChatStream(conversationId: string | undefined) {
   const queryClient = useQueryClient();

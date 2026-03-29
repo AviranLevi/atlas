@@ -173,7 +173,13 @@ export function ProjectDetailPage() {
           </Button>
         </div>
         {phases.length === 0 ? (
-          <p className="text-muted-foreground text-xs">No phases defined yet.</p>
+          <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-5 text-muted-foreground">
+            <Milestone className="h-5 w-5 shrink-0 opacity-50" />
+            <div>
+              <p className="text-xs font-medium">No phases defined</p>
+              <p className="text-xs opacity-70">Break the project into phases to track progress milestones.</p>
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
             {phases.map((phase) => (

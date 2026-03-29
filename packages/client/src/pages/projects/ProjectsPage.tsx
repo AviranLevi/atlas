@@ -20,7 +20,7 @@ import { useProjectsWithSummary, useDeleteProject } from '@/hooks/use-projects.h
 
 // Types
 import type { Project } from '@atlas/shared';
-import type { ProjectWithSummary } from '@/hooks/use-projects.hook';
+import type { ProjectWithSummary } from './projects-page.types';
 
 export function ProjectsPage() {
   const { data: projects, isLoading } = useProjectsWithSummary();

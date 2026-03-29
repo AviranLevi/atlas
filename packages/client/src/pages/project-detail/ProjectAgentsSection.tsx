@@ -63,9 +63,13 @@ export function ProjectAgentsSection({
       </div>
 
       {projectAgents.length === 0 ? (
-        <p className="text-muted-foreground text-xs">
-          No agents assigned to this project yet. Assign agents to scope their work.
-        </p>
+        <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-5 text-muted-foreground">
+          <Users className="h-5 w-5 shrink-0 opacity-50" />
+          <div>
+            <p className="text-xs font-medium">No agents assigned</p>
+            <p className="text-xs opacity-70">Assign agents to scope their work to this project.</p>
+          </div>
+        </div>
       ) : (
         <div className="flex flex-wrap gap-2">
           {projectAgents.map((agent) => (

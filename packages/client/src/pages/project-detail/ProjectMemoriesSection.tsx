@@ -20,7 +20,13 @@ export function ProjectMemoriesSection({ memories }: ProjectMemoriesSectionProps
       </div>
 
       {memories.length === 0 ? (
-        <p className="text-muted-foreground text-xs">No memories recorded for this project yet.</p>
+        <div className="flex items-center gap-3 rounded-lg border border-dashed px-4 py-5 text-muted-foreground">
+          <Brain className="h-5 w-5 shrink-0 opacity-50" />
+          <div>
+            <p className="text-xs font-medium">No memories yet</p>
+            <p className="text-xs opacity-70">Add memories to give agents persistent context.</p>
+          </div>
+        </div>
       ) : (
         <div className="flex flex-col gap-2">
           {memories.map((mem) => (

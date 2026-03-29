@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import type { ChatMessage } from '@atlas/shared';
 import { MessageBubble } from './MessageBubble';
 import { StreamingBubble } from './StreamingBubble';
-import type { StreamingToolCall } from '@/hooks/use-chat.hook';
+import type { StreamingToolCall } from './chat-page.types';
 
 interface MessageListProps {
   messages: ChatMessage[];

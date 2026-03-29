@@ -1,5 +1,15 @@
 import type { ChatConversation, ChatMessage, AgentProvider, ProviderModel, ChatBackendType, ExecutorStatus } from '@atlas/shared';
 
+export type ChatStreamState = 'idle' | 'streaming' | 'error';
+
+export type StreamingToolCall = {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+  result?: unknown;
+  status: 'pending' | 'done';
+};
+
 export type ThinkingStep = {
   id: string;
   toolName: string;
@@ -18,13 +28,7 @@ export type MessageBubbleProps = {
 
 export type StreamingBubbleProps = {
   text: string;
-  toolCalls: Array<{
-    id: string;
-    name: string;
-    args: Record<string, unknown>;
-    result?: unknown;
-    status: 'pending' | 'done';
-  }>;
+  toolCalls: StreamingToolCall[];
 };
 
 export type ConversationSidebarProps = {

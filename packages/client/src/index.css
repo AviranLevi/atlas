@@ -66,6 +66,11 @@
   transition: none !important;
 }
 
+/* Font size preference — rem-based utilities scale automatically. */
+html.font-size-sm { font-size: 13px; }
+html.font-size-md { font-size: 15px; }
+html.font-size-lg { font-size: 17px; }
+
 @layer base {
   *,
   ::after,
