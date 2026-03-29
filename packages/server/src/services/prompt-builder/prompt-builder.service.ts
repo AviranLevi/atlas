@@ -1,5 +1,5 @@
 // Services
-import { agentsService, projectsService, tasksService, settingsService, memoryService } from '../index.js';
+import { agentsService, projectsService, tasksService, settingsService, memoryService, supermemoryService } from '../index.js';
 
 // Lib
 import { logger } from '../../lib/logger.js';
@@ -107,6 +107,16 @@ export class PromptBuilderService {
             .join('\n');
           sections.push(`## Agent Memories\n\n${memList}`);
         }
+      }
+
+      // ─── Supermemory: semantically relevant context ─────────────
+      const supermemoryResults = await supermemoryService.searchRelevant(
+        task.name + (task.notes ? ` ${task.notes}` : ''),
+        params.projectId,
+      );
+      if (supermemoryResults.length > 0) {
+        const smList = supermemoryResults.map((r) => `- ${r}`).join('\n');
+        sections.push(`## Relevant Context (from Supermemory)\n\n${smList}`);
       }
 
       // ─── Project context (brief-based or fallback) ─────────────

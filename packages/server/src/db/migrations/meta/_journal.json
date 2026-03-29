@@ -64,6 +64,13 @@
       "when": 1743187200000,
       "tag": "0008_task_source_field",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1743273600000,
+      "tag": "0009_integrations_table",
+      "breakpoints": true
     }
   ]
 }

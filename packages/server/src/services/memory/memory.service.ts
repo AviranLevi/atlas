@@ -2,7 +2,7 @@
 import type { Memory, CreateMemory, UpdateMemory } from '@atlas/shared';
 
 // Services
-import { briefGeneratorService } from '../index.js';
+import { briefGeneratorService, supermemoryService } from '../index.js';
 
 // Repositories
 import { memoryRepository } from '../../db/repositories/index.js';
@@ -83,6 +83,7 @@ export class MemoryService {
           logger.error(`${FILE_PATH} :: create - brief generation failed`, err);
         });
       }
+      supermemoryService.syncMemory(memory).catch(() => {});
       return memory;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -100,6 +101,7 @@ export class MemoryService {
           logger.error(`${FILE_PATH} :: update - brief generation failed`, err);
         });
       }
+      supermemoryService.syncMemory(memory).catch(() => {});
       return memory;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

@@ -13,3 +13,4 @@ export * from "./schemas/search.schema";
 export * from "./schemas/chat.schema";
 export * from "./schemas/preferences.schema";
 export * from "./schemas/package.schema";
+export * from "./schemas/integrations.schema";

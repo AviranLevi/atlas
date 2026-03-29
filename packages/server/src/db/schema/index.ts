@@ -13,3 +13,4 @@ export { reviews } from './reviews.schema.js';
 export { activityLog } from './activity-log.schema.js';
 export { chatConversations, chatMessages } from './chat.schema.js';
 export { preferences } from './preferences.schema.js';
+export { integrations } from './integrations.schema.js';

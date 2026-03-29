@@ -17,6 +17,7 @@ import { ActivityLogRepository } from './activity-log.repository.js';
 import { ChatRepository } from './chat.repository.js';
 import { PreferencesRepository } from './preferences.repository.js';
 import { SearchRepository } from './search.repository.js';
+import { IntegrationsRepository } from './integrations.repository.js';
 
 export const agentsRepository = new AgentsRepository(db);
 export const skillsRepository = new SkillsRepository(db);
@@ -33,3 +34,4 @@ export const activityLogRepository = new ActivityLogRepository(db);
 export const chatRepository = new ChatRepository(db);
 export const preferencesRepository = new PreferencesRepository(db);
 export const searchRepository = new SearchRepository(db);
+export const integrationsRepository = new IntegrationsRepository(db);

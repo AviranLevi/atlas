@@ -8,11 +8,13 @@ import { DefaultWorkspaceTab } from './DefaultWorkspaceTab';
 import { ServerInfoTab } from './ServerInfoTab';
 import { DataManagementTab } from './DataManagementTab';
 import { AboutTab } from './AboutTab';
+import { IntegrationsTab } from './IntegrationsTab';
 
 const VALID_TABS = [
   'appearance',
   'workspace',
   'mcp',
+  'integrations',
   'server-info',
   'data',
   'about',
@@ -50,6 +52,7 @@ export function SettingsPage() {
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="workspace">Default Workspace</TabsTrigger>
           <TabsTrigger value="mcp">MCP Connection</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="server-info">Server Info</TabsTrigger>
           <TabsTrigger value="data">Data Management</TabsTrigger>
           <TabsTrigger value="about">About</TabsTrigger>
@@ -65,6 +68,10 @@ export function SettingsPage() {
 
         <TabsContent value="mcp" className="mt-6">
           <McpConnectionPanel />
+        </TabsContent>
+
+        <TabsContent value="integrations" className="mt-6">
+          <IntegrationsTab />
         </TabsContent>
 
         <TabsContent value="server-info" className="mt-6">

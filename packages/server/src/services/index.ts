@@ -19,6 +19,8 @@ import { PreferencesService } from './preferences/preferences.service.js';
 import { SystemService } from './system/system.service.js';
 import { FilesystemService } from './filesystem/filesystem.service.js';
 import { PackageService } from './package/package.service.js';
+import { IntegrationsService } from './integrations/integrations.service.js';
+import { SupermemoryService } from './integrations/supermemory.service.js';
 
 export const activityLogService = new ActivityLogService();
 export const agentsService = new AgentsService();
@@ -41,6 +43,8 @@ export const preferencesService = new PreferencesService();
 export const systemService = new SystemService();
 export const filesystemService = new FilesystemService();
 export const packageService = new PackageService();
+export const integrationsService = new IntegrationsService();
+export const supermemoryService = new SupermemoryService();
 
 export type { AgentContext, AgentDetail } from './agents/agents.types.js';
 export type { SkillDetail } from './skills/skills.types.js';
