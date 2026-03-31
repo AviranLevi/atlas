@@ -4,7 +4,7 @@ import { cors } from 'hono/cors';
 import { AppError } from './lib/errors.js';
 import { logger } from './lib/logger.js';
 import { apiRoutes } from './routes/index.js';
-import { orchestratorService } from './services/index.js';
+import { heartbeatService, orchestratorService } from './services/index.js';
 import { startMcpHttpServer } from './mcp-http.js';
 
 const app = new Hono();
@@ -28,3 +28,4 @@ logger.info(`Server running on http://localhost:${port}`);
 startMcpHttpServer();
 
 orchestratorService.reconcileOnStartup();
+heartbeatService.start();

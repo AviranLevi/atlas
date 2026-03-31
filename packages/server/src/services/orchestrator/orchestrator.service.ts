@@ -153,7 +153,7 @@ export class OrchestratorService {
       });
 
       const cwd = executor.usesProjectRoot ? project.localPath : worktreePath;
-      const result = spawnAgent(workspace.id, executor, cwd, prompt, {
+      const result = await spawnAgent(workspace.id, executor, cwd, prompt, {
         onCompleted: (output) => {
           activeProcesses.delete(workspace.id);
           const ws = workspacesRepository.update(workspace.id, {
@@ -421,7 +421,7 @@ export class OrchestratorService {
 
       // Re-spawn the agent on the SAME worktree (not a new one)
       const cwd = executor.usesProjectRoot ? project.localPath : workspace.worktreePath;
-      const result = spawnAgent(workspace.id, executor, cwd, fullPrompt, {
+      const result = await spawnAgent(workspace.id, executor, cwd, fullPrompt, {
         onCompleted: (output) => {
           activeProcesses.delete(workspace.id);
           // Clear comments on success — the agent addressed them
@@ -770,7 +770,7 @@ export class OrchestratorService {
         ? (await projectsService.getById(workspace.projectId)).localPath ?? workspace.worktreePath
         : workspace.worktreePath;
 
-      const result = spawnAgent(workspaceId, executor, cwd, reviewPrompt, {
+      const result = await spawnAgent(workspaceId, executor, cwd, reviewPrompt, {
         onCompleted: (output) => {
           activeProcesses.delete(workspaceId);
           workspacesRepository.update(workspaceId, { status: 'completed', output, completedAt: new Date().toISOString() });

@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import type { McpConfigFormat } from './executor.types.js';
+import { mcpServersService } from '../services/index.js';
 
 // __dirname → packages/server/src/executors
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -19,10 +20,30 @@ const MCP_CONFIG_DIR = path.join(PROJECT_ROOT, 'data', 'mcp-configs');
 // Gemini CLI settings file path
 const GEMINI_SETTINGS_PATH = path.join(os.homedir(), '.gemini', 'settings.json');
 
-export function generateMcpConfig(
+async function buildMcpServers(atlasEntry: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const servers: Record<string, unknown> = { atlas: atlasEntry };
+  try {
+    const userServers = await mcpServersService.listEnabled();
+    for (const s of userServers) {
+      try {
+        const entry: Record<string, unknown> = { command: s.command };
+        if (s.args) entry.args = JSON.parse(s.args);
+        if (s.env) entry.env = JSON.parse(s.env);
+        servers[s.name] = entry;
+      } catch {
+        console.error(`[MCP Config] Skipping server "${s.name}": malformed args/env JSON`);
+      }
+    }
+  } catch (err) {
+    console.error('[MCP Config] Failed to load user MCP servers:', err instanceof Error ? err.message : err);
+  }
+  return servers;
+}
+
+export async function generateMcpConfig(
   workspaceId: string,
   format: McpConfigFormat,
-): string | undefined {
+): Promise<string | undefined> {
   if (format === 'none') return undefined;
 
   // Use absolute path for the MCP entry point so it works regardless of cwd
@@ -43,7 +64,8 @@ export function generateMcpConfig(
       try { settings = JSON.parse(fs.readFileSync(GEMINI_SETTINGS_PATH, 'utf8')); } catch { /* ignore */ }
     }
     const mcpServers = (settings.mcpServers as Record<string, unknown>) ?? {};
-    mcpServers['atlas'] = mcpServerEntry;
+    const allServers = await buildMcpServers(mcpServerEntry);
+    Object.assign(mcpServers, allServers);
     settings.mcpServers = mcpServers;
     fs.writeFileSync(GEMINI_SETTINGS_PATH, JSON.stringify(settings, null, 2));
     // Return the settings path so cleanup knows where to look
@@ -56,9 +78,11 @@ export function generateMcpConfig(
   switch (format) {
     case 'claude':
     case 'cursor':
-    case 'generic-json':
-      config = { mcpServers: { 'atlas': mcpServerEntry } };
+    case 'generic-json': {
+      const allServers = await buildMcpServers(mcpServerEntry);
+      config = { mcpServers: allServers };
       break;
+    }
     default:
       return undefined;
   }

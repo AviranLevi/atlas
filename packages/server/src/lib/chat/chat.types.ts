@@ -2,6 +2,7 @@ export type ChatEvent =
   | { type: 'text_delta'; text: string }
   | { type: 'tool_call'; id: string; name: string; args: Record<string, unknown> }
   | { type: 'tool_call_done' }
+  | { type: 'usage'; inputTokens: number; outputTokens: number }
   | { type: 'done'; stopReason: string };
 
 export type InternalMessage =

@@ -14,3 +14,6 @@ export { activityLog } from './activity-log.schema.js';
 export { chatConversations, chatMessages } from './chat.schema.js';
 export { preferences } from './preferences.schema.js';
 export { integrations } from './integrations.schema.js';
+export { mcpServers } from './mcp-servers.schema.js';
+export { heartbeatConfigs, heartbeatRuns } from './heartbeats.schema.js';
+export { usageLogs } from './usage-logs.schema.js';

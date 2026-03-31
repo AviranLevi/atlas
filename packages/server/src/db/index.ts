@@ -22,7 +22,16 @@ sqlite.pragma('foreign_keys = ON');
 
 export const db = drizzle(sqlite, { schema });
 
-migrate(db, { migrationsFolder });
+try {
+  migrate(db, { migrationsFolder });
+} catch (err) {
+  console.error('[DB] ❌ Migration failed. This usually means a .sql file in src/db/migrations/ is malformed.');
+  console.error('[DB]    Migrations must use --> statement-breakpoint between SQL statements.');
+  console.error('[DB]    Use "pnpm db:generate" to create migrations from schema changes — never hand-write them.');
+  console.error('[DB]    Error:', err instanceof Error ? err.message : err);
+  process.exit(1);
+}
+
 applySchemaPatches(sqlite);
 
 console.error(`[DB] Database initialized successfully`);

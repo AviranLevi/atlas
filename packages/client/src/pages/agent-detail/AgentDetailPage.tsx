@@ -11,6 +11,7 @@ import { EditableCard } from '@/components/ui/editable-card';
 import { DefaultModelSelector } from './DefaultModelSelector';
 import { AttachableItemsSection } from './AttachableItemsSection';
 import { AssignedProjectsSection } from './AssignedProjectsSection';
+import { HeartbeatSection } from './HeartbeatSection';
 
 // Hooks
 import { useUpdateAgent } from '@/hooks/use-agents.hook';
@@ -169,6 +170,7 @@ export function AgentDetailPage() {
         badgeVariant="outline"
       />
 
+      <HeartbeatSection agentId={agent.id} />
       <AssignedProjectsSection projects={projects} />
       <AgentDialog open={editOpen} onOpenChange={setEditOpen} agent={agent} />
     </div>

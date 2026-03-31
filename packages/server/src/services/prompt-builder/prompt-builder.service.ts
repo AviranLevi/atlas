@@ -1,5 +1,5 @@
 // Services
-import { agentsService, projectsService, tasksService, settingsService, memoryService, supermemoryService } from '../index.js';
+import { agentsService, projectsService, tasksService, settingsService, memoryService, supermemoryService, phasesService } from '../index.js';
 
 // Lib
 import { logger } from '../../lib/logger.js';
@@ -36,8 +36,24 @@ export class PromptBuilderService {
     try {
       const task = await tasksService.getById(params.taskId);
       const projectContext = await projectsService.getContext(params.projectId);
+      const { project } = projectContext;
 
       const sections: string[] = [];
+
+      if (project.mission) {
+        sections.push(`## Mission\n\n${project.mission}`);
+      }
+
+      if (task.phaseId) {
+        try {
+          const phase = await phasesService.getById(task.phaseId);
+          const goalLines = [`## Current Goal: ${phase.name}`];
+          if (phase.description) goalLines.push(`\n${phase.description}`);
+          if (phase.successCriteria) goalLines.push(`\n**Success criteria:** ${phase.successCriteria}`);
+          sections.push(goalLines.join(''));
+        } catch {
+        }
+      }
 
       const globalInstructions = await settingsService.listGlobalInstructions();
       if (globalInstructions.length > 0) {
@@ -120,7 +136,6 @@ export class PromptBuilderService {
       }
 
       // ─── Project context (brief-based or fallback) ─────────────
-      const { project } = projectContext;
 
       if (project.projectBrief) {
         // Use the pre-generated compact brief

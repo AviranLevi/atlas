@@ -15,6 +15,7 @@ export const projects = sqliteTable('projects', {
   scanData: text('scan_data'),  // JSON blob of ProjectScanData
   projectBrief: text('project_brief'),  // Auto-generated compressed context for agents
   color: text('color'),
+  mission: text('mission'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(timestampDefault),

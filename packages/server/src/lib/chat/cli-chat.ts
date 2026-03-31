@@ -95,7 +95,7 @@ export function parseCliStreamJsonLine(
  * Sends a one-shot prompt to a CLI agent, streaming output chunks via `onChunk` as they arrive.
  * Returns the full accumulated response text when the process exits.
  */
-export function streamCliChat(
+export async function streamCliChat(
   options: CliChatOptions,
   onChunk: (text: string) => void,
 ): Promise<CliChatResult> {
@@ -104,7 +104,7 @@ export function streamCliChat(
   const configId = `chat-${Date.now()}`;
   let mcpConfigPath: string | undefined;
   if (executor.mcpConfigFormat !== 'none') {
-    mcpConfigPath = generateMcpConfig(configId, executor.mcpConfigFormat);
+    mcpConfigPath = await generateMcpConfig(configId, executor.mcpConfigFormat);
   }
 
   const args = buildChatArgs(executor, prompt, mcpConfigPath, model);

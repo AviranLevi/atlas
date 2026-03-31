@@ -108,6 +108,13 @@ async function* streamAnthropic(
       }
     } else if (event.type === 'message_stop') {
       const msg = await stream.finalMessage();
+      if (msg.usage) {
+        yield {
+          type: 'usage',
+          inputTokens: msg.usage.input_tokens,
+          outputTokens: msg.usage.output_tokens,
+        };
+      }
       yield { type: 'done', stopReason: msg.stop_reason ?? 'end_turn' };
     }
   }
@@ -152,12 +159,18 @@ async function* streamOpenAI(
     function: { name: t.name, description: t.description, parameters: t.parameters },
   }));
 
-  const stream = await client.chat.completions.create({
+  const createParams: Record<string, unknown> = {
     model,
-    messages: openaiMessages as Parameters<typeof client.chat.completions.create>[0]['messages'],
+    messages: openaiMessages,
     tools: openaiTools,
     stream: true,
-  }, { signal });
+  };
+  if (!baseUrl) createParams.stream_options = { include_usage: true };
+
+  const stream = await client.chat.completions.create(
+    createParams as Parameters<typeof client.chat.completions.create>[0],
+    { signal },
+  );
 
   const toolCalls = new Map<number, { id: string; name: string; argsJson: string }>();
 
@@ -165,13 +178,12 @@ async function* streamOpenAI(
     if (signal?.aborted) return;
 
     const delta = chunk.choices[0]?.delta;
-    if (!delta) continue;
 
-    if (delta.content) {
+    if (delta?.content) {
       yield { type: 'text_delta', text: delta.content };
     }
 
-    if (delta.tool_calls) {
+    if (delta?.tool_calls) {
       for (const tc of delta.tool_calls) {
         const idx = tc.index;
         if (!toolCalls.has(idx)) {
@@ -192,6 +204,15 @@ async function* streamOpenAI(
         yield { type: 'tool_call_done' };
       }
       yield { type: 'done', stopReason: chunk.choices[0].finish_reason };
+    }
+
+    if (chunk.usage) {
+      const u = chunk.usage as { prompt_tokens?: number; completion_tokens?: number };
+      yield {
+        type: 'usage',
+        inputTokens: u.prompt_tokens ?? 0,
+        outputTokens: u.completion_tokens ?? 0,
+      };
     }
   }
 }

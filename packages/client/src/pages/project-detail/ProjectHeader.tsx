@@ -42,6 +42,9 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
             {project.description && (
               <p className="text-muted-foreground mt-1 text-sm">{project.description}</p>
             )}
+            {project.mission && (
+              <p className="text-muted-foreground/80 mt-1 text-xs italic">{project.mission}</p>
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {project.techStack
                 ?.split(',')

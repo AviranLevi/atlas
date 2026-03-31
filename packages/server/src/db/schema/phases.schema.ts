@@ -11,6 +11,7 @@ export const phases = sqliteTable('phases', {
     .references(() => projects.id),
   name: text('name').notNull(),
   description: text('description'),
+  successCriteria: text('success_criteria'),
   status: text('status').notNull().default('planning'), // 'planning' | 'active' | 'review' | 'completed'
   orderIndex: integer('order_index').notNull().default(0),
   createdAt: text('created_at')

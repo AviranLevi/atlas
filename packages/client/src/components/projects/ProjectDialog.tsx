@@ -46,6 +46,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
   const [folderPickerOpen, setFolderPickerOpen] = useState(false);
   const [color, setColor] = useState<string | null>(null);
   const [scanned, setScanned] = useState(false);
+  const [mission, setMission] = useState('');
 
   useEffect(() => {
     if (project) {
@@ -57,6 +58,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       setLocalPath(project.localPath ?? '');
       setDefaultBranch(project.defaultBranch ?? '');
       setColor(project.color ?? null);
+      setMission(project.mission ?? '');
     } else {
       setName('');
       setDescription('');
@@ -66,6 +68,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       setLocalPath('');
       setDefaultBranch('');
       setColor(null);
+      setMission('');
       setScanned(false);
     }
   }, [project, open]);
@@ -102,6 +105,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       localPath: localPath.trim() || null,
       defaultBranch: defaultBranch.trim() || null,
       color: color || null,
+      mission: mission.trim() || null,
     };
 
     if (isEditing) {
@@ -210,6 +214,16 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Brief description of the project"
                   rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mission">Mission</Label>
+                <Textarea
+                  id="mission"
+                  value={mission}
+                  onChange={(e) => setMission(e.target.value)}
+                  placeholder="What is this project's north-star objective?"
+                  rows={2}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">

@@ -68,8 +68,36 @@
     {
       "idx": 9,
       "version": "6",
-      "when": 1743273600000,
+      "when": 1774000000000,
       "tag": "0009_integrations_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1774100000000,
+      "tag": "0010_add_goal_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1774200000000,
+      "tag": "0011_add_mcp_servers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1774300000000,
+      "tag": "0012_add_heartbeats",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1774400000000,
+      "tag": "0013_add_usage_logs",
       "breakpoints": true
     }
   ]

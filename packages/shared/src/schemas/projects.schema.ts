@@ -39,6 +39,7 @@ export const ProjectSchema = z.object({
   scanData: ProjectScanDataSchema.nullable(),
   projectBrief: z.string().nullable(),
   color: z.string().nullable(),
+  mission: z.string().max(2000).nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -54,6 +55,7 @@ export const CreateProjectSchema = z.object({
   scanData: ProjectScanDataSchema.nullable().optional(),
   projectBrief: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
+  mission: z.string().max(2000).nullable().optional(),
 });
 
 export const UpdateProjectSchema = CreateProjectSchema.partial();

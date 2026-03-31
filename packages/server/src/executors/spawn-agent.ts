@@ -61,14 +61,14 @@ function resolveProviderField(
   return field === 'apiKey' ? provider.apiKey : provider.baseUrl;
 }
 
-export function spawnAgent(
+export async function spawnAgent(
   workspaceId: string,
   executor: ExecutorConfig,
   cwd: string,
   prompt: string,
   callbacks: SpawnCallbacks,
   options: SpawnOptions = {},
-): SpawnResult {
+): Promise<SpawnResult> {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
   const logFile = path.join(OUTPUT_DIR, `${workspaceId}.log`);
@@ -77,7 +77,7 @@ export function spawnAgent(
 
   let mcpConfigPath: string | undefined;
   if (executor.mcpConfigFormat !== 'none') {
-    mcpConfigPath = generateMcpConfig(workspaceId, executor.mcpConfigFormat);
+    mcpConfigPath = await generateMcpConfig(workspaceId, executor.mcpConfigFormat);
   }
 
   const args = buildArgs(executor, prompt, mcpConfigPath, options.model);

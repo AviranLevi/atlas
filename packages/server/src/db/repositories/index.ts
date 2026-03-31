@@ -18,6 +18,9 @@ import { ChatRepository } from './chat.repository.js';
 import { PreferencesRepository } from './preferences.repository.js';
 import { SearchRepository } from './search.repository.js';
 import { IntegrationsRepository } from './integrations.repository.js';
+import { McpServersRepository } from './mcp-servers.repository.js';
+import { HeartbeatsRepository } from './heartbeats.repository.js';
+import { UsageRepository } from './usage.repository.js';
 
 export const agentsRepository = new AgentsRepository(db);
 export const skillsRepository = new SkillsRepository(db);
@@ -35,3 +38,6 @@ export const chatRepository = new ChatRepository(db);
 export const preferencesRepository = new PreferencesRepository(db);
 export const searchRepository = new SearchRepository(db);
 export const integrationsRepository = new IntegrationsRepository(db);
+export const mcpServersRepository = new McpServersRepository(db);
+export const heartbeatsRepository = new HeartbeatsRepository(db);
+export const usageRepository = new UsageRepository(db);

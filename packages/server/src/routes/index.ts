@@ -21,6 +21,9 @@ import { systemRoute } from './system.route.js';
 import { preferencesRoute } from './preferences.route.js';
 import { packageRoute } from './package.route.js';
 import { integrationsRoute } from './integrations.route.js';
+import { mcpServersRoute } from './mcp-servers.route.js';
+import { heartbeatsRoute } from './heartbeats.route.js';
+import { usageRoute } from './usage.route.js';
 
 export const apiRoutes = new Hono()
   .route('/agents', agentsRoute)
@@ -41,4 +44,7 @@ export const apiRoutes = new Hono()
   .route('/system', systemRoute)
   .route('/preferences', preferencesRoute)
   .route('/packages', packageRoute)
-  .route('/integrations', integrationsRoute);
+  .route('/integrations', integrationsRoute)
+  .route('/mcp-servers', mcpServersRoute)
+  .route('/usage', usageRoute)
+  .route('/', heartbeatsRoute);

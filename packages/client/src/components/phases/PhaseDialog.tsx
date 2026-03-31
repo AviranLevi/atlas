@@ -38,6 +38,7 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<PhaseStatus>('planning');
+  const [successCriteria, setSuccessCriteria] = useState('');
 
   useEffect(() => {
     if (phase) {
@@ -56,6 +57,7 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
     const data = {
       name,
       description: description || null,
+      successCriteria: successCriteria || null,
       status,
     };
     if (isEditing) {
@@ -99,6 +101,16 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Goals and scope for this phase..."
               rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phase-criteria">Success Criteria</Label>
+            <Textarea
+              id="phase-criteria"
+              value={successCriteria}
+              onChange={(e) => setSuccessCriteria(e.target.value)}
+              placeholder="What does 'done' look like for this goal?"
+              rows={2}
             />
           </div>
           <div className="space-y-2">

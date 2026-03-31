@@ -38,6 +38,7 @@ export class PhasesRepository {
           projectId: phases.projectId,
           name: phases.name,
           description: phases.description,
+          successCriteria: phases.successCriteria,
           status: phases.status,
           orderIndex: phases.orderIndex,
           createdAt: phases.createdAt,

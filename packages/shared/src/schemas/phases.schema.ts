@@ -12,6 +12,7 @@ export const PhaseSchema = z.object({
   projectId: z.string().uuid(),
   name: z.string().min(1).max(200),
   description: z.string().nullable(),
+  successCriteria: z.string().max(5000).nullable(),
   status: PhaseStatusEnum,
   orderIndex: z.number().int().min(0),
   taskCount: z.number().int().optional(),
@@ -24,6 +25,7 @@ export const CreatePhaseSchema = z.object({
   projectId: z.string().uuid(),
   name: z.string().min(1).max(200),
   description: z.string().nullable().optional(),
+  successCriteria: z.string().max(5000).nullable().optional(),
   status: PhaseStatusEnum.optional().default("planning"),
   orderIndex: z.number().int().min(0).optional().default(0),
 });

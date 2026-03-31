@@ -1,8 +1,8 @@
 import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 
 import { chatRepository } from '../../db/repositories/index.js';
-import { agentProvidersService, settingsService, projectsService, memoryService } from '../index.js';
-import { streamChat, type InternalMessage, type ChatEvent, type ToolDefinition, CHAT_TOOLS, executeTool, streamCliChat, formatCliPrompt } from '../../lib/chat/index.js';
+import { agentProvidersService, settingsService, projectsService, memoryService, usageService } from '../index.js';
+import { streamChat, type InternalMessage, CHAT_TOOLS, executeTool, streamCliChat, formatCliPrompt } from '../../lib/chat/index.js';
 import { executorRegistry } from '../../executors/index.js';
 import { logger } from '../../lib/logger.js';
 
@@ -78,6 +78,9 @@ export class ChatService {
     const abortController = new AbortController();
     this.activeStreams.set(conversationId, abortController);
 
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+
     try {
       const systemPrompt = await this.buildSystemPrompt(conversation.projectId);
       const history = this.repo.findMessagesByConversation(conversationId);
@@ -112,6 +115,10 @@ export class ChatService {
             case 'tool_call':
               pendingToolCalls.push({ id: event.id, name: event.name, args: event.args });
               await emit('tool_call', { id: event.id, name: event.name, args: event.args });
+              break;
+            case 'usage':
+              totalInputTokens += event.inputTokens;
+              totalOutputTokens += event.outputTokens;
               break;
             case 'done':
               if (pendingToolCalls.length === 0) {
@@ -167,6 +174,21 @@ export class ChatService {
           content: '(Reached maximum tool call rounds)',
         });
         await emit('done', { messageId: savedMsg.id });
+      }
+
+      if (totalInputTokens > 0 || totalOutputTokens > 0) {
+        try {
+          usageService.log({
+            conversationId,
+            projectId: conversation.projectId ?? undefined,
+            inputTokens: totalInputTokens,
+            outputTokens: totalOutputTokens,
+            model: conversation.model ?? undefined,
+            providerType: provider.type,
+          });
+        } catch (err) {
+          logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} usage log failed`, err);
+        }
       }
 
       await this.maybeGenerateTitle(conversation);

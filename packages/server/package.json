@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "mcp": "tsx src/mcp.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:validate": "tsx scripts/validate-migrations.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
@@ -21,11 +22,13 @@
     "drizzle-orm": "^0.38",
     "hono": "^4.7",
     "minimatch": "^10.2.4",
+    "node-cron": "^4.2.1",
     "openai": "^6.32.0",
     "zod": "^3.24"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6",
+    "@types/node-cron": "^3.0.11",
     "drizzle-kit": "^0.30",
     "tsx": "^4.19",
     "typescript": "^5.7"
