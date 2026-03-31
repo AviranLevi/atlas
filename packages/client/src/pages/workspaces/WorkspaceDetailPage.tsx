@@ -5,14 +5,13 @@ import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { WorkspaceDetailHeader } from './WorkspaceDetailHeader';
 import { WorkspaceInfoCards } from './WorkspaceInfoCards';
 import { DiffSection } from './diff';
 import { AiReviewDialog } from './AiReviewDialog';
 import { RerunDialog } from '@/components/workspaces/RerunDialog';
-import { LogOutput } from './LogOutput';
+import { TerminalOutput } from './TerminalOutput';
 
 // Hooks
 import {
@@ -147,22 +146,10 @@ export function WorkspaceDetailPage() {
       )}
 
       {(isActive || workspace.fullOutput || workspace.output) && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-lg font-semibold">Agent Output</h2>
-            {isActive && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Live
-              </span>
-            )}
-          </div>
-          <Card>
-            <CardContent className="p-0">
-              <LogOutput text={isActive ? (streamedLog ?? '') : (workspace.fullOutput ?? workspace.output ?? '')} />
-            </CardContent>
-          </Card>
-        </div>
+        <TerminalOutput
+          text={isActive ? (streamedLog ?? '') : (workspace.fullOutput ?? workspace.output ?? '')}
+          isLive={isActive}
+        />
       )}
 
       {review && (

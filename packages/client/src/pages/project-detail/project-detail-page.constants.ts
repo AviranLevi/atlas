@@ -26,3 +26,11 @@ export const priorityBadgeClass: Record<string, string> = {
   Medium: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
   Low: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
 };
+
+export const SOURCE_LABELS: Record<string, string> = {
+  cursor: 'Cursor',
+  claude: 'Claude Code',
+  copilot: 'GitHub Copilot',
+  cline: 'Cline / Roo',
+  generic: 'Agent Instructions',
+};

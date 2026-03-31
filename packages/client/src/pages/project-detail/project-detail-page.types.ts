@@ -38,3 +38,8 @@ export type ProjectTasksTableProps = {
 export type ProjectMemoriesSectionProps = {
   memories: Record<string, unknown>[];
 };
+
+export type DetectedRulesSectionProps = {
+  projectId: string;
+  aiConfigs: NonNullable<ProjectScanData['aiConfigs']>;
+};

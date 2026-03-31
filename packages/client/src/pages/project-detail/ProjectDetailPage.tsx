@@ -11,6 +11,7 @@ import { PhaseCard } from '@/components/phases/PhaseCard';
 import { PhaseDialog } from '@/components/phases/PhaseDialog';
 import { ProjectHeader } from './ProjectHeader';
 import { ScanDataSection } from './ScanDataSection';
+import { DetectedRulesSection } from './DetectedRulesSection';
 import { ProjectBriefSection } from './ProjectBriefSection';
 import { ProjectAgentsSection } from './ProjectAgentsSection';
 import { ProjectTasksTable } from './ProjectTasksTable';
@@ -111,6 +112,14 @@ export function ProjectDetailPage() {
             )}
           </div>
           <ScanDataSection scanData={project.scanData} />
+          {project.scanData.aiConfigs && project.scanData.aiConfigs.length > 0 && (
+            <div className="mt-4">
+              <DetectedRulesSection
+                projectId={project.id}
+                aiConfigs={project.scanData.aiConfigs}
+              />
+            </div>
+          )}
         </section>
       ) : project.localPath ? (
         <Card className="flex flex-col items-center gap-3 p-8 border-dashed">

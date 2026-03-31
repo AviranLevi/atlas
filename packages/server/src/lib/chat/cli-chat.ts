@@ -7,6 +7,10 @@ import type { CliChatOptions, CliChatResult } from './chat.types.js';
 const FILE_PATH = 'lib/chat/cli-chat.ts';
 const DEFAULT_TIMEOUT_MS = 120_000;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function buildChatArgs(
   executor: ExecutorConfig,
   prompt: string,
@@ -47,16 +51,19 @@ export function parseCliStreamJsonLine(
 ): { text: string; isFinal: boolean; skipLog?: boolean } | null {
   if (!line.trim()) return null;
   try {
-    const event = JSON.parse(line);
+    const event: unknown = JSON.parse(line);
+    if (!isRecord(event)) return null;
 
     // ── Claude Code format ──────────────────────────────────────────────────
-    if (event.type === 'assistant' && Array.isArray(event.message?.content)) {
+    const message = isRecord(event.message) ? event.message : undefined;
+    if (event.type === 'assistant' && message && Array.isArray(message.content)) {
       const parts: string[] = [];
-      for (const block of event.message.content) {
-        if (block.type === 'text' && block.text) {
+      for (const block of message.content) {
+        if (!isRecord(block)) continue;
+        if (block.type === 'text' && typeof block.text === 'string') {
           parts.push(block.text);
-        } else if (block.type === 'tool_use' && block.name) {
-          const input = block.input ?? {};
+        } else if (block.type === 'tool_use' && typeof block.name === 'string') {
+          const input = isRecord(block.input) ? block.input : {};
           const hint = input.command ?? input.file_path ?? input.pattern ?? input.query ?? input.url ?? '';
           const summary = hint ? `${hint}`.slice(0, 100) : '';
           parts.push(`▸ ${block.name}${summary ? `  ${summary}` : ''}`);
@@ -70,19 +77,36 @@ export function parseCliStreamJsonLine(
     }
 
     // ── Gemini CLI format ───────────────────────────────────────────────────
-    // Gemini only emits delta:true for all assistant text
-    if (event.type === 'message' && event.role === 'assistant' && event.content) {
-      return { text: event.content, isFinal: false };
+    // Gemini emits: role 'model' (Google convention) or 'assistant'
+    const isAssistantMsg =
+      event.type === 'message' &&
+      (event.role === 'assistant' || event.role === 'model') &&
+      typeof event.content === 'string';
+    if (isAssistantMsg) {
+      return { text: event.content as string, isFinal: false };
     }
-    if (event.type === 'tool_use' && event.tool_name) {
-      const params = event.parameters ?? {};
+    if (event.type === 'tool_use' && typeof event.tool_name === 'string') {
+      const params = isRecord(event.parameters) ? event.parameters : {};
       const hint = params.command ?? params.file_path ?? params.path ?? params.pattern ?? params.query ?? params.url ?? '';
       const summary = hint ? `${hint}`.slice(0, 100) : '';
       return { text: `▸ ${event.tool_name}${summary ? `  ${summary}` : ''}`, isFinal: false };
     }
+    // tool_result events contain output from tool execution
+    if (event.type === 'tool_result' && event.content) {
+      const preview = typeof event.content === 'string'
+        ? event.content.slice(0, 200)
+        : JSON.stringify(event.content).slice(0, 200);
+      return preview.trim() ? { text: preview, isFinal: false } : null;
+    }
     // Gemini result event signals completion; final output is accumulated text
     if (event.type === 'result' && event.status !== undefined) {
       return { text: '', isFinal: true, skipLog: true };
+    }
+
+    // Catch-all: log any text-bearing event we don't recognize
+    if (typeof event.content === 'string' && event.content.trim()) {
+      logger.debug?.(`cli-chat :: unhandled event type="${event.type}" role="${event.role}"`);
+      return { text: event.content, isFinal: false };
     }
 
     return null;

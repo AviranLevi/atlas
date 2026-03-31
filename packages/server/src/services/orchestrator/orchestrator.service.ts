@@ -62,6 +62,17 @@ export class OrchestratorService {
 
     if (!resolvedModel && executor.defaultModel) resolvedModel = executor.defaultModel;
 
+    // Validate model is compatible with this executor's presets
+    if (resolvedModel && executor.modelPresets?.length) {
+      const known = new Set(executor.modelPresets.map((p) => p.value));
+      if (!known.has(resolvedModel)) {
+        logger.warn(
+          `${FILE_PATH} :: resolveSpawnOptions - model "${resolvedModel}" not in ${executor.id} presets, falling back to ${executor.defaultModel ?? 'runtime default'}`,
+        );
+        resolvedModel = executor.defaultModel;
+      }
+    }
+
     const spawnOpts: SpawnOptions = { model: resolvedModel };
 
     if (providerIdToLoad && executor.providerMapping?.length) {

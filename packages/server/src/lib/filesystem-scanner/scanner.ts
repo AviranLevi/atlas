@@ -213,6 +213,85 @@ function detectScripts(dirPath: string): Record<string, string> {
   return result;
 }
 
+type AiConfigFile = {
+  source: string;
+  filePath: string;
+  name: string;
+  content: string;
+};
+
+const AI_CONFIG_SOURCES: Array<{
+  source: string;
+  paths: string[];
+  glob?: string;
+}> = [
+  { source: 'cursor', paths: ['.cursor/rules'], glob: '*.{mdc,md}' },
+  { source: 'cursor', paths: ['.cursorrules'] },
+  { source: 'claude', paths: ['CLAUDE.md', '.claude/CLAUDE.md'] },
+  { source: 'generic', paths: ['AGENTS.md'] },
+  { source: 'copilot', paths: ['.github/copilot-instructions.md'] },
+  { source: 'cline', paths: ['.clinerules'] },
+  { source: 'cline', paths: ['.clinerules'], glob: '*.md' },
+];
+
+function parseMdcFrontmatter(content: string): string | null {
+  const match = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  if (!match) return null;
+  const descLine = match[1].split('\n').find((l) => l.startsWith('description:'));
+  return descLine ? descLine.replace('description:', '').trim() : null;
+}
+
+function detectAiConfigs(dirPath: string): AiConfigFile[] {
+  const configs: AiConfigFile[] = [];
+
+  for (const entry of AI_CONFIG_SOURCES) {
+    for (const p of entry.paths) {
+      const fullPath = path.join(dirPath, p);
+      if (!fs.existsSync(fullPath)) continue;
+
+      const stat = fs.statSync(fullPath);
+
+      if (stat.isFile()) {
+        try {
+          const content = fs.readFileSync(fullPath, 'utf-8').trim();
+          if (!content) continue;
+          const baseName = path.basename(p, path.extname(p));
+          configs.push({
+            source: entry.source,
+            filePath: p,
+            name: baseName,
+            content,
+          });
+        } catch { /* skip unreadable files */ }
+      } else if (stat.isDirectory() && entry.glob) {
+        try {
+          const extensions = entry.glob.replace('*.{', '').replace('}', '').split(',');
+          const files = fs.readdirSync(fullPath)
+            .filter((f) => extensions.some((ext) => f.endsWith(`.${ext}`)));
+
+          for (const file of files) {
+            try {
+              const filePath = path.join(p, file);
+              const content = fs.readFileSync(path.join(dirPath, filePath), 'utf-8').trim();
+              if (!content) continue;
+              const baseName = path.basename(file, path.extname(file));
+              const frontmatterName = file.endsWith('.mdc') ? parseMdcFrontmatter(content) : null;
+              configs.push({
+                source: entry.source,
+                filePath: filePath,
+                name: frontmatterName || baseName,
+                content,
+              });
+            } catch { /* skip unreadable files */ }
+          }
+        } catch { /* skip unreadable dirs */ }
+      }
+    }
+  }
+
+  return configs;
+}
+
 /** Performs a deep scan of a project directory and returns the full ProjectScanData. */
 export function deepScanProject(dirPath: string): ProjectScanData {
   const repositoryUrl = detectRepoUrl(dirPath);
@@ -234,6 +313,7 @@ export function deepScanProject(dirPath: string): ProjectScanData {
     githubOwner,
     githubRepo,
     scripts: detectScripts(dirPath),
+    aiConfigs: detectAiConfigs(dirPath),
     scannedAt: new Date().toISOString(),
   };
 }

@@ -75,6 +75,14 @@ export async function spawnAgent(
   const logStream = fs.createWriteStream(logFile, { flags: 'a' });
   const outputLines: string[] = [];
 
+  // Raw debug log for stream-json diagnostics (auto-deleted on success)
+  const rawLogFile = executor.outputFormat === 'stream-json'
+    ? path.join(OUTPUT_DIR, `${workspaceId}.raw.log`)
+    : undefined;
+  const rawLogStream = rawLogFile
+    ? fs.createWriteStream(rawLogFile, { flags: 'a' })
+    : undefined;
+
   let mcpConfigPath: string | undefined;
   if (executor.mcpConfigFormat !== 'none') {
     mcpConfigPath = await generateMcpConfig(workspaceId, executor.mcpConfigFormat);
@@ -110,9 +118,10 @@ export async function spawnAgent(
     const raw = data.toString();
 
     if (executor.outputFormat === 'stream-json') {
+      rawLogStream?.write(raw);
       streamJsonBuffer += raw;
       const lines = streamJsonBuffer.split('\n');
-      streamJsonBuffer = lines.pop() ?? ''; // keep incomplete last line
+      streamJsonBuffer = lines.pop() ?? '';
 
       for (const line of lines) {
         const parsed = parseCliStreamJsonLine(line);
@@ -146,10 +155,15 @@ export async function spawnAgent(
 
   proc.on('close', (code) => {
     logStream.end();
+    rawLogStream?.end();
     const finalOutput = executor.outputFormat === 'stream-json'
       ? (finalResult || outputLines.join('\n'))
       : outputLines.join('\n');
     if (code === 0) {
+      // Clean up raw debug log on success
+      if (rawLogFile && fs.existsSync(rawLogFile)) {
+        fs.unlinkSync(rawLogFile);
+      }
       callbacks.onCompleted(finalOutput);
     } else {
       callbacks.onFailed(finalOutput, `Exit code: ${code}`);
@@ -158,6 +172,7 @@ export async function spawnAgent(
 
   proc.on('error', (err) => {
     logStream.end();
+    rawLogStream?.end();
     callbacks.onFailed(`Spawn error: ${err.message}`, err.message);
   });
 

@@ -3,12 +3,14 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateProjectSchema, UpdateProjectSchema, AssignAgentSchema } from '@atlas/shared';
+import { CreateProjectSchema, UpdateProjectSchema, AssignAgentSchema, CreateBranchSchema, ImportRulesSchema } from '@atlas/shared';
 
 // Controllers
 import {
   listProjects,
   getProjectBranches,
+  createProjectBranch,
+  importProjectRules,
   getProjectContext,
   getProject,
   createProject,
@@ -24,6 +26,8 @@ import {
 export const projectsRoute = new Hono()
   .get('/', listProjects)
   .get('/:id/branches', getProjectBranches)
+  .post('/:id/branches', zValidator('json', CreateBranchSchema), createProjectBranch)
+  .post('/:id/import-rules', zValidator('json', ImportRulesSchema), importProjectRules)
   .get('/:id/context', getProjectContext)
   .get('/:id', getProject)
   .post('/', zValidator('json', CreateProjectSchema), createProject)

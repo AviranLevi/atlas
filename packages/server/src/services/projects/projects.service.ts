@@ -173,6 +173,42 @@ export class ProjectsService {
     }
   }
 
+  /** Creates a new git branch in the project's local repository without checking it out. */
+  async createBranch(projectId: string, branchName: string, baseBranch?: string): Promise<string> {
+    const FUNCTION_NAME = 'createBranch';
+    try {
+      const project = await this.getById(projectId);
+      if (!project.localPath) {
+        throw new AppError('Project has no local path configured', { status: 400 });
+      }
+
+      const sanitized = branchName.replace(/[^a-zA-Z0-9._\-/]/g, '-');
+      if (!sanitized || sanitized === '-') {
+        throw new AppError('Invalid branch name', { status: 400 });
+      }
+
+      const args = ['branch', sanitized];
+      if (baseBranch) args.push(baseBranch);
+
+      execSync(`git ${args.join(' ')}`, {
+        cwd: project.localPath,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - created branch "${sanitized}" in ${project.localPath}`);
+      return sanitized;
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (msg.includes('already exists')) {
+        throw new AppError(`Branch "${branchName}" already exists`, { status: 409 });
+      }
+      throw new AppError(`Failed to create branch: ${msg}`, { status: 500, cause: error });
+    }
+  }
+
   /** Deep-scans the project directory, updates metadata, and regenerates the brief. */
   async scanAndUpdate(projectId: string): Promise<Project> {
     const FUNCTION_NAME = 'scanAndUpdate';

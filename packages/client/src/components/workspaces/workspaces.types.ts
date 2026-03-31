@@ -51,6 +51,10 @@ export type BranchSelectProps = {
   value: string;
   onChange: (value: string) => void;
   defaultLabel: string;
+  newBranchName?: string;
+  onNewBranchNameChange?: (value: string) => void;
+  isCreating?: boolean;
+  createError?: string;
 };
 
 export type DiffFile = {

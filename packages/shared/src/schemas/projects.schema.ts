@@ -3,6 +3,22 @@ import { z } from "zod";
 export const ProjectStatusEnum = z.enum(['active', 'on-hold', 'archived', 'completed']);
 export const ProjectTypeEnum = z.enum(['frontend', 'backend', 'fullstack', 'library', 'mobile', 'cli', 'other']);
 
+export const AiConfigSchema = z.object({
+  source: z.string(),
+  filePath: z.string(),
+  name: z.string(),
+  content: z.string(),
+});
+
+export const CreateBranchSchema = z.object({
+  name: z.string().min(1).max(200),
+  baseBranch: z.string().optional(),
+});
+
+export const ImportRulesSchema = z.object({
+  items: z.array(AiConfigSchema).min(1),
+});
+
 export const ProjectScanDataSchema = z.object({
   projectType: ProjectTypeEnum.nullable().optional(),
   languages: z.array(z.string()).optional(),
@@ -24,6 +40,7 @@ export const ProjectScanDataSchema = z.object({
   githubOwner: z.string().nullable().optional(),
   githubRepo: z.string().nullable().optional(),
   scripts: z.record(z.string()).optional(),
+  aiConfigs: z.array(AiConfigSchema).optional(),
   scannedAt: z.string().optional(),
 });
 
@@ -60,6 +77,9 @@ export const CreateProjectSchema = z.object({
 
 export const UpdateProjectSchema = CreateProjectSchema.partial();
 
+export type AiConfig = z.infer<typeof AiConfigSchema>;
+export type CreateBranch = z.infer<typeof CreateBranchSchema>;
+export type ImportRules = z.infer<typeof ImportRulesSchema>;
 export type ProjectStatus = z.infer<typeof ProjectStatusEnum>;
 export type ProjectType = z.infer<typeof ProjectTypeEnum>;
 export type ProjectScanData = z.infer<typeof ProjectScanDataSchema>;

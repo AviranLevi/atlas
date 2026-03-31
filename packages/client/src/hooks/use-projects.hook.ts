@@ -1,9 +1,15 @@
+// React / library
 import {
   useQuery,
   useMutation,
   useQueryClient,
+  type UseMutationResult,
 } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
+
+// Types
 import type { Project, CreateProject, UpdateProject } from '@atlas/shared';
 import type { ProjectWithSummary, ProjectContext } from '@/pages/projects/projects-page.types';
 import type { ScanResult, BrowseResponse } from '@/components/projects/projects.types';
@@ -49,6 +55,32 @@ export function useProjectBranches(id: string | undefined) {
     queryFn: () => api.get<string[]>(`/projects/${id}/branches`),
     enabled: !!id,
     staleTime: 60_000,
+  });
+}
+
+export function useCreateBranch(projectId: string | undefined): UseMutationResult<{ branch: string }, Error, { name: string; baseBranch?: string }> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name: string; baseBranch?: string }) => {
+      if (!projectId) throw new Error('projectId is required to create a branch');
+      return api.post<{ branch: string }>(`/projects/${projectId}/branches`, data);
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'branches'] }),
+  });
+}
+
+export function useImportProjectRules(projectId: string | undefined): UseMutationResult<{ imported: number; ids: string[] }, Error, Array<{ name: string; content: string; source: string; filePath: string }>> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (items: Array<{ name: string; content: string; source: string; filePath: string }>) => {
+      if (!projectId) throw new Error('projectId is required to import rules');
+      return api.post<{ imported: number; ids: string[] }>(`/projects/${projectId}/import-rules`, { items });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
+      queryClient.invalidateQueries({ queryKey: ['rules'] });
+    },
   });
 }
 

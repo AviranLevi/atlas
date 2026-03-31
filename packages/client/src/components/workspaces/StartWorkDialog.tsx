@@ -1,5 +1,5 @@
 // React / library
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactElement } from 'react';
 import { Play, Lightbulb } from 'lucide-react';
 
 // Components
@@ -18,7 +18,7 @@ import { BranchSelect } from './BranchSelect';
 
 // Hooks
 import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
-import { useProjectBranches, useProject } from '@/hooks/use-projects.hook';
+import { useProjectBranches, useProject, useCreateBranch } from '@/hooks/use-projects.hook';
 import { useAgent } from '@/hooks/use-agents.hook';
 import { useProviderModels } from '@/hooks/use-agent-providers.hook';
 
@@ -29,6 +29,7 @@ import type { StartWorkDialogProps } from './workspaces.types';
 import {
   RUNTIME_STORAGE_KEY,
   DEFAULT_BRANCH_VALUE,
+  NEW_BRANCH_VALUE,
   DEFAULT_MODEL_VALUE,
   CUSTOM_MODEL_VALUE,
   ESTIMATE_MODEL_HINT,
@@ -42,18 +43,20 @@ export function StartWorkDialog({
   agentName,
   projectName,
   projectId,
-}: StartWorkDialogProps) {
+}: StartWorkDialogProps): ReactElement {
   const { data: runtimes = [], isLoading: runtimesLoading } = useAgentRuntimes();
   const { data: branches = [], isLoading: branchesLoading } = useProjectBranches(projectId);
   const { data: project } = useProject(projectId);
   const { data: agent } = useAgent(task?.agentId ?? undefined);
   const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(agent?.providerId ?? undefined);
   const startWork = useStartWork();
+  const createBranch = useCreateBranch(projectId);
 
   const [selectedRuntime, setSelectedRuntime] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<string>(DEFAULT_BRANCH_VALUE);
   const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL_VALUE);
   const [customModelText, setCustomModelText] = useState<string>('');
+  const [newBranchName, setNewBranchName] = useState<string>('');
 
   const currentRuntime = useMemo(
     () => runtimes.find((r) => r.id === selectedRuntime),
@@ -73,19 +76,28 @@ export function StartWorkDialog({
 
   useEffect(() => {
     if (!selectedRuntime) return;
+    const rt = runtimes.find((r) => r.id === selectedRuntime);
+    const presetValues = new Set(rt?.modelPresets?.map((p) => p.value) ?? []);
+    const isCompatible = (model: string) => presetValues.size === 0 || presetValues.has(model);
+
     const savedModel = localStorage.getItem(getModelStorageKey(selectedRuntime));
-    if (savedModel) {
+    if (savedModel && isCompatible(savedModel)) {
       setSelectedModel(savedModel);
-    } else if (agent?.defaultModel) {
+    } else if (agent?.defaultModel && isCompatible(agent.defaultModel)) {
       setSelectedModel(agent.defaultModel);
     } else {
       setSelectedModel(DEFAULT_MODEL_VALUE);
     }
     setCustomModelText('');
-  }, [selectedRuntime, agent?.defaultModel]);
+  }, [selectedRuntime, agent?.defaultModel, runtimes]);
 
   useEffect(() => {
-    if (open) setSelectedBranch(DEFAULT_BRANCH_VALUE);
+    if (open) {
+      setSelectedBranch(DEFAULT_BRANCH_VALUE);
+      setNewBranchName('');
+      createBranch.reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleRuntimeChange = (value: string) => {
@@ -101,9 +113,16 @@ export function StartWorkDialog({
     if (value !== CUSTOM_MODEL_VALUE) setCustomModelText('');
   };
 
-  const handleStart = () => {
+  const handleBranchChange = (value: string) => {
+    setSelectedBranch(value);
+    if (value !== NEW_BRANCH_VALUE) {
+      setNewBranchName('');
+      createBranch.reset();
+    }
+  };
+
+  const doStartWork = (baseBranch?: string) => {
     if (!task || !selectedRuntime) return;
-    const baseBranch = selectedBranch !== DEFAULT_BRANCH_VALUE ? selectedBranch : undefined;
 
     let model: string | undefined;
     if (selectedModel === CUSTOM_MODEL_VALUE && customModelText.trim()) {
@@ -123,6 +142,21 @@ export function StartWorkDialog({
       { onSuccess: () => onOpenChange(false) },
     );
   };
+
+  const handleStart = () => {
+    if (selectedBranch === NEW_BRANCH_VALUE && newBranchName.trim()) {
+      createBranch.mutate(
+        { name: newBranchName.trim() },
+        { onSuccess: (data) => doStartWork(data.branch) },
+      );
+    } else {
+      const baseBranch = selectedBranch !== DEFAULT_BRANCH_VALUE ? selectedBranch : undefined;
+      doStartWork(baseBranch);
+    }
+  };
+
+  const isNewBranchInvalid = selectedBranch === NEW_BRANCH_VALUE && !newBranchName.trim();
+  const isPending = startWork.isPending || createBranch.isPending;
 
   const defaultBranchLabel = project?.defaultBranch || 'auto-detect';
 
@@ -174,8 +208,12 @@ export function StartWorkDialog({
               branches={branches}
               isLoading={branchesLoading}
               value={selectedBranch}
-              onChange={setSelectedBranch}
+              onChange={handleBranchChange}
               defaultLabel={defaultBranchLabel}
+              newBranchName={newBranchName}
+              onNewBranchNameChange={setNewBranchName}
+              isCreating={createBranch.isPending}
+              createError={createBranch.isError ? (createBranch.error as Error).message : undefined}
             />
 
             {startWork.isError && (
@@ -191,9 +229,9 @@ export function StartWorkDialog({
               <Button
                 type="button"
                 onClick={handleStart}
-                disabled={!selectedRuntime || startWork.isPending}
+                disabled={!selectedRuntime || isPending || isNewBranchInvalid}
               >
-                {startWork.isPending ? 'Starting...' : 'Start Agent'}
+                {isPending ? 'Starting...' : 'Start Agent'}
               </Button>
             </div>
           </div>

@@ -29,3 +29,9 @@ export type WorkspaceDetailHeaderProps = {
 export type WorkspaceInfoCardsProps = {
   workspace: Workspace;
 };
+
+export type TerminalOutputProps = {
+  text: string;
+  isLive?: boolean;
+  title?: string;
+};

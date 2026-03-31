@@ -83,6 +83,31 @@ export class RulesService {
     }
   }
 
+  /** Bulk-imports detected AI config files as rules linked to a project. */
+  async bulkImportRules(
+    projectId: string,
+    items: Array<{ name: string; content: string; source: string; filePath: string }>,
+  ): Promise<{ imported: number; ids: string[] }> {
+    const FUNCTION_NAME = 'bulkImportRules';
+    try {
+      const ids: string[] = [];
+      for (const item of items) {
+        const rule = this.repo.insert({
+          name: item.name,
+          type: item.source,
+          tags: item.filePath,
+          content: item.content,
+          projectId,
+        });
+        ids.push(rule.id);
+      }
+      return { imported: ids.length, ids };
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to bulk-import rules', { cause: error });
+    }
+  }
+
   /** Returns a rule with its associated agents. */
   async getDetail(ruleId: string): Promise<RuleDetail> {
     const FUNCTION_NAME = 'getDetail';

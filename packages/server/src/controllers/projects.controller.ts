@@ -2,10 +2,10 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateProject, UpdateProject, AssignAgent } from '@atlas/shared';
+import type { CreateProject, UpdateProject, AssignAgent, CreateBranch, ImportRules } from '@atlas/shared';
 
 // Services
-import { projectsService, briefGeneratorService, agentsService } from '../services/index.js';
+import { projectsService, briefGeneratorService, agentsService, rulesService } from '../services/index.js';
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
@@ -25,6 +25,21 @@ export async function listProjects(c: Context) {
 export async function getProjectBranches(c: Context) {
   const branches = await projectsService.getBranches(c.req.param('id')!);
   return c.json(branches);
+}
+
+/** Bulk-imports detected AI config files as rules linked to the project. */
+export async function importProjectRules(c: Context) {
+  const projectId = c.req.param('id')!;
+  const { items } = getValidatedBody<ImportRules>(c);
+  const result = await rulesService.bulkImportRules(projectId, items);
+  return c.json(result, 201);
+}
+
+/** Creates a new git branch in a project's local repository. */
+export async function createProjectBranch(c: Context) {
+  const { name, baseBranch } = getValidatedBody<CreateBranch>(c);
+  const branch = await projectsService.createBranch(c.req.param('id')!, name, baseBranch);
+  return c.json({ branch }, 201);
 }
 
 /** Returns the full context for a project (agents, tasks, memories). */
