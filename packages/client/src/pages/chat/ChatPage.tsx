@@ -190,13 +190,13 @@ export function ChatPage() {
         </p>
         <div className="flex gap-3">
           <Button asChild variant="outline">
-            <Link to="/settings?tab=providers">
+            <Link to="/agents">
               <Settings className="h-4 w-4 mr-2" />
               Configure API Provider
             </Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/settings?tab=runtimes">
+            <Link to="/agents">
               <Terminal className="h-4 w-4 mr-2" />
               View CLI Agents
             </Link>

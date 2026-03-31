@@ -2,26 +2,18 @@ import { useSearchParams } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { McpConnectionPanel } from '@/components/settings/McpConnectionPanel';
 import { AppearanceTab } from './AppearanceTab';
 import { DefaultWorkspaceTab } from './DefaultWorkspaceTab';
-import { ServerInfoTab } from './ServerInfoTab';
-import { DataManagementTab } from './DataManagementTab';
-import { AboutTab } from './AboutTab';
+import { McpTab } from './McpTab';
 import { IntegrationsTab } from './IntegrationsTab';
-import { McpServersTab } from './McpServersTab';
-import { UsageTab } from './UsageTab';
+import { SystemTab } from './SystemTab';
 
 const VALID_TABS = [
   'appearance',
   'workspace',
   'mcp',
-  'mcp-servers',
-  'usage',
   'integrations',
-  'server-info',
-  'data',
-  'about',
+  'system',
 ] as const;
 
 type SettingsTab = (typeof VALID_TABS)[number];
@@ -54,14 +46,10 @@ export function SettingsPage() {
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="workspace">Default Workspace</TabsTrigger>
-          <TabsTrigger value="mcp">MCP Connection</TabsTrigger>
-          <TabsTrigger value="mcp-servers">MCP Servers</TabsTrigger>
-          <TabsTrigger value="usage">Usage</TabsTrigger>
+          <TabsTrigger value="workspace">Workspace</TabsTrigger>
+          <TabsTrigger value="mcp">MCP</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
-          <TabsTrigger value="server-info">Server Info</TabsTrigger>
-          <TabsTrigger value="data">Data Management</TabsTrigger>
-          <TabsTrigger value="about">About</TabsTrigger>
+          <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
 
         <TabsContent value="appearance" className="mt-6">
@@ -73,31 +61,15 @@ export function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="mcp" className="mt-6">
-          <McpConnectionPanel />
-        </TabsContent>
-
-        <TabsContent value="mcp-servers" className="mt-6">
-          <McpServersTab />
-        </TabsContent>
-
-        <TabsContent value="usage" className="mt-6">
-          <UsageTab />
+          <McpTab />
         </TabsContent>
 
         <TabsContent value="integrations" className="mt-6">
           <IntegrationsTab />
         </TabsContent>
 
-        <TabsContent value="server-info" className="mt-6">
-          <ServerInfoTab />
-        </TabsContent>
-
-        <TabsContent value="data" className="mt-6">
-          <DataManagementTab />
-        </TabsContent>
-
-        <TabsContent value="about" className="mt-6">
-          <AboutTab />
+        <TabsContent value="system" className="mt-6">
+          <SystemTab />
         </TabsContent>
       </Tabs>
     </div>

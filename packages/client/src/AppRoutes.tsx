@@ -17,6 +17,7 @@ import { WorkspaceDetailPage } from '@/pages/workspaces/WorkspaceDetailPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
 import { GlobalPage } from '@/pages/global/GlobalPage';
 import { ChatPage } from '@/pages/chat/ChatPage';
+import { UsagePage } from '@/pages/usage/UsagePage';
 
 export function AppRoutes() {
   return (
@@ -35,6 +36,7 @@ export function AppRoutes() {
       <Route path="/workspaces" element={<WorkspacesPage />} />
       <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
       <Route path="/global" element={<GlobalPage />} />
+      <Route path="/usage" element={<UsagePage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/chat" element={<ChatPage />} />
       <Route path="/chat/:id" element={<ChatPage />} />
