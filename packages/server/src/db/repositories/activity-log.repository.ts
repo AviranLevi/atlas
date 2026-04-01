@@ -1,13 +1,13 @@
 // External
-import { eq, desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 // DB
 import type { DB } from '../index.js';
 import { activityLog } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/activity-log.repository.ts';
 
@@ -87,12 +87,7 @@ export class ActivityLogRepository {
   findAll(limit = 50): ActivityLogEntry[] {
     const FUNCTION_NAME = 'findAll';
     try {
-      const rows = this.db
-        .select()
-        .from(activityLog)
-        .orderBy(desc(activityLog.createdAt))
-        .limit(limit)
-        .all();
+      const rows = this.db.select().from(activityLog).orderBy(desc(activityLog.createdAt)).limit(limit).all();
       return rows.map((r) => parseEntry(r as ActivityLogRow));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

@@ -12,7 +12,7 @@ export function timeAgo(dateStr: string): string {
 export function contentPreview(content: string | null, maxLen = 100): string {
   if (!content) return '';
   return content
-    .replace(/[#*_`~\[\]>]/g, '')
+    .replace(/[#*_`~[\]>]/g, '')
     .replace(/\n+/g, ' ')
     .trim()
     .slice(0, maxLen);

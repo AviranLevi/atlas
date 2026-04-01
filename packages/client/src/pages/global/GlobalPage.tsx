@@ -1,8 +1,8 @@
 // React / library
+import { Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Globe } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { GlobalInstructionsCard } from '@/pages/settings/GlobalInstructionsCard';
 import { DispatchRulesCard } from '@/pages/settings/DispatchRulesCard';
+import { GlobalInstructionsCard } from '@/pages/settings/GlobalInstructionsCard';
 
-// Hooks / context
+// Hooks
+import { useAgents } from '@/hooks/use-agents.hook';
 import {
   useGlobalInstructions,
   useUpdateGlobalInstructions,
@@ -27,7 +28,6 @@ import {
   useUpdateDispatchRule,
   useDeleteDispatchRule,
 } from '@/hooks/use-settings.hook';
-import { useAgents } from '@/hooks/use-agents.hook';
 import { useSkills } from '@/hooks/use-skills.hook';
 
 // Types
@@ -76,7 +76,7 @@ export function GlobalPage() {
   };
 
   const getAgentName = (id: string) => agents.find((a) => a.id === id)?.name ?? 'Unknown';
-  const getSkillName = (id: string | null) => (id ? skills.find((s) => s.id === id)?.name ?? '—' : '—');
+  const getSkillName = (id: string | null) => (id ? (skills.find((s) => s.id === id)?.name ?? '—') : '—');
 
   const handleCancelEdit = () => {
     setEditingRuleId(null);
@@ -92,14 +92,23 @@ export function GlobalPage() {
     };
     if (editingRuleId === 'new') {
       createRule.mutate(payload, {
-        onSuccess: () => { handleCancelEdit(); toast.success('Dispatch rule created'); },
+        onSuccess: () => {
+          handleCancelEdit();
+          toast.success('Dispatch rule created');
+        },
         onError: (err) => toast.error(err.message ?? 'Failed to create rule'),
       });
     } else if (editingRuleId) {
-      updateRule.mutate({ id: editingRuleId, data: payload }, {
-        onSuccess: () => { handleCancelEdit(); toast.success('Dispatch rule updated'); },
-        onError: (err) => toast.error(err.message ?? 'Failed to update rule'),
-      });
+      updateRule.mutate(
+        { id: editingRuleId, data: payload },
+        {
+          onSuccess: () => {
+            handleCancelEdit();
+            toast.success('Dispatch rule updated');
+          },
+          onError: (err) => toast.error(err.message ?? 'Failed to update rule'),
+        },
+      );
     }
   };
 
@@ -123,9 +132,7 @@ export function GlobalPage() {
         <Globe className="h-8 w-8 text-muted-foreground" />
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Global Configuration</h1>
-          <p className="text-muted-foreground mt-1">
-            Configure global instructions and dispatch rules for all agents
-          </p>
+          <p className="text-muted-foreground mt-1">Configure global instructions and dispatch rules for all agents</p>
         </div>
       </div>
 
@@ -142,13 +149,22 @@ export function GlobalPage() {
             isDirty={instructionsDirty}
             isSaving={updateInstructions.isPending}
             error={instructionsError}
-            onChange={(v) => { setInstructions(v); setInstructionsDirty(true); }}
+            onChange={(v) => {
+              setInstructions(v);
+              setInstructionsDirty(true);
+            }}
             onSave={() => {
               if (!instructionsDirty) return;
-              updateInstructions.mutate({ content: instructions }, {
-                onSuccess: () => { setInstructionsDirty(false); toast.success('Instructions saved'); },
-                onError: (err) => toast.error(err.message ?? 'Failed to save instructions'),
-              });
+              updateInstructions.mutate(
+                { content: instructions },
+                {
+                  onSuccess: () => {
+                    setInstructionsDirty(false);
+                    toast.success('Instructions saved');
+                  },
+                  onError: (err) => toast.error(err.message ?? 'Failed to save instructions'),
+                },
+              );
             }}
           />
         </TabsContent>
@@ -165,9 +181,17 @@ export function GlobalPage() {
             isSaving={createRule.isPending || updateRule.isPending}
             error={dispatchError}
             onFormChange={setRuleForm}
-            onAdd={() => { setRuleForm(emptyRuleForm); setEditingRuleId('new'); }}
+            onAdd={() => {
+              setRuleForm(emptyRuleForm);
+              setEditingRuleId('new');
+            }}
             onEdit={(rule: DispatchRule) => {
-              setRuleForm({ pattern: rule.pattern, agentId: rule.agentId, skillId: rule.skillId ?? NONE_SKILL_VALUE, autoStart: rule.autoStart });
+              setRuleForm({
+                pattern: rule.pattern,
+                agentId: rule.agentId,
+                skillId: rule.skillId ?? NONE_SKILL_VALUE,
+                autoStart: rule.autoStart,
+              });
               setEditingRuleId(rule.id);
             }}
             onDelete={(id) => setDeleteRuleId(id)}
@@ -188,7 +212,9 @@ export function GlobalPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteRuleId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteRuleId(null)}>
+              Cancel
+            </Button>
             <Button
               variant="destructive"
               onClick={() => {

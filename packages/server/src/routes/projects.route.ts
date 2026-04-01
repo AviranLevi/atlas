@@ -1,26 +1,32 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateProjectSchema, UpdateProjectSchema, AssignAgentSchema, CreateBranchSchema, ImportRulesSchema } from '@atlas/shared';
+import {
+  AssignAgentSchema,
+  CreateBranchSchema,
+  CreateProjectSchema,
+  ImportRulesSchema,
+  UpdateProjectSchema,
+} from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import {
-  listProjects,
-  getProjectBranches,
-  createProjectBranch,
-  importProjectRules,
-  getProjectContext,
-  getProject,
-  createProject,
-  scanProject,
-  generateProjectBrief,
-  updateProject,
-  deleteProject,
-  listProjectAgents,
   assignProjectAgent,
+  createProject,
+  createProjectBranch,
+  deleteProject,
+  generateProjectBrief,
+  getProject,
+  getProjectBranches,
+  getProjectContext,
+  importProjectRules,
+  listProjectAgents,
+  listProjects,
+  scanProject,
   unassignProjectAgent,
+  updateProject,
 } from '../controllers/projects.controller.js';
 
 export const projectsRoute = new Hono()

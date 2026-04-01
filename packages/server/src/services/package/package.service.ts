@@ -1,25 +1,14 @@
-import type {
-  AtlasPackage,
-  ImportRequest,
-  Agent,
-  Skill,
-  Rule,
-  AgentProvider,
-  PackageSkill,
-  PackageRule,
-} from '@atlas/shared';
+// Shared
+import type { AtlasPackage, ImportRequest, PackageRule, PackageSkill, Rule, Skill } from '@atlas/shared';
 import { AtlasPackageSchema } from '@atlas/shared';
 
-import {
-  agentsService,
-  skillsService,
-  rulesService,
-  agentProvidersService,
-} from '../index.js';
-import { logger } from '../../lib/logger.js';
-import { AppError } from '../../lib/errors.js';
+// Services
+import { agentProvidersService, agentsService, rulesService, skillsService } from '../index.js';
 
+// Lib
 import type { ImportPreview, ImportSummary } from './package.types.js';
+import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/package/package.service.ts';
 
@@ -191,10 +180,7 @@ export class PackageService {
       const nameToSkillId = new Map<string, string>();
       const nameToRuleId = new Map<string, string>();
 
-      const [allSkills, allRules] = await Promise.all([
-        skillsService.list(),
-        rulesService.list(),
-      ]);
+      const [allSkills, allRules] = await Promise.all([skillsService.list(), rulesService.list()]);
 
       for (const skillData of pkg.skills ?? []) {
         const resolution = res.skills[skillData.name];
@@ -213,9 +199,7 @@ export class PackageService {
           continue;
         }
 
-        const createName = resolution?.action === 'rename' && resolution.rename
-          ? resolution.rename
-          : skillData.name;
+        const createName = resolution?.action === 'rename' && resolution.rename ? resolution.rename : skillData.name;
         const created = await skillsService.create({ ...skillData, name: createName });
         skillIds.push(created.id);
         nameToSkillId.set(skillData.name, created.id);
@@ -238,9 +222,7 @@ export class PackageService {
           continue;
         }
 
-        const createName = resolution?.action === 'rename' && resolution.rename
-          ? resolution.rename
-          : ruleData.name;
+        const createName = resolution?.action === 'rename' && resolution.rename ? resolution.rename : ruleData.name;
         const created = await rulesService.create({ ...ruleData, name: createName });
         ruleIds.push(created.id);
         nameToRuleId.set(ruleData.name, created.id);

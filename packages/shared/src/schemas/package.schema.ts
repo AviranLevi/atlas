@@ -1,10 +1,10 @@
-import { z } from "zod";
-import { CreateAgentSchema } from "./agents.schema";
-import { CreateSkillSchema } from "./skills.schema";
-import { CreateRuleSchema } from "./rules.schema";
-import { ProviderTypeEnum } from "./agent-providers.schema";
+import { z } from 'zod';
+import { ProviderTypeEnum } from './agent-providers.schema';
+import { CreateAgentSchema } from './agents.schema';
+import { CreateRuleSchema } from './rules.schema';
+import { CreateSkillSchema } from './skills.schema';
 
-export const PackageTypeEnum = z.enum(["agent", "skill", "rule"]);
+export const PackageTypeEnum = z.enum(['agent', 'skill', 'rule']);
 
 export const PackageProviderHintSchema = z.object({
   type: ProviderTypeEnum,
@@ -23,12 +23,12 @@ export const PackageSkillSchema = CreateSkillSchema.omit({ projectId: true });
 export const PackageRuleSchema = CreateRuleSchema.omit({ projectId: true });
 
 export const AtlasPackageSchema = z.object({
-  atlas: z.literal("1.0"),
+  atlas: z.literal('1.0'),
   type: PackageTypeEnum,
   name: z.string().min(1).max(200),
   version: z.string().min(1).max(50),
-  description: z.string().optional().default(""),
-  author: z.string().optional().default(""),
+  description: z.string().optional().default(''),
+  author: z.string().optional().default(''),
   tags: z.array(z.string()).optional().default([]),
   agent: PackageAgentSchema.optional(),
   skills: z.array(PackageSkillSchema).optional().default([]),
@@ -36,7 +36,7 @@ export const AtlasPackageSchema = z.object({
 });
 
 export const ImportResolutionSchema = z.object({
-  action: z.enum(["create", "overwrite", "rename"]),
+  action: z.enum(['create', 'overwrite', 'rename']),
   rename: z.string().optional(),
 });
 

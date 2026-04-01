@@ -1,28 +1,25 @@
-import fs from 'fs';
-import path from 'path';
+// External
+import fs from 'node:fs';
+import path from 'node:path';
 
-import type {
-  CreateAgent,
-  CreateMemory,
-  CreateRule,
-  CreateSkill,
-  CreateTask,
-  UpdateTask,
-} from '@atlas/shared';
+// Shared
+import type { CreateAgent, CreateMemory, CreateRule, CreateSkill, CreateTask, UpdateTask } from '@atlas/shared';
 
+// Services
 import {
-  tasksService,
   agentsService,
-  rulesService,
-  skillsService,
   memoryService,
-  searchService,
-  projectsService,
   orchestratorService,
+  projectsService,
+  rulesService,
+  searchService,
+  skillsService,
+  tasksService,
 } from '../../services/index.js';
 
+// Lib
+import type { ToolContext, ToolDefinition } from './chat.types.js';
 import { logger } from '../logger.js';
-import type { ToolDefinition, ToolContext } from './chat.types.js';
 
 const FILE_PATH = 'lib/chat/chat-tools.ts';
 
@@ -141,8 +138,7 @@ export const CHAT_TOOLS: ToolDefinition[] = [
   },
   {
     name: 'create_memory',
-    description:
-      'Save a decision, convention, preference, or problem as a memory entry for future reference.',
+    description: 'Save a decision, convention, preference, or problem as a memory entry for future reference.',
     parameters: {
       type: 'object',
       properties: {
@@ -208,11 +204,7 @@ function isResolvedPathInsideRoot(root: string, candidate: string): boolean {
 }
 
 /** Runs a named chat tool with validated-style args and request context. */
-export async function executeTool(
-  name: string,
-  args: Record<string, unknown>,
-  context: ToolContext,
-): Promise<unknown> {
+export async function executeTool(name: string, args: Record<string, unknown>, context: ToolContext): Promise<unknown> {
   try {
     switch (name) {
       case 'create_task': {

@@ -2,15 +2,15 @@
 import { eq } from 'drizzle-orm';
 
 // Shared
-import type { Review, ChecklistItem } from '@atlas/shared';
+import type { ChecklistItem, Review } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
 import { reviews } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/reviews.repository.ts';
 
@@ -108,14 +108,17 @@ export class ReviewsRepository {
   }
 
   /** Updates a review with selective field updates and returns the updated record. */
-  update(id: string, data: {
-    checklist?: ChecklistItem[] | null;
-    notes?: string | null;
-    status?: string;
-    reviewerId?: string | null;
-    reviewerType?: string;
-    decidedAt?: string | null;
-  }): Review {
+  update(
+    id: string,
+    data: {
+      checklist?: ChecklistItem[] | null;
+      notes?: string | null;
+      status?: string;
+      reviewerId?: string | null;
+      reviewerType?: string;
+      decidedAt?: string | null;
+    },
+  ): Review {
     const FUNCTION_NAME = 'update';
     try {
       const updateData: Record<string, unknown> = {
@@ -130,12 +133,7 @@ export class ReviewsRepository {
       if (data.reviewerType !== undefined) updateData.reviewerType = data.reviewerType;
       if (data.decidedAt !== undefined) updateData.decidedAt = data.decidedAt;
 
-      const result = this.db
-        .update(reviews)
-        .set(updateData)
-        .where(eq(reviews.id, id))
-        .returning()
-        .get();
+      const result = this.db.update(reviews).set(updateData).where(eq(reviews.id, id)).returning().get();
       return parseReview(result as ReviewRow);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

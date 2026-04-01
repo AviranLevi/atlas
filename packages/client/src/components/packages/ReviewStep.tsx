@@ -1,16 +1,13 @@
-import { Check, AlertTriangle } from 'lucide-react';
-import type { AtlasPackage, AgentProvider } from '@atlas/shared';
+// React / library
+import { AlertTriangle, Check } from 'lucide-react';
 
+// Components
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ConflictItem } from './ConflictItem';
+
+// Types
+import type { AgentProvider, AtlasPackage } from '@atlas/shared';
 import type { ImportPreviewData, Resolutions } from './packages.types';
 
 type ReviewStepProps = {
@@ -23,20 +20,18 @@ type ReviewStepProps = {
 
 export function ReviewStep({ pkg, preview, providers, resolutions, onResolutionsChange }: ReviewStepProps) {
   const hasConflicts =
-    preview.agent?.conflict ||
-    preview.skills.some((s) => s.conflict) ||
-    preview.rules.some((r) => r.conflict);
+    preview.agent?.conflict || preview.skills.some((s) => s.conflict) || preview.rules.some((r) => r.conflict);
 
   return (
     <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
       <div className="rounded-lg border p-3 space-y-1">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">{pkg.name}</span>
-          <Badge variant="outline" className="text-xs">{pkg.type}</Badge>
+          <Badge variant="outline" className="text-xs">
+            {pkg.type}
+          </Badge>
         </div>
-        {pkg.version && (
-          <span className="text-xs text-muted-foreground">v{pkg.version}</span>
-        )}
+        {pkg.version && <span className="text-xs text-muted-foreground">v{pkg.version}</span>}
       </div>
 
       {preview.agent && (
@@ -103,9 +98,7 @@ export function ReviewStep({ pkg, preview, providers, resolutions, onResolutions
               {providers.length > 0 && (
                 <Select
                   value={resolutions.providerId ?? ''}
-                  onValueChange={(v) =>
-                    onResolutionsChange((prev) => ({ ...prev, providerId: v || null }))
-                  }
+                  onValueChange={(v) => onResolutionsChange((prev) => ({ ...prev, providerId: v || null }))}
                 >
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="Select a provider..." />

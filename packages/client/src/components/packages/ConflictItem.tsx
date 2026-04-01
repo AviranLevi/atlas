@@ -1,14 +1,10 @@
+// React / library
 import { AlertTriangle, Check } from 'lucide-react';
 
+// Components
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type ConflictItemProps = {
   label: string;
@@ -18,19 +14,15 @@ type ConflictItemProps = {
   onResolutionChange: (r: { action: 'overwrite' | 'rename'; rename?: string }) => void;
 };
 
-export function ConflictItem({
-  label,
-  name,
-  conflict,
-  resolution,
-  onResolutionChange,
-}: ConflictItemProps) {
+export function ConflictItem({ label, name, conflict, resolution, onResolutionChange }: ConflictItemProps) {
   if (!conflict) {
     return (
       <div className="flex items-center gap-2 rounded-lg border p-3">
         <Check className="h-4 w-4 text-green-500 shrink-0" />
         <span className="text-sm">{name}</span>
-        <Badge variant="secondary" className="text-xs ml-auto">{label}</Badge>
+        <Badge variant="secondary" className="text-xs ml-auto">
+          {label}
+        </Badge>
       </div>
     );
   }
@@ -40,7 +32,9 @@ export function ConflictItem({
       <div className="flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
         <span className="text-sm font-medium">{name}</span>
-        <Badge variant="outline" className="text-xs ml-auto">{label}</Badge>
+        <Badge variant="outline" className="text-xs ml-auto">
+          {label}
+        </Badge>
       </div>
       <p className="text-xs text-muted-foreground">
         A {label.toLowerCase()} named &ldquo;{conflict.name}&rdquo; already exists.

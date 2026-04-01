@@ -4,13 +4,7 @@ import { Save, X, Zap } from 'lucide-react';
 // Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Types
 import type { DispatchRuleFormRowProps } from './settings-page.types';
@@ -36,10 +30,7 @@ export function DispatchRuleFormRow({
         onChange={(e) => onChange({ ...form, pattern: e.target.value })}
         placeholder="Pattern (e.g. feature/*)"
       />
-      <Select
-        value={form.agentId}
-        onValueChange={(v) => onChange({ ...form, agentId: v })}
-      >
+      <Select value={form.agentId} onValueChange={(v) => onChange({ ...form, agentId: v })}>
         <SelectTrigger>
           <SelectValue placeholder="Select agent" />
         </SelectTrigger>
@@ -51,10 +42,7 @@ export function DispatchRuleFormRow({
           ))}
         </SelectContent>
       </Select>
-      <Select
-        value={form.skillId}
-        onValueChange={(v) => onChange({ ...form, skillId: v })}
-      >
+      <Select value={form.skillId} onValueChange={(v) => onChange({ ...form, skillId: v })}>
         <SelectTrigger>
           <SelectValue placeholder="Select skill" />
         </SelectTrigger>
@@ -79,21 +67,10 @@ export function DispatchRuleFormRow({
         </Button>
       </div>
       <div className="flex gap-1">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onSave}
-          disabled={!isValid || isSaving}
-          aria-label="Save"
-        >
+        <Button size="icon" variant="ghost" onClick={onSave} disabled={!isValid || isSaving} aria-label="Save">
           <Save className="h-4 w-4" />
         </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onCancel}
-          aria-label="Cancel"
-        >
+        <Button size="icon" variant="ghost" onClick={onCancel} aria-label="Cancel">
           <X className="h-4 w-4" />
         </Button>
       </div>

@@ -22,11 +22,7 @@ export function ProjectBriefSection({ project, generateBrief }: ProjectBriefSect
             </Badge>
           </div>
           <Button variant="ghost" size="sm" asChild>
-            <button
-              type="button"
-              onClick={() => generateBrief.mutate(project.id)}
-              disabled={generateBrief.isPending}
-            >
+            <button type="button" onClick={() => generateBrief.mutate(project.id)} disabled={generateBrief.isPending}>
               <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${generateBrief.isPending ? 'animate-spin' : ''}`} />
               {generateBrief.isPending ? 'Regenerating...' : 'Regenerate'}
             </button>
@@ -54,11 +50,7 @@ export function ProjectBriefSection({ project, generateBrief }: ProjectBriefSect
           </div>
         </div>
         <Button variant="outline" size="sm" asChild>
-          <button
-            type="button"
-            onClick={() => generateBrief.mutate(project.id)}
-            disabled={generateBrief.isPending}
-          >
+          <button type="button" onClick={() => generateBrief.mutate(project.id)} disabled={generateBrief.isPending}>
             <FileText className={`mr-1.5 h-4 w-4 ${generateBrief.isPending ? 'animate-pulse' : ''}`} />
             {generateBrief.isPending ? 'Generating...' : 'Generate Brief'}
           </button>

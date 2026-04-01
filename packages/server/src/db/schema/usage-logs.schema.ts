@@ -1,10 +1,11 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { uuidDefault, timestampDefault } from '../helpers/index.js';
+// External
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+// DB
+import { timestampDefault, uuidDefault } from '../helpers/index.js';
 
 export const usageLogs = sqliteTable('usage_logs', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(uuidDefault),
+  id: text('id').primaryKey().$defaultFn(uuidDefault),
   workspaceId: text('workspace_id'),
   conversationId: text('conversation_id'),
   agentId: text('agent_id'),
@@ -15,7 +16,5 @@ export const usageLogs = sqliteTable('usage_logs', {
   totalTokens: integer('total_tokens').notNull().default(0),
   model: text('model'),
   providerType: text('provider_type'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(timestampDefault),
+  createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
 });

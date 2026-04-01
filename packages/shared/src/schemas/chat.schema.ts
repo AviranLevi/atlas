@@ -1,7 +1,7 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const ChatBackendTypeEnum = z.enum(["api", "cli"]);
-export const ChatMessageRoleEnum = z.enum(["user", "assistant", "tool"]);
+export const ChatBackendTypeEnum = z.enum(['api', 'cli']);
+export const ChatMessageRoleEnum = z.enum(['user', 'assistant', 'tool']);
 
 export const ChatToolCallSchema = z.object({
   id: z.string(),
@@ -38,7 +38,7 @@ export const ChatMessageSchema = z.object({
 
 export const CreateConversationSchema = z.object({
   projectId: z.string().uuid().nullable().optional(),
-  backendType: ChatBackendTypeEnum.default("api"),
+  backendType: ChatBackendTypeEnum.default('api'),
   providerId: z.string().uuid().nullable().optional(),
   executorId: z.string().nullable().optional(),
   model: z.string().nullable().optional(),

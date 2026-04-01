@@ -1,15 +1,15 @@
 // Shared
 import type { UsageLog, UsageSummary, UsageSummaryItem } from '@atlas/shared';
 
+// Services
+import { agentsService, projectsService } from '../index.js';
+
 // Repositories
 import { usageRepository } from '../../db/repositories/index.js';
 
 // Lib
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
-
-// Services
-import { agentsService, projectsService } from '../index.js';
 
 const FILE_PATH = 'services/usage/usage.service.ts';
 

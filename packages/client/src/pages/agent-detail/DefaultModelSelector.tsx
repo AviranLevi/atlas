@@ -1,12 +1,12 @@
 // React / library
-import { useState, useMemo, useCallback } from 'react';
 import { Cpu, Pencil, X, Check, Loader2 } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
 
 // Components
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/select';
 
 // Hooks
-import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 import { useProviderModels } from '@/hooks/use-agent-providers.hook';
+import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 
 // Types
 import type { AgentProvider, ExecutorStatus, ProviderModel } from '@atlas/shared';
@@ -100,12 +100,7 @@ export type DefaultModelSelectorProps = {
   onSave: (value: string | null) => void;
 };
 
-export function DefaultModelSelector({
-  value,
-  provider,
-  isPending,
-  onSave,
-}: DefaultModelSelectorProps) {
+export function DefaultModelSelector({ value, provider, isPending, onSave }: DefaultModelSelectorProps) {
   const { data: runtimes = [] } = useAgentRuntimes();
   const { data: providerModels = [], isLoading: modelsLoading } = useProviderModels(provider?.id);
   const [editing, setEditing] = useState(false);
@@ -255,9 +250,7 @@ export function DefaultModelSelector({
         >
           <div className="flex items-center gap-2">
             <code className="text-sm font-mono">{displayLabel}</code>
-            {displayLabel !== value && (
-              <span className="text-muted-foreground text-xs">({value})</span>
-            )}
+            {displayLabel !== value && <span className="text-muted-foreground text-xs">({value})</span>}
           </div>
         </button>
       ) : (

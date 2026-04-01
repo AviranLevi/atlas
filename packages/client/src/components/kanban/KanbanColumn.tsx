@@ -1,8 +1,17 @@
+// React / library
 import { useDroppable } from '@dnd-kit/core';
-import { cn } from '@/lib/utils';
+
+// Components
 import { Badge } from '@/components/ui/badge';
 import { KanbanCard } from './KanbanCard';
+
+// Lib
+import { cn } from '@/lib/utils';
+
+// Types
 import type { KanbanColumnProps } from './kanban.types';
+
+// Constants
 import { COLUMN_STYLES, DEFAULT_COLUMN_STYLE } from './kanban.constants';
 
 export function KanbanColumn({
@@ -26,7 +35,7 @@ export function KanbanColumn({
       className={cn(
         'flex min-w-0 flex-1 flex-col rounded-lg border p-4 transition-colors',
         columnStyle,
-        isOver && 'bg-accent/50'
+        isOver && 'bg-accent/50',
       )}
     >
       <div className="mb-4 flex items-center justify-between">

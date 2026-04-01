@@ -2,10 +2,10 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateReview, UpdateReview, DecideReview, SubmitAiReview } from '@atlas/shared';
+import type { CreateReview, DecideReview, SubmitAiReview, UpdateReview } from '@atlas/shared';
 
 // Services
-import { reviewsService, orchestratorService } from '../services/index.js';
+import { orchestratorService, reviewsService } from '../services/index.js';
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
@@ -57,6 +57,10 @@ export async function submitAiReview(c: Context): Promise<Response> {
 export async function startAiReview(c: Context): Promise<Response> {
   const { agentRuntimeId, autoFix } = getValidatedBody<{ agentRuntimeId: string; autoFix?: boolean }>(c);
   const review = await reviewsService.getById(c.req.param('id')!);
-  const updatedWorkspace = await orchestratorService.startAiReviewForTask(review.taskId, agentRuntimeId, autoFix ?? false);
+  const updatedWorkspace = await orchestratorService.startAiReviewForTask(
+    review.taskId,
+    agentRuntimeId,
+    autoFix ?? false,
+  );
   return c.json(updatedWorkspace);
 }

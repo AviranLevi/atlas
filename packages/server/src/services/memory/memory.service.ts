@@ -1,5 +1,5 @@
 // Shared
-import type { Memory, CreateMemory, UpdateMemory } from '@atlas/shared';
+import type { CreateMemory, Memory, UpdateMemory } from '@atlas/shared';
 
 // Services
 import { briefGeneratorService, supermemoryService } from '../index.js';
@@ -8,8 +8,8 @@ import { briefGeneratorService, supermemoryService } from '../index.js';
 import { memoryRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/memory/memory.service.ts';
 
@@ -34,10 +34,7 @@ export class MemoryService {
     }
   }
 
-  private applyFilters(
-    memories: Memory[],
-    filters?: { type?: string; scope?: string; agentId?: string },
-  ): Memory[] {
+  private applyFilters(memories: Memory[], filters?: { type?: string; scope?: string; agentId?: string }): Memory[] {
     let result = memories;
     if (filters?.type) {
       result = result.filter((m) => m.type === filters.type);

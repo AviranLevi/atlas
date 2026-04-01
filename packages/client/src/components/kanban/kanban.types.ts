@@ -1,4 +1,5 @@
-import type { Task, TaskPriority, TaskEstimate, TaskStatus } from '@atlas/shared';
+// Types
+import type { Task, TaskEstimate, TaskPriority, TaskStatus } from '@atlas/shared';
 
 export type KanbanCardActionsProps = {
   task: Task;

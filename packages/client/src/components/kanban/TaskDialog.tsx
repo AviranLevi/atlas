@@ -1,25 +1,39 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+// React / library
+import { TASK_STATUS } from '@atlas/shared';
+
+// Components
+import { ReviewPanel } from '@/components/reviews/ReviewPanel';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ReviewPanel } from '@/components/reviews/ReviewPanel';
 import { TaskAdvancedFields } from './TaskAdvancedFields';
 import { TaskCoreFields } from './TaskCoreFields';
 
-import { TASK_STATUS } from '@atlas/shared';
-import type { TaskDialogProps } from './kanban.types';
-import { NONE_VALUE } from './kanban.constants';
+// Hooks
 import { useTaskForm } from './use-task-form.hook';
 
-export function TaskDialog({ open, onOpenChange, task, defaultProjectId, defaultStatus, followUpContext }: TaskDialogProps) {
+// Types
+import type { TaskDialogProps } from './kanban.types';
+
+// Constants
+import { NONE_VALUE } from './kanban.constants';
+
+export function TaskDialog({
+  open,
+  onOpenChange,
+  task,
+  defaultProjectId,
+  defaultStatus,
+  followUpContext,
+}: TaskDialogProps) {
   const form = useTaskForm({
-    task, open, defaultProjectId, defaultStatus, followUpContext,
+    task,
+    open,
+    defaultProjectId,
+    defaultStatus,
+    followUpContext,
     onClose: () => onOpenChange(false),
   });
 
@@ -101,16 +115,10 @@ export function TaskDialog({ open, onOpenChange, task, defaultProjectId, default
             noneValue={NONE_VALUE}
           />
 
-          {form.isEditing && task?.status === TASK_STATUS.IN_REVIEW && (
-            <ReviewPanel taskId={task.id} />
-          )}
+          {form.isEditing && task?.status === TASK_STATUS.IN_REVIEW && <ReviewPanel taskId={task.id} />}
 
           <div className="flex items-center justify-end gap-2 pt-1">
-            {form.submitError && (
-              <p className="mr-auto text-sm text-destructive">
-                {form.submitError.message}
-              </p>
-            )}
+            {form.submitError && <p className="mr-auto text-sm text-destructive">{form.submitError.message}</p>}
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

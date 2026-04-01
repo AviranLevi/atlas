@@ -1,27 +1,27 @@
 // React / library
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 // Components
-import { Button } from '@/components/ui/button';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { Button } from '@/components/ui/button';
+import { RerunDialog } from '@/components/workspaces/RerunDialog';
+import { AiReviewDialog } from './components/AiReviewDialog';
+import { TerminalOutput } from './components/TerminalOutput';
 import { WorkspaceDetailHeader } from './components/WorkspaceDetailHeader';
 import { WorkspaceInfoCards } from './components/WorkspaceInfoCards';
 import { DiffSection } from './diff';
-import { AiReviewDialog } from './components/AiReviewDialog';
-import { RerunDialog } from '@/components/workspaces/RerunDialog';
-import { TerminalOutput } from './components/TerminalOutput';
 
 // Hooks
+import { useProject } from '@/hooks/use-projects.hook';
+import { useReview, useStartAiReview } from '@/hooks/use-reviews.hook';
 import {
   useWorkspaceStatus,
   useStopWork,
   useCleanupWorkspace,
   useWorkspaceLogStream,
 } from '@/hooks/use-workspaces.hook';
-import { useProject } from '@/hooks/use-projects.hook';
-import { useReview, useStartAiReview } from '@/hooks/use-reviews.hook';
 
 // Types
 import type { DiffComment } from '@atlas/shared';
@@ -133,9 +133,7 @@ export function WorkspaceDetailPage() {
             Hover over a line and click the comment icon to leave inline feedback.
           </p>
           {startAiReview.isError && (
-            <p className="text-sm text-destructive mb-3">
-              AI review failed: {(startAiReview.error as Error).message}
-            </p>
+            <p className="text-sm text-destructive mb-3">AI review failed: {(startAiReview.error as Error).message}</p>
           )}
           <DiffSection
             workspaceId={workspace.id}

@@ -1,3 +1,4 @@
+// External
 import type Database from 'better-sqlite3';
 
 /**

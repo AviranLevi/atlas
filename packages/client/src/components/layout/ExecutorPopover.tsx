@@ -1,19 +1,17 @@
 // React / library
-import { useState, useCallback } from 'react';
-import { RefreshCw, ExternalLink, Terminal, Copy, Check } from 'lucide-react';
+import { Check, Copy, ExternalLink, RefreshCw, Terminal } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
 // Components
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+// Lib
+import { cn } from '@/lib/utils';
 
 // Types
-import type { ExecutorPopoverProps, CopyCommandProps } from './layout.types';
+import type { CopyCommandProps, ExecutorPopoverProps } from './layout.types';
 
 function CopyCommand({ label, command }: CopyCommandProps) {
   const [copied, setCopied] = useState(false);
@@ -43,11 +41,7 @@ function CopyCommand({ label, command }: CopyCommandProps) {
   );
 }
 
-export function ExecutorPopover({
-  executor,
-  onRecheck,
-  isRechecking,
-}: ExecutorPopoverProps) {
+export function ExecutorPopover({ executor, onRecheck, isRechecking }: ExecutorPopoverProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -70,9 +64,7 @@ export function ExecutorPopover({
           />
           <span className="flex-1 truncate font-medium">{executor.name}</span>
           {executor.installed && executor.version && (
-            <span className="shrink-0 text-[10px] text-muted-foreground font-mono">
-              {executor.version}
-            </span>
+            <span className="shrink-0 text-[10px] text-muted-foreground font-mono">{executor.version}</span>
           )}
         </button>
       </PopoverTrigger>
@@ -92,11 +84,17 @@ export function ExecutorPopover({
                 Not found
               </Badge>
             ) : executor.authenticated ? (
-              <Badge variant="outline" className="text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+              <Badge
+                variant="outline"
+                className="text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
+              >
                 Ready
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-[10px] border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
+              <Badge
+                variant="outline"
+                className="text-[10px] border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300"
+              >
                 Not authenticated
               </Badge>
             )}
@@ -127,12 +125,8 @@ export function ExecutorPopover({
 
         {executor.setup && (!executor.installed || !executor.authenticated) && (
           <div className="border-t px-4 py-3 space-y-2">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Setup
-            </span>
-            {!executor.installed && (
-              <CopyCommand label="1. Install" command={executor.setup.install} />
-            )}
+            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Setup</span>
+            {!executor.installed && <CopyCommand label="1. Install" command={executor.setup.install} />}
             {executor.installed && !executor.authenticated && executor.setup.auth && (
               <CopyCommand label="Authenticate" command={executor.setup.auth} />
             )}
@@ -146,12 +140,7 @@ export function ExecutorPopover({
               onClick={onRecheck}
               disabled={isRechecking}
             >
-              <RefreshCw
-                className={cn(
-                  'mr-1.5 h-3 w-3',
-                  isRechecking && 'animate-spin',
-                )}
-              />
+              <RefreshCw className={cn('mr-1.5 h-3 w-3', isRechecking && 'animate-spin')} />
               {isRechecking ? 'Checking...' : 'Recheck'}
             </Button>
           </div>

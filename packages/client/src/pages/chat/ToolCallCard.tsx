@@ -1,5 +1,8 @@
-import { useState } from 'react';
+// React / library
 import { Wrench, ChevronDown, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+
+// Types
 import type { ChatToolCall } from '@atlas/shared';
 
 interface ToolCallCardProps {
@@ -18,11 +21,7 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
       >
         <Wrench className="h-3 w-3 shrink-0 text-muted-foreground" />
         <span className="font-medium">{formatToolName(toolCall.name)}</span>
-        {expanded ? (
-          <ChevronDown className="ml-auto h-3 w-3" />
-        ) : (
-          <ChevronRight className="ml-auto h-3 w-3" />
-        )}
+        {expanded ? <ChevronDown className="ml-auto h-3 w-3" /> : <ChevronRight className="ml-auto h-3 w-3" />}
       </button>
       {expanded && (
         <div className="border-t border-border px-3 py-2">

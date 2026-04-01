@@ -1,8 +1,13 @@
-import { useState } from 'react';
+// React / library
 import { MessageSquare, X, Pencil, CornerDownRight } from 'lucide-react';
+import { useState } from 'react';
+
+// Components
 import { Button } from '@/components/ui/button';
-import type { DiffComment } from '@atlas/shared';
 import { InlineCommentForm } from './InlineCommentForm';
+
+// Types
+import type { DiffComment } from '@atlas/shared';
 
 export function InlineCommentBubble({
   comment,
@@ -87,7 +92,10 @@ export function InlineCommentBubble({
       {replies.length > 0 && (
         <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-blue-200 dark:border-blue-900 pl-2">
           {replies.map((reply) => (
-            <div key={reply.id} className="rounded-md border border-blue-100 bg-blue-50/60 dark:border-blue-900/60 dark:bg-blue-950/20 p-2">
+            <div
+              key={reply.id}
+              className="rounded-md border border-blue-100 bg-blue-50/60 dark:border-blue-900/60 dark:bg-blue-950/20 p-2"
+            >
               <div className="flex items-start gap-2 min-w-0">
                 <CornerDownRight className="mt-0.5 h-3 w-3 shrink-0 text-blue-400" />
                 <p className="text-xs font-sans whitespace-pre-wrap">{reply.body}</p>

@@ -5,13 +5,15 @@ import { ListChecks } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
+// Lib
+import { timeAgo } from '@/lib/format';
+
 // Types
 import type { Task } from '@atlas/shared';
 import type { ProjectTasksTableProps } from './project-detail-page.types';
 
-// Constants & utilities
+// Constants
 import { taskStatusConfig, priorityBadgeClass } from './project-detail-page.constants';
-import { timeAgo } from '@/lib/format';
 
 export function ProjectTasksTable({ tasks, onNavigateToKanban }: ProjectTasksTableProps) {
   return (
@@ -54,23 +56,28 @@ export function ProjectTasksTable({ tasks, onNavigateToKanban }: ProjectTasksTab
                       </span>
                     </td>
                     <td className="hidden px-3 py-2 sm:table-cell">
-                      <Badge variant="outline" className={`text-xs ${priorityBadgeClass[task.priority ?? 'Medium'] ?? ''}`}>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${priorityBadgeClass[task.priority ?? 'Medium'] ?? ''}`}
+                      >
                         {task.priority}
                       </Badge>
                     </td>
                     <td className="hidden px-3 py-2 md:table-cell">
-                      <Badge variant="outline" className="text-xs">{task.estimate}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {task.estimate}
+                      </Badge>
                     </td>
                     <td className="hidden px-3 py-2 lg:table-cell">
                       <div className="flex flex-wrap gap-1">
                         {task.tags?.map((tag: string) => (
-                          <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
+                          <Badge key={tag} variant="secondary" className="text-[10px]">
+                            {tag}
+                          </Badge>
                         ))}
                       </div>
                     </td>
-                    <td className="text-muted-foreground px-3 py-2 text-right text-xs">
-                      {timeAgo(task.createdAt)}
-                    </td>
+                    <td className="text-muted-foreground px-3 py-2 text-right text-xs">{timeAgo(task.createdAt)}</td>
                   </tr>
                 );
               })}

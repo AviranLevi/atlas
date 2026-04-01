@@ -1,5 +1,8 @@
-import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
-import { uuidDefault, timestampDefault } from '../helpers/index.js';
+// External
+import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+
+// DB
+import { timestampDefault, uuidDefault } from '../helpers/index.js';
 
 export const integrations = sqliteTable(
   'integrations',

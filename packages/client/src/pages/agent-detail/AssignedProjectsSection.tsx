@@ -1,6 +1,6 @@
 // React / library
-import { useNavigate } from 'react-router-dom';
 import { FolderOpen, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Components
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +35,9 @@ export function AssignedProjectsSection({ projects }: AssignedProjectsSectionPro
               <div className="flex items-center gap-2 min-w-0">
                 <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="truncate text-sm font-medium">{project.name}</span>
-                <Badge variant="outline" className="text-[10px] capitalize">{project.status}</Badge>
+                <Badge variant="outline" className="text-[10px] capitalize">
+                  {project.status}
+                </Badge>
               </div>
               <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             </Card>

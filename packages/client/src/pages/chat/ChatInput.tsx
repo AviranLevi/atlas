@@ -1,5 +1,8 @@
-import { useState, useRef, useCallback, type KeyboardEvent } from 'react';
+// React / library
 import { Send, Square } from 'lucide-react';
+import { useState, useRef, useCallback, type KeyboardEvent } from 'react';
+
+// Components
 import { Button } from '@/components/ui/button';
 
 interface ChatInputProps {
@@ -52,13 +55,7 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
           className="flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
         />
         {isStreaming ? (
-          <Button
-            size="icon"
-            variant="destructive"
-            onClick={onAbort}
-            className="shrink-0"
-            aria-label="Stop generating"
-          >
+          <Button size="icon" variant="destructive" onClick={onAbort} className="shrink-0" aria-label="Stop generating">
             <Square className="h-4 w-4" />
           </Button>
         ) : (

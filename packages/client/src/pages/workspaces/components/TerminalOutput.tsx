@@ -1,9 +1,11 @@
 // React / library
-import { useEffect, useRef, useCallback, useState, type ReactElement } from 'react';
-import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
+import { Terminal } from '@xterm/xterm';
 import { Copy, Check, ArrowDownToLine } from 'lucide-react';
+import { useEffect, useRef, useCallback, useState, type ReactElement } from 'react';
+
+// Components
 import '@xterm/xterm/css/xterm.css';
 
 // Components
@@ -12,11 +14,11 @@ import { Button } from '@/components/ui/button';
 // Hooks
 import { useTheme } from '@/hooks/use-theme.hook';
 
-// Types
-import type { TerminalOutputProps } from '../workspaces.types';
-
 // Lib
 import { cn } from '@/lib/utils';
+
+// Types
+import type { TerminalOutputProps } from '../workspaces.types';
 
 function buildTheme(dark: boolean) {
   return {
@@ -137,29 +139,26 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
   }, []);
 
   return (
-    <div className={cn(
-      'rounded-lg border overflow-hidden',
-      isDark ? 'border-zinc-800 bg-[#0c0c0e]' : 'border-zinc-200 bg-[#fafafa]',
-    )}>
+    <div
+      className={cn(
+        'rounded-lg border overflow-hidden',
+        isDark ? 'border-zinc-800 bg-[#0c0c0e]' : 'border-zinc-200 bg-[#fafafa]',
+      )}
+    >
       {/* Header bar */}
-      <div className={cn(
-        'flex items-center justify-between px-4 py-2 border-b',
-        isDark
-          ? 'bg-zinc-900/80 border-zinc-800'
-          : 'bg-zinc-100 border-zinc-200',
-      )}>
+      <div
+        className={cn(
+          'flex items-center justify-between px-4 py-2 border-b',
+          isDark ? 'bg-zinc-900/80 border-zinc-800' : 'bg-zinc-100 border-zinc-200',
+        )}
+      >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
             <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/70" />
             <div className="h-2.5 w-2.5 rounded-full bg-green-500/70" />
           </div>
-          <span className={cn(
-            'text-xs font-medium',
-            isDark ? 'text-zinc-400' : 'text-zinc-500',
-          )}>
-            {title}
-          </span>
+          <span className={cn('text-xs font-medium', isDark ? 'text-zinc-400' : 'text-zinc-500')}>{title}</span>
           {isLive && (
             <span className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
@@ -182,26 +181,15 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
               <ArrowDownToLine className="h-3 w-3" />
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={handleCopy}
-            title="Copy output"
-          >
-            {copied
-              ? <Check className="h-3 w-3 text-emerald-500" />
-              : <Copy className="h-3 w-3" />}
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy} title="Copy output">
+            {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
           </Button>
         </div>
       </div>
 
       {/* Terminal body -- inner padding wrapper so FitAddon calculates columns from reduced width */}
       <div className="px-3 pt-3 pb-1">
-        <div
-          ref={wrapperRef}
-          className="h-[500px] overflow-hidden [&_.xterm-viewport]:overflow-y-auto!"
-        />
+        <div ref={wrapperRef} className="h-[500px] overflow-hidden [&_.xterm-viewport]:overflow-y-auto!" />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+// Types
 import type { TaskSummaryProps } from './workspaces.types';
 
 export function TaskSummary({ name, projectName, agentName, priority }: TaskSummaryProps) {

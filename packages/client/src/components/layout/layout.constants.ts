@@ -1,16 +1,19 @@
+// React / library
 import {
+  Activity,
+  BarChart3,
   Bot,
-  Zap,
-  ScrollText,
   Brain,
   Columns3,
-  Settings,
-  Activity,
   FolderKanban,
-  MessageSquare,
   Globe,
-  BarChart3,
+  MessageSquare,
+  ScrollText,
+  Settings,
+  Zap,
 } from 'lucide-react';
+
+// Types
 import type { NavItem } from './layout.types';
 
 export const navItems: NavItem[] = [

@@ -1,3 +1,4 @@
+// Types
 import type { Memory } from '@atlas/shared';
 
 export type SortKey = 'name' | 'type' | 'lastUsed' | 'createdAt';

@@ -1,9 +1,9 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { SearchQuerySchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import { search } from '../controllers/search.controller.js';

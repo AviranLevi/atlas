@@ -1,14 +1,14 @@
+// React / library
+import { User, Bot } from 'lucide-react';
+
 // Components
 import { MarkdownContent } from '@/components/ui/markdown-content';
-import { User, Bot } from 'lucide-react';
 import { AgentThinking } from './AgentThinking';
+import { parseAgentContent } from './chat-page.utils';
 
 // Types
 import type { ChatToolCall } from '@atlas/shared';
 import type { ThinkingStep, MessageBubbleProps } from './chat-page.types';
-
-// Utils
-import { parseAgentContent } from './chat-page.utils';
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   if (message.role === 'tool') return null;

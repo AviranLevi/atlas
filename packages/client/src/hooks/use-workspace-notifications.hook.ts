@@ -22,9 +22,7 @@ export function useWorkspaceNotifications() {
   useEffect(() => {
     if (!workspaces) return;
 
-    const current: Record<string, string> = Object.fromEntries(
-      workspaces.map((w) => [w.id, w.status]),
-    );
+    const current: Record<string, string> = Object.fromEntries(workspaces.map((w) => [w.id, w.status]));
 
     if (prevRef.current === null) {
       // First load — capture state without notifying.

@@ -24,10 +24,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, data: unknown) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(data) }),
-  put: <T>(path: string, data: unknown) =>
-    request<T>(path, { method: 'PUT', body: JSON.stringify(data) }),
+  post: <T>(path: string, data: unknown) => request<T>(path, { method: 'POST', body: JSON.stringify(data) }),
+  put: <T>(path: string, data: unknown) => request<T>(path, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
   /** Raw streaming POST -- returns the Response for manual body reading. */
   stream: (path: string, data: unknown, signal?: AbortSignal): Promise<Response> =>

@@ -1,13 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const MemoryTypeEnum = z.enum([
-  "Decision",
-  "Convention",
-  "Preference",
-  "Problem",
-]);
+export const MemoryTypeEnum = z.enum(['Decision', 'Convention', 'Preference', 'Problem']);
 
-export const MemoryScopeEnum = z.enum(["global", "project"]);
+export const MemoryScopeEnum = z.enum(['global', 'project']);
 
 export const MemorySchema = z.object({
   id: z.string().uuid(),

@@ -22,9 +22,7 @@ export function GlobalInstructionsCard({
     <Card>
       <CardHeader>
         <CardTitle>Global Instructions</CardTitle>
-        <CardDescription>
-          Instructions that apply to every agent regardless of project
-        </CardDescription>
+        <CardDescription>Instructions that apply to every agent regardless of project</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (

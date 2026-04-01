@@ -1,14 +1,11 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+// React / library
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
-import type {
-  Rule,
-  CreateRule,
-  UpdateRule,
-} from '@atlas/shared';
+
+// Types
+import type { CreateRule, Rule, UpdateRule } from '@atlas/shared';
 
 const RULES_KEY = ['rules'] as const;
 const RULE_DETAIL_KEY = ['rule-detail'] as const;
@@ -29,10 +26,7 @@ export function useRules(filters?: { type?: string; tag?: string }) {
   const query = params.toString();
   return useQuery({
     queryKey: [...RULES_KEY, filters],
-    queryFn: () =>
-      api.get<Rule[]>(
-        query ? `/rules?${query}` : '/rules'
-      ),
+    queryFn: () => api.get<Rule[]>(query ? `/rules?${query}` : '/rules'),
   });
 }
 
@@ -47,18 +41,15 @@ export function useRule(id: string | undefined) {
 export function useCreateRule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateRule) =>
-      api.post<Rule>('/rules', data),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: RULES_KEY }),
+    mutationFn: (data: CreateRule) => api.post<Rule>('/rules', data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: RULES_KEY }),
   });
 }
 
 export function useUpdateRule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateRule }) =>
-      api.put<Rule>(`/rules/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateRule }) => api.put<Rule>(`/rules/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: RULES_KEY });
       queryClient.invalidateQueries({ queryKey: RULE_DETAIL_KEY });
@@ -70,8 +61,7 @@ export function useDeleteRule() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/rules/${id}`),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: RULES_KEY }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: RULES_KEY }),
   });
 }
 

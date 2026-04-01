@@ -1,3 +1,4 @@
+// Types
 import type { Project, Agent, Task } from '@atlas/shared';
 
 export type TaskCounts = {

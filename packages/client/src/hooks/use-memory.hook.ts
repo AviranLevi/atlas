@@ -1,10 +1,11 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+// React / library
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
-import type { Memory, CreateMemory, UpdateMemory } from '@atlas/shared';
+
+// Types
+import type { CreateMemory, Memory, UpdateMemory } from '@atlas/shared';
 
 const MEMORY_KEY = ['memory'] as const;
 
@@ -24,8 +25,7 @@ export function useMemories(filters?: MemoryFilters) {
   const query = params.toString();
   return useQuery({
     queryKey: [...MEMORY_KEY, filters],
-    queryFn: () =>
-      api.get<Memory[]>(query ? `/memory?${query}` : '/memory'),
+    queryFn: () => api.get<Memory[]>(query ? `/memory?${query}` : '/memory'),
   });
 }
 
@@ -40,8 +40,7 @@ export function useMemory(id: string | undefined) {
 export function useCreateMemory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateMemory) =>
-      api.post<Memory>('/memory', data),
+    mutationFn: (data: CreateMemory) => api.post<Memory>('/memory', data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMORY_KEY }),
   });
 }
@@ -49,8 +48,7 @@ export function useCreateMemory() {
 export function useUpdateMemory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateMemory }) =>
-      api.put<Memory>(`/memory/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateMemory }) => api.put<Memory>(`/memory/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMORY_KEY }),
   });
 }

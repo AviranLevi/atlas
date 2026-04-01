@@ -1,7 +1,12 @@
+// React / library
 import { useRef, useEffect } from 'react';
-import type { ChatMessage } from '@atlas/shared';
+
+// Components
 import { MessageBubble } from './MessageBubble';
 import { StreamingBubble } from './StreamingBubble';
+
+// Types
+import type { ChatMessage } from '@atlas/shared';
 import type { StreamingToolCall } from './chat-page.types';
 
 interface MessageListProps {
@@ -49,9 +54,7 @@ export function MessageList({
             }}
           />
         )}
-        {isStreaming && (
-          <StreamingBubble text={streamingText} toolCalls={streamingToolCalls} />
-        )}
+        {isStreaming && <StreamingBubble text={streamingText} toolCalls={streamingToolCalls} />}
         <div ref={bottomRef} />
       </div>
     </div>

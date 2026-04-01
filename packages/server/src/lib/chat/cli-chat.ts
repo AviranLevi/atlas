@@ -1,8 +1,13 @@
-import { spawn } from 'child_process';
+// External
+import { spawn } from 'node:child_process';
+
+// Executors
 import type { ExecutorConfig } from '../../executors/executor.types.js';
 import { generateMcpConfig, removeMcpConfig } from '../../executors/mcp-config-generator.js';
-import { logger } from '../logger.js';
+
+// Lib
 import type { CliChatOptions, CliChatResult } from './chat.types.js';
+import { logger } from '../logger.js';
 
 const FILE_PATH = 'lib/chat/cli-chat.ts';
 const DEFAULT_TIMEOUT_MS = 120_000;
@@ -46,9 +51,7 @@ function buildChatArgs(
  * Parses a single stream-json line from a CLI agent (Claude Code or Gemini CLI format).
  * Returns human-readable text + metadata, or null to skip the line.
  */
-export function parseCliStreamJsonLine(
-  line: string,
-): { text: string; isFinal: boolean; skipLog?: boolean } | null {
+export function parseCliStreamJsonLine(line: string): { text: string; isFinal: boolean; skipLog?: boolean } | null {
   if (!line.trim()) return null;
   try {
     const event: unknown = JSON.parse(line);
@@ -87,15 +90,15 @@ export function parseCliStreamJsonLine(
     }
     if (event.type === 'tool_use' && typeof event.tool_name === 'string') {
       const params = isRecord(event.parameters) ? event.parameters : {};
-      const hint = params.command ?? params.file_path ?? params.path ?? params.pattern ?? params.query ?? params.url ?? '';
+      const hint =
+        params.command ?? params.file_path ?? params.path ?? params.pattern ?? params.query ?? params.url ?? '';
       const summary = hint ? `${hint}`.slice(0, 100) : '';
       return { text: `▸ ${event.tool_name}${summary ? `  ${summary}` : ''}`, isFinal: false };
     }
     // tool_result events contain output from tool execution
     if (event.type === 'tool_result' && event.content) {
-      const preview = typeof event.content === 'string'
-        ? event.content.slice(0, 200)
-        : JSON.stringify(event.content).slice(0, 200);
+      const preview =
+        typeof event.content === 'string' ? event.content.slice(0, 200) : JSON.stringify(event.content).slice(0, 200);
       return preview.trim() ? { text: preview, isFinal: false } : null;
     }
     // Gemini result event signals completion; final output is accumulated text
@@ -119,10 +122,7 @@ export function parseCliStreamJsonLine(
  * Sends a one-shot prompt to a CLI agent, streaming output chunks via `onChunk` as they arrive.
  * Returns the full accumulated response text when the process exits.
  */
-export async function streamCliChat(
-  options: CliChatOptions,
-  onChunk: (text: string) => void,
-): Promise<CliChatResult> {
+export async function streamCliChat(options: CliChatOptions, onChunk: (text: string) => void): Promise<CliChatResult> {
   const { executor, prompt, cwd, model, timeoutMs = DEFAULT_TIMEOUT_MS, signal } = options;
 
   const configId = `chat-${Date.now()}`;
@@ -132,7 +132,7 @@ export async function streamCliChat(
   }
 
   const args = buildChatArgs(executor, prompt, mcpConfigPath, model);
-  const env = { ...process.env as Record<string, string>, ...executor.env };
+  const env = { ...(process.env as Record<string, string>), ...executor.env };
 
   logger.info(`${FILE_PATH} :: streamCliChat - ${executor.command} ${args.join(' ').slice(0, 200)}...`);
 
@@ -159,7 +159,7 @@ export async function streamCliChat(
           if (parsed.isFinal) {
             finalText = parsed.text;
           } else if (parsed.text) {
-            const chunk = parsed.text + '\n';
+            const chunk = `${parsed.text}\n`;
             fullText += chunk;
             onChunk(chunk);
           }
@@ -171,7 +171,9 @@ export async function streamCliChat(
     };
 
     proc.stdout?.on('data', (data: Buffer) => handleRaw(data.toString()));
-    proc.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
+    proc.stderr?.on('data', (data: Buffer) => {
+      stderr += data.toString();
+    });
 
     if (executor.promptDelivery === 'stdin') {
       proc.stdin?.write(prompt);
@@ -260,7 +262,7 @@ export function formatCliPrompt(
   }
 
   parts.push(`<user>\n${newMessage}\n</user>`);
-  parts.push('Respond to the user\'s latest message. Be concise and direct.');
+  parts.push("Respond to the user's latest message. Be concise and direct.");
 
   return parts.join('\n\n');
 }

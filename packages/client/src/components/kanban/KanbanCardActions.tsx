@@ -1,17 +1,13 @@
 // React / library
+import { TASK_STATUS } from '@atlas/shared';
+import { FileCode, Pencil, Play, Terminal, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Pencil, Trash2, Play, Terminal, FileCode } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Types
-import { TASK_STATUS } from '@atlas/shared';
 import type { KanbanCardActionsProps } from './kanban.types';
 
 export function KanbanCardActions({
@@ -78,13 +74,7 @@ export function KanbanCardActions({
       )}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => onEdit(task)}
-            aria-label="Edit task"
-          >
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(task)} aria-label="Edit task">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
         </TooltipTrigger>

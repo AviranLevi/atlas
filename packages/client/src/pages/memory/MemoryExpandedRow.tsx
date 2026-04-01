@@ -1,18 +1,12 @@
 // React / library
-import { useState, useCallback } from 'react';
 import { Pencil, Check, X, FolderOpen } from 'lucide-react';
+import { useState, useCallback } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 // Hooks
 import { useUpdateMemory } from '@/hooks/use-memory.hook';
@@ -58,7 +52,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
     setEditingContent(false);
   }, [memory.id, contentDraft, updateMemory]);
 
-  const agentName = memory.agentId ? agentMap.get(memory.agentId) ?? 'Unknown' : null;
+  const agentName = memory.agentId ? (agentMap.get(memory.agentId) ?? 'Unknown') : null;
 
   return (
     <div className="space-y-4 px-4 pb-4 pl-11">
@@ -72,7 +66,10 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
               onChange={(e) => setNameDraft(e.target.value)}
               className="h-8 text-sm"
               autoFocus
-              onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveName();
+                if (e.key === 'Escape') setEditingName(false);
+              }}
             />
             <Button size="icon" variant="ghost" className="h-7 w-7" onClick={saveName}>
               <Check className="h-3.5 w-3.5" />
@@ -106,7 +103,12 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
               autoFocus
             />
             <div className="flex justify-end gap-1.5">
-              <Button variant="ghost" size="sm" onClick={() => setEditingContent(false)} disabled={updateMemory.isPending}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingContent(false)}
+                disabled={updateMemory.isPending}
+              >
                 <X className="mr-1 h-3.5 w-3.5" />
                 Cancel
               </Button>
@@ -140,7 +142,9 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
             </SelectTrigger>
             <SelectContent>
               {MEMORY_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -157,7 +161,9 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
             </SelectTrigger>
             <SelectContent>
               {MEMORY_SCOPES.map((s) => (
-                <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                <SelectItem key={s} value={s}>
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

@@ -1,16 +1,14 @@
-import { useState } from 'react';
+// React / library
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState } from 'react';
+
+// Components
 import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from '@/components/ui/command';
+
+// Lib
+import { cn } from '@/lib/utils';
 
 export type ComboboxOption = {
   value: string;
@@ -73,10 +71,7 @@ export function Combobox({
                   }}
                 >
                   <Check
-                    className={cn(
-                      'mr-2 h-3.5 w-3.5 shrink-0',
-                      value === option.value ? 'opacity-100' : 'opacity-0',
-                    )}
+                    className={cn('mr-2 h-3.5 w-3.5 shrink-0', value === option.value ? 'opacity-100' : 'opacity-0')}
                   />
                   <span className="truncate">{option.label}</span>
                 </CommandItem>

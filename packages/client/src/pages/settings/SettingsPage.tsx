@@ -1,20 +1,16 @@
-import { useSearchParams } from 'react-router-dom';
+// React / library
 import { Settings } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
+// Components
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AppearanceTab } from './AppearanceTab';
 import { DefaultWorkspaceTab } from './DefaultWorkspaceTab';
-import { McpTab } from './McpTab';
 import { IntegrationsTab } from './IntegrationsTab';
+import { McpTab } from './McpTab';
 import { SystemTab } from './SystemTab';
 
-const VALID_TABS = [
-  'appearance',
-  'workspace',
-  'mcp',
-  'integrations',
-  'system',
-] as const;
+const VALID_TABS = ['appearance', 'workspace', 'mcp', 'integrations', 'system'] as const;
 
 type SettingsTab = (typeof VALID_TABS)[number];
 
@@ -37,9 +33,7 @@ export function SettingsPage() {
         <Settings className="h-8 w-8 text-muted-foreground" />
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            App preferences, connections, and infrastructure
-          </p>
+          <p className="text-muted-foreground mt-1">App preferences, connections, and infrastructure</p>
         </div>
       </div>
 

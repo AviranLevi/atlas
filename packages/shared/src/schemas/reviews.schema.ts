@@ -1,12 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const ReviewStatusEnum = z.enum([
-  "pending",
-  "approved",
-  "changes_requested",
-]);
+export const ReviewStatusEnum = z.enum(['pending', 'approved', 'changes_requested']);
 
-export const ReviewerTypeEnum = z.enum(["human", "agent"]);
+export const ReviewerTypeEnum = z.enum(['human', 'agent']);
 
 export const ChecklistItemSchema = z.object({
   item: z.string(),
@@ -35,7 +31,7 @@ export const UpdateReviewSchema = z.object({
   notes: z.string().nullable().optional(),
 });
 
-export const ReviewDecisionEnum = z.enum(["approved", "changes_requested"]);
+export const ReviewDecisionEnum = z.enum(['approved', 'changes_requested']);
 
 export const DecideReviewSchema = z.object({
   decision: ReviewDecisionEnum,

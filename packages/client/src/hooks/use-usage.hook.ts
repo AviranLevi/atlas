@@ -1,5 +1,10 @@
+// React / library
 import { useQuery } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
+
+// Types
 import type { UsageSummary } from '@atlas/shared';
 
 const USAGE_KEY = ['usage'] as const;

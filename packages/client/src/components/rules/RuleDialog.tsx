@@ -2,28 +2,22 @@
 import { useState } from 'react';
 
 // Components
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks
-import { useCreateRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
+import { useCreateRule } from '@/hooks/use-rules.hook';
 
 // Types
-import type { RuleType, Rule } from '@atlas/shared';
+import type { Rule, RuleType } from '@atlas/shared';
 import type { RuleDialogProps } from './rules.types';
 
 // Constants
-import { RULE_TYPES, NONE } from './rules.constants';
+import { NONE, RULE_TYPES } from './rules.constants';
 
 export function RuleDialog({ open, onOpenChange, onCreated }: RuleDialogProps) {
   const createRule = useCreateRule();
@@ -67,7 +61,13 @@ export function RuleDialog({ open, onOpenChange, onCreated }: RuleDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => { if (!val) resetForm(); onOpenChange(val); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!val) resetForm();
+        onOpenChange(val);
+      }}
+    >
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>New Rule</DialogTitle>
@@ -124,7 +124,14 @@ export function RuleDialog({ open, onOpenChange, onCreated }: RuleDialogProps) {
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                onOpenChange(false);
+              }}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={createRule.isPending || !name.trim()}>

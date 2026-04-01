@@ -1,15 +1,15 @@
 // React / library
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
-import { useState, useEffect, useRef } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 
 // Lib
-import { api, ApiError } from '@/lib/api';
+import { ApiError, api } from '@/lib/api';
+
 // Types
-import type { Workspace, ExecutorStatus } from '@atlas/shared';
+import type { ExecutorStatus, Workspace } from '@atlas/shared';
+import type { DiffResult } from '@/components/workspaces/workspaces.types';
+
+export type { DiffFile, DiffResult } from '@/components/workspaces/workspaces.types';
 
 const WORKSPACES_KEY = ['workspaces'] as const;
 const RUNTIMES_KEY = ['agent-runtimes'] as const;
@@ -35,8 +35,7 @@ export function useRefreshRuntimes() {
 export function useWorkspaces(activeOnly = false) {
   return useQuery({
     queryKey: [...WORKSPACES_KEY, activeOnly ? 'active' : 'all'],
-    queryFn: () =>
-      api.get<Workspace[]>(`/workspaces${activeOnly ? '?status=active' : ''}`),
+    queryFn: () => api.get<Workspace[]>(`/workspaces${activeOnly ? '?status=active' : ''}`),
     refetchInterval: 5000,
   });
 }
@@ -58,8 +57,13 @@ export function useWorkspaceStatus(id: string | undefined) {
 export function useStartWork() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { taskId: string; agentRuntimeId: string; baseBranch?: string; model?: string; providerId?: string }) =>
-      api.post<Workspace>('/workspaces', data),
+    mutationFn: (data: {
+      taskId: string;
+      agentRuntimeId: string;
+      baseBranch?: string;
+      model?: string;
+      providerId?: string;
+    }) => api.post<Workspace>('/workspaces', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -70,8 +74,7 @@ export function useStartWork() {
 export function useStopWork() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      api.post<Workspace>(`/workspaces/${id}/stop`, {}),
+    mutationFn: (id: string) => api.post<Workspace>(`/workspaces/${id}/stop`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
     },
@@ -88,9 +91,6 @@ export function useCleanupWorkspace() {
   });
 }
 
-export type { DiffFile, DiffResult } from '@/components/workspaces/workspaces.types';
-import type { DiffResult } from '@/components/workspaces/workspaces.types';
-
 export function useWorkspaceDiff(workspaceId: string | undefined) {
   return useQuery({
     queryKey: [...WORKSPACES_KEY, workspaceId, 'diff'],
@@ -103,8 +103,7 @@ export function useWorkspaceDiff(workspaceId: string | undefined) {
 export function useMergeWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (workspaceId: string) =>
-      api.post<Workspace>(`/workspaces/${workspaceId}/merge`, {}),
+    mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/merge`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -115,8 +114,7 @@ export function useMergeWorkspace() {
 export function useCompleteWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (workspaceId: string) =>
-      api.post<Workspace>(`/workspaces/${workspaceId}/complete`, {}),
+    mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/complete`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -127,8 +125,15 @@ export function useCompleteWorkspace() {
 export function useRerunWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ workspaceId, agentRuntimeId, model }: { workspaceId: string; agentRuntimeId: string; model?: string }) =>
-      api.post<Workspace>(`/workspaces/${workspaceId}/rerun`, { agentRuntimeId, model }),
+    mutationFn: ({
+      workspaceId,
+      agentRuntimeId,
+      model,
+    }: {
+      workspaceId: string;
+      agentRuntimeId: string;
+      model?: string;
+    }) => api.post<Workspace>(`/workspaces/${workspaceId}/rerun`, { agentRuntimeId, model }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -150,8 +155,7 @@ export function useCreatePR() {
 export function useRequestChanges() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (workspaceId: string) =>
-      api.post<Workspace>(`/workspaces/${workspaceId}/request-changes`, {}),
+    mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/request-changes`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -162,7 +166,10 @@ export function useRequestChanges() {
 export function useAddDiffComment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ workspaceId, comment }: {
+    mutationFn: ({
+      workspaceId,
+      comment,
+    }: {
       workspaceId: string;
       comment: { filename: string; lineNumber: number; lineContent: string; body: string; parentId?: string };
     }) => api.post<Workspace>(`/workspaces/${workspaceId}/comments`, comment),
@@ -175,11 +182,8 @@ export function useAddDiffComment() {
 export function useEditDiffComment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ workspaceId, commentId, body }: {
-      workspaceId: string;
-      commentId: string;
-      body: string;
-    }) => api.post<Workspace>(`/workspaces/${workspaceId}/comments/${commentId}`, { body }),
+    mutationFn: ({ workspaceId, commentId, body }: { workspaceId: string; commentId: string; body: string }) =>
+      api.post<Workspace>(`/workspaces/${workspaceId}/comments/${commentId}`, { body }),
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, workspaceId] });
     },
@@ -201,9 +205,7 @@ export function useRemoveDiffComment() {
 export function useActiveWorkspaceForTask(taskId: string | undefined) {
   const { data: workspaces = [] } = useWorkspaces();
   if (!taskId) return undefined;
-  return workspaces.find(
-    (w) => w.taskId === taskId && (w.status === 'running' || w.status === 'pending')
-  );
+  return workspaces.find((w) => w.taskId === taskId && (w.status === 'running' || w.status === 'pending'));
 }
 
 /**

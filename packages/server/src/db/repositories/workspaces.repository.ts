@@ -6,11 +6,11 @@ import type { Workspace } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
-import { workspaces, tasks, projects } from '../schema/index.js';
+import { projects, tasks, workspaces } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/workspaces.repository.ts';
 
@@ -38,10 +38,18 @@ export class WorkspacesRepository {
 
   private parseComments(raw: string | null | undefined): Workspace['diffComments'] {
     if (!raw) return null;
-    try { return JSON.parse(raw); } catch { return null; }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
 
-  private enrichRow(row: { workspaces: Workspace; tasks: { name: string } | null; projects: { name: string } | null }): Workspace {
+  private enrichRow(row: {
+    workspaces: Workspace;
+    tasks: { name: string } | null;
+    projects: { name: string } | null;
+  }): Workspace {
     return {
       ...row.workspaces,
       diffComments: this.parseComments(row.workspaces.diffComments as unknown as string),
@@ -89,11 +97,7 @@ export class WorkspacesRepository {
   findByTaskId(taskId: string): Workspace | null {
     const FUNCTION_NAME = 'findByTaskId';
     try {
-      const row = this.db
-        .select()
-        .from(workspaces)
-        .where(eq(workspaces.taskId, taskId))
-        .get();
+      const row = this.db.select().from(workspaces).where(eq(workspaces.taskId, taskId)).get();
       if (!row) return null;
       return { ...row, diffComments: this.parseComments(row.diffComments) } as Workspace;
     } catch (error: unknown) {

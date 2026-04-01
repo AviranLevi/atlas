@@ -5,11 +5,11 @@ import { Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 
+// Lib
+import { timeAgo } from '@/lib/format';
+
 // Types
 import type { ProjectMemoriesSectionProps } from './project-detail-page.types';
-
-// Utilities
-import { timeAgo } from '@/lib/format';
 
 export function ProjectMemoriesSection({ memories }: ProjectMemoriesSectionProps) {
   return (
@@ -32,7 +32,9 @@ export function ProjectMemoriesSection({ memories }: ProjectMemoriesSectionProps
           {memories.map((mem) => (
             <Card key={mem.id as string} className="p-3">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-[10px]">{String(mem.scope ?? 'project')}</Badge>
+                <Badge variant="secondary" className="text-[10px]">
+                  {String(mem.scope ?? 'project')}
+                </Badge>
                 <span className="text-muted-foreground text-xs">{timeAgo(String(mem.createdAt))}</span>
               </div>
               <p className="mt-1 line-clamp-2 text-sm">{String(mem.content ?? '')}</p>

@@ -1,15 +1,20 @@
-import { spawn, type ChildProcess } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+// External
+import type { ChildProcess } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Executors
 import type { ExecutorConfig, ProviderField } from './executor.types.js';
 import { generateMcpConfig } from './mcp-config-generator.js';
-import { logger } from '../lib/logger.js';
+
+// Lib
 import { parseCliStreamJsonLine } from '../lib/chat/cli-chat.js';
+import { logger } from '../lib/logger.js';
 
 const FILE_PATH = 'executors/spawn-agent.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
 const MAX_DB_OUTPUT_LINES = 50;
-
 
 export interface SpawnResult {
   process: ChildProcess;
@@ -54,10 +59,7 @@ function buildArgs(executor: ExecutorConfig, prompt: string, mcpConfigPath?: str
 }
 
 /** Resolves a ProviderField reference to the actual value from the provider object. */
-function resolveProviderField(
-  field: ProviderField,
-  provider: NonNullable<SpawnOptions['provider']>,
-): string | null {
+function resolveProviderField(field: ProviderField, provider: NonNullable<SpawnOptions['provider']>): string | null {
   return field === 'apiKey' ? provider.apiKey : provider.baseUrl;
 }
 
@@ -76,12 +78,9 @@ export async function spawnAgent(
   const outputLines: string[] = [];
 
   // Raw debug log for stream-json diagnostics (auto-deleted on success)
-  const rawLogFile = executor.outputFormat === 'stream-json'
-    ? path.join(OUTPUT_DIR, `${workspaceId}.raw.log`)
-    : undefined;
-  const rawLogStream = rawLogFile
-    ? fs.createWriteStream(rawLogFile, { flags: 'a' })
-    : undefined;
+  const rawLogFile =
+    executor.outputFormat === 'stream-json' ? path.join(OUTPUT_DIR, `${workspaceId}.raw.log`) : undefined;
+  const rawLogStream = rawLogFile ? fs.createWriteStream(rawLogFile, { flags: 'a' }) : undefined;
 
   let mcpConfigPath: string | undefined;
   if (executor.mcpConfigFormat !== 'none') {
@@ -91,7 +90,7 @@ export async function spawnAgent(
   const args = buildArgs(executor, prompt, mcpConfigPath, options.model);
 
   // Build env: process env → executor static env → provider credential env
-  const env: Record<string, string> = { ...process.env as Record<string, string>, ...executor.env };
+  const env: Record<string, string> = { ...(process.env as Record<string, string>), ...executor.env };
 
   if (options.provider && executor.providerMapping) {
     const mapping = executor.providerMapping.find((m) => m.providerType === options.provider!.type);
@@ -130,7 +129,7 @@ export async function spawnAgent(
           finalResult = parsed.text;
         }
         if (!parsed.skipLog) {
-          const entry = parsed.text + '\n';
+          const entry = `${parsed.text}\n`;
           logStream.write(entry);
           const entryLines = entry.split('\n');
           outputLines.push(...entryLines);
@@ -156,9 +155,8 @@ export async function spawnAgent(
   proc.on('close', (code) => {
     logStream.end();
     rawLogStream?.end();
-    const finalOutput = executor.outputFormat === 'stream-json'
-      ? (finalResult || outputLines.join('\n'))
-      : outputLines.join('\n');
+    const finalOutput =
+      executor.outputFormat === 'stream-json' ? finalResult || outputLines.join('\n') : outputLines.join('\n');
     if (code === 0) {
       // Clean up raw debug log on success
       if (rawLogFile && fs.existsSync(rawLogFile)) {

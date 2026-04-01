@@ -1,23 +1,27 @@
-import { useState, useCallback } from 'react';
-import { Upload } from 'lucide-react';
+// React / library
 import { AtlasPackageSchema } from '@atlas/shared';
-import type { AtlasPackage } from '@atlas/shared';
+import { Upload } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
+// Components
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-
-import { useImportPreview, useImportPackage } from '@/hooks/use-packages.hook';
-import { useAgentProviders } from '@/hooks/use-agent-providers.hook';
-
-import { UploadStep } from './UploadStep';
 import { ReviewStep } from './ReviewStep';
+import { UploadStep } from './UploadStep';
+
+// Hooks
+import { useAgentProviders } from '@/hooks/use-agent-providers.hook';
+import { useImportPackage, useImportPreview } from '@/hooks/use-packages.hook';
+
+// Types
+import type { AtlasPackage } from '@atlas/shared';
 import type { ImportPackageDialogProps, ImportPreviewData, Resolutions } from './packages.types';
 
 type Step = 'upload' | 'review';
@@ -77,19 +81,14 @@ export function ImportPackageDialog({ open, onOpenChange }: ImportPackageDialogP
 
   const handleImport = useCallback(() => {
     if (!pkg) return;
-    importMutation.mutate(
-      { package: pkg, resolutions },
-      { onSuccess: () => handleOpenChange(false) },
-    );
+    importMutation.mutate({ package: pkg, resolutions }, { onSuccess: () => handleOpenChange(false) });
   }, [pkg, resolutions, importMutation, handleOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {step === 'upload' ? 'Import Package' : 'Review Import'}
-          </DialogTitle>
+          <DialogTitle>{step === 'upload' ? 'Import Package' : 'Review Import'}</DialogTitle>
           <DialogDescription>
             {step === 'upload'
               ? 'Import a JSON package containing agents, skills, rules, or any combination.'
@@ -129,9 +128,7 @@ export function ImportPackageDialog({ open, onOpenChange }: ImportPackageDialogP
             </>
           )}
           {importMutation.error && (
-            <p className="w-full text-sm text-destructive">
-              {(importMutation.error as Error).message}
-            </p>
+            <p className="w-full text-sm text-destructive">{(importMutation.error as Error).message}</p>
           )}
         </DialogFooter>
       </DialogContent>

@@ -1,14 +1,17 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// External
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// DB
 import { db } from '../../db/index.js';
 import {
   activityLog,
   agentProjects,
   agentProviders,
   agentRules,
-  agents,
   agentSkills,
+  agents,
   chatConversations,
   chatMessages,
   dispatchRules,
@@ -24,8 +27,10 @@ import {
   tasks,
   workspaces,
 } from '../../db/schema/index.js';
-import { logger } from '../../lib/logger.js';
+
+// Lib
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/system/system.service.ts';
 

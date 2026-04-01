@@ -1,3 +1,4 @@
+// Types
 import type { ProviderType } from '@atlas/shared';
 
 export const NONE = '__none__';

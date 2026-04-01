@@ -1,26 +1,25 @@
 // DB
 import { db } from '../index.js';
-
+import { ActivityLogRepository } from './activity-log.repository.js';
+import { AgentProvidersRepository } from './agent-providers.repository.js';
 // Repositories
 import { AgentsRepository } from './agents.repository.js';
-import { SkillsRepository } from './skills.repository.js';
-import { RulesRepository } from './rules.repository.js';
-import { MemoryRepository } from './memory.repository.js';
-import { TasksRepository } from './tasks.repository.js';
-import { ProjectsRepository } from './projects.repository.js';
-import { SettingsRepository } from './settings.repository.js';
-import { WorkspacesRepository } from './workspaces.repository.js';
-import { AgentProvidersRepository } from './agent-providers.repository.js';
-import { PhasesRepository } from './phases.repository.js';
-import { ReviewsRepository } from './reviews.repository.js';
-import { ActivityLogRepository } from './activity-log.repository.js';
 import { ChatRepository } from './chat.repository.js';
-import { PreferencesRepository } from './preferences.repository.js';
-import { SearchRepository } from './search.repository.js';
+import { HeartbeatsRepository } from './heartbeats.repository.js';
 import { IntegrationsRepository } from './integrations.repository.js';
 import { McpServersRepository } from './mcp-servers.repository.js';
-import { HeartbeatsRepository } from './heartbeats.repository.js';
+import { MemoryRepository } from './memory.repository.js';
+import { PhasesRepository } from './phases.repository.js';
+import { PreferencesRepository } from './preferences.repository.js';
+import { ProjectsRepository } from './projects.repository.js';
+import { ReviewsRepository } from './reviews.repository.js';
+import { RulesRepository } from './rules.repository.js';
+import { SearchRepository } from './search.repository.js';
+import { SettingsRepository } from './settings.repository.js';
+import { SkillsRepository } from './skills.repository.js';
+import { TasksRepository } from './tasks.repository.js';
 import { UsageRepository } from './usage.repository.js';
+import { WorkspacesRepository } from './workspaces.repository.js';
 
 export const agentsRepository = new AgentsRepository(db);
 export const skillsRepository = new SkillsRepository(db);

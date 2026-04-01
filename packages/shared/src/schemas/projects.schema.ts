@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const ProjectStatusEnum = z.enum(['active', 'on-hold', 'archived', 'completed']);
 export const ProjectTypeEnum = z.enum(['frontend', 'backend', 'fullstack', 'library', 'mobile', 'cli', 'other']);
@@ -27,13 +27,15 @@ export const ProjectScanDataSchema = z.object({
   envVars: z.array(z.string()).optional(),
   keyDirectories: z.record(z.string()).optional(),
   ports: z.array(z.number()).optional(),
-  formatting: z.object({
-    prettier: z.boolean().optional(),
-    eslint: z.boolean().optional(),
-    editorconfig: z.boolean().optional(),
-    biome: z.boolean().optional(),
-    config: z.record(z.unknown()).optional(),
-  }).optional(),
+  formatting: z
+    .object({
+      prettier: z.boolean().optional(),
+      eslint: z.boolean().optional(),
+      editorconfig: z.boolean().optional(),
+      biome: z.boolean().optional(),
+      config: z.record(z.unknown()).optional(),
+    })
+    .optional(),
   packageManager: z.string().nullable().optional(),
   cicd: z.string().nullable().optional(),
   monorepo: z.boolean().optional(),

@@ -1,30 +1,28 @@
 // External
-import { type ChildProcess, execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import { type ChildProcess, execSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Shared
+import type { ChecklistItem, Workspace } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
-import type { Workspace, ChecklistItem } from '@atlas/shared';
 
 // Services
-import { tasksService, projectsService, activityLogService, agentProvidersService, agentsService } from '../index.js';
-import { WorktreeService } from '../worktree/worktree.service.js';
+import { activityLogService, agentProvidersService, agentsService, projectsService, tasksService } from '../index.js';
 import { PromptBuilderService } from '../prompt-builder/prompt-builder.service.js';
-
-// Types
-import type { DiffResult } from './orchestrator.types.js';
+import { WorktreeService } from '../worktree/worktree.service.js';
 
 // Repositories
 import { workspacesRepository } from '../../db/repositories/index.js';
 
 // Executors
 import { executorRegistry, removeMcpConfig } from '../../executors/index.js';
-import { spawnAgent, type SpawnOptions } from '../../executors/spawn-agent.js';
+import { type SpawnOptions, spawnAgent } from '../../executors/spawn-agent.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
+import type { DiffResult } from './orchestrator.types.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/orchestrator/orchestrator.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
@@ -80,7 +78,9 @@ export class OrchestratorService {
         const provider = await agentProvidersService.getById(providerIdToLoad);
         spawnOpts.provider = { type: provider.type, apiKey: provider.apiKey, baseUrl: provider.baseUrl };
       } catch {
-        logger.warn(`${FILE_PATH} :: resolveSpawnOptions - provider ${providerIdToLoad} not found, skipping credential injection`);
+        logger.warn(
+          `${FILE_PATH} :: resolveSpawnOptions - provider ${providerIdToLoad} not found, skipping credential injection`,
+        );
       }
     }
 
@@ -123,12 +123,7 @@ export class OrchestratorService {
         throw new AppError('A workspace is already active for this task', { status: 409 });
       }
 
-      const { resolvedModel, spawnOpts } = await this.resolveSpawnOptions(
-        executor,
-        task.agentId,
-        model,
-        providerId,
-      );
+      const { resolvedModel, spawnOpts } = await this.resolveSpawnOptions(executor, task.agentId, model, providerId);
 
       // Resolve which branch to base the worktree on:
       //   1. Explicit baseBranch from the request
@@ -164,50 +159,57 @@ export class OrchestratorService {
       });
 
       const cwd = executor.usesProjectRoot ? project.localPath : worktreePath;
-      const result = await spawnAgent(workspace.id, executor, cwd, prompt, {
-        onCompleted: (output) => {
-          activeProcesses.delete(workspace.id);
-          const ws = workspacesRepository.update(workspace.id, {
-            status: 'completed',
-            output,
-            completedAt: new Date().toISOString(),
-          });
-          tasksService.update(ws.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
-            logger.warn(`${FILE_PATH} :: spawnAgent - failed to move task to In Review`, e);
-          });
-          activityLogService.log({
-            projectId: ws.projectId,
-            taskId: ws.taskId,
-            workspaceId: workspace.id,
-            agentId: ws.agentId,
-            eventType: 'agent_completed',
-            description: 'Agent completed successfully',
-            metadata: {},
-          });
-          logger.info(`${FILE_PATH} :: spawnAgent - process completed for workspace ${workspace.id}`);
+      const result = await spawnAgent(
+        workspace.id,
+        executor,
+        cwd,
+        prompt,
+        {
+          onCompleted: (output) => {
+            activeProcesses.delete(workspace.id);
+            const ws = workspacesRepository.update(workspace.id, {
+              status: 'completed',
+              output,
+              completedAt: new Date().toISOString(),
+            });
+            tasksService.update(ws.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
+              logger.warn(`${FILE_PATH} :: spawnAgent - failed to move task to In Review`, e);
+            });
+            activityLogService.log({
+              projectId: ws.projectId,
+              taskId: ws.taskId,
+              workspaceId: workspace.id,
+              agentId: ws.agentId,
+              eventType: 'agent_completed',
+              description: 'Agent completed successfully',
+              metadata: {},
+            });
+            logger.info(`${FILE_PATH} :: spawnAgent - process completed for workspace ${workspace.id}`);
+          },
+          onFailed: (output, error) => {
+            activeProcesses.delete(workspace.id);
+            const ws = workspacesRepository.update(workspace.id, {
+              status: 'failed',
+              output,
+              completedAt: new Date().toISOString(),
+            });
+            tasksService.update(ws.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
+              logger.warn(`${FILE_PATH} :: spawnAgent - failed to reset task status`, e);
+            });
+            activityLogService.log({
+              projectId: ws.projectId,
+              taskId: ws.taskId,
+              workspaceId: workspace.id,
+              agentId: ws.agentId,
+              eventType: 'agent_failed',
+              description: `Agent failed: ${error ?? 'unknown error'}`,
+              metadata: { error },
+            });
+            logger.error(`${FILE_PATH} :: spawnAgent - process failed for workspace ${workspace.id}: ${error}`);
+          },
         },
-        onFailed: (output, error) => {
-          activeProcesses.delete(workspace.id);
-          const ws = workspacesRepository.update(workspace.id, {
-            status: 'failed',
-            output,
-            completedAt: new Date().toISOString(),
-          });
-          tasksService.update(ws.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
-            logger.warn(`${FILE_PATH} :: spawnAgent - failed to reset task status`, e);
-          });
-          activityLogService.log({
-            projectId: ws.projectId,
-            taskId: ws.taskId,
-            workspaceId: workspace.id,
-            agentId: ws.agentId,
-            eventType: 'agent_failed',
-            description: `Agent failed: ${error ?? 'unknown error'}`,
-            metadata: { error },
-          });
-          logger.error(`${FILE_PATH} :: spawnAgent - process failed for workspace ${workspace.id}: ${error}`);
-        },
-      }, spawnOpts);
+        spawnOpts,
+      );
 
       // Store process reference and mark as running — done after spawnAgent
       // returns so result.process is available.
@@ -383,7 +385,7 @@ export class OrchestratorService {
         throw new AppError('No review comments to send', { status: 400 });
       }
 
-      const task = await tasksService.getById(workspace.taskId);
+      const _task = await tasksService.getById(workspace.taskId);
       const project = await projectsService.getById(workspace.projectId);
 
       if (!project.localPath) {
@@ -424,59 +426,62 @@ export class OrchestratorService {
       const fullPrompt = basePrompt + reviewSection;
 
       // Resolve model/provider from workspace's recorded model + agent's provider
-      const { spawnOpts } = await this.resolveSpawnOptions(
-        executor,
-        workspace.agentId,
-        workspace.model ?? undefined,
-      );
+      const { spawnOpts } = await this.resolveSpawnOptions(executor, workspace.agentId, workspace.model ?? undefined);
 
       // Re-spawn the agent on the SAME worktree (not a new one)
       const cwd = executor.usesProjectRoot ? project.localPath : workspace.worktreePath;
-      const result = await spawnAgent(workspace.id, executor, cwd, fullPrompt, {
-        onCompleted: (output) => {
-          activeProcesses.delete(workspace.id);
-          // Clear comments on success — the agent addressed them
-          workspacesRepository.update(workspace.id, {
-            status: 'completed',
-            output,
-            completedAt: new Date().toISOString(),
-            diffComments: JSON.stringify([]),
-          } as any);
-          tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
-            logger.warn(`${FILE_PATH} :: requestChanges - failed to move task to In Review`, e);
-          });
-          activityLogService.log({
-            projectId: workspace.projectId,
-            taskId: workspace.taskId,
-            workspaceId,
-            agentId: workspace.agentId,
-            eventType: 'agent_completed',
-            description: 'Agent completed review changes',
-            metadata: {},
-          });
+      const result = await spawnAgent(
+        workspace.id,
+        executor,
+        cwd,
+        fullPrompt,
+        {
+          onCompleted: (output) => {
+            activeProcesses.delete(workspace.id);
+            // Clear comments on success — the agent addressed them
+            workspacesRepository.update(workspace.id, {
+              status: 'completed',
+              output,
+              completedAt: new Date().toISOString(),
+              diffComments: JSON.stringify([]),
+            } as any);
+            tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
+              logger.warn(`${FILE_PATH} :: requestChanges - failed to move task to In Review`, e);
+            });
+            activityLogService.log({
+              projectId: workspace.projectId,
+              taskId: workspace.taskId,
+              workspaceId,
+              agentId: workspace.agentId,
+              eventType: 'agent_completed',
+              description: 'Agent completed review changes',
+              metadata: {},
+            });
+          },
+          onFailed: (output, error) => {
+            activeProcesses.delete(workspace.id);
+            // On failure, go back to completed + In Review so user can retry
+            workspacesRepository.update(workspace.id, {
+              status: 'completed',
+              output,
+              completedAt: new Date().toISOString(),
+            });
+            tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
+              logger.warn(`${FILE_PATH} :: requestChanges - failed to reset task to In Review`, e);
+            });
+            activityLogService.log({
+              projectId: workspace.projectId,
+              taskId: workspace.taskId,
+              workspaceId,
+              agentId: workspace.agentId,
+              eventType: 'agent_failed',
+              description: `Agent failed during review changes: ${error ?? 'unknown error'}`,
+              metadata: { error },
+            });
+          },
         },
-        onFailed: (output, error) => {
-          activeProcesses.delete(workspace.id);
-          // On failure, go back to completed + In Review so user can retry
-          workspacesRepository.update(workspace.id, {
-            status: 'completed',
-            output,
-            completedAt: new Date().toISOString(),
-          });
-          tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
-            logger.warn(`${FILE_PATH} :: requestChanges - failed to reset task to In Review`, e);
-          });
-          activityLogService.log({
-            projectId: workspace.projectId,
-            taskId: workspace.taskId,
-            workspaceId,
-            agentId: workspace.agentId,
-            eventType: 'agent_failed',
-            description: `Agent failed during review changes: ${error ?? 'unknown error'}`,
-            metadata: { error },
-          });
-        },
-      }, spawnOpts);
+        spawnOpts,
+      );
 
       activeProcesses.set(workspace.id, result.process);
 
@@ -633,7 +638,7 @@ export class OrchestratorService {
         }
         // Delete the orphaned branch (no code to preserve)
         try {
-          const { execSync } = await import('child_process');
+          const { execSync } = await import('node:child_process');
           execSync(`git branch -D "${workspace.branchName}"`, {
             cwd: project.localPath,
             stdio: 'pipe',
@@ -736,12 +741,15 @@ export class OrchestratorService {
       const review = await reviewsService.getByTask(workspace.taskId);
 
       const diff = await this.getDiff(workspaceId);
-      const diffText = diff.files.map((f) => `### ${f.filename}\n\`\`\`diff\n${f.patch ?? '(no patch)'}\n\`\`\``).join('\n\n');
+      const diffText = diff.files
+        .map((f) => `### ${f.filename}\n\`\`\`diff\n${f.patch ?? '(no patch)'}\n\`\`\``)
+        .join('\n\n');
 
       const checklist = review?.checklist ?? [];
-      const checklistText = checklist.length > 0
-        ? checklist.map((c: ChecklistItem) => `- [${c.checked ? 'x' : ' '}] ${c.item}`).join('\n')
-        : '(no checklist items defined)';
+      const checklistText =
+        checklist.length > 0
+          ? checklist.map((c: ChecklistItem) => `- [${c.checked ? 'x' : ' '}] ${c.item}`).join('\n')
+          : '(no checklist items defined)';
 
       const reviewPrompt = [
         `# Code Review Task`,
@@ -773,18 +781,24 @@ export class OrchestratorService {
             ].join('\n'),
         ``,
         `The reviewId is: "${review?.id ?? 'unknown'}"`,
-      ].filter(Boolean).join('\n');
+      ]
+        .filter(Boolean)
+        .join('\n');
 
       const { resolvedModel, spawnOpts } = await this.resolveSpawnOptions(executor, task.agentId, undefined, undefined);
 
       const cwd = executor.usesProjectRoot
-        ? (await projectsService.getById(workspace.projectId)).localPath ?? workspace.worktreePath
+        ? ((await projectsService.getById(workspace.projectId)).localPath ?? workspace.worktreePath)
         : workspace.worktreePath;
 
       const result = await spawnAgent(workspaceId, executor, cwd, reviewPrompt, {
         onCompleted: (output) => {
           activeProcesses.delete(workspaceId);
-          workspacesRepository.update(workspaceId, { status: 'completed', output, completedAt: new Date().toISOString() });
+          workspacesRepository.update(workspaceId, {
+            status: 'completed',
+            output,
+            completedAt: new Date().toISOString(),
+          });
           activityLogService.log({
             projectId: workspace.projectId,
             taskId: workspace.taskId,
@@ -823,7 +837,10 @@ export class OrchestratorService {
   }
 
   /** Adds a review comment (or reply) to a workspace diff. */
-  addDiffComment(workspaceId: string, comment: { filename: string; lineNumber: number; lineContent: string; body: string; parentId?: string }): Workspace {
+  addDiffComment(
+    workspaceId: string,
+    comment: { filename: string; lineNumber: number; lineContent: string; body: string; parentId?: string },
+  ): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];
     const newComment = {
@@ -861,10 +878,7 @@ export class OrchestratorService {
 
   /** Returns all pending and running workspaces. */
   async listActive(): Promise<Workspace[]> {
-    return [
-      ...workspacesRepository.findByStatus('pending'),
-      ...workspacesRepository.findByStatus('running'),
-    ];
+    return [...workspacesRepository.findByStatus('pending'), ...workspacesRepository.findByStatus('running')];
   }
 
   /** Returns all workspaces. */
@@ -880,10 +894,7 @@ export class OrchestratorService {
    *      should keep running unattended) then mark failed
    */
   reconcileOnStartup(): void {
-    const active = [
-      ...workspacesRepository.findByStatus('running'),
-      ...workspacesRepository.findByStatus('pending'),
-    ];
+    const active = [...workspacesRepository.findByStatus('running'), ...workspacesRepository.findByStatus('pending')];
 
     for (const ws of active) {
       if (ws.pid) {
@@ -903,20 +914,20 @@ export class OrchestratorService {
             process.kill(ws.pid, 'SIGTERM');
             // Give it 3 s then force-kill
             setTimeout(() => {
-              try { process.kill(ws.pid!, 'SIGKILL'); } catch { /* already dead */ }
+              try {
+                process.kill(ws.pid!, 'SIGKILL');
+              } catch {
+                /* already dead */
+              }
             }, 3000);
           } catch {
             // already exited between probe and kill -- that's fine
           }
         } else {
-          logger.warn(
-            `${FILE_PATH} :: reconcileOnStartup - PID ${ws.pid} not found (workspace ${ws.id})`,
-          );
+          logger.warn(`${FILE_PATH} :: reconcileOnStartup - PID ${ws.pid} not found (workspace ${ws.id})`);
         }
       } else {
-        logger.warn(
-          `${FILE_PATH} :: reconcileOnStartup - workspace ${ws.id} has no PID recorded, marking failed`,
-        );
+        logger.warn(`${FILE_PATH} :: reconcileOnStartup - workspace ${ws.id} has no PID recorded, marking failed`);
       }
 
       workspacesRepository.update(ws.id, {
@@ -931,9 +942,7 @@ export class OrchestratorService {
     }
 
     if (active.length > 0) {
-      logger.info(
-        `${FILE_PATH} :: reconcileOnStartup - reconciled ${active.length} orphaned workspace(s)`,
-      );
+      logger.info(`${FILE_PATH} :: reconcileOnStartup - reconciled ${active.length} orphaned workspace(s)`);
     }
   }
 
@@ -958,7 +967,7 @@ export class OrchestratorService {
         throw new AppError('Project has no local path', { status: 400 });
       }
 
-      if (!project.repositoryUrl || !project.repositoryUrl.includes('github.com')) {
+      if (!project.repositoryUrl?.includes('github.com')) {
         throw new AppError('Project has no GitHub repository configured', { status: 400 });
       }
 
@@ -969,7 +978,7 @@ export class OrchestratorService {
           stdio: 'pipe',
           encoding: 'utf-8',
         });
-      } catch (pushError: unknown) {
+      } catch (_pushError: unknown) {
         // Try from project root if worktree is gone
         execSync(`git push -u origin "${workspace.branchName}"`, {
           cwd: project.localPath,
@@ -980,14 +989,16 @@ export class OrchestratorService {
 
       const task = await tasksService.getById(workspace.taskId);
       const prTitle = opts.title || task.name;
-      const prBody = opts.body || [
-        '## Summary',
-        '',
-        task.notes || `Automated changes for: ${task.name}`,
-        '',
-        '---',
-        `*Created via [atlas](${project.repositoryUrl}) workspace*`,
-      ].join('\n');
+      const prBody =
+        opts.body ||
+        [
+          '## Summary',
+          '',
+          task.notes || `Automated changes for: ${task.name}`,
+          '',
+          '---',
+          `*Created via [atlas](${project.repositoryUrl}) workspace*`,
+        ].join('\n');
 
       const baseBranch = project.defaultBranch || 'main';
 

@@ -1,32 +1,32 @@
 // React / library
-import { useEffect, useState, useCallback } from 'react';
 import { FolderOpen, ScanSearch } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 // Components
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { FolderPickerDialog } from './FolderPickerDialog';
 
 // Hooks
-import { useCreateProject, useUpdateProject, useProjectBranches, useScanProject, useScanFolder } from '@/hooks/use-projects.hook';
+import {
+  useCreateProject,
+  useProjectBranches,
+  useScanFolder,
+  useScanProject,
+  useUpdateProject,
+} from '@/hooks/use-projects.hook';
 
 // Types
 import type { ProjectStatus } from '@atlas/shared';
 import type { ProjectDialogProps } from './projects.types';
 
 // Constants
-import { STATUSES, COLOR_PRESETS } from './projects.constants';
+import { COLOR_PRESETS, STATUSES } from './projects.constants';
 
 export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProps) {
   const createProject = useCreateProject();
@@ -73,26 +73,32 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
     }
   }, [project, open]);
 
-  const doScan = useCallback((folderPath: string) => {
-    if (!folderPath) return;
-    scanFolder.mutate(folderPath, {
-      onSuccess: (result) => {
-        if (result.name && !name) setName(result.name);
-        if (result.description && !description) setDescription(result.description);
-        if (result.techStack && !techStack) setTechStack(result.techStack);
-        if (result.repositoryUrl && !repositoryUrl) setRepositoryUrl(result.repositoryUrl);
-        if (result.defaultBranch && !defaultBranch) setDefaultBranch(result.defaultBranch);
-        setScanned(true);
-      },
-    });
-  }, [name, description, techStack, repositoryUrl, defaultBranch, scanFolder]);
+  const doScan = useCallback(
+    (folderPath: string) => {
+      if (!folderPath) return;
+      scanFolder.mutate(folderPath, {
+        onSuccess: (result) => {
+          if (result.name && !name) setName(result.name);
+          if (result.description && !description) setDescription(result.description);
+          if (result.techStack && !techStack) setTechStack(result.techStack);
+          if (result.repositoryUrl && !repositoryUrl) setRepositoryUrl(result.repositoryUrl);
+          if (result.defaultBranch && !defaultBranch) setDefaultBranch(result.defaultBranch);
+          setScanned(true);
+        },
+      });
+    },
+    [name, description, techStack, repositoryUrl, defaultBranch, scanFolder],
+  );
 
-  const handleFolderSelect = useCallback((selectedPath: string) => {
-    setLocalPath(selectedPath);
-    if (!isEditing) {
-      doScan(selectedPath);
-    }
-  }, [isEditing, doScan]);
+  const handleFolderSelect = useCallback(
+    (selectedPath: string) => {
+      setLocalPath(selectedPath);
+      if (!isEditing) {
+        doScan(selectedPath);
+      }
+    },
+    [isEditing, doScan],
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,10 +115,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
     };
 
     if (isEditing) {
-      updateProject.mutate(
-        { id: project.id, data },
-        { onSuccess: () => onOpenChange(false) },
-      );
+      updateProject.mutate({ id: project.id, data }, { onSuccess: () => onOpenChange(false) });
     } else {
       createProject.mutate(data, {
         onSuccess: (created) => {
@@ -235,7 +238,9 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                     </SelectTrigger>
                     <SelectContent>
                       {STATUSES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -263,16 +268,15 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                 <div className="space-y-2">
                   <Label htmlFor="defaultBranch">Default Branch</Label>
                   {branches.length > 0 ? (
-                    <Select
-                      value={defaultBranch || ''}
-                      onValueChange={(v) => setDefaultBranch(v)}
-                    >
+                    <Select value={defaultBranch || ''} onValueChange={(v) => setDefaultBranch(v)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select branch..." />
                       </SelectTrigger>
                       <SelectContent>
                         {branches.map((b) => (
-                          <SelectItem key={b} value={b}>{b}</SelectItem>
+                          <SelectItem key={b} value={b}>
+                            {b}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

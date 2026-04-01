@@ -1,3 +1,4 @@
+// Services
 import type { DiffFile } from '../worktree/worktree.service.js';
 
 export type DiffResult = {

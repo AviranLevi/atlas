@@ -1,38 +1,29 @@
 // React / library
+import { ScrollText, Plus, Trash2, Search, FolderOpen, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ScrollText, Plus, Trash2, Search, FolderOpen, Upload } from 'lucide-react';
 
 // Components
+import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
+import { RuleDialog } from '@/components/rules/RuleDialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { RuleDialog } from '@/components/rules/RuleDialog';
-import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks
-import { useRules, useDeleteRule } from '@/hooks/use-rules.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
+import { useRules, useDeleteRule } from '@/hooks/use-rules.hook';
+
+// Lib
+import { timeAgo, contentPreview } from '@/lib/format';
 
 // Types
 import type { Rule } from '@atlas/shared';
 
-// Constants & utilities
-import {
-  RULE_TYPE_OPTIONS,
-  RULE_TYPE_COLORS,
-  PROJECT_SCOPE_ALL,
-  PROJECT_SCOPE_GLOBAL,
-} from './rules-page.constants';
-import { timeAgo, contentPreview } from '@/lib/format';
+// Constants
+import { RULE_TYPE_OPTIONS, RULE_TYPE_COLORS, PROJECT_SCOPE_ALL, PROJECT_SCOPE_GLOBAL } from './rules-page.constants';
 
 export function RulesPage() {
   const navigate = useNavigate();
@@ -47,10 +38,7 @@ export function RulesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
-  const projectMap = useMemo(
-    () => new Map(projects.map((p) => [p.id, p.name])),
-    [projects],
-  );
+  const projectMap = useMemo(() => new Map(projects.map((p) => [p.id, p.name])), [projects]);
 
   const filtered = useMemo(() => {
     let result = rules;
@@ -103,7 +91,9 @@ export function RulesPage() {
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-sm font-semibold">{rule.name}</h3>
             <div className="mt-1 flex flex-wrap gap-1">
-              <Badge variant="secondary" className="text-[11px]">{rule.type}</Badge>
+              <Badge variant="secondary" className="text-[11px]">
+                {rule.type}
+              </Badge>
               {rule.projectId && projectMap.get(rule.projectId) && (
                 <Badge variant="outline" className="text-[10px]">
                   <FolderOpen className="mr-0.5 h-2.5 w-2.5" />
@@ -114,14 +104,14 @@ export function RulesPage() {
           </div>
         </div>
 
-        {preview && (
-          <p className="line-clamp-2 text-xs text-muted-foreground">{preview}</p>
-        )}
+        {preview && <p className="line-clamp-2 text-xs text-muted-foreground">{preview}</p>}
 
         {rule.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {rule.tags.map((tag: string) => (
-              <Badge key={tag} variant="outline" className="text-[11px]">{tag}</Badge>
+              <Badge key={tag} variant="outline" className="text-[11px]">
+                {tag}
+              </Badge>
             ))}
           </div>
         )}
@@ -147,9 +137,7 @@ export function RulesPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Rules</h1>
-          <p className="text-muted-foreground mt-0.5 text-sm">
-            Coding standards and conventions for agents
-          </p>
+          <p className="text-muted-foreground mt-0.5 text-sm">Coding standards and conventions for agents</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
@@ -179,7 +167,9 @@ export function RulesPage() {
           </SelectTrigger>
           <SelectContent>
             {RULE_TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -191,7 +181,9 @@ export function RulesPage() {
             <SelectItem value={PROJECT_SCOPE_ALL}>All Projects</SelectItem>
             <SelectItem value={PROJECT_SCOPE_GLOBAL}>Global Only</SelectItem>
             {projects.map((p) => (
-              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -222,23 +214,15 @@ export function RulesPage() {
               <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
                 {typeName} ({typeRules.length})
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {typeRules.map(renderCard)}
-              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{typeRules.map(renderCard)}</div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map(renderCard)}
-        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{filtered.map(renderCard)}</div>
       )}
 
-      <RuleDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onCreated={(rule) => navigate(`/rules/${rule.id}`)}
-      />
+      <RuleDialog open={dialogOpen} onOpenChange={setDialogOpen} onCreated={(rule) => navigate(`/rules/${rule.id}`)} />
 
       <ImportPackageDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>

@@ -1,11 +1,12 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { uuidDefault, timestampDefault } from '../helpers/index.js';
+// External
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+// DB
+import { timestampDefault, uuidDefault } from '../helpers/index.js';
 import { projects } from './projects.schema.js';
 
 export const phases = sqliteTable('phases', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(uuidDefault),
+  id: text('id').primaryKey().$defaultFn(uuidDefault),
   projectId: text('project_id')
     .notNull()
     .references(() => projects.id),
@@ -14,10 +15,6 @@ export const phases = sqliteTable('phases', {
   successCriteria: text('success_criteria'),
   status: text('status').notNull().default('planning'), // 'planning' | 'active' | 'review' | 'completed'
   orderIndex: integer('order_index').notNull().default(0),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(timestampDefault),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(timestampDefault),
+  createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
+  updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

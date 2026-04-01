@@ -1,21 +1,17 @@
 // React / library
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseMutationResult,
-} from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Lib
 import { api } from '@/lib/api';
 
 // Types
-import type { Project, CreateProject, UpdateProject } from '@atlas/shared';
-import type { ProjectWithSummary, ProjectContext } from '@/pages/projects/projects-page.types';
-import type { ScanResult, BrowseResponse } from '@/components/projects/projects.types';
+import type { CreateProject, Project, UpdateProject } from '@atlas/shared';
+import type { UseMutationResult } from '@tanstack/react-query';
+import type { BrowseResponse, ScanResult } from '@/components/projects/projects.types';
+import type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projects-page.types';
 
-export type { ProjectWithSummary, ProjectContext } from '@/pages/projects/projects-page.types';
-export type { ScanResult, DirectoryEntry, BrowseResponse } from '@/components/projects/projects.types';
+export type { BrowseResponse, DirectoryEntry, ScanResult } from '@/components/projects/projects.types';
+export type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projects-page.types';
 
 const PROJECTS_KEY = ['projects'] as const;
 
@@ -58,19 +54,26 @@ export function useProjectBranches(id: string | undefined) {
   });
 }
 
-export function useCreateBranch(projectId: string | undefined): UseMutationResult<{ branch: string }, Error, { name: string; baseBranch?: string }> {
+export function useCreateBranch(
+  projectId: string | undefined,
+): UseMutationResult<{ branch: string }, Error, { name: string; baseBranch?: string }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { name: string; baseBranch?: string }) => {
       if (!projectId) throw new Error('projectId is required to create a branch');
       return api.post<{ branch: string }>(`/projects/${projectId}/branches`, data);
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'branches'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'branches'] }),
   });
 }
 
-export function useImportProjectRules(projectId: string | undefined): UseMutationResult<{ imported: number; ids: string[] }, Error, Array<{ name: string; content: string; source: string; filePath: string }>> {
+export function useImportProjectRules(
+  projectId: string | undefined,
+): UseMutationResult<
+  { imported: number; ids: string[] },
+  Error,
+  Array<{ name: string; content: string; source: string; filePath: string }>
+> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (items: Array<{ name: string; content: string; source: string; filePath: string }>) => {
@@ -87,20 +90,16 @@ export function useImportProjectRules(projectId: string | undefined): UseMutatio
 export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateProject) =>
-      api.post<Project>('/projects', data),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    mutationFn: (data: CreateProject) => api.post<Project>('/projects', data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });
 }
 
 export function useUpdateProject() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateProject }) =>
-      api.put<Project>(`/projects/${id}`, data),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    mutationFn: ({ id, data }: { id: string; data: UpdateProject }) => api.put<Project>(`/projects/${id}`, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });
 }
 
@@ -108,8 +107,7 @@ export function useDeleteProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/projects/${id}`),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });
 }
 
@@ -117,8 +115,7 @@ export function useScanProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<Project>(`/projects/${id}/scan`, {}),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });
 }
 
@@ -126,8 +123,7 @@ export function useGenerateBrief() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<Project>(`/projects/${id}/generate-brief`, {}),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });
 }
 
@@ -136,8 +132,7 @@ const FILESYSTEM_KEY = ['filesystem'] as const;
 /** Scans a local folder and returns auto-detected project metadata. */
 export function useScanFolder() {
   return useMutation({
-    mutationFn: (path: string) =>
-      api.get<ScanResult>(`/filesystem/scan?path=${encodeURIComponent(path)}`),
+    mutationFn: (path: string) => api.get<ScanResult>(`/filesystem/scan?path=${encodeURIComponent(path)}`),
   });
 }
 
@@ -145,10 +140,7 @@ export function useScanFolder() {
 export function useBrowseFilesystem(path: string, enabled: boolean) {
   return useQuery({
     queryKey: [...FILESYSTEM_KEY, 'browse', path],
-    queryFn: () =>
-      api.get<BrowseResponse>(
-        `/filesystem/browse${path ? `?path=${encodeURIComponent(path)}` : ''}`,
-      ),
+    queryFn: () => api.get<BrowseResponse>(`/filesystem/browse${path ? `?path=${encodeURIComponent(path)}` : ''}`),
     enabled,
   });
 }

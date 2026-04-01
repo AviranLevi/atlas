@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import type { ReactNode } from 'react';
+// React / library
 import { Download } from 'lucide-react';
+import { useState } from 'react';
 
+// Components
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,17 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+// Hooks
 import { useResetAllData } from '@/hooks/use-system.hook';
 
-function ActionCard({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
+// Types
+import type { ReactNode } from 'react';
+
+function ActionCard({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   return (
     <div className="rounded-lg border border-border bg-card p-6">
       <h3 className="text-base font-semibold">{title}</h3>
@@ -44,8 +42,7 @@ export function DataManagementTab() {
     setResetError(null);
     resetMutation.mutate(undefined, {
       onSuccess: () => window.location.reload(),
-      onError: (e: unknown) =>
-        setResetError(e instanceof Error ? e.message : 'Reset failed'),
+      onError: (e: unknown) => setResetError(e instanceof Error ? e.message : 'Reset failed'),
     });
   };
 
@@ -74,9 +71,7 @@ export function DataManagementTab() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset all data?</DialogTitle>
-            <DialogDescription>
-              Are you sure? This will permanently delete all data.
-            </DialogDescription>
+            <DialogDescription>Are you sure? This will permanently delete all data.</DialogDescription>
           </DialogHeader>
           {resetError && <p className="text-sm text-destructive">{resetError}</p>}
           <DialogFooter>
@@ -88,12 +83,7 @@ export function DataManagementTab() {
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleConfirmReset}
-              disabled={resetMutation.isPending}
-            >
+            <Button type="button" variant="destructive" onClick={handleConfirmReset} disabled={resetMutation.isPending}>
               {resetMutation.isPending ? 'Resetting…' : 'Delete everything'}
             </Button>
           </DialogFooter>

@@ -1,9 +1,14 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import type { McpConfigFormat } from './executor.types.js';
+// External
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Services
 import { mcpServersService } from '../services/index.js';
+
+// Executors
+import type { McpConfigFormat } from './executor.types.js';
 
 // __dirname → packages/server/src/executors
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -40,10 +45,7 @@ async function buildMcpServers(atlasEntry: Record<string, unknown>): Promise<Rec
   return servers;
 }
 
-export async function generateMcpConfig(
-  workspaceId: string,
-  format: McpConfigFormat,
-): Promise<string | undefined> {
+export async function generateMcpConfig(workspaceId: string, format: McpConfigFormat): Promise<string | undefined> {
   if (format === 'none') return undefined;
 
   // Use absolute path for the MCP entry point so it works regardless of cwd
@@ -61,7 +63,11 @@ export async function generateMcpConfig(
     fs.mkdirSync(path.dirname(GEMINI_SETTINGS_PATH), { recursive: true });
     let settings: Record<string, unknown> = {};
     if (fs.existsSync(GEMINI_SETTINGS_PATH)) {
-      try { settings = JSON.parse(fs.readFileSync(GEMINI_SETTINGS_PATH, 'utf8')); } catch { /* ignore */ }
+      try {
+        settings = JSON.parse(fs.readFileSync(GEMINI_SETTINGS_PATH, 'utf8'));
+      } catch {
+        /* ignore */
+      }
     }
     const mcpServers = (settings.mcpServers as Record<string, unknown>) ?? {};
     const allServers = await buildMcpServers(mcpServerEntry);
@@ -99,10 +105,12 @@ export function removeMcpConfig(workspaceId: string, format?: McpConfigFormat): 
     try {
       const settings = JSON.parse(fs.readFileSync(GEMINI_SETTINGS_PATH, 'utf8'));
       if (settings.mcpServers) {
-        delete settings.mcpServers['atlas'];
+        delete settings.mcpServers.atlas;
         fs.writeFileSync(GEMINI_SETTINGS_PATH, JSON.stringify(settings, null, 2));
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return;
   }
   const configPath = path.join(MCP_CONFIG_DIR, `${workspaceId}.json`);

@@ -3,8 +3,8 @@ import { ArrowLeft, ExternalLink, Pencil, GitBranch, ScanSearch } from 'lucide-r
 import { useNavigate } from 'react-router-dom';
 
 // Components
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 // Types
 import type { ProjectHeaderProps } from './project-detail-page.types';
@@ -22,10 +22,7 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
           {project.color && (
-            <div
-              className="mt-1.5 h-4 w-4 shrink-0 rounded-full"
-              style={{ backgroundColor: project.color }}
-            />
+            <div className="mt-1.5 h-4 w-4 shrink-0 rounded-full" style={{ backgroundColor: project.color }} />
           )}
           <div>
             <div className="flex items-center gap-2">
@@ -39,12 +36,8 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
                 </Badge>
               )}
             </div>
-            {project.description && (
-              <p className="text-muted-foreground mt-1 text-sm">{project.description}</p>
-            )}
-            {project.mission && (
-              <p className="text-muted-foreground/80 mt-1 text-xs italic">{project.mission}</p>
-            )}
+            {project.description && <p className="text-muted-foreground mt-1 text-sm">{project.description}</p>}
+            {project.mission && <p className="text-muted-foreground/80 mt-1 text-xs italic">{project.mission}</p>}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {project.techStack
                 ?.split(',')
@@ -78,11 +71,7 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
         <div className="flex items-center gap-2">
           {project.localPath && (
             <Button variant="outline" size="sm" asChild>
-              <button
-                type="button"
-                onClick={() => scanProject.mutate(project.id)}
-                disabled={scanProject.isPending}
-              >
+              <button type="button" onClick={() => scanProject.mutate(project.id)} disabled={scanProject.isPending}>
                 <ScanSearch className={`mr-1.5 h-4 w-4 ${scanProject.isPending ? 'animate-pulse' : ''}`} />
                 {scanProject.isPending ? 'Scanning...' : project.scanData ? 'Re-scan' : 'Scan Project'}
               </button>

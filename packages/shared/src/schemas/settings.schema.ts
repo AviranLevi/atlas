@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const GlobalInstructionsSchema = z.object({
   id: z.string().uuid(),
@@ -10,16 +10,11 @@ export const CreateGlobalInstructionsSchema = GlobalInstructionsSchema.pick({
   content: true,
 });
 
-export const UpdateGlobalInstructionsSchema =
-  CreateGlobalInstructionsSchema.partial();
+export const UpdateGlobalInstructionsSchema = CreateGlobalInstructionsSchema.partial();
 
 export type GlobalInstructions = z.infer<typeof GlobalInstructionsSchema>;
-export type CreateGlobalInstructions = z.infer<
-  typeof CreateGlobalInstructionsSchema
->;
-export type UpdateGlobalInstructions = z.infer<
-  typeof UpdateGlobalInstructionsSchema
->;
+export type CreateGlobalInstructions = z.infer<typeof CreateGlobalInstructionsSchema>;
+export type UpdateGlobalInstructions = z.infer<typeof UpdateGlobalInstructionsSchema>;
 
 export const DispatchRuleSchema = z.object({
   id: z.string().uuid(),

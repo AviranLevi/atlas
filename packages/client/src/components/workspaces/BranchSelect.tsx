@@ -1,20 +1,13 @@
 // React / library
-import type { ReactElement } from 'react';
-import { GitBranch, Plus, Loader2 } from 'lucide-react';
+import { GitBranch, Loader2, Plus } from 'lucide-react';
 
 // Components
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Types
+import type { ReactElement } from 'react';
 import type { BranchSelectProps } from './workspaces.types';
 
 // Constants
@@ -51,7 +44,9 @@ export function BranchSelect({
               <span className="text-muted-foreground">Default ({defaultLabel})</span>
             </SelectItem>
             {branches.map((branch) => (
-              <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+              <SelectItem key={branch} value={branch}>
+                {branch}
+              </SelectItem>
             ))}
             <SelectSeparator />
             <SelectItem value={NEW_BRANCH_VALUE}>
@@ -77,9 +72,7 @@ export function BranchSelect({
               <Loader2 className="h-3 w-3 animate-spin" /> Creating branch...
             </p>
           )}
-          {createError && (
-            <p className="text-destructive text-xs">{createError}</p>
-          )}
+          {createError && <p className="text-destructive text-xs">{createError}</p>}
         </div>
       )}
       <p className="text-muted-foreground text-xs">

@@ -1,11 +1,11 @@
 // React / library
-import { useState, useMemo, type ReactElement } from 'react';
 import { FileText, Download, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { useState, useMemo, type ReactElement } from 'react';
 
 // Components
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 
 // Hooks
@@ -81,9 +81,7 @@ export function DetectedRulesSection({ projectId, aiConfigs }: DetectedRulesSect
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">
-            Detected AI Rules ({aiConfigs.length})
-          </h3>
+          <h3 className="text-sm font-semibold">Detected AI Rules ({aiConfigs.length})</h3>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={toggleAll}>
@@ -96,9 +94,7 @@ export function DetectedRulesSection({ projectId, aiConfigs }: DetectedRulesSect
             onClick={handleImport}
           >
             <Download className="h-3 w-3 mr-1.5" />
-            {importRules.isPending
-              ? 'Importing...'
-              : `Import ${selected.size} Rule${selected.size !== 1 ? 's' : ''}`}
+            {importRules.isPending ? 'Importing...' : `Import ${selected.size} Rule${selected.size !== 1 ? 's' : ''}`}
           </Button>
         </div>
       </div>
@@ -135,13 +131,13 @@ export function DetectedRulesSection({ projectId, aiConfigs }: DetectedRulesSect
                         className="flex items-center gap-1.5 flex-1 text-left min-w-0"
                         onClick={() => setExpandedFile(isExpanded ? null : config.filePath)}
                       >
-                        {isExpanded
-                          ? <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-                          : <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
+                        {isExpanded ? (
+                          <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                        )}
                         <span className="text-sm font-medium truncate">{config.name}</span>
-                        <span className="text-xs text-muted-foreground truncate ml-1">
-                          {config.filePath}
-                        </span>
+                        <span className="text-xs text-muted-foreground truncate ml-1">{config.filePath}</span>
                       </button>
                     </div>
                     {isExpanded && (

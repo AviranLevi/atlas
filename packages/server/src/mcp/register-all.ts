@@ -1,16 +1,18 @@
+// External
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerAgentTools } from './agents.tools.js';
-import { registerTaskTools } from './tasks.tools.js';
-import { registerMemoryTools } from './memory.tools.js';
-import { registerProjectTools } from './projects.tools.js';
-import { registerRuleTools } from './rules.tools.js';
-import { registerSkillTools } from './skills.tools.js';
-import { registerSettingsTools } from './settings.tools.js';
-import { registerSearchTools } from './search.tools.js';
-import { registerWorkspaceTools } from './workspaces.tools.js';
-import { registerPhaseTools } from './phases.tools.js';
-import { registerReviewTools } from './reviews.tools.js';
+
 import { registerAgentProviderTools } from './agent-providers.tools.js';
+import { registerAgentTools } from './agents.tools.js';
+import { registerMemoryTools } from './memory.tools.js';
+import { registerPhaseTools } from './phases.tools.js';
+import { registerProjectTools } from './projects.tools.js';
+import { registerReviewTools } from './reviews.tools.js';
+import { registerRuleTools } from './rules.tools.js';
+import { registerSearchTools } from './search.tools.js';
+import { registerSettingsTools } from './settings.tools.js';
+import { registerSkillTools } from './skills.tools.js';
+import { registerTaskTools } from './tasks.tools.js';
+import { registerWorkspaceTools } from './workspaces.tools.js';
 
 export function registerAllTools(server: McpServer) {
   registerAgentTools(server);

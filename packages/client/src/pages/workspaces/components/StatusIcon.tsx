@@ -1,6 +1,6 @@
 // React / library
-import { Loader2, Circle, CheckCircle2, XCircle, Square } from 'lucide-react';
 import { GitMerge } from 'lucide-react';
+import { Loader2, Circle, CheckCircle2, XCircle, Square } from 'lucide-react';
 
 // Lib
 import { cn } from '@/lib/utils';

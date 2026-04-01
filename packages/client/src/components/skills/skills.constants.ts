@@ -1,3 +1,4 @@
+// Types
 import type { SkillType } from '@atlas/shared';
 
 export const NONE = '__none__';

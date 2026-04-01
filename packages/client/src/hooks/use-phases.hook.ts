@@ -1,6 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// React / library
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
-import type { Phase, CreatePhase, UpdatePhase } from '@atlas/shared';
+
+// Types
+import type { CreatePhase, Phase, UpdatePhase } from '@atlas/shared';
 
 const PHASES_KEY = ['phases'] as const;
 
@@ -23,8 +28,7 @@ export function useCreatePhase() {
 export function useUpdatePhase() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdatePhase }) =>
-      api.put<Phase>(`/phases/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdatePhase }) => api.put<Phase>(`/phases/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: PHASES_KEY }),
   });
 }

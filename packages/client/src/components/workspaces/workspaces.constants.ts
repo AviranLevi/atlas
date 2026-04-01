@@ -30,14 +30,15 @@ export const ACTIVE_STATUSES: ReadonlySet<string> = new Set(['running', 'pending
 
 export const WORKSPACE_TRANSITIONS: Record<string, { kind: 'success' | 'error'; verb: string }> = {
   completed: { kind: 'success', verb: 'completed' },
-  merged:    { kind: 'success', verb: 'merged' },
-  failed:    { kind: 'error',   verb: 'failed' },
+  merged: { kind: 'success', verb: 'merged' },
+  failed: { kind: 'error', verb: 'failed' },
 };
 
 export const statusConfig: Record<string, { label: string; className: string }> = {
   pending: {
     label: 'Pending',
-    className: 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
+    className:
+      'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
   },
   running: {
     label: 'Running',
@@ -45,7 +46,8 @@ export const statusConfig: Record<string, { label: string; className: string }> 
   },
   completed: {
     label: 'Completed',
-    className: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
+    className:
+      'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
   },
   failed: {
     label: 'Failed',

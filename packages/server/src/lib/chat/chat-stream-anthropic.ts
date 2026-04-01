@@ -1,6 +1,7 @@
+// Lib
+import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 import { createAnthropicClient } from '../providers/provider-clients.js';
 import { logger } from '../logger.js';
-import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 
 export async function* streamAnthropic(
   apiKey: string,
@@ -36,13 +37,16 @@ export async function* streamAnthropic(
     input_schema: t.parameters as Record<string, unknown>,
   }));
 
-  const stream = client.messages.stream({
-    model,
-    max_tokens: 4096,
-    system: systemPrompt,
-    messages: anthropicMessages as Parameters<typeof client.messages.stream>[0]['messages'],
-    tools: anthropicTools as Parameters<typeof client.messages.stream>[0]['tools'],
-  }, { signal });
+  const stream = client.messages.stream(
+    {
+      model,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: anthropicMessages as Parameters<typeof client.messages.stream>[0]['messages'],
+      tools: anthropicTools as Parameters<typeof client.messages.stream>[0]['tools'],
+    },
+    { signal },
+  );
 
   let currentToolId = '';
   let currentToolName = '';
@@ -68,7 +72,11 @@ export async function* streamAnthropic(
     } else if (event.type === 'content_block_stop') {
       if (currentToolName) {
         let args: Record<string, unknown> = {};
-        try { args = JSON.parse(toolArgsJson || '{}'); } catch (e: unknown) { logger.debug('chat-stream :: anthropic tool args parse failed', e); }
+        try {
+          args = JSON.parse(toolArgsJson || '{}');
+        } catch (e: unknown) {
+          logger.debug('chat-stream :: anthropic tool args parse failed', e);
+        }
         yield { type: 'tool_call', id: currentToolId, name: currentToolName, args };
         yield { type: 'tool_call_done' };
         currentToolName = '';

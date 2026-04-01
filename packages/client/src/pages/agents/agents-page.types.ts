@@ -1,3 +1,4 @@
+// Types
 import type { Agent, AgentProvider } from '@atlas/shared';
 
 export type ProvidersSectionProps = {

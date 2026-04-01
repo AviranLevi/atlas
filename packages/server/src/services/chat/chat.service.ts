@@ -1,9 +1,24 @@
+// Shared
 import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 
-import { chatRepository } from '../../db/repositories/index.js';
-import { agentProvidersService, settingsService, projectsService, memoryService, usageService } from '../index.js';
-import { streamChat, type InternalMessage, CHAT_TOOLS, executeTool, streamCliChat, formatCliPrompt } from '../../lib/chat/index.js';
+// Services
+import { agentProvidersService, memoryService, projectsService, settingsService, usageService } from '../index.js';
+
+// Executors
 import { executorRegistry } from '../../executors/index.js';
+
+// Repositories
+import { chatRepository } from '../../db/repositories/index.js';
+
+// Lib
+import {
+  type InternalMessage,
+  CHAT_TOOLS,
+  executeTool,
+  formatCliPrompt,
+  streamChat,
+  streamCliChat,
+} from '../../lib/chat/index.js';
 import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/chat/chat.service.ts';
@@ -45,11 +60,7 @@ export class ChatService {
     }
   }
 
-  async sendMessage(
-    conversationId: string,
-    content: string,
-    emit: StreamCallback,
-  ): Promise<void> {
+  async sendMessage(conversationId: string, content: string, emit: StreamCallback): Promise<void> {
     const conversation = this.repo.findConversationByIdOrThrow(conversationId);
     this.repo.insertMessage({ conversationId, role: 'user', content });
 
@@ -60,11 +71,7 @@ export class ChatService {
     }
   }
 
-  private async sendMessageApi(
-    conversation: ChatConversation,
-    content: string,
-    emit: StreamCallback,
-  ): Promise<void> {
+  private async sendMessageApi(conversation: ChatConversation, _content: string, emit: StreamCallback): Promise<void> {
     const FUNCTION_NAME = 'sendMessageApi';
     const conversationId = conversation.id;
 
@@ -152,9 +159,7 @@ export class ChatService {
             });
           }
 
-          messages = this.toInternalMessages(
-            this.repo.findMessagesByConversation(conversationId),
-          );
+          messages = this.toInternalMessages(this.repo.findMessagesByConversation(conversationId));
           toolRound++;
         } else {
           const savedMsg = this.repo.insertMessage({
@@ -202,11 +207,7 @@ export class ChatService {
     }
   }
 
-  private async sendMessageCli(
-    conversation: ChatConversation,
-    content: string,
-    emit: StreamCallback,
-  ): Promise<void> {
+  private async sendMessageCli(conversation: ChatConversation, content: string, emit: StreamCallback): Promise<void> {
     const FUNCTION_NAME = 'sendMessageCli';
     const conversationId = conversation.id;
 
@@ -254,7 +255,9 @@ export class ChatService {
           model: conversation.model ?? executor.defaultModel,
           signal: abortController.signal,
         },
-        (chunk) => { emit('text_delta', { text: chunk }); },
+        (chunk) => {
+          emit('text_delta', { text: chunk });
+        },
       );
 
       const savedMsg = this.repo.insertMessage({
@@ -281,13 +284,16 @@ export class ChatService {
 
     sections.push(
       'You are a helpful AI assistant integrated into a project management and AI agent orchestration platform. ' +
-      'You can answer questions about the project, create tasks, agents, rules, skills, and memories using the available tools. ' +
-      'Be concise and direct. When creating entities, confirm what you created.',
+        'You can answer questions about the project, create tasks, agents, rules, skills, and memories using the available tools. ' +
+        'Be concise and direct. When creating entities, confirm what you created.',
     );
 
     const globalInstructions = await settingsService.listGlobalInstructions();
     if (globalInstructions.length > 0) {
-      const content = globalInstructions.map((gi) => gi.content).filter(Boolean).join('\n\n');
+      const content = globalInstructions
+        .map((gi) => gi.content)
+        .filter(Boolean)
+        .join('\n\n');
       if (content) sections.push(`## Global Instructions\n\n${content}`);
     }
 
@@ -311,7 +317,9 @@ export class ChatService {
           if (sd.packageManager) scanLines.push(`**Package Manager:** ${sd.packageManager}`);
           if (sd.projectType) scanLines.push(`**Type:** ${sd.projectType}`);
           if (sd.keyDirectories && Object.keys(sd.keyDirectories).length > 0) {
-            const dirs = Object.entries(sd.keyDirectories).map(([k, v]) => `${k}: \`${v}\``).join(', ');
+            const dirs = Object.entries(sd.keyDirectories)
+              .map(([k, v]) => `${k}: \`${v}\``)
+              .join(', ');
             scanLines.push(`**Key Directories:** ${dirs}`);
           }
           if (scanLines.length > 0) {
@@ -324,9 +332,7 @@ export class ChatService {
           .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
           .slice(0, MAX_RECENT_MEMORIES);
         if (recentMemories.length > 0) {
-          const memList = recentMemories
-            .map((m) => `- [${m.type}] **${m.name}**: ${m.content}`)
-            .join('\n');
+          const memList = recentMemories.map((m) => `- [${m.type}] **${m.name}**: ${m.content}`).join('\n');
           sections.push(`## Recent Project Knowledge\n\n${memList}`);
         }
       } catch (error: unknown) {
@@ -352,7 +358,9 @@ export class ChatService {
     });
   }
 
-  private async getProjectContext(projectId: string | null): Promise<{ projectId?: string | null; projectLocalPath?: string | null }> {
+  private async getProjectContext(
+    projectId: string | null,
+  ): Promise<{ projectId?: string | null; projectLocalPath?: string | null }> {
     if (!projectId) return {};
     try {
       const { project } = await projectsService.getContext(projectId);

@@ -1,3 +1,4 @@
+// Types
 import type { Phase } from '@atlas/shared';
 
 export type PhaseCardProps = {

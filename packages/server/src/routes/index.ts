@@ -2,28 +2,28 @@
 import { Hono } from 'hono';
 
 // Routes
-import { agentsRoute } from './agents.route.js';
-import { skillsRoute } from './skills.route.js';
-import { rulesRoute } from './rules.route.js';
-import { memoryRoute } from './memory.route.js';
-import { tasksRoute } from './tasks.route.js';
-import { projectsRoute } from './projects.route.js';
-import { settingsRoute } from './settings.route.js';
-import { searchRoute } from './search.route.js';
-import { workspacesRoute } from './workspaces.route.js';
-import { filesystemRoute } from './filesystem.route.js';
-import { mcpConfigRoute } from './mcp-config.route.js';
 import { agentProvidersRoute } from './agent-providers.route.js';
-import { phasesRoute } from './phases.route.js';
-import { reviewsRoute } from './reviews.route.js';
+import { agentsRoute } from './agents.route.js';
 import { chatRoute } from './chat.route.js';
-import { systemRoute } from './system.route.js';
-import { preferencesRoute } from './preferences.route.js';
-import { packageRoute } from './package.route.js';
-import { integrationsRoute } from './integrations.route.js';
-import { mcpServersRoute } from './mcp-servers.route.js';
+import { filesystemRoute } from './filesystem.route.js';
 import { heartbeatsRoute } from './heartbeats.route.js';
+import { integrationsRoute } from './integrations.route.js';
+import { mcpConfigRoute } from './mcp-config.route.js';
+import { mcpServersRoute } from './mcp-servers.route.js';
+import { memoryRoute } from './memory.route.js';
+import { packageRoute } from './package.route.js';
+import { phasesRoute } from './phases.route.js';
+import { preferencesRoute } from './preferences.route.js';
+import { projectsRoute } from './projects.route.js';
+import { reviewsRoute } from './reviews.route.js';
+import { rulesRoute } from './rules.route.js';
+import { searchRoute } from './search.route.js';
+import { settingsRoute } from './settings.route.js';
+import { skillsRoute } from './skills.route.js';
+import { systemRoute } from './system.route.js';
+import { tasksRoute } from './tasks.route.js';
 import { usageRoute } from './usage.route.js';
+import { workspacesRoute } from './workspaces.route.js';
 
 export const apiRoutes = new Hono()
   .route('/agents', agentsRoute)

@@ -1,3 +1,4 @@
+// Types
 import type { ThinkingStep } from './chat-page.types';
 
 /**

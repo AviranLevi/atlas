@@ -1,19 +1,24 @@
 // Shared
+import type { CreateTask, Task, UpdateTask } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
-import type { Task, CreateTask, UpdateTask } from '@atlas/shared';
 
 // Services
 import { activityLogService, settingsService } from '../index.js';
 
 // Repositories
-import { tasksRepository, workspacesRepository, reviewsRepository } from '../../db/repositories/index.js';
+import { reviewsRepository, tasksRepository, workspacesRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 /** Statuses that mean "an agent should not be running for this task". */
-const INACTIVE_STATUSES: ReadonlySet<string> = new Set([TASK_STATUS.BACKLOG, TASK_STATUS.TODO, TASK_STATUS.DONE, TASK_STATUS.BLOCKED]);
+const INACTIVE_STATUSES: ReadonlySet<string> = new Set([
+  TASK_STATUS.BACKLOG,
+  TASK_STATUS.TODO,
+  TASK_STATUS.DONE,
+  TASK_STATUS.BLOCKED,
+]);
 
 const FILE_PATH = 'services/tasks/tasks.service.ts';
 
@@ -117,10 +122,7 @@ export class TasksService {
         // "To Do" (or marks it Done / Blocked) while an agent is still running.
         if (INACTIVE_STATUSES.has(data.status)) {
           const activeWorkspace = workspacesRepository.findByTaskId(id);
-          if (
-            activeWorkspace &&
-            (activeWorkspace.status === 'running' || activeWorkspace.status === 'pending')
-          ) {
+          if (activeWorkspace && (activeWorkspace.status === 'running' || activeWorkspace.status === 'pending')) {
             // Lazy import to break the potential circular dep with orchestrator
             import('../orchestrator/orchestrator.service.js').then(({ OrchestratorService }) => {
               const orchestrator = new OrchestratorService();

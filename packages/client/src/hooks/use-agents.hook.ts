@@ -1,10 +1,6 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import type { Agent, CreateAgent, Rule, Skill, UpdateAgent } from '@atlas/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { Agent, CreateAgent, UpdateAgent, Skill, Rule } from '@atlas/shared';
 
 const AGENTS_KEY = ['agents'] as const;
 const AGENT_DETAIL_KEY = ['agent-detail'] as const;
@@ -38,8 +34,7 @@ export function useAgent(id: string | undefined) {
 export function useCreateAgent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateAgent) =>
-      api.post<Agent>('/agents', data),
+    mutationFn: (data: CreateAgent) => api.post<Agent>('/agents', data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: AGENTS_KEY }),
   });
 }
@@ -47,8 +42,7 @@ export function useCreateAgent() {
 export function useUpdateAgent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateAgent }) =>
-      api.put<Agent>(`/agents/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateAgent }) => api.put<Agent>(`/agents/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AGENTS_KEY });
       queryClient.invalidateQueries({ queryKey: AGENT_DETAIL_KEY });

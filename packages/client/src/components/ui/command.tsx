@@ -1,6 +1,9 @@
-import * as React from 'react';
+// React / library
 import { Command as CommandPrimitive } from 'cmdk';
 import { Search } from 'lucide-react';
+import * as React from 'react';
+
+// Lib
 import { cn } from '@/lib/utils';
 
 const Command = React.forwardRef<
@@ -51,9 +54,7 @@ CommandList.displayName = CommandPrimitive.List.displayName;
 const CommandEmpty = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Empty>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Empty>
->((props, ref) => (
-  <CommandPrimitive.Empty ref={ref} className="py-6 text-center text-sm" {...props} />
-));
+>((props, ref) => <CommandPrimitive.Empty ref={ref} className="py-6 text-center text-sm" {...props} />);
 CommandEmpty.displayName = CommandPrimitive.Empty.displayName;
 
 const CommandGroup = React.forwardRef<
@@ -86,11 +87,4 @@ const CommandItem = React.forwardRef<
 ));
 CommandItem.displayName = CommandPrimitive.Item.displayName;
 
-export {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-};
+export { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList };

@@ -1,4 +1,7 @@
+// External
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+// DB
 import { timestampDefault } from '../helpers/index.js';
 
 export const preferences = sqliteTable('preferences', {

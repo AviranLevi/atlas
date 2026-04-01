@@ -1,6 +1,9 @@
-import type { AgentProvider } from '@atlas/shared';
+// External
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
+
+// Shared
+import type { AgentProvider } from '@atlas/shared';
 
 export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
 export const GOOGLE_AI_BASE = 'https://generativelanguage.googleapis.com/v1beta';

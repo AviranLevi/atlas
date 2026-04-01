@@ -1,6 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+// External
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Shared
+import type { Agent, AgentProvider, Rule, Skill } from '@atlas/shared';
 import { AtlasPackageSchema } from '@atlas/shared';
-import type { Agent, Skill, Rule, AgentProvider } from '@atlas/shared';
 
 vi.mock('../index.js', () => ({
   agentsService: {
@@ -43,13 +46,9 @@ vi.mock('../../lib/errors.js', () => ({
   },
 }));
 
+// Services
+import { agentProvidersService, agentsService, rulesService, skillsService } from '../index.js';
 import { PackageService } from './package.service.js';
-import {
-  agentsService,
-  skillsService,
-  rulesService,
-  agentProvidersService,
-} from '../index.js';
 
 const mAgents = vi.mocked(agentsService);
 const mSkills = vi.mocked(skillsService);

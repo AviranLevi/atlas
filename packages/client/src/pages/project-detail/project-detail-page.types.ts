@@ -1,3 +1,4 @@
+// Types
 import type { Project, ProjectScanData, ProjectStatus, Task, Phase, Agent } from '@atlas/shared';
 import type { UseMutationResult } from '@tanstack/react-query';
 

@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+// React / library
 import { Timer } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+// Components
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { HeartbeatHistory } from './HeartbeatHistory';
+import { HeartbeatScheduleForm } from './HeartbeatScheduleForm';
+
+// Hooks
 import {
   useCreateHeartbeatConfig,
   useDeleteHeartbeatConfig,
@@ -21,14 +21,8 @@ import {
 import { useProjects } from '@/hooks/use-projects.hook';
 import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 
-import {
-  ALL_PROJECTS_VALUE,
-  SCHEDULE_PRESETS,
-  cronFromPreset,
-  presetFromCron,
-} from './heartbeat-section.constants';
-import { HeartbeatScheduleForm } from './HeartbeatScheduleForm';
-import { HeartbeatHistory } from './HeartbeatHistory';
+// Constants
+import { ALL_PROJECTS_VALUE, SCHEDULE_PRESETS, cronFromPreset, presetFromCron } from './heartbeat-section.constants';
 
 type HeartbeatSectionProps = {
   agentId: string;
@@ -58,8 +52,7 @@ export function HeartbeatSection({ agentId }: HeartbeatSectionProps) {
 
   const sortedRuntimes = useMemo(() => {
     return [...runtimes].sort((a, b) => {
-      const score = (r: (typeof runtimes)[0]) =>
-        r.installed && r.authenticated ? 2 : r.installed ? 1 : 0;
+      const score = (r: (typeof runtimes)[0]) => (r.installed && r.authenticated ? 2 : r.installed ? 1 : 0);
       return score(b) - score(a);
     });
   }, [runtimes]);
@@ -171,9 +164,7 @@ export function HeartbeatSection({ agentId }: HeartbeatSectionProps) {
           </div>
           <div className="min-w-0 flex-1">
             <CardTitle className="text-base">Heartbeat</CardTitle>
-            <CardDescription>
-              Periodically wake this agent to pick up work on a schedule.
-            </CardDescription>
+            <CardDescription>Periodically wake this agent to pick up work on a schedule.</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">

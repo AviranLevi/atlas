@@ -6,12 +6,12 @@ import { useNavigate } from 'react-router-dom';
 import { AgentDialog } from '@/components/agents/AgentDialog';
 import { AgentProviderDialog } from '@/components/agents/AgentProviderDialog';
 import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
-import { ProvidersSection } from './ProvidersSection';
 import { AgentsSection } from './AgentsSection';
+import { ProvidersSection } from './ProvidersSection';
 
 // Hooks
-import { useAgents, useDeleteAgent } from '@/hooks/use-agents.hook';
 import { useAgentProviders, useDeleteAgentProvider } from '@/hooks/use-agent-providers.hook';
+import { useAgents, useDeleteAgent } from '@/hooks/use-agents.hook';
 
 // Types
 import type { Agent, AgentProvider } from '@atlas/shared';
@@ -90,11 +90,7 @@ export function AgentsPage() {
         onCreated={(agent) => navigate(`/agents/${agent.id}`)}
       />
 
-      <AgentProviderDialog
-        open={providerDialogOpen}
-        onOpenChange={setProviderDialogOpen}
-        provider={editingProvider}
-      />
+      <AgentProviderDialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen} provider={editingProvider} />
 
       <ImportPackageDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>

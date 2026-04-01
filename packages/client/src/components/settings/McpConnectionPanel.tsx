@@ -1,10 +1,10 @@
 // React / library
+import { Check, ChevronDown, ChevronUp, Copy, Plug } from 'lucide-react';
 import { useState } from 'react';
-import { Copy, Check, ChevronDown, ChevronUp, Plug } from 'lucide-react';
 
 // Components
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Hooks
 import { useMcpConnectionInfo } from '@/hooks/use-settings.hook';
@@ -21,9 +21,7 @@ function CopyBlock({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {label}
-        </span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</span>
         <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs" onClick={handleCopy}>
           {copied ? (
             <>
@@ -45,13 +43,7 @@ function CopyBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-function CollapsibleSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function CollapsibleSection({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="rounded-md border">
@@ -62,7 +54,11 @@ function CollapsibleSection({
         aria-expanded={open}
       >
         {title}
-        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        )}
       </button>
       {open && <div className="border-t px-4 py-3 space-y-3">{children}</div>}
     </div>
@@ -97,41 +93,24 @@ export function McpConnectionPanel() {
           <Plug className="h-5 w-5" />
           MCP Connection
         </CardTitle>
-        <CardDescription>
-          Connect Cursor, Claude, or any MCP-compatible tool to this platform
-        </CardDescription>
+        <CardDescription>Connect Cursor, Claude, or any MCP-compatible tool to this platform</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <CopyBlock label="SSE Endpoint" value={info.sseUrl} />
 
         <CollapsibleSection title="Cursor — ~/.cursor/mcp.json">
-          <p className="text-xs text-muted-foreground">
-            {info.instructions.cursor}
-          </p>
-          <CopyBlock
-            label="Cursor Config"
-            value={JSON.stringify(info.cursorConfig, null, 2)}
-          />
+          <p className="text-xs text-muted-foreground">{info.instructions.cursor}</p>
+          <CopyBlock label="Cursor Config" value={JSON.stringify(info.cursorConfig, null, 2)} />
         </CollapsibleSection>
 
         <CollapsibleSection title="Claude Desktop — config.json">
-          <p className="text-xs text-muted-foreground">
-            {info.instructions.claude}
-          </p>
-          <CopyBlock
-            label="Claude Desktop Config"
-            value={JSON.stringify(info.claudeDesktopConfig, null, 2)}
-          />
+          <p className="text-xs text-muted-foreground">{info.instructions.claude}</p>
+          <CopyBlock label="Claude Desktop Config" value={JSON.stringify(info.claudeDesktopConfig, null, 2)} />
         </CollapsibleSection>
 
         <CollapsibleSection title="Claude Code CLI (stdio)">
-          <p className="text-xs text-muted-foreground">
-            {info.instructions.stdio}
-          </p>
-          <CopyBlock
-            label="Stdio Config"
-            value={JSON.stringify(info.stdioConfig, null, 2)}
-          />
+          <p className="text-xs text-muted-foreground">{info.instructions.stdio}</p>
+          <CopyBlock label="Stdio Config" value={JSON.stringify(info.stdioConfig, null, 2)} />
         </CollapsibleSection>
       </CardContent>
     </Card>

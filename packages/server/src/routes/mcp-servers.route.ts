@@ -1,17 +1,17 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { CreateMcpServerSchema, UpdateMcpServerSchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import {
-  listMcpServers,
-  getMcpServer,
   createMcpServer,
-  updateMcpServer,
   deleteMcpServer,
+  getMcpServer,
+  listMcpServers,
+  updateMcpServer,
 } from '../controllers/mcp-servers.controller.js';
 
 export const mcpServersRoute = new Hono()

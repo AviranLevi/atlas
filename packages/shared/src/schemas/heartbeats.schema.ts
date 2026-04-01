@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const HeartbeatRunStatusEnum = z.enum(['triggered', 'working', 'completed', 'skipped', 'failed']);
 export const HeartbeatRunResultEnum = z.enum(['task_started', 'no_work', 'daily_limit_reached', 'already_running']);

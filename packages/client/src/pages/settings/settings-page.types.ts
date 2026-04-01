@@ -1,3 +1,4 @@
+// Types
 import type { Agent, Skill, DispatchRule } from '@atlas/shared';
 
 export type RuleForm = {

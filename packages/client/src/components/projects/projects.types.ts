@@ -1,3 +1,4 @@
+// Types
 import type { Project } from '@atlas/shared';
 
 export type ScanResult = {

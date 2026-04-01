@@ -1,4 +1,7 @@
+// React / library
 import { MessageSquarePlus } from 'lucide-react';
+
+// Lib
 import { cn } from '@/lib/utils';
 
 export function CommentGutter({
@@ -19,9 +22,7 @@ export function CommentGutter({
         type="button"
         className={cn(
           'h-4 w-4 flex items-center justify-center rounded transition-opacity',
-          isActive
-            ? 'opacity-100 bg-blue-500/20'
-            : 'opacity-0 group-hover/line:opacity-100 hover:bg-blue-500/20',
+          isActive ? 'opacity-100 bg-blue-500/20' : 'opacity-0 group-hover/line:opacity-100 hover:bg-blue-500/20',
         )}
         onClick={onClick}
       >

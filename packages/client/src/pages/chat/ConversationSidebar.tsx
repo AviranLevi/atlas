@@ -1,10 +1,17 @@
-import { useState } from 'react';
+// React / library
 import { Plus, Trash2, MessageSquare, Loader2, Terminal, Cloud, Search, X } from 'lucide-react';
+import { useState } from 'react';
+
+// Components
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Combobox } from '@/components/ui/combobox';
+
+// Lib
 import { cn } from '@/lib/utils';
+
+// Types
 import type { ConversationSidebarProps } from './chat-page.types';
 
 export function ConversationSidebar({
@@ -30,9 +37,7 @@ export function ConversationSidebar({
   const installedExecutors = executors.filter((e) => e.installed && e.authenticated);
 
   const filteredConversations = searchQuery.trim()
-    ? conversations.filter((c) =>
-        (c.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? conversations.filter((c) => (c.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase()))
     : conversations;
 
   return (
@@ -92,9 +97,7 @@ export function ConversationSidebar({
               <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm">{conv.title || 'New Chat'}</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(conv.updatedAt).toLocaleDateString()}
-                </p>
+                <p className="text-xs text-muted-foreground">{new Date(conv.updatedAt).toLocaleDateString()}</p>
               </div>
               <button
                 type="button"
@@ -148,9 +151,7 @@ export function ConversationSidebar({
         {backendType === 'api' ? (
           <>
             <div className="space-y-1">
-              <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Provider
-              </label>
+              <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Provider</label>
               <Select value={selectedProviderId} onValueChange={onProviderChange}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Select provider" />
@@ -175,11 +176,7 @@ export function ConversationSidebar({
                 value={selectedModel}
                 onValueChange={onModelChange}
                 placeholder={
-                  !selectedProviderId
-                    ? 'Select provider first'
-                    : modelsLoading
-                      ? 'Loading...'
-                      : 'Select model'
+                  !selectedProviderId ? 'Select provider first' : modelsLoading ? 'Loading...' : 'Select model'
                 }
                 searchPlaceholder="Search models..."
                 emptyText="No models found."

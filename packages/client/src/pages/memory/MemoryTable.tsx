@@ -1,18 +1,20 @@
 // React / library
-import { useState, useMemo } from 'react';
 import { Trash2, ChevronRight, ChevronDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { useState, useMemo } from 'react';
 
 // Components
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { MemoryExpandedRow } from './MemoryExpandedRow';
+
+// Lib
+import { contentPreview } from '@/lib/format';
 
 // Types
 import type { MemoryTableProps, SortKey, SortDir } from './memory-page.types';
 
-// Constants & utilities
+// Constants
 import { formatLastUsed, TYPE_BADGE_VARIANTS } from './memory-page.constants';
-import { contentPreview } from '@/lib/format';
 
 function SortHeader({
   label,
@@ -32,7 +34,10 @@ function SortHeader({
     <button
       type="button"
       className="flex items-center gap-1 text-left hover:text-foreground transition-colors"
-      onClick={(e) => { e.stopPropagation(); onSort(sortKey); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSort(sortKey);
+      }}
     >
       {label}
       {isActive && (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
@@ -101,7 +106,7 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
       {sorted.map((mem) => {
         const isExpanded = expandedIds.has(mem.id);
         const preview = contentPreview(mem.content, 80);
-        const agentName = mem.agentId ? agentMap.get(mem.agentId) ?? '—' : 'Manual';
+        const agentName = mem.agentId ? (agentMap.get(mem.agentId) ?? '—') : 'Manual';
 
         return (
           <div key={mem.id} className="border-b last:border-0">
@@ -125,14 +130,10 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
                 {mem.scope === 'global' ? 'Global' : 'Project'}
               </Badge>
               <span className="text-xs text-muted-foreground truncate max-w-[120px]">
-                {mem.projectId ? projectMap.get(mem.projectId) ?? '—' : '—'}
+                {mem.projectId ? (projectMap.get(mem.projectId) ?? '—') : '—'}
               </span>
-              <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                {agentName}
-              </span>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                {formatLastUsed(mem.lastUsed)}
-              </span>
+              <span className="text-xs text-muted-foreground truncate max-w-[100px]">{agentName}</span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">{formatLastUsed(mem.lastUsed)}</span>
               <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="ghost"
@@ -146,9 +147,7 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
               </div>
             </div>
 
-            {isExpanded && (
-              <MemoryExpandedRow memory={mem} projectMap={projectMap} agentMap={agentMap} />
-            )}
+            {isExpanded && <MemoryExpandedRow memory={mem} projectMap={projectMap} agentMap={agentMap} />}
           </div>
         );
       })}

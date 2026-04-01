@@ -1,12 +1,12 @@
 // Shared
-import type { McpServer, CreateMcpServer, UpdateMcpServer } from '@atlas/shared';
+import type { CreateMcpServer, McpServer, UpdateMcpServer } from '@atlas/shared';
 
 // Repositories
 import { mcpServersRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/mcp-servers/mcp-servers.service.ts';
 

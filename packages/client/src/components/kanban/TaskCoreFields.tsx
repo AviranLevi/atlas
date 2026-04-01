@@ -1,15 +1,16 @@
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import type { TaskStatus, TaskPriority, TaskEstimate } from '@atlas/shared';
-import type { TaskCoreFieldsProps } from './kanban.types';
-import { PRIORITIES, ESTIMATES, NONE_VALUE } from './kanban.constants';
+// React / library
 import { ALL_STATUSES } from '@/pages/kanban/kanban-page.constants';
+
+// Components
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+// Types
+import type { TaskEstimate, TaskPriority, TaskStatus } from '@atlas/shared';
+import type { TaskCoreFieldsProps } from './kanban.types';
+
+// Constants
+import { ESTIMATES, NONE_VALUE, PRIORITIES } from './kanban.constants';
 
 export function TaskCoreFields({
   projectId,
@@ -38,13 +39,13 @@ export function TaskCoreFields({
             </SelectTrigger>
             <SelectContent>
               {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {projectId === NONE_VALUE && (
-            <p className="text-xs text-destructive">Required to run tasks</p>
-          )}
+          {projectId === NONE_VALUE && <p className="text-xs text-destructive">Required to run tasks</p>}
         </div>
 
         <div className="space-y-1.5">
@@ -56,7 +57,9 @@ export function TaskCoreFields({
             <SelectContent>
               <SelectItem value={NONE_VALUE}>None</SelectItem>
               {agents.map((a) => (
-                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                <SelectItem key={a.id} value={a.id}>
+                  {a.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -72,7 +75,9 @@ export function TaskCoreFields({
             </SelectTrigger>
             <SelectContent>
               {ALL_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -86,7 +91,9 @@ export function TaskCoreFields({
             </SelectTrigger>
             <SelectContent>
               {PRIORITIES.map((p) => (
-                <SelectItem key={p} value={p}>{p}</SelectItem>
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -100,7 +107,9 @@ export function TaskCoreFields({
             </SelectTrigger>
             <SelectContent>
               {ESTIMATES.map((e) => (
-                <SelectItem key={e} value={e}>{e}</SelectItem>
+                <SelectItem key={e} value={e}>
+                  {e}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

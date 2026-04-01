@@ -1,19 +1,14 @@
+// React / library
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+// Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  usePreferences,
-  useUpdatePreferences,
-} from '@/hooks/use-preferences.hook';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+// Hooks
+import { usePreferences, useUpdatePreferences } from '@/hooks/use-preferences.hook';
 import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 
 const DEFAULT_EXECUTOR_KEY = 'defaultExecutorId';
@@ -35,8 +30,7 @@ export function DefaultWorkspaceTab() {
 
   const savedExecutor = prefs?.[DEFAULT_EXECUTOR_KEY] ?? '';
   const savedBranch = prefs?.[BRANCH_PATTERN_KEY] ?? '';
-  const dirty =
-    executorId !== savedExecutor || branchPattern !== savedBranch;
+  const dirty = executorId !== savedExecutor || branchPattern !== savedBranch;
 
   const eligibleRuntimes = runtimes.filter((r) => r.installed && r.authenticated);
 
@@ -76,9 +70,7 @@ export function DefaultWorkspaceTab() {
 
       <div className="space-y-2">
         <h3 className="text-lg font-semibold">Default Branch Pattern</h3>
-        <p className="text-sm text-muted-foreground">
-          Template for Git branch names when creating workspace branches.
-        </p>
+        <p className="text-sm text-muted-foreground">Template for Git branch names when creating workspace branches.</p>
         <Input
           className="max-w-md font-mono text-sm"
           placeholder="agents/{agent}/{task}"
@@ -89,11 +81,7 @@ export function DefaultWorkspaceTab() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={!dirty || updatePrefs.isPending || prefsLoading}
-        >
+        <Button type="button" onClick={handleSave} disabled={!dirty || updatePrefs.isPending || prefsLoading}>
           {updatePrefs.isPending ? 'Saving…' : 'Save'}
         </Button>
         {dirty && !updatePrefs.isPending && (

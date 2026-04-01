@@ -1,11 +1,11 @@
 // External
 import type { Context } from 'hono';
 
-// Lib
-import { AppError } from '../lib/errors.js';
-
 // Services
 import { usageService } from '../services/index.js';
+
+// Lib
+import { AppError } from '../lib/errors.js';
 
 /** Returns aggregated usage for the requested group and period. */
 export async function getUsageSummary(c: Context) {

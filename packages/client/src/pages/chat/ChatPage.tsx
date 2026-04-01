@@ -1,21 +1,16 @@
 // React / library
+import { MessageSquare, Settings, Terminal, Loader2 } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MessageSquare, Settings, Terminal, Loader2 } from 'lucide-react';
-
-// Types
-import type { ChatBackendType } from '@atlas/shared';
 
 // Components
 import { Button } from '@/components/ui/button';
+import { ChatInput } from './ChatInput';
 import { ConversationSidebar } from './ConversationSidebar';
 import { MessageList } from './MessageList';
-import { ChatInput } from './ChatInput';
 
-// Hooks / context
-import { useActiveProject } from '@/contexts/ProjectContext';
+// Hooks
 import { useAgentProviders, useProviderModels } from '@/hooks/use-agent-providers.hook';
-import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 import {
   useConversations,
   useConversation,
@@ -24,6 +19,13 @@ import {
   useDeleteConversation,
   useChatStream,
 } from '@/hooks/use-chat.hook';
+import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
+
+// Context
+import { useActiveProject } from '@/contexts/ProjectContext';
+
+// Types
+import type { ChatBackendType } from '@atlas/shared';
 
 export function ChatPage() {
   const { id: conversationId } = useParams<{ id: string }>();
@@ -47,7 +49,7 @@ export function ChatPage() {
   const pendingMessageRef = useRef<string | null>(null);
 
   const { data: providerModels = [], isLoading: modelsLoading } = useProviderModels(
-    backendType === 'api' ? (selectedProviderId || undefined) : undefined,
+    backendType === 'api' ? selectedProviderId || undefined : undefined,
   );
 
   const installedExecutors = executors.filter((e) => e.installed && e.authenticated);
@@ -59,7 +61,7 @@ export function ChatPage() {
     } else if (installedExecutors.length > 0) {
       setBackendType('cli');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providers.length, installedExecutors.length]);
 
   // Auto-select first provider
@@ -81,7 +83,7 @@ export function ChatPage() {
     if (installedExecutors.length > 0 && !selectedExecutorId) {
       setSelectedExecutorId(installedExecutors[0].id);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [installedExecutors.length, selectedExecutorId]);
 
   // Sync sidebar with active conversation
@@ -119,9 +121,12 @@ export function ChatPage() {
     setBackendType(type);
   }, []);
 
-  const handleSelectConversation = useCallback((id: string) => {
-    navigate(`/chat/${id}`);
-  }, [navigate]);
+  const handleSelectConversation = useCallback(
+    (id: string) => {
+      navigate(`/chat/${id}`);
+    },
+    [navigate],
+  );
 
   const handleNewChat = useCallback(() => {
     setCreatingChat(false);
@@ -129,44 +134,60 @@ export function ChatPage() {
     navigate('/chat');
   }, [navigate]);
 
-  const handleDeleteConversation = useCallback(async (id: string) => {
-    await deleteConversation.mutateAsync(id);
-    if (id === conversationId) {
-      navigate('/chat');
-    }
-  }, [deleteConversation, conversationId, navigate]);
+  const handleDeleteConversation = useCallback(
+    async (id: string) => {
+      await deleteConversation.mutateAsync(id);
+      if (id === conversationId) {
+        navigate('/chat');
+      }
+    },
+    [deleteConversation, conversationId, navigate],
+  );
 
-  const handleSend = useCallback(async (content: string) => {
-    if (conversationId) {
-      send(content);
-      return;
-    }
+  const handleSend = useCallback(
+    async (content: string) => {
+      if (conversationId) {
+        send(content);
+        return;
+      }
 
-    if (backendType === 'api') {
-      if (!selectedProviderId || !selectedModel) return;
-      setCreatingChat(true);
-      pendingMessageRef.current = content;
-      const result = await createConversation.mutateAsync({
-        projectId: activeProjectId ?? null,
-        backendType: 'api',
-        providerId: selectedProviderId,
-        model: selectedModel,
-      });
-      navigate(`/chat/${result.id}`);
-    } else {
-      if (!selectedExecutorId) return;
-      setCreatingChat(true);
-      pendingMessageRef.current = content;
-      const result = await createConversation.mutateAsync({
-        projectId: activeProjectId ?? null,
-        backendType: 'cli',
-        executorId: selectedExecutorId,
-        providerId: null,
-        model: null,
-      });
-      navigate(`/chat/${result.id}`);
-    }
-  }, [conversationId, backendType, selectedProviderId, selectedModel, selectedExecutorId, activeProjectId, createConversation, navigate, send]);
+      if (backendType === 'api') {
+        if (!selectedProviderId || !selectedModel) return;
+        setCreatingChat(true);
+        pendingMessageRef.current = content;
+        const result = await createConversation.mutateAsync({
+          projectId: activeProjectId ?? null,
+          backendType: 'api',
+          providerId: selectedProviderId,
+          model: selectedModel,
+        });
+        navigate(`/chat/${result.id}`);
+      } else {
+        if (!selectedExecutorId) return;
+        setCreatingChat(true);
+        pendingMessageRef.current = content;
+        const result = await createConversation.mutateAsync({
+          projectId: activeProjectId ?? null,
+          backendType: 'cli',
+          executorId: selectedExecutorId,
+          providerId: null,
+          model: null,
+        });
+        navigate(`/chat/${result.id}`);
+      }
+    },
+    [
+      conversationId,
+      backendType,
+      selectedProviderId,
+      selectedModel,
+      selectedExecutorId,
+      activeProjectId,
+      createConversation,
+      navigate,
+      send,
+    ],
+  );
 
   const hasAnyBackend = providers.length > 0 || installedExecutors.length > 0;
 
@@ -186,7 +207,8 @@ export function ChatPage() {
         </div>
         <h2 className="text-lg font-semibold">No AI Backends Available</h2>
         <p className="text-sm text-muted-foreground max-w-md">
-          To use the chat, either configure an AI provider with an API key, or install a supported CLI agent (like Claude Code).
+          To use the chat, either configure an AI provider with an API key, or install a supported CLI agent (like
+          Claude Code).
         </p>
         <div className="flex gap-3">
           <Button asChild variant="outline">

@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { useProjects } from '@/hooks/use-projects.hook';
 import type { Project } from '@atlas/shared';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { useProjects } from '@/hooks/use-projects.hook';
 
 const STORAGE_KEY = 'active-project-id';
 
@@ -21,9 +21,7 @@ const ProjectCtx = createContext<ProjectContextValue | null>(null);
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const { data: projects = [], isLoading } = useProjects();
-  const [activeProjectId, setActiveProjectIdRaw] = useState<string | null>(
-    () => localStorage.getItem(STORAGE_KEY),
-  );
+  const [activeProjectId, setActiveProjectIdRaw] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
 
   const setActiveProjectId = useCallback((id: string | null) => {
     setActiveProjectIdRaw(id);
@@ -35,9 +33,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Resolve active project — if stored ID no longer exists, fall back to All
-  const activeProject = activeProjectId
-    ? projects.find((p) => p.id === activeProjectId) ?? null
-    : null;
+  const activeProject = activeProjectId ? (projects.find((p) => p.id === activeProjectId) ?? null) : null;
 
   useEffect(() => {
     if (activeProjectId && !activeProject && projects.length > 0) {

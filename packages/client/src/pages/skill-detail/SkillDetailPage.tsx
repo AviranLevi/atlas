@@ -1,36 +1,42 @@
 // React / library
+import {
+  ArrowLeft,
+  Zap,
+  ListOrdered,
+  LogIn,
+  LogOut,
+  Bot,
+  Trash2,
+  Check,
+  X,
+  Pencil,
+  FolderOpen,
+  Download,
+} from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import {
-  ArrowLeft, Zap, ListOrdered, LogIn, LogOut, Bot, Trash2,
-  Check, X, Pencil, FolderOpen, Download,
-} from 'lucide-react';
 
 // Components
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { EditableCard } from '@/components/ui/editable-card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks
+import { useProjects } from '@/hooks/use-projects.hook';
 import { useSkillDetail } from '@/hooks/use-skills.hook';
 import { useUpdateSkill, useDeleteSkill } from '@/hooks/use-skills.hook';
-import { useProjects } from '@/hooks/use-projects.hook';
+
+// Lib
+import { timeAgo } from '@/lib/format';
 
 // Types
 import type { SkillType } from '@atlas/shared';
 
 // Constants
 import { SKILL_TYPES, NONE } from '@/components/skills/skills.constants';
-import { timeAgo } from '@/lib/format';
 
 export function SkillDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -100,7 +106,12 @@ export function SkillDetailPage() {
             <Download className="mr-1.5 h-3.5 w-3.5" />
             Export
           </Button>
-          <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={handleDelete}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:bg-destructive/10"
+            onClick={handleDelete}
+          >
             <Trash2 className="mr-1.5 h-3.5 w-3.5" />
             Delete
           </Button>
@@ -120,7 +131,10 @@ export function SkillDetailPage() {
                 onChange={(e) => setNameDraft(e.target.value)}
                 className="h-9 text-xl font-bold"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveName();
+                  if (e.key === 'Escape') setEditingName(false);
+                }}
               />
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={saveName}>
                 <Check className="h-4 w-4" />
@@ -161,7 +175,9 @@ export function SkillDetailPage() {
             </SelectTrigger>
             <SelectContent>
               {SKILL_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -230,9 +246,7 @@ export function SkillDetailPage() {
         </div>
         {agents.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center">
-            <p className="text-muted-foreground text-xs italic">
-              No agents are using this skill yet.
-            </p>
+            <p className="text-muted-foreground text-xs italic">No agents are using this skill yet.</p>
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">

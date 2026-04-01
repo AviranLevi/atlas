@@ -1,6 +1,11 @@
+// Components
 import { Badge } from '@/components/ui/badge';
+
+// Types
 import type { ProviderType } from '@atlas/shared';
 import type { ProviderBadgeProps } from './agents.types';
+
+// Constants
 import { PROVIDER_LABELS } from './agents.constants';
 
 const PROVIDER_COLORS: Record<ProviderType, string> = {
@@ -13,10 +18,7 @@ const PROVIDER_COLORS: Record<ProviderType, string> = {
 
 export function ProviderTypeBadge({ type }: ProviderBadgeProps) {
   return (
-    <Badge
-      variant="outline"
-      className={`text-xs font-medium ${PROVIDER_COLORS[type] ?? ''}`}
-    >
+    <Badge variant="outline" className={`text-xs font-medium ${PROVIDER_COLORS[type] ?? ''}`}>
       {PROVIDER_LABELS[type] ?? type}
     </Badge>
   );

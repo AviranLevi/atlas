@@ -2,21 +2,15 @@
 import cron, { type ScheduledTask } from 'node-cron';
 
 // Shared
+import type { CreateHeartbeatConfig, HeartbeatConfig, HeartbeatRun, Task, UpdateHeartbeatConfig } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
-import type {
-  CreateHeartbeatConfig,
-  HeartbeatConfig,
-  HeartbeatRun,
-  Task,
-  UpdateHeartbeatConfig,
-} from '@atlas/shared';
 
 // Repositories
 import { heartbeatsRepository, workspacesRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/heartbeat/heartbeat.service.ts';
 
@@ -229,9 +223,7 @@ export class HeartbeatService {
       agentId: config.agentId,
       status: TASK_STATUS.TODO,
     });
-    const scoped = config.projectId
-      ? todoTasks.filter((t) => t.projectId === config.projectId)
-      : todoTasks;
+    const scoped = config.projectId ? todoTasks.filter((t) => t.projectId === config.projectId) : todoTasks;
     const task = pickNextTodoTask(scoped);
 
     if (!task) {

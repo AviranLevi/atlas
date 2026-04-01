@@ -1,16 +1,16 @@
 // External
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 // Shared
-import type { CreateTask, UpdateTask, Task } from '@atlas/shared';
+import type { CreateTask, Task, UpdateTask } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
 import { tasks } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/tasks.repository.ts';
 
@@ -19,7 +19,7 @@ function parseTags(row: unknown): Task {
   const rawTags = r.tags;
   return {
     ...r,
-    tags: typeof rawTags === 'string' ? JSON.parse(rawTags) : rawTags ?? null,
+    tags: typeof rawTags === 'string' ? JSON.parse(rawTags) : (rawTags ?? null),
   } as Task;
 }
 
@@ -107,12 +107,7 @@ export class TasksRepository {
       if (tags !== undefined) {
         setValues.tags = tags ? JSON.stringify(tags) : null;
       }
-      const result = this.db
-        .update(tasks)
-        .set(setValues)
-        .where(eq(tasks.id, id))
-        .returning()
-        .get();
+      const result = this.db.update(tasks).set(setValues).where(eq(tasks.id, id)).returning().get();
       return parseTags(result);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

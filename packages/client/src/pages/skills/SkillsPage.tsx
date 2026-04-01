@@ -1,38 +1,34 @@
 // React / library
+import { Zap, Plus, Trash2, Search, FolderOpen, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Plus, Trash2, Search, FolderOpen, Upload } from 'lucide-react';
 
 // Components
+import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
+import { SkillDialog } from '@/components/skills/SkillDialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SkillDialog } from '@/components/skills/SkillDialog';
-import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks
-import { useSkills, useDeleteSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
+import { useSkills, useDeleteSkill } from '@/hooks/use-skills.hook';
+
+// Lib
+import { timeAgo, contentPreview } from '@/lib/format';
 
 // Types
 import type { Skill } from '@atlas/shared';
 
-// Constants & utilities
+// Constants
 import {
   SKILL_TYPE_OPTIONS,
   SKILL_TYPE_COLORS,
   PROJECT_SCOPE_ALL,
   PROJECT_SCOPE_GLOBAL,
 } from './skills-page.constants';
-import { timeAgo, contentPreview } from '@/lib/format';
 
 export function SkillsPage() {
   const navigate = useNavigate();
@@ -46,10 +42,7 @@ export function SkillsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
-  const projectMap = useMemo(
-    () => new Map(projects.map((p) => [p.id, p.name])),
-    [projects],
-  );
+  const projectMap = useMemo(() => new Map(projects.map((p) => [p.id, p.name])), [projects]);
 
   const filtered = useMemo(() => {
     let result = skills;
@@ -107,7 +100,9 @@ export function SkillsPage() {
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-sm font-semibold">{skill.name}</h3>
             <div className="mt-1 flex flex-wrap gap-1">
-              <Badge variant="secondary" className="text-[11px]">{skill.type}</Badge>
+              <Badge variant="secondary" className="text-[11px]">
+                {skill.type}
+              </Badge>
               {skill.projectId && projectMap.get(skill.projectId) && (
                 <Badge variant="outline" className="text-[10px]">
                   <FolderOpen className="mr-0.5 h-2.5 w-2.5" />
@@ -118,9 +113,7 @@ export function SkillsPage() {
           </div>
         </div>
 
-        {preview && (
-          <p className="line-clamp-2 text-xs text-muted-foreground">{preview}</p>
-        )}
+        {preview && <p className="line-clamp-2 text-xs text-muted-foreground">{preview}</p>}
 
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-muted-foreground">{timeAgo(skill.updatedAt)}</span>
@@ -143,9 +136,7 @@ export function SkillsPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Skills</h1>
-          <p className="text-muted-foreground mt-0.5 text-sm">
-            Define reusable skill templates for agents
-          </p>
+          <p className="text-muted-foreground mt-0.5 text-sm">Define reusable skill templates for agents</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
@@ -175,7 +166,9 @@ export function SkillsPage() {
           </SelectTrigger>
           <SelectContent>
             {SKILL_TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -187,7 +180,9 @@ export function SkillsPage() {
             <SelectItem value={PROJECT_SCOPE_ALL}>All Projects</SelectItem>
             <SelectItem value={PROJECT_SCOPE_GLOBAL}>Global Only</SelectItem>
             {projects.map((p) => (
-              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -206,9 +201,9 @@ export function SkillsPage() {
           </p>
           {!search && projectFilter === PROJECT_SCOPE_ALL && (
             <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm">
-            <Plus className="mr-1.5 h-4 w-4" />
-            Create Skill
-          </Button>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Create Skill
+            </Button>
           )}
         </div>
       ) : grouped ? (
@@ -225,9 +220,7 @@ export function SkillsPage() {
           ))}
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map(renderCard)}
-        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{filtered.map(renderCard)}</div>
       )}
 
       <SkillDialog

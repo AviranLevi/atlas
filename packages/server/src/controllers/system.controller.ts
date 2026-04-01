@@ -1,7 +1,14 @@
+// External
 import type { Context } from 'hono';
-import { systemService } from '../services/index.js';
-import { getValidatedBody } from '../lib/hono-helpers.js';
+
+// Shared
 import type { ResetDatabase } from '@atlas/shared';
+
+// Services
+import { systemService } from '../services/index.js';
+
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
 
 /** Returns server metadata and database file stats. */
 export async function getSystemInfo(c: Context): Promise<Response> {
@@ -9,7 +16,7 @@ export async function getSystemInfo(c: Context): Promise<Response> {
 }
 
 /** Streams the SQLite database file as a download. */
-export async function exportDatabase(c: Context): Promise<Response> {
+export async function exportDatabase(_c: Context): Promise<Response> {
   const { data, filename } = systemService.exportDatabase();
   return new Response(data.buffer as ArrayBuffer, {
     headers: {

@@ -1,14 +1,25 @@
+// External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { CreateReviewSchema, UpdateReviewSchema, DecideReviewSchema, SubmitAiReviewSchema, StartAiReviewSchema } from '@atlas/shared';
+
+// Shared
 import {
-  listReviews,
-  getReview,
+  CreateReviewSchema,
+  DecideReviewSchema,
+  StartAiReviewSchema,
+  SubmitAiReviewSchema,
+  UpdateReviewSchema,
+} from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
+
+// Controllers
+import {
   createReview,
-  updateReview,
   decideReview,
-  submitAiReview,
+  getReview,
+  listReviews,
   startAiReview,
+  submitAiReview,
+  updateReview,
 } from '../controllers/reviews.controller.js';
 
 export const reviewsRoute = new Hono()

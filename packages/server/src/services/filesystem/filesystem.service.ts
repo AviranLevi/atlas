@@ -1,22 +1,25 @@
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import { logger } from '../../lib/logger.js';
+// External
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+// Lib
 import {
-  detectName,
-  detectDescription,
-  detectTechStack,
-  detectRepoUrl,
-  detectDefaultBranch,
-  detectPackageManager,
-  detectCICD,
-  detectMonorepo,
-  parseGitHubInfo,
   type BrowseResponse,
   type DirectoryEntry,
   type ScanResult,
+  detectCICD,
+  detectDefaultBranch,
+  detectDescription,
+  detectMonorepo,
+  detectName,
+  detectPackageManager,
+  detectRepoUrl,
+  detectTechStack,
+  parseGitHubInfo,
 } from '../../lib/filesystem-scanner/index.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 export class FilesystemService {
   /** Lists subdirectories of a path, indicating which are git repos. */

@@ -1,6 +1,7 @@
+// Lib
+import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 import { GOOGLE_AI_BASE } from '../providers/provider-clients.js';
 import { logger } from '../logger.js';
-import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 
 export async function* streamGoogle(
   apiKey: string,
@@ -17,7 +18,9 @@ export async function* streamGoogle(
     } else if (m.role === 'tool') {
       geminiContents.push({
         role: 'user',
-        parts: [{ functionResponse: { name: '_tool_result', response: { toolCallId: m.toolCallId, result: m.content } } }],
+        parts: [
+          { functionResponse: { name: '_tool_result', response: { toolCallId: m.toolCallId, result: m.content } } },
+        ],
       });
     } else {
       const parts: unknown[] = [];
@@ -31,13 +34,18 @@ export async function* streamGoogle(
     }
   }
 
-  const geminiTools = tools.length > 0 ? [{
-    functionDeclarations: tools.map((t) => ({
-      name: t.name,
-      description: t.description,
-      parameters: t.parameters,
-    })),
-  }] : undefined;
+  const geminiTools =
+    tools.length > 0
+      ? [
+          {
+            functionDeclarations: tools.map((t) => ({
+              name: t.name,
+              description: t.description,
+              parameters: t.parameters,
+            })),
+          },
+        ]
+      : undefined;
 
   const url = `${GOOGLE_AI_BASE}/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
   const resp = await fetch(url, {
@@ -78,7 +86,12 @@ export async function* streamGoogle(
       if (!json || json === '[DONE]') continue;
 
       let data: Record<string, unknown>;
-      try { data = JSON.parse(json); } catch (e: unknown) { logger.debug('chat-stream :: google chunk parse failed', e); continue; }
+      try {
+        data = JSON.parse(json);
+      } catch (e: unknown) {
+        logger.debug('chat-stream :: google chunk parse failed', e);
+        continue;
+      }
 
       const candidates = data.candidates as { content?: { parts?: unknown[] }; finishReason?: string }[] | undefined;
       if (!candidates?.[0]) continue;

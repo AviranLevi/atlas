@@ -1,3 +1,4 @@
+// Types
 import type { ProjectStatus } from '@atlas/shared';
 
 export const STATUSES: { value: ProjectStatus; label: string }[] = [
@@ -8,7 +9,14 @@ export const STATUSES: { value: ProjectStatus; label: string }[] = [
 ];
 
 export const COLOR_PRESETS = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
-  '#f97316', '#eab308', '#22c55e', '#06b6d4',
-  '#3b82f6', '#64748b',
+  '#6366f1',
+  '#8b5cf6',
+  '#ec4899',
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#06b6d4',
+  '#3b82f6',
+  '#64748b',
 ];

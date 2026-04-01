@@ -2,8 +2,8 @@
 import { preferencesRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/preferences/preferences.service.ts';
 

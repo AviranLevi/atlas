@@ -1,13 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const WorkspaceStatusEnum = z.enum([
-  'pending',
-  'running',
-  'completed',
-  'failed',
-  'stopped',
-  'merged',
-]);
+export const WorkspaceStatusEnum = z.enum(['pending', 'running', 'completed', 'failed', 'stopped', 'merged']);
 
 export const DiffCommentSchema = z.object({
   id: z.string(),
@@ -96,10 +89,12 @@ export const ExecutorStatusSchema = z.object({
   version: z.string().optional(),
   binaryPath: z.string().optional(),
   authHint: z.string().optional(),
-  setup: z.object({
-    install: z.string(),
-    auth: z.string().optional(),
-  }).optional(),
+  setup: z
+    .object({
+      install: z.string(),
+      auth: z.string().optional(),
+    })
+    .optional(),
   modelFlag: z.string().optional(),
   defaultModel: z.string().optional(),
   modelPresets: z.array(ModelPresetSchema).optional(),

@@ -18,12 +18,16 @@ export function ScanDataSection({ scanData }: ScanDataSectionProps) {
           Type & Languages
         </div>
         {scanData.projectType && (
-          <Badge variant="secondary" className="capitalize">{scanData.projectType}</Badge>
+          <Badge variant="secondary" className="capitalize">
+            {scanData.projectType}
+          </Badge>
         )}
         {scanData.languages && scanData.languages.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {scanData.languages.map((lang) => (
-              <Badge key={lang} variant="outline" className="text-xs">{lang}</Badge>
+              <Badge key={lang} variant="outline" className="text-xs">
+                {lang}
+              </Badge>
             ))}
           </div>
         )}
@@ -56,7 +60,9 @@ export function ScanDataSection({ scanData }: ScanDataSectionProps) {
           </div>
           <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
             {scanData.dependencies.slice(0, 30).map((dep) => (
-              <Badge key={dep} variant="outline" className="text-[10px] font-mono">{dep}</Badge>
+              <Badge key={dep} variant="outline" className="text-[10px] font-mono">
+                {dep}
+              </Badge>
             ))}
             {scanData.dependencies.length > 30 && (
               <Badge variant="outline" className="text-[10px] text-muted-foreground">
@@ -77,7 +83,9 @@ export function ScanDataSection({ scanData }: ScanDataSectionProps) {
           <div className="space-y-1">
             {Object.entries(scanData.scripts).map(([name, cmd]) => (
               <div key={name} className="flex items-start gap-2 text-xs">
-                <code className="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-[11px] shrink-0">{name}</code>
+                <code className="bg-primary/10 text-primary rounded px-1.5 py-0.5 font-mono text-[11px] shrink-0">
+                  {name}
+                </code>
                 <code className="text-muted-foreground font-mono text-[11px] truncate">{cmd}</code>
               </div>
             ))}
@@ -93,10 +101,26 @@ export function ScanDataSection({ scanData }: ScanDataSectionProps) {
             Formatting & Tooling
           </div>
           <div className="flex flex-wrap gap-1">
-            {scanData.formatting.prettier && <Badge variant="secondary" className="text-xs">Prettier</Badge>}
-            {scanData.formatting.eslint && <Badge variant="secondary" className="text-xs">ESLint</Badge>}
-            {scanData.formatting.biome && <Badge variant="secondary" className="text-xs">Biome</Badge>}
-            {scanData.formatting.editorconfig && <Badge variant="secondary" className="text-xs">EditorConfig</Badge>}
+            {scanData.formatting.prettier && (
+              <Badge variant="secondary" className="text-xs">
+                Prettier
+              </Badge>
+            )}
+            {scanData.formatting.eslint && (
+              <Badge variant="secondary" className="text-xs">
+                ESLint
+              </Badge>
+            )}
+            {scanData.formatting.biome && (
+              <Badge variant="secondary" className="text-xs">
+                Biome
+              </Badge>
+            )}
+            {scanData.formatting.editorconfig && (
+              <Badge variant="secondary" className="text-xs">
+                EditorConfig
+              </Badge>
+            )}
           </div>
           {scanData.packageManager && (
             <div className="text-xs text-muted-foreground">
@@ -108,7 +132,11 @@ export function ScanDataSection({ scanData }: ScanDataSectionProps) {
               CI/CD: <span className="font-medium text-foreground">{scanData.cicd}</span>
             </div>
           )}
-          {scanData.monorepo && <Badge variant="outline" className="text-xs">Monorepo</Badge>}
+          {scanData.monorepo && (
+            <Badge variant="outline" className="text-xs">
+              Monorepo
+            </Badge>
+          )}
         </Card>
       )}
 
@@ -123,7 +151,9 @@ export function ScanDataSection({ scanData }: ScanDataSectionProps) {
             <div className="text-xs">
               <span className="text-muted-foreground">Ports:</span>{' '}
               {scanData.ports.map((p) => (
-                <Badge key={p} variant="outline" className="text-[10px] font-mono ml-1">{p}</Badge>
+                <Badge key={p} variant="outline" className="text-[10px] font-mono ml-1">
+                  {p}
+                </Badge>
               ))}
             </div>
           )}
@@ -132,7 +162,9 @@ export function ScanDataSection({ scanData }: ScanDataSectionProps) {
               <span className="text-muted-foreground text-xs">Required env vars:</span>
               <div className="flex flex-wrap gap-1 mt-1">
                 {scanData.envVars.map((v) => (
-                  <code key={v} className="bg-muted rounded px-1.5 py-0.5 font-mono text-[10px]">{v}</code>
+                  <code key={v} className="bg-muted rounded px-1.5 py-0.5 font-mono text-[10px]">
+                    {v}
+                  </code>
                 ))}
               </div>
             </div>

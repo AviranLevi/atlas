@@ -1,3 +1,4 @@
+// React / library
 import { useCallback, useSyncExternalStore } from 'react';
 
 export type FontSize = 'sm' | 'md' | 'lg';
@@ -42,7 +43,7 @@ function setFontSizeGlobal(size: FontSize): void {
   currentSize = size;
   localStorage.setItem(STORAGE_KEY, size);
   applyFontSize(size);
-  listeners.forEach((cb) => cb());
+  for (const cb of listeners) cb();
 }
 
 /** Returns the current font size preference and a setter. */

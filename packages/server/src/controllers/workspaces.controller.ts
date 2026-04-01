@@ -1,23 +1,27 @@
 // External
 import type { Context } from 'hono';
+import fs from 'node:fs';
+import path from 'node:path';
 import { streamSSE } from 'hono/streaming';
-import fs from 'fs';
-import path from 'path';
 
 // Shared
-import type { CreateWorkspace, AddDiffComment, RerunWorkspace, CreatePullRequest, EditDiffComment } from '@atlas/shared';
-
-// Lib
-import { logger } from '../lib/logger.js';
-
-// Services
-import { orchestratorService } from '../services/index.js';
+import type {
+  AddDiffComment,
+  CreatePullRequest,
+  CreateWorkspace,
+  EditDiffComment,
+  RerunWorkspace,
+} from '@atlas/shared';
 
 // Executors
 import { executorRegistry } from '../executors/index.js';
 
+// Services
+import { orchestratorService } from '../services/index.js';
+
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
+import { logger } from '../lib/logger.js';
 
 /** Lists all registered agent runtimes. */
 export async function listAgentRuntimes(c: Context) {
@@ -45,9 +49,7 @@ export function getArchivedLog(c: Context) {
 /** Lists workspaces. Pass status=active to limit to running/pending. */
 export async function listWorkspaces(c: Context) {
   const status = c.req.query('status');
-  const workspaces = status === 'active'
-    ? await orchestratorService.listActive()
-    : await orchestratorService.listAll();
+  const workspaces = status === 'active' ? await orchestratorService.listActive() : await orchestratorService.listAll();
   return c.json(workspaces);
 }
 
@@ -113,20 +115,13 @@ export function addWorkspaceComment(c: Context) {
 /** Edits an existing diff comment in a workspace. */
 export async function editWorkspaceComment(c: Context) {
   const { body } = getValidatedBody<EditDiffComment>(c);
-  const workspace = orchestratorService.editDiffComment(
-    c.req.param('id')!,
-    c.req.param('commentId')!,
-    body,
-  );
+  const workspace = orchestratorService.editDiffComment(c.req.param('id')!, c.req.param('commentId')!, body);
   return c.json(workspace);
 }
 
 /** Removes a diff comment from a workspace. */
 export function removeWorkspaceComment(c: Context) {
-  const workspace = orchestratorService.removeDiffComment(
-    c.req.param('id')!,
-    c.req.param('commentId')!,
-  );
+  const workspace = orchestratorService.removeDiffComment(c.req.param('id')!, c.req.param('commentId')!);
   return c.json(workspace);
 }
 
@@ -152,7 +147,9 @@ export async function streamWorkspaceLogs(c: Context) {
   return streamSSE(c, async (stream) => {
     let offset = 0;
     let aborted = false;
-    stream.onAbort(() => { aborted = true; });
+    stream.onAbort(() => {
+      aborted = true;
+    });
 
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 

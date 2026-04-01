@@ -2,10 +2,10 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateProject, UpdateProject, AssignAgent, CreateBranch, ImportRules } from '@atlas/shared';
+import type { AssignAgent, CreateBranch, CreateProject, ImportRules, UpdateProject } from '@atlas/shared';
 
 // Services
-import { projectsService, briefGeneratorService, agentsService, rulesService } from '../services/index.js';
+import { agentsService, briefGeneratorService, projectsService, rulesService } from '../services/index.js';
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
@@ -64,7 +64,7 @@ export async function createProject(c: Context) {
 /** Deep-scans the project directory, updates metadata, and regenerates the brief. */
 export async function scanProject(c: Context) {
   const projectId = c.req.param('id')!;
-  const project = await projectsService.scanAndUpdate(projectId);
+  const _project = await projectsService.scanAndUpdate(projectId);
   await briefGeneratorService.generateAndSave(projectId);
   const final = await projectsService.getById(projectId);
   return c.json(final);

@@ -1,3 +1,4 @@
+// Shared
 import type { Rule } from '@atlas/shared';
 
 export type RuleDetail = {

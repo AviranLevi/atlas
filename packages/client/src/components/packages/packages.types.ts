@@ -1,4 +1,5 @@
-import type { AtlasPackage, ImportResolution } from '@atlas/shared';
+// Types
+import type { ImportResolution } from '@atlas/shared';
 
 export type ImportPackageDialogProps = {
   open: boolean;

@@ -1,4 +1,5 @@
-import type { PackageAgent, PackageSkill, PackageRule, PackageProviderHint } from '@atlas/shared';
+// Shared
+import type { PackageAgent, PackageProviderHint, PackageRule, PackageSkill } from '@atlas/shared';
 
 export type ExistingEntity = {
   id: string;

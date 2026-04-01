@@ -1,19 +1,17 @@
 // External
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 
 // Shared
+import type { CreateProject, Project, UpdateProject } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
-import type { Project, CreateProject, UpdateProject } from '@atlas/shared';
-
-// Types
-import type { ProjectSummary, ProjectContext } from './projects.types.js';
 
 // Repositories
 import { projectsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
+import type { ProjectContext, ProjectSummary } from './projects.types.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/projects/projects.service.ts';
 
@@ -128,7 +126,7 @@ export class ProjectsService {
 
   /** Returns git branches for a project's local repository. */
   async getBranches(projectId: string): Promise<string[]> {
-    const FUNCTION_NAME = 'getBranches';
+    const _FUNCTION_NAME = 'getBranches';
     try {
       const project = await this.getById(projectId);
       if (!project.localPath) return [];
@@ -199,8 +197,23 @@ export class ProjectsService {
         const techs = [
           ...(scanData.languages ?? []),
           ...(scanData.dependencies?.filter((d: string) =>
-            ['react', 'vue', 'svelte', 'angular', 'next', 'nuxt', 'express', 'fastify', 'hono', 'nestjs',
-             'drizzle-orm', 'prisma', 'tailwindcss', 'vite', 'electron'].includes(d)
+            [
+              'react',
+              'vue',
+              'svelte',
+              'angular',
+              'next',
+              'nuxt',
+              'express',
+              'fastify',
+              'hono',
+              'nestjs',
+              'drizzle-orm',
+              'prisma',
+              'tailwindcss',
+              'vite',
+              'electron',
+            ].includes(d),
           ) ?? []),
         ];
         if (techs.length) updates.techStack = techs.join(', ');

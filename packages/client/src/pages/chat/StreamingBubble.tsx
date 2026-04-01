@@ -1,19 +1,17 @@
 // React / library
-import { useEffect, useState } from 'react';
 import { Bot } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 // Components
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { AgentThinking } from './AgentThinking';
+import { parseAgentContent } from './chat-page.utils';
 
 // Lib
 import { cn } from '@/lib/utils';
 
 // Types
 import type { ThinkingStep, StreamingBubbleProps } from './chat-page.types';
-
-// Utils
-import { parseAgentContent } from './chat-page.utils';
 
 function useTypewriter(text: string, speed = 10) {
   const [pos, setPos] = useState(0);
@@ -59,9 +57,7 @@ export function StreamingBubble({ text, toolCalls }: StreamingBubbleProps) {
         {responseText && (
           <div className="min-w-0 rounded-lg bg-muted px-3 py-2 animate-fade-in-up">
             <MarkdownContent content={displayed} />
-            {!done && (
-              <span className="ml-0.5 inline-block h-4 w-2 animate-pulse bg-foreground/70 align-middle" />
-            )}
+            {!done && <span className="ml-0.5 inline-block h-4 w-2 animate-pulse bg-foreground/70 align-middle" />}
           </div>
         )}
       </div>

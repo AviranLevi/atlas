@@ -1,6 +1,10 @@
+// React / library
 import { Loader2 } from 'lucide-react';
 
+// Components
 import { Button } from '@/components/ui/button';
+
+// Hooks
 import { useSystemInfo } from '@/hooks/use-system.hook';
 
 function formatBytes(bytes: number): string {
@@ -28,9 +32,7 @@ type InfoRowProps = { label: string; value: string };
 function InfoCard({ label, value }: InfoRowProps) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-1 break-all text-sm font-mono">{value}</p>
     </div>
   );

@@ -1,36 +1,29 @@
 // React / library
+import { ArrowLeft, ScrollText, FileText, Bot, Trash2, Check, X, Pencil, FolderOpen, Download } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import {
-  ArrowLeft, ScrollText, FileText, Bot, Trash2,
-  Check, X, Pencil, FolderOpen, Download,
-} from 'lucide-react';
 
 // Components
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { EditableCard } from '@/components/ui/editable-card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks
+import { useProjects } from '@/hooks/use-projects.hook';
 import { useRuleDetail } from '@/hooks/use-rules.hook';
 import { useUpdateRule, useDeleteRule } from '@/hooks/use-rules.hook';
-import { useProjects } from '@/hooks/use-projects.hook';
+
+// Lib
+import { timeAgo } from '@/lib/format';
 
 // Types
 import type { RuleType } from '@atlas/shared';
 
 // Constants
 import { RULE_TYPES, NONE } from '@/components/rules/rules.constants';
-import { timeAgo } from '@/lib/format';
 
 export function RuleDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +58,10 @@ export function RuleDetailPage() {
 
   const saveTags = useCallback(() => {
     if (!detail) return;
-    const tags = tagsDraft.split(',').map((t) => t.trim()).filter(Boolean);
+    const tags = tagsDraft
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
     updateRule.mutate({ id: detail.rule.id, data: { tags } });
     setEditingTags(false);
   }, [detail, tagsDraft, updateRule]);
@@ -91,9 +87,7 @@ export function RuleDetailPage() {
   }
 
   const { rule, agents } = detail;
-  const projectName = rule.projectId
-    ? projects.find((p) => p.id === rule.projectId)?.name
-    : null;
+  const projectName = rule.projectId ? projects.find((p) => p.id === rule.projectId)?.name : null;
 
   const handleDelete = () => {
     if (confirm('Delete this rule? This cannot be undone.')) {
@@ -118,7 +112,12 @@ export function RuleDetailPage() {
             <Download className="mr-1.5 h-3.5 w-3.5" />
             Export
           </Button>
-          <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={handleDelete}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:bg-destructive/10"
+            onClick={handleDelete}
+          >
             <Trash2 className="mr-1.5 h-3.5 w-3.5" />
             Delete
           </Button>
@@ -138,7 +137,10 @@ export function RuleDetailPage() {
                 onChange={(e) => setNameDraft(e.target.value)}
                 className="h-9 text-xl font-bold"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveName();
+                  if (e.key === 'Escape') setEditingName(false);
+                }}
               />
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={saveName}>
                 <Check className="h-4 w-4" />
@@ -179,7 +181,9 @@ export function RuleDetailPage() {
             </SelectTrigger>
             <SelectContent>
               {RULE_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -227,7 +231,10 @@ export function RuleDetailPage() {
                 placeholder="api, errors, conventions"
                 className="h-8 text-xs"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter') saveTags(); if (e.key === 'Escape') setEditingTags(false); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveTags();
+                  if (e.key === 'Escape') setEditingTags(false);
+                }}
               />
               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={saveTags}>
                 <Check className="h-3.5 w-3.5" />
@@ -239,7 +246,9 @@ export function RuleDetailPage() {
           ) : rule.tags.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {rule.tags.map((tag: string) => (
-                <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                <Badge key={tag} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
               ))}
             </div>
           ) : (
@@ -272,9 +281,7 @@ export function RuleDetailPage() {
         </div>
         {agents.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center">
-            <p className="text-muted-foreground text-xs italic">
-              No agents are using this rule yet.
-            </p>
+            <p className="text-muted-foreground text-xs italic">No agents are using this rule yet.</p>
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">

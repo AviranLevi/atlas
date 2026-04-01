@@ -1,6 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// React / library
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
-import type { Review, UpdateReview, DecideReview, ChecklistItem, Workspace } from '@atlas/shared';
+
+// Types
+import type { ChecklistItem, DecideReview, Review, UpdateReview, Workspace } from '@atlas/shared';
 
 const REVIEWS_KEY = ['reviews'] as const;
 
@@ -24,8 +29,7 @@ export function useCreateReview() {
 export function useUpdateReview() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateReview }) =>
-      api.put<Review>(`/reviews/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateReview }) => api.put<Review>(`/reviews/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: REVIEWS_KEY }),
   });
 }
@@ -33,8 +37,7 @@ export function useUpdateReview() {
 export function useDecideReview() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: DecideReview }) =>
-      api.post<Review>(`/reviews/${id}/decide`, data),
+    mutationFn: ({ id, data }: { id: string; data: DecideReview }) => api.post<Review>(`/reviews/${id}/decide`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });

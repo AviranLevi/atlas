@@ -1,15 +1,13 @@
 // Shared
-import type { Rule, CreateRule, UpdateRule } from '@atlas/shared';
-
-// Types
-import type { RuleDetail } from './rules.types.js';
+import type { CreateRule, Rule, UpdateRule } from '@atlas/shared';
 
 // Repositories
 import { rulesRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
+import type { RuleDetail } from './rules.types.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/rules/rules.service.ts';
 

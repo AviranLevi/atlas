@@ -5,8 +5,8 @@ import type { Integration, UpsertIntegration } from '@atlas/shared';
 import { integrationsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/integrations/integrations.service.ts';
 

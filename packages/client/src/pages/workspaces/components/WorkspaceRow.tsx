@@ -1,6 +1,6 @@
 // React / library
-import { Link } from 'react-router-dom';
 import { GitBranch, Clock, Square, Trash2, ChevronRight, FileCode } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Components
 import { Badge } from '@/components/ui/badge';
@@ -12,12 +12,14 @@ import { StatusIcon } from './StatusIcon';
 // Hooks
 import { useStopWork, useCleanupWorkspace } from '@/hooks/use-workspaces.hook';
 
+// Lib
+import { calcDuration } from '@/lib/format';
+
 // Types
 import type { WorkspaceRowProps } from '../workspaces.types';
 
-// Constants & utilities
+// Constants
 import { statusMeta } from '../workspaces.constants';
-import { calcDuration } from '@/lib/format';
 
 export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
   const stopWork = useStopWork();
@@ -29,10 +31,7 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
   const canCleanup = !isActive && workspace.status !== 'merged';
 
   return (
-    <Card
-      className="border-l-[3px] transition-shadow hover:shadow-md"
-      style={{ borderLeftColor: meta.leftColor }}
-    >
+    <Card className="border-l-[3px] transition-shadow hover:shadow-md" style={{ borderLeftColor: meta.leftColor }}>
       <Link to={`/workspaces/${workspace.id}`} className="flex items-center gap-3 p-4">
         <div className="shrink-0">
           <StatusIcon status={workspace.status} className="h-4 w-4" />
@@ -40,11 +39,12 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-sm font-semibold">
-              {workspace.taskName ?? 'Unknown task'}
-            </h3>
+            <h3 className="truncate text-sm font-semibold">{workspace.taskName ?? 'Unknown task'}</h3>
             {canReview && (
-              <Badge variant="outline" className="shrink-0 text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+              <Badge
+                variant="outline"
+                className="shrink-0 text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
+              >
                 <FileCode className="mr-1 h-2.5 w-2.5" />
                 Review
               </Badge>
@@ -75,7 +75,10 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
                   variant="outline"
                   size="sm"
                   className="h-7 border-destructive/30 text-xs text-destructive hover:bg-destructive/10"
-                  onClick={(e) => { e.preventDefault(); stopWork.mutate(workspace.id); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    stopWork.mutate(workspace.id);
+                  }}
                   disabled={stopWork.isPending}
                 >
                   <Square className="mr-1 h-3 w-3" />
@@ -92,7 +95,10 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 text-muted-foreground"
-                  onClick={(e) => { e.preventDefault(); cleanup.mutate(workspace.id); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    cleanup.mutate(workspace.id);
+                  }}
                   disabled={cleanup.isPending}
                 >
                   <Trash2 className="h-3.5 w-3.5" />

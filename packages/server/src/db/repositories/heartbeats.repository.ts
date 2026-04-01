@@ -2,20 +2,15 @@
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
 
 // Shared
-import type {
-  CreateHeartbeatConfig,
-  HeartbeatConfig,
-  HeartbeatRun,
-  UpdateHeartbeatConfig,
-} from '@atlas/shared';
+import type { CreateHeartbeatConfig, HeartbeatConfig, HeartbeatRun, UpdateHeartbeatConfig } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
 import { heartbeatConfigs, heartbeatRuns } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/heartbeats.repository.ts';
 
@@ -66,11 +61,7 @@ export class HeartbeatsRepository {
   findEnabledConfigs(): HeartbeatConfig[] {
     const FUNCTION_NAME = 'findEnabledConfigs';
     try {
-      const rows = this.db
-        .select()
-        .from(heartbeatConfigs)
-        .where(eq(heartbeatConfigs.enabled, true))
-        .all();
+      const rows = this.db.select().from(heartbeatConfigs).where(eq(heartbeatConfigs.enabled, true)).all();
       return rows.map((r) => mapConfig(r));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -82,11 +73,7 @@ export class HeartbeatsRepository {
   findConfigsByAgentId(agentId: string): HeartbeatConfig[] {
     const FUNCTION_NAME = 'findConfigsByAgentId';
     try {
-      const rows = this.db
-        .select()
-        .from(heartbeatConfigs)
-        .where(eq(heartbeatConfigs.agentId, agentId))
-        .all();
+      const rows = this.db.select().from(heartbeatConfigs).where(eq(heartbeatConfigs.agentId, agentId)).all();
       return rows.map((r) => mapConfig(r));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -204,12 +191,7 @@ export class HeartbeatsRepository {
   ): HeartbeatRun {
     const FUNCTION_NAME = 'updateRun';
     try {
-      const row = this.db
-        .update(heartbeatRuns)
-        .set(data)
-        .where(eq(heartbeatRuns.id, id))
-        .returning()
-        .get();
+      const row = this.db.update(heartbeatRuns).set(data).where(eq(heartbeatRuns.id, id)).returning().get();
       if (!row) {
         throw new NotFoundError('HeartbeatRun', id);
       }

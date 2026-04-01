@@ -14,5 +14,8 @@ export function parseTags(raw: string | null | undefined): string[] {
     }
   }
 
-  return raw.split(',').map((t) => t.trim()).filter(Boolean);
+  return raw
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
 }

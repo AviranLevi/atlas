@@ -1,24 +1,20 @@
 // React / library
-import { useState, useMemo } from 'react';
 import { Brain, Plus, Search } from 'lucide-react';
+import { useState, useMemo } from 'react';
 
 // Components
+import { MemoryDialog } from '@/components/memory/MemoryDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { MemoryDialog } from '@/components/memory/MemoryDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MemoryTable } from './MemoryTable';
 
 // Hooks
+import { useAgents } from '@/hooks/use-agents.hook';
 import { useMemories, useDeleteMemory } from '@/hooks/use-memory.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
-import { useAgents } from '@/hooks/use-agents.hook';
+
+// Context
 import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Constants
@@ -44,22 +40,14 @@ export function MemoryPage() {
   const deleteMemory = useDeleteMemory();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const projectMap = useMemo(
-    () => new Map(projects.map((p) => [p.id, p.name])),
-    [projects],
-  );
+  const projectMap = useMemo(() => new Map(projects.map((p) => [p.id, p.name])), [projects]);
 
-  const agentMap = useMemo(
-    () => new Map(agents.map((a) => [a.id, a.name])),
-    [agents],
-  );
+  const agentMap = useMemo(() => new Map(agents.map((a) => [a.id, a.name])), [agents]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return memories;
     const q = search.toLowerCase();
-    return memories.filter(
-      (m) => (m.name ?? '').toLowerCase().includes(q) || m.content.toLowerCase().includes(q),
-    );
+    return memories.filter((m) => (m.name ?? '').toLowerCase().includes(q) || m.content.toLowerCase().includes(q));
   }, [memories, search]);
 
   return (
@@ -93,7 +81,9 @@ export function MemoryPage() {
           </SelectTrigger>
           <SelectContent>
             {TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -103,7 +93,9 @@ export function MemoryPage() {
           </SelectTrigger>
           <SelectContent>
             {SCOPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -132,7 +124,9 @@ export function MemoryPage() {
           memories={filtered}
           projectMap={projectMap}
           agentMap={agentMap}
-          onDelete={(id) => { if (confirm('Delete this memory?')) deleteMemory.mutate(id); }}
+          onDelete={(id) => {
+            if (confirm('Delete this memory?')) deleteMemory.mutate(id);
+          }}
         />
       )}
 

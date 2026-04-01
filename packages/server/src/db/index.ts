@@ -1,11 +1,14 @@
+// External
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+
+// DB
 import * as schema from './schema/index.js';
 import { applySchemaPatches } from './schema-patches.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverPackageRoot = path.resolve(__dirname, '../..');

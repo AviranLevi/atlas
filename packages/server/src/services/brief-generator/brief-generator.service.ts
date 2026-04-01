@@ -1,12 +1,12 @@
 // Shared
-import type { Project, ProjectScanData, Memory } from '@atlas/shared';
+import type { Memory, Project } from '@atlas/shared';
 
 // Services
 import { memoryService, projectsService } from '../index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/brief-generator/brief-generator.service.ts';
 
@@ -33,7 +33,9 @@ export class BriefGeneratorService {
       const brief = this.generate(project, memories);
 
       await projectsService.update(projectId, { projectBrief: brief });
-      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - generated brief for project ${projectId} (${brief.length} chars)`);
+      logger.info(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - generated brief for project ${projectId} (${brief.length} chars)`,
+      );
       return brief;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -112,9 +114,7 @@ export class BriefGeneratorService {
     // ─── Memories (grouped by type, condensed) ───────────────────
     if (memories.length > 0) {
       // Sort by most recently updated, then take top N
-      const sorted = [...memories].sort((a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
+      const sorted = [...memories].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
       const selected = sorted.slice(0, MAX_INLINE_MEMORIES);
       const overflow = memories.length - selected.length;
 
@@ -136,9 +136,7 @@ export class BriefGeneratorService {
         lines.push(`\n### ${type}s`);
         for (const m of items) {
           // Truncate long content to keep brief compact
-          const content = m.content.length > 150
-            ? m.content.slice(0, 147) + '...'
-            : m.content;
+          const content = m.content.length > 150 ? `${m.content.slice(0, 147)}...` : m.content;
           lines.push(`- **${m.name}**: ${content}`);
         }
       }
@@ -154,16 +152,51 @@ export class BriefGeneratorService {
       // Show only the most important ones (frameworks, ORMs, etc.)
       const important = sd.dependencies.filter((d) =>
         [
-          'react', 'vue', 'svelte', 'angular', 'next', 'nuxt', 'solid-js',
-          'express', 'fastify', 'hono', 'koa', 'nestjs', '@nestjs/core',
-          'drizzle-orm', 'prisma', '@prisma/client', 'typeorm', 'sequelize', 'mongoose',
-          'tailwindcss', 'vite', 'webpack', 'esbuild', 'rollup',
-          'electron', 'react-native', 'expo',
-          'zod', 'joi', 'yup',
-          'jest', 'vitest', 'mocha', 'playwright', 'cypress',
-          'better-sqlite3', 'pg', 'postgres', 'mongodb', 'redis', 'ioredis',
-          'axios', 'trpc', '@tanstack/react-query',
-        ].includes(d)
+          'react',
+          'vue',
+          'svelte',
+          'angular',
+          'next',
+          'nuxt',
+          'solid-js',
+          'express',
+          'fastify',
+          'hono',
+          'koa',
+          'nestjs',
+          '@nestjs/core',
+          'drizzle-orm',
+          'prisma',
+          '@prisma/client',
+          'typeorm',
+          'sequelize',
+          'mongoose',
+          'tailwindcss',
+          'vite',
+          'webpack',
+          'esbuild',
+          'rollup',
+          'electron',
+          'react-native',
+          'expo',
+          'zod',
+          'joi',
+          'yup',
+          'jest',
+          'vitest',
+          'mocha',
+          'playwright',
+          'cypress',
+          'better-sqlite3',
+          'pg',
+          'postgres',
+          'mongodb',
+          'redis',
+          'ioredis',
+          'axios',
+          'trpc',
+          '@tanstack/react-query',
+        ].includes(d),
       );
       if (important.length) {
         lines.push(important.join(', '));

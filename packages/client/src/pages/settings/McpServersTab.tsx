@@ -1,15 +1,11 @@
 // React / library
+import { Plus, Pencil, Trash2, Server, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Server, Loader2 } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 
 // Hooks
 import {
@@ -74,7 +74,10 @@ function envToDisplay(env: string | null): string {
 
 function displayArgsToJson(argsStr: string): string {
   return JSON.stringify(
-    argsStr.split(',').map((a) => a.trim()).filter(Boolean),
+    argsStr
+      .split(',')
+      .map((a) => a.trim())
+      .filter(Boolean),
   );
 }
 
@@ -109,14 +112,7 @@ type McpServerFormRowProps = {
   onCancel: () => void;
 };
 
-function McpServerFormRow({
-  form,
-  isSaving,
-  isValid,
-  onChange,
-  onSave,
-  onCancel,
-}: McpServerFormRowProps) {
+function McpServerFormRow({ form, isSaving, isValid, onChange, onSave, onCancel }: McpServerFormRowProps) {
   return (
     <div className="space-y-4 border-b px-4 py-4 last:border-b-0">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -401,11 +397,7 @@ export function McpServersTab() {
             <Button variant="outline" onClick={() => setDeleteId(null)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDelete}
-              disabled={deleteServer.isPending}
-            >
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleteServer.isPending}>
               {deleteServer.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>

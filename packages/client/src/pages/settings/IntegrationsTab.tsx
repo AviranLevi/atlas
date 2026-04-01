@@ -1,18 +1,18 @@
 // React / library
+import { Brain, CheckCircle2, XCircle, Loader2, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Brain, CheckCircle2, XCircle, Loader2, ExternalLink } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-// Lib
-import { cn } from '@/lib/utils';
-
 // Hooks
 import { useIntegration, useUpsertIntegration, useTestSupermemory } from '@/hooks/use-integrations.hook';
+
+// Lib
+import { cn } from '@/lib/utils';
 
 type TestStatus = 'idle' | 'testing' | 'ok' | 'error';
 
@@ -51,7 +51,10 @@ export function IntegrationsTab() {
   };
 
   const handleTest = () => {
-    if (!apiKey.trim()) { toast.error('Enter an API key first'); return; }
+    if (!apiKey.trim()) {
+      toast.error('Enter an API key first');
+      return;
+    }
     setTestStatus('testing');
     setTestError('');
     testConnection.mutate(
@@ -110,8 +113,8 @@ export function IntegrationsTab() {
                 </a>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Semantic memory layer — gives agents relevant context from past work.
-                Works with all agent CLIs. Open source, self-hostable.
+                Semantic memory layer — gives agents relevant context from past work. Works with all agent CLIs. Open
+                source, self-hostable.
               </p>
             </div>
           </div>
@@ -143,7 +146,10 @@ export function IntegrationsTab() {
               id="sm-api-key"
               type="password"
               value={apiKey}
-              onChange={(e) => { setApiKey(e.target.value); setTestStatus('idle'); }}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                setTestStatus('idle');
+              }}
               placeholder="sm-••••••••"
               className="font-mono text-sm"
             />
@@ -156,8 +162,8 @@ export function IntegrationsTab() {
                 className="text-primary hover:underline"
               >
                 supermemory.ai
-              </a>
-              {' '}— 1M tokens/month free. Leave blank to use a self-hosted instance.
+              </a>{' '}
+              — 1M tokens/month free. Leave blank to use a self-hosted instance.
             </p>
           </div>
 
@@ -169,7 +175,10 @@ export function IntegrationsTab() {
               id="sm-base-url"
               type="url"
               value={baseUrl}
-              onChange={(e) => { setBaseUrl(e.target.value); setTestStatus('idle'); }}
+              onChange={(e) => {
+                setBaseUrl(e.target.value);
+                setTestStatus('idle');
+              }}
               placeholder="https://api.supermemory.ai/v3"
               className="text-sm"
             />
@@ -198,16 +207,15 @@ export function IntegrationsTab() {
             disabled={!apiKey.trim() || testStatus === 'testing'}
           >
             {testStatus === 'testing' ? (
-              <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Testing…</>
+              <>
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                Testing…
+              </>
             ) : (
               'Test Connection'
             )}
           </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!isDirty || upsert.isPending}
-          >
+          <Button size="sm" onClick={handleSave} disabled={!isDirty || upsert.isPending}>
             {upsert.isPending ? 'Saving…' : 'Save'}
           </Button>
         </div>

@@ -1,12 +1,12 @@
 // Shared
-import type { Phase, CreatePhase, UpdatePhase } from '@atlas/shared';
+import type { CreatePhase, Phase, UpdatePhase } from '@atlas/shared';
 
 // Repositories
 import { phasesRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/phases/phases.service.ts';
 

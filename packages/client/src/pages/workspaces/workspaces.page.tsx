@@ -1,6 +1,6 @@
 // React / library
-import { useState } from 'react';
 import { Terminal, Activity } from 'lucide-react';
+import { useState } from 'react';
 
 // Components
 import { Card } from '@/components/ui/card';
@@ -8,6 +8,8 @@ import { WorkspaceRow } from './components/WorkspaceRow';
 
 // Hooks
 import { useWorkspaces } from '@/hooks/use-workspaces.hook';
+
+// Context
 import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Types
@@ -21,9 +23,7 @@ export function WorkspacesPage() {
   const { activeProjectId } = useActiveProject();
   const [filter, setFilter] = useState<StatusFilter>('all');
 
-  const workspaces = activeProjectId
-    ? allWorkspaces.filter((w) => w.projectId === activeProjectId)
-    : allWorkspaces;
+  const workspaces = activeProjectId ? allWorkspaces.filter((w) => w.projectId === activeProjectId) : allWorkspaces;
 
   const counts: Record<StatusFilter, number> = {
     all: workspaces.length,
@@ -46,9 +46,7 @@ export function WorkspacesPage() {
         <Activity className="h-7 w-7 text-muted-foreground" />
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Agent Workspaces</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Monitor and manage agent execution environments
-          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">Monitor and manage agent execution environments</p>
         </div>
       </div>
 
@@ -82,9 +80,7 @@ export function WorkspacesPage() {
             {counts[tab.key] > 0 && (
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                  filter === tab.key
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-muted text-muted-foreground'
+                  filter === tab.key ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {counts[tab.key]}
@@ -102,9 +98,7 @@ export function WorkspacesPage() {
         <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed">
           <Terminal className="h-8 w-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            {filter === 'all'
-              ? 'No workspaces yet. Start an agent from the Kanban board.'
-              : `No ${filter} workspaces.`}
+            {filter === 'all' ? 'No workspaces yet. Start an agent from the Kanban board.' : `No ${filter} workspaces.`}
           </p>
         </div>
       ) : (

@@ -1,3 +1,4 @@
+// Types
 import type { ReviewStatus } from '@atlas/shared';
 
 export const STATUS_CONFIG: Record<ReviewStatus, { label: string; className: string }> = {

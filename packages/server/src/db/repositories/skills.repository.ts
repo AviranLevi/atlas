@@ -1,16 +1,16 @@
 // External
-import { eq, or, isNull } from 'drizzle-orm';
+import { eq, isNull, or } from 'drizzle-orm';
 
 // Shared
-import type { CreateSkill, UpdateSkill, Skill } from '@atlas/shared';
+import type { CreateSkill, Skill, UpdateSkill } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
-import { skills, agentSkills, agents } from '../schema/index.js';
+import { agentSkills, agents, skills } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/skills.repository.ts';
 
@@ -109,11 +109,7 @@ export class SkillsRepository {
   findAgentsBySkillId(skillId: string): { id: string; name: string }[] {
     const FUNCTION_NAME = 'findAgentsBySkillId';
     try {
-      const rows = this.db
-        .select()
-        .from(agentSkills)
-        .where(eq(agentSkills.skillId, skillId))
-        .all();
+      const rows = this.db.select().from(agentSkills).where(eq(agentSkills.skillId, skillId)).all();
       const result: { id: string; name: string }[] = [];
       for (const row of rows) {
         const agent = this.db.select().from(agents).where(eq(agents.id, row.agentId)).get();

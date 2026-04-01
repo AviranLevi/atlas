@@ -1,20 +1,30 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.9/schema.json",
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": { "actions": { "source": { "organizeImports": "off" } } },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
       "correctness": {
         "noUnusedImports": "warn",
-        "noUnusedVariables": "warn"
+        "noUnusedVariables": "warn",
+        "noUnusedFunctionParameters": "warn",
+        "useExhaustiveDependencies": "warn"
       },
       "style": {
-        "useConst": "error"
+        "useConst": "error",
+        "noNonNullAssertion": "off"
       },
       "suspicious": {
         "noExplicitAny": "warn",
-        "noVar": "error"
+        "noVar": "error",
+        "noArrayIndexKey": "warn"
+      },
+      "a11y": {
+        "useButtonType": "warn",
+        "noLabelWithoutControl": "warn",
+        "useKeyWithClickEvents": "warn",
+        "noStaticElementInteractions": "warn"
       }
     }
   },
@@ -32,6 +42,14 @@
     }
   },
   "files": {
-    "includes": ["**", "!**/node_modules", "!**/dist", "!**/*.db", "!**/data/", "!**/packages/shared/src/**/*.d.ts"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/*.db",
+      "!**/data/",
+      "!**/packages/shared/src/**/*.d.ts",
+      "!**/*.css"
+    ]
   }
 }

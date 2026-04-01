@@ -80,7 +80,9 @@ export function ProjectAgentsSection({
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{agent.name}</p>
                 {agent.role && (
-                  <Badge variant="secondary" className="text-[10px]">{agent.role}</Badge>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {agent.role}
+                  </Badge>
                 )}
               </div>
               <Button

@@ -1,9 +1,16 @@
-import { cn } from '@/lib/utils';
+// Components
+import { LineNum, CommentGutter, InlineCommentForm, InlineCommentBubble, HighlightedLine } from '../components';
+
+// Hooks
 import { useAddDiffComment, useEditDiffComment, useRemoveDiffComment } from '@/hooks/use-workspaces.hook';
-import type { DiffFile } from '@/hooks/use-workspaces.hook';
+
+// Lib
+import { cn } from '@/lib/utils';
+
+// Types
 import type { DiffComment } from '@atlas/shared';
 import type { ParsedLine, CommentingTarget } from '../diff-parser';
-import { LineNum, CommentGutter, InlineCommentForm, InlineCommentBubble, HighlightedLine } from '../components';
+import type { DiffFile } from '@/hooks/use-workspaces.hook';
 
 export function UnifiedDiffView({
   parsed,
@@ -51,7 +58,13 @@ export function UnifiedDiffView({
                 <CommentGutter
                   isCommentable={isCommentable}
                   isActive={commentingLine?.patchIndex === line.patchIndex}
-                  onClick={() => setCommentingLine(commentingLine?.patchIndex === line.patchIndex ? null : { patchIndex: line.patchIndex, side: 'left' })}
+                  onClick={() =>
+                    setCommentingLine(
+                      commentingLine?.patchIndex === line.patchIndex
+                        ? null
+                        : { patchIndex: line.patchIndex, side: 'left' },
+                    )
+                  }
                 />
                 <LineNum num={line.oldLineNum} />
                 <LineNum num={line.newLineNum} />
@@ -73,7 +86,13 @@ export function UnifiedDiffView({
                   onReply={(body) =>
                     addComment.mutate({
                       workspaceId,
-                      comment: { filename: file.filename, lineNumber: line.patchIndex, lineContent: line.content, body, parentId: c.id },
+                      comment: {
+                        filename: file.filename,
+                        lineNumber: line.patchIndex,
+                        lineContent: line.content,
+                        body,
+                        parentId: c.id,
+                      },
                     })
                   }
                   isDeleting={removeComment.isPending}

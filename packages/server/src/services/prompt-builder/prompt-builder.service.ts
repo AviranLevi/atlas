@@ -1,9 +1,17 @@
 // Services
-import { agentsService, projectsService, tasksService, settingsService, memoryService, supermemoryService, phasesService } from '../index.js';
+import {
+  agentsService,
+  memoryService,
+  phasesService,
+  projectsService,
+  settingsService,
+  supermemoryService,
+  tasksService,
+} from '../index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/prompt-builder/prompt-builder.service.ts';
 
@@ -58,7 +66,10 @@ export class PromptBuilderService {
 
       const globalInstructions = await settingsService.listGlobalInstructions();
       if (globalInstructions.length > 0) {
-        const content = globalInstructions.map((gi) => gi.content).filter(Boolean).join('\n\n');
+        const content = globalInstructions
+          .map((gi) => gi.content)
+          .filter(Boolean)
+          .join('\n\n');
         if (content) {
           sections.push(`## Global Instructions\n\n${content}`);
         }
@@ -119,9 +130,7 @@ export class PromptBuilderService {
         // Agent-specific memories (deprecated in favor of project memories below,
         // but still included for backwards compatibility)
         if (agentMemories.length > 0) {
-          const memList = agentMemories
-            .map((m) => `- [${m.type}] ${m.content}`)
-            .join('\n');
+          const memList = agentMemories.map((m) => `- [${m.type}] ${m.content}`).join('\n');
           sections.push(`## Agent Memories\n\n${memList}`);
         }
       }
@@ -148,7 +157,9 @@ export class PromptBuilderService {
           const memList = recentMemories
             .map((m) => `- [${m.type}]${m.scope === 'global' ? ' (global)' : ''} **${m.name}**: ${m.content}`)
             .join('\n');
-          sections.push(`## Recent Updates\n\nNewly added project knowledge (may not be in the brief yet):\n\n${memList}`);
+          sections.push(
+            `## Recent Updates\n\nNewly added project knowledge (may not be in the brief yet):\n\n${memList}`,
+          );
         }
       } else {
         // Fallback: no brief exists yet — use raw data (legacy behavior)
@@ -163,7 +174,9 @@ export class PromptBuilderService {
           if (sd.languages?.length) projLines.push(`**Languages:** ${sd.languages.join(', ')}`);
           if (sd.packageManager) projLines.push(`**Package Manager:** ${sd.packageManager}`);
           if (sd.keyDirectories && Object.keys(sd.keyDirectories).length > 0) {
-            const dirs = Object.entries(sd.keyDirectories).map(([k, v]) => `${k}: \`${v}\``).join(', ');
+            const dirs = Object.entries(sd.keyDirectories)
+              .map(([k, v]) => `${k}: \`${v}\``)
+              .join(', ');
             projLines.push(`**Key Directories:** ${dirs}`);
           }
           if (sd.formatting) {
@@ -192,15 +205,13 @@ export class PromptBuilderService {
           const memList = uniqueProjectMemories
             .map((m) => `- [${m.type}]${m.scope === 'global' ? ' (global)' : ''} **${m.name}**: ${m.content}`)
             .join('\n');
-          sections.push(`## Project Knowledge\n\nThese are established conventions, decisions, and learnings for this project:\n\n${memList}`);
+          sections.push(
+            `## Project Knowledge\n\nThese are established conventions, decisions, and learnings for this project:\n\n${memList}`,
+          );
         }
       }
 
-      const taskLines: string[] = [
-        `## Task`,
-        `\n**Name:** ${task.name}`,
-        `**Status:** ${task.status}`,
-      ];
+      const taskLines: string[] = [`## Task`, `\n**Name:** ${task.name}`, `**Status:** ${task.status}`];
       if (task.priority) taskLines.push(`**Priority:** ${task.priority}`);
       if (task.estimate) taskLines.push(`**Estimate:** ${task.estimate}`);
       if (task.definitionOfDone) taskLines.push(`\n**Definition of Done:**\n${task.definitionOfDone}`);

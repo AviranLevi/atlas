@@ -2,28 +2,22 @@
 import { useState } from 'react';
 
 // Components
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks
-import { useCreateSkill } from '@/hooks/use-skills.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
+import { useCreateSkill } from '@/hooks/use-skills.hook';
 
 // Types
-import type { SkillType, Skill } from '@atlas/shared';
+import type { Skill, SkillType } from '@atlas/shared';
 import type { SkillDialogProps } from './skills.types';
 
 // Constants
-import { SKILL_TYPES, NONE } from './skills.constants';
+import { NONE, SKILL_TYPES } from './skills.constants';
 
 export function SkillDialog({ open, onOpenChange, onCreated }: SkillDialogProps) {
   const createSkill = useCreateSkill();
@@ -62,7 +56,13 @@ export function SkillDialog({ open, onOpenChange, onCreated }: SkillDialogProps)
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => { if (!val) resetForm(); onOpenChange(val); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!val) resetForm();
+        onOpenChange(val);
+      }}
+    >
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>New Skill</DialogTitle>
@@ -110,15 +110,20 @@ export function SkillDialog({ open, onOpenChange, onCreated }: SkillDialogProps)
             </Select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                onOpenChange(false);
+              }}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={createSkill.isPending || !name.trim()}>
               {createSkill.isPending ? 'Creating...' : 'Create Skill'}
             </Button>
-            {createSkill.isError && (
-              <p className="text-sm text-destructive">{(createSkill.error as Error).message}</p>
-            )}
+            {createSkill.isError && <p className="text-sm text-destructive">{(createSkill.error as Error).message}</p>}
           </div>
         </form>
       </DialogContent>

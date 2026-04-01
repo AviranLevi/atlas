@@ -1,13 +1,13 @@
 // Shared
-import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@atlas/shared';
+import type { AgentProvider, CreateAgentProvider, ProviderModel, UpdateAgentProvider } from '@atlas/shared';
 
 // Repositories
 import { agentProvidersRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
-import { TEST_FNS, LIST_MODEL_FNS } from '../../lib/providers/index.js';
+import { logger } from '../../lib/logger.js';
+import { LIST_MODEL_FNS, TEST_FNS } from '../../lib/providers/index.js';
 import { withTimeout } from '../../lib/utils/index.js';
 
 const FILE_PATH = 'services/agent-providers/agent-providers.service.ts';

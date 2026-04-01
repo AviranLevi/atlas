@@ -33,12 +33,7 @@ export class SupermemoryService {
   }
 
   /** Calls the Supermemory REST API. */
-  private async request(
-    config: SupermemoryConfig,
-    method: string,
-    path: string,
-    body?: unknown,
-  ): Promise<unknown> {
+  private async request(config: SupermemoryConfig, method: string, path: string, body?: unknown): Promise<unknown> {
     const res = await fetch(`${config.baseUrl}${path}`, {
       method,
       headers: {
@@ -93,11 +88,11 @@ export class SupermemoryService {
     if (!config) return [];
 
     try {
-      const result = await this.request(config, 'POST', '/search/memory-entries', {
+      const result = (await this.request(config, 'POST', '/search/memory-entries', {
         q: query,
         containerTags: [containerId],
         limit,
-      }) as { results?: SupermemorySearchResult[] };
+      })) as { results?: SupermemorySearchResult[] };
 
       return (result.results ?? []).map((r) => r.content).filter(Boolean);
     } catch (error: unknown) {

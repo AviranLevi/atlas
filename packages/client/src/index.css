@@ -40,7 +40,9 @@
 }
 
 @keyframes bounce-dot {
-  0%, 60%, 100% {
+  0%,
+  60%,
+  100% {
     transform: translateY(0);
     opacity: 0.35;
   }
@@ -63,13 +65,19 @@
 
 /* Kill every transition while the theme class is being swapped. */
 .theme-switching * {
-  transition: none !important;
+  transition: none;
 }
 
 /* Font size preference — rem-based utilities scale automatically. */
-html.font-size-sm { font-size: 13px; }
-html.font-size-md { font-size: 15px; }
-html.font-size-lg { font-size: 17px; }
+html.font-size-sm {
+  font-size: 13px;
+}
+html.font-size-md {
+  font-size: 15px;
+}
+html.font-size-lg {
+  font-size: 17px;
+}
 
 @layer base {
   *,

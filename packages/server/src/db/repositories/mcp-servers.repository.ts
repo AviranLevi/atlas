@@ -2,15 +2,15 @@
 import { eq } from 'drizzle-orm';
 
 // Shared
-import type { McpServer, CreateMcpServer, UpdateMcpServer } from '@atlas/shared';
+import type { CreateMcpServer, McpServer, UpdateMcpServer } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
 import { mcpServers } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/mcp-servers.repository.ts';
 
@@ -32,11 +32,7 @@ export class McpServersRepository {
   findEnabled(): McpServer[] {
     const FUNCTION_NAME = 'findEnabled';
     try {
-      return this.db
-        .select()
-        .from(mcpServers)
-        .where(eq(mcpServers.enabled, true))
-        .all() as McpServer[];
+      return this.db.select().from(mcpServers).where(eq(mcpServers.enabled, true)).all() as McpServer[];
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query enabled MCP servers', { cause: error });

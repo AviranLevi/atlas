@@ -1,6 +1,6 @@
 // External
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 /** Checks for C# projects by scanning for .csproj/.sln files in the directory. */
 function hasCSharpProject(dirPath: string): boolean {

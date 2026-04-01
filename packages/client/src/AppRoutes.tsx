@@ -1,23 +1,23 @@
 // React / library
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
-// Pages
-import { AgentsPage } from '@/pages/agents/AgentsPage';
+// Components
 import { AgentDetailPage } from '@/pages/agent-detail/AgentDetailPage';
-import { SkillsPage } from '@/pages/skills/SkillsPage';
-import { SkillDetailPage } from '@/pages/skill-detail/SkillDetailPage';
-import { RulesPage } from '@/pages/rules/RulesPage';
-import { RuleDetailPage } from '@/pages/rule-detail/RuleDetailPage';
-import { MemoryPage } from '@/pages/memory/MemoryPage';
-import { ProjectsPage } from '@/pages/projects/ProjectsPage';
-import { ProjectDetailPage } from '@/pages/project-detail/ProjectDetailPage';
-import { KanbanPage } from '@/pages/kanban/KanbanPage';
-import { WorkspacesPage } from '@/pages/workspaces/workspaces.page';
-import { WorkspaceDetailPage } from '@/pages/workspaces/workspace-detail.page';
-import { SettingsPage } from '@/pages/settings/SettingsPage';
-import { GlobalPage } from '@/pages/global/GlobalPage';
+import { AgentsPage } from '@/pages/agents/AgentsPage';
 import { ChatPage } from '@/pages/chat/ChatPage';
+import { GlobalPage } from '@/pages/global/GlobalPage';
+import { KanbanPage } from '@/pages/kanban/KanbanPage';
+import { MemoryPage } from '@/pages/memory/MemoryPage';
+import { ProjectDetailPage } from '@/pages/project-detail/ProjectDetailPage';
+import { ProjectsPage } from '@/pages/projects/ProjectsPage';
+import { RuleDetailPage } from '@/pages/rule-detail/RuleDetailPage';
+import { RulesPage } from '@/pages/rules/RulesPage';
+import { SettingsPage } from '@/pages/settings/SettingsPage';
+import { SkillDetailPage } from '@/pages/skill-detail/SkillDetailPage';
+import { SkillsPage } from '@/pages/skills/SkillsPage';
 import { UsagePage } from '@/pages/usage/UsagePage';
+import { WorkspaceDetailPage } from '@/pages/workspaces/workspace-detail.page';
+import { WorkspacesPage } from '@/pages/workspaces/workspaces.page';
 
 export function AppRoutes() {
   return (

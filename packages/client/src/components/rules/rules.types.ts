@@ -1,3 +1,4 @@
+// Types
 import type { Rule } from '@atlas/shared';
 
 export type RuleDialogProps = {

@@ -1,12 +1,10 @@
-// Types
-import type { SearchResult } from './search.types.js';
-
 // Repositories
 import { searchRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
+import type { SearchResult } from './search.types.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/search/search.service.ts';
 

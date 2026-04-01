@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { UpsertIntegration, TestSupermemory } from '@atlas/shared';
+import type { TestSupermemory, UpsertIntegration } from '@atlas/shared';
 
 // Services
 import { integrationsService, supermemoryService } from '../services/index.js';

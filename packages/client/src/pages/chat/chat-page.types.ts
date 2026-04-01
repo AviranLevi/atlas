@@ -1,4 +1,12 @@
-import type { ChatConversation, ChatMessage, AgentProvider, ProviderModel, ChatBackendType, ExecutorStatus } from '@atlas/shared';
+// Types
+import type {
+  ChatConversation,
+  ChatMessage,
+  AgentProvider,
+  ProviderModel,
+  ChatBackendType,
+  ExecutorStatus,
+} from '@atlas/shared';
 
 export type ChatStreamState = 'idle' | 'streaming' | 'error';
 

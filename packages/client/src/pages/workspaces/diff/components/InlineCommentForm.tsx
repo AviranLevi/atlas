@@ -1,5 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+// React / library
 import { Send } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+
+// Components
 import { Button } from '@/components/ui/button';
 
 export function InlineCommentForm({

@@ -1,12 +1,19 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { CreateRuleSchema, UpdateRuleSchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
-import { listRules, getRule, getRuleDetail, createRule, updateRule, deleteRule } from '../controllers/rules.controller.js';
+import {
+  createRule,
+  deleteRule,
+  getRule,
+  getRuleDetail,
+  listRules,
+  updateRule,
+} from '../controllers/rules.controller.js';
 
 export const rulesRoute = new Hono()
   .get('/', listRules)

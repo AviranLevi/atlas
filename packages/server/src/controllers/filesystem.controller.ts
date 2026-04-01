@@ -1,4 +1,7 @@
+// External
 import type { Context } from 'hono';
+
+// Services
 import { filesystemService } from '../services/index.js';
 
 /** Lists subdirectories of a path, indicating which are git repos. */

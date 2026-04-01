@@ -34,7 +34,8 @@ export function DispatchRulesCard({
         <div>
           <CardTitle>Dispatch Rules</CardTitle>
           <CardDescription>
-            Rules are matched against task names when tasks are created. The first matching rule auto-assigns the agent and skill.
+            Rules are matched against task names when tasks are created. The first matching rule auto-assigns the agent
+            and skill.
           </CardDescription>
         </div>
         <Button onClick={onAdd} disabled={editingRuleId === 'new'}>
@@ -51,7 +52,9 @@ export function DispatchRulesCard({
               <div>Pattern</div>
               <div>Agent</div>
               <div>Skill</div>
-              <div><Zap className="h-3.5 w-3.5" /></div>
+              <div>
+                <Zap className="h-3.5 w-3.5" />
+              </div>
               <div />
             </div>
 
@@ -79,9 +82,7 @@ export function DispatchRulesCard({
                   <div className="flex items-center text-sm">{getAgentName(rule.agentId)}</div>
                   <div className="flex items-center text-sm">{getSkillName(rule.skillId)}</div>
                   <div className="flex items-center">
-                    {rule.autoStart && (
-                      <Zap className="h-4 w-4 text-yellow-500" aria-label="Auto-start enabled" />
-                    )}
+                    {rule.autoStart && <Zap className="h-4 w-4 text-yellow-500" aria-label="Auto-start enabled" />}
                   </div>
                   <div className="flex gap-1">
                     <Button size="icon" variant="ghost" onClick={() => onEdit(rule)} aria-label="Edit">

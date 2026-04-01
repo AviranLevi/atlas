@@ -1,12 +1,12 @@
 // React / library
-import { useState, useCallback } from 'react';
-import { Pencil, X, Check } from 'lucide-react';
+import { Check, Pencil, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { MarkdownContent } from '@/components/ui/markdown-content';
+import { Textarea } from '@/components/ui/textarea';
 
 export type EditableCardProps = {
   icon: React.ElementType;
@@ -18,14 +18,7 @@ export type EditableCardProps = {
 };
 
 /** Inline-editable text card for long-form fields. Renders Markdown when not editing. */
-export function EditableCard({
-  icon: Icon,
-  label,
-  value,
-  placeholder,
-  onSave,
-  isPending,
-}: EditableCardProps) {
+export function EditableCard({ icon: Icon, label, value, placeholder, onSave, isPending }: EditableCardProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
 
@@ -69,7 +62,9 @@ export function EditableCard({
             autoFocus
           />
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-muted-foreground">Supports Markdown — headings, **bold**, `code`, ```code blocks```, lists</p>
+            <p className="text-[11px] text-muted-foreground">
+              Supports Markdown — headings, **bold**, `code`, ```code blocks```, lists
+            </p>
             <div className="flex gap-1.5">
               <Button variant="ghost" size="sm" onClick={cancel} disabled={isPending}>
                 <X className="mr-1 h-3.5 w-3.5" />

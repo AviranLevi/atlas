@@ -1,13 +1,7 @@
 // Components
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Types
 import type { RuntimeSelectProps } from './workspaces.types';
@@ -45,12 +39,17 @@ export function RuntimeSelect({ runtimes, isLoading, value, onChange }: RuntimeS
                   </Badge>
                 )}
                 {rt.installed && !rt.authenticated && (
-                  <Badge variant="outline" className="text-[10px] border-yellow-300 text-yellow-600 dark:border-yellow-700 dark:text-yellow-400">
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-yellow-300 text-yellow-600 dark:border-yellow-700 dark:text-yellow-400"
+                  >
                     {rt.authHint ?? 'Not authenticated'}
                   </Badge>
                 )}
                 {rt.mcpConfigFormat !== 'none' && rt.installed && rt.authenticated && (
-                  <Badge variant="secondary" className="text-[10px]">MCP</Badge>
+                  <Badge variant="secondary" className="text-[10px]">
+                    MCP
+                  </Badge>
                 )}
               </div>
             </SelectItem>

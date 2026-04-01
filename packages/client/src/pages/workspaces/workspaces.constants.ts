@@ -1,9 +1,7 @@
+// Types
 import type { StatusFilter } from './workspaces.types';
 
-export const statusMeta: Record<
-  string,
-  { label: string; leftColor: string; badgeClass: string }
-> = {
+export const statusMeta: Record<string, { label: string; leftColor: string; badgeClass: string }> = {
   pending: {
     label: 'Pending',
     leftColor: '#eab308',
@@ -13,8 +11,7 @@ export const statusMeta: Record<
   running: {
     label: 'Running',
     leftColor: '#3b82f6',
-    badgeClass:
-      'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
+    badgeClass: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
   },
   completed: {
     label: 'Completed',
@@ -25,14 +22,12 @@ export const statusMeta: Record<
   failed: {
     label: 'Failed',
     leftColor: '#ef4444',
-    badgeClass:
-      'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300',
+    badgeClass: 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300',
   },
   stopped: {
     label: 'Stopped',
     leftColor: '#6b7280',
-    badgeClass:
-      'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400',
+    badgeClass: 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400',
   },
   merged: {
     label: 'Merged',

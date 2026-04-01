@@ -1,6 +1,9 @@
-import type { ExecutorConfig, ExecutorStatus, DetectionResult } from './executor.types.js';
-import { KNOWN_EXECUTORS } from './executor-definitions.js';
+// Executors
+import type { DetectionResult, ExecutorConfig, ExecutorStatus } from './executor.types.js';
 import { detectExecutor } from './executor-detection.js';
+import { KNOWN_EXECUTORS } from './executor-definitions.js';
+
+// Lib
 import { logger } from '../lib/logger.js';
 
 const FILE_PATH = 'executors/executor-registry.ts';
@@ -42,9 +45,7 @@ class ExecutorRegistry {
     for (const { executor, result } of results) {
       newCache.set(executor.id, result);
       if (result.installed) {
-        logger.info(
-          `${FILE_PATH} :: detected ${executor.name} v${result.version ?? '?'} at ${result.binaryPath}`,
-        );
+        logger.info(`${FILE_PATH} :: detected ${executor.name} v${result.version ?? '?'} at ${result.binaryPath}`);
       }
     }
 

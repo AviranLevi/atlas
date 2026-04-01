@@ -1,33 +1,23 @@
 // React / library
-import { useState, useEffect, useMemo, useRef } from 'react';
 import { RotateCcw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // Components
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ModelSection } from './ModelSection';
 import { RuntimeSelect } from './RuntimeSelect';
 
 // Hooks
-import { useAgentRuntimes, useRerunWorkspace } from '@/hooks/use-workspaces.hook';
 import { useProviderModels } from '@/hooks/use-agent-providers.hook';
 import { useAgent } from '@/hooks/use-agents.hook';
+import { useAgentRuntimes, useRerunWorkspace } from '@/hooks/use-workspaces.hook';
 
 // Types
 import type { RerunDialogProps } from './workspaces.types';
 
 // Constants
-import {
-  DEFAULT_MODEL_VALUE,
-  CUSTOM_MODEL_VALUE,
-  getModelStorageKey,
-} from './workspaces.constants';
+import { CUSTOM_MODEL_VALUE, DEFAULT_MODEL_VALUE, getModelStorageKey } from './workspaces.constants';
 
 /** Dialog for re-running a workspace with a (possibly different) runtime and model. */
 export function RerunDialog({ open, onOpenChange, workspace, onSuccess }: RerunDialogProps) {
@@ -38,14 +28,13 @@ export function RerunDialog({ open, onOpenChange, workspace, onSuccess }: RerunD
   const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL_VALUE);
   const [customModelText, setCustomModelText] = useState<string>('');
 
-  const currentRuntime = useMemo(
-    () => runtimes.find((r) => r.id === selectedRuntime),
-    [runtimes, selectedRuntime],
-  );
+  const currentRuntime = useMemo(() => runtimes.find((r) => r.id === selectedRuntime), [runtimes, selectedRuntime]);
 
   const agentId = workspace.agentId ?? undefined;
   const { data: agent } = useAgent(agentId);
-  const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(agent?.providerId ?? undefined);
+  const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(
+    agent?.providerId ?? undefined,
+  );
 
   // Sync model selection: prioritize workspace values on open, fall back to localStorage on runtime change
   const prevRuntimeRef = useRef(selectedRuntime);
@@ -134,21 +123,13 @@ export function RerunDialog({ open, onOpenChange, workspace, onSuccess }: RerunD
             />
           )}
 
-          {rerun.isError && (
-            <p className="text-destructive text-sm">
-              {(rerun.error as Error).message}
-            </p>
-          )}
+          {rerun.isError && <p className="text-destructive text-sm">{(rerun.error as Error).message}</p>}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button
-              type="button"
-              onClick={handleRerun}
-              disabled={!selectedRuntime || rerun.isPending}
-            >
+            <Button type="button" onClick={handleRerun} disabled={!selectedRuntime || rerun.isPending}>
               {rerun.isPending ? 'Starting...' : 'Re-run'}
             </Button>
           </div>

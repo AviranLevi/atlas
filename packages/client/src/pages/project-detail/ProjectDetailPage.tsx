@@ -1,34 +1,36 @@
 // React / library
+import { ArrowLeft, ScanSearch, Plus, Milestone } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ScanSearch, Plus, Milestone } from 'lucide-react';
 
 // Components
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { PhaseCard } from '@/components/phases/PhaseCard';
 import { PhaseDialog } from '@/components/phases/PhaseDialog';
-import { ProjectHeader } from './ProjectHeader';
-import { ScanDataSection } from './ScanDataSection';
+import { ProjectDialog } from '@/components/projects/ProjectDialog';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { DetectedRulesSection } from './DetectedRulesSection';
-import { ProjectBriefSection } from './ProjectBriefSection';
 import { ProjectAgentsSection } from './ProjectAgentsSection';
-import { ProjectTasksTable } from './ProjectTasksTable';
+import { ProjectBriefSection } from './ProjectBriefSection';
+import { ProjectHeader } from './ProjectHeader';
 import { ProjectMemoriesSection } from './ProjectMemoriesSection';
+import { ProjectTasksTable } from './ProjectTasksTable';
+import { ScanDataSection } from './ScanDataSection';
 
 // Hooks
-import { useProjectContext, useScanProject, useGenerateBrief } from '@/hooks/use-projects.hook';
+import { useAgents } from '@/hooks/use-agents.hook';
 import { usePhases, useDeletePhase } from '@/hooks/use-phases.hook';
 import { useProjectAgents, useAssignAgent, useUnassignAgent } from '@/hooks/use-project-agents.hook';
-import { useAgents } from '@/hooks/use-agents.hook';
+import { useProjectContext, useScanProject, useGenerateBrief } from '@/hooks/use-projects.hook';
+
+// Lib
+import { timeAgo } from '@/lib/format';
 
 // Types
 import type { ProjectStatus, Phase } from '@atlas/shared';
 
 // Constants
 import { statusConfig } from './project-detail-page.constants';
-import { timeAgo } from '@/lib/format';
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -77,7 +79,10 @@ export function ProjectDetailPage() {
   const status = statusConfig[project.status as ProjectStatus] ?? statusConfig.active;
 
   const tasksByStatus = tasks.reduce(
-    (acc, t) => { acc[t.status] = (acc[t.status] ?? 0) + 1; return acc; },
+    (acc, t) => {
+      acc[t.status] = (acc[t.status] ?? 0) + 1;
+      return acc;
+    },
     {} as Record<string, number>,
   );
 
@@ -106,18 +111,13 @@ export function ProjectDetailPage() {
               <h2 className="text-sm font-semibold">Project Intelligence</h2>
             </div>
             {project.scanData.scannedAt && (
-              <span className="text-muted-foreground text-xs">
-                Scanned {timeAgo(project.scanData.scannedAt)}
-              </span>
+              <span className="text-muted-foreground text-xs">Scanned {timeAgo(project.scanData.scannedAt)}</span>
             )}
           </div>
           <ScanDataSection scanData={project.scanData} />
           {project.scanData.aiConfigs && project.scanData.aiConfigs.length > 0 && (
             <div className="mt-4">
-              <DetectedRulesSection
-                projectId={project.id}
-                aiConfigs={project.scanData.aiConfigs}
-              />
+              <DetectedRulesSection projectId={project.id} aiConfigs={project.scanData.aiConfigs} />
             </div>
           )}
         </section>
@@ -131,11 +131,7 @@ export function ProjectDetailPage() {
             </p>
           </div>
           <Button variant="outline" size="sm" asChild>
-            <button
-              type="button"
-              onClick={() => scanProject.mutate(project.id)}
-              disabled={scanProject.isPending}
-            >
+            <button type="button" onClick={() => scanProject.mutate(project.id)} disabled={scanProject.isPending}>
               <ScanSearch className={`mr-1.5 h-4 w-4 ${scanProject.isPending ? 'animate-pulse' : ''}`} />
               {scanProject.isPending ? 'Scanning...' : 'Scan Project'}
             </button>
@@ -175,7 +171,10 @@ export function ProjectDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => { setEditingPhase(undefined); setPhaseDialogOpen(true); }}
+            onClick={() => {
+              setEditingPhase(undefined);
+              setPhaseDialogOpen(true);
+            }}
           >
             <Plus className="mr-1.5 h-4 w-4" />
             Add Phase
@@ -195,7 +194,10 @@ export function ProjectDetailPage() {
               <PhaseCard
                 key={phase.id}
                 phase={phase}
-                onEdit={(p) => { setEditingPhase(p); setPhaseDialogOpen(true); }}
+                onEdit={(p) => {
+                  setEditingPhase(p);
+                  setPhaseDialogOpen(true);
+                }}
                 onDelete={(phaseId) => {
                   if (confirm('Delete this phase? Tasks in this phase will be unassigned.')) {
                     deletePhase.mutate(phaseId);

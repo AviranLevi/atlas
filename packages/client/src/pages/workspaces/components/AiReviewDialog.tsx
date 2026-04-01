@@ -1,6 +1,6 @@
 // React / library
-import { useState } from 'react';
 import { Bot, Loader2, Wrench } from 'lucide-react';
+import { useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -12,9 +12,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+
+// Lib
 import { cn } from '@/lib/utils';
 
-// Types
 export interface AiReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -47,13 +48,16 @@ export function AiReviewDialog({ open, onOpenChange, isPending, onStart }: AiRev
           <div className="flex flex-1 flex-col gap-1">
             <span className="text-sm font-medium">Auto-fix issues</span>
             <span className="text-xs text-muted-foreground">
-              If the reviewer finds problems, it will attempt to fix them directly in the code and commit before submitting its decision.
+              If the reviewer finds problems, it will attempt to fix them directly in the code and commit before
+              submitting its decision.
             </span>
           </div>
-          <div className={cn(
-            'mt-0.5 h-4 w-4 shrink-0 rounded-sm border',
-            autoFix ? 'border-primary bg-primary' : 'border-muted-foreground',
-          )} />
+          <div
+            className={cn(
+              'mt-0.5 h-4 w-4 shrink-0 rounded-sm border',
+              autoFix ? 'border-primary bg-primary' : 'border-muted-foreground',
+            )}
+          />
         </button>
 
         <DialogFooter>

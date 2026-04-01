@@ -1,12 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const ProviderTypeEnum = z.enum([
-  "anthropic",
-  "openai",
-  "google",
-  "openai-compatible",
-  "ollama",
-]);
+export const ProviderTypeEnum = z.enum(['anthropic', 'openai', 'google', 'openai-compatible', 'ollama']);
 
 export const AgentProviderSchema = z.object({
   id: z.string().uuid(),

@@ -1,3 +1,4 @@
+// Types
 import type { HeartbeatRun } from '@atlas/shared';
 
 export const SCHEDULE_PRESETS = [
@@ -17,9 +18,7 @@ export function cronFromPreset(schedulePreset: string, customCron: string): stri
 }
 
 export function presetFromCron(cronExpression: string): { preset: string; custom: string } {
-  const match = SCHEDULE_PRESETS.find(
-    (p) => p.value !== 'custom' && p.value === cronExpression,
-  );
+  const match = SCHEDULE_PRESETS.find((p) => p.value !== 'custom' && p.value === cronExpression);
   if (match) return { preset: match.value, custom: '' };
   return { preset: 'custom', custom: cronExpression };
 }

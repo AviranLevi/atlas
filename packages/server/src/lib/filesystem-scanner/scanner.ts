@@ -1,15 +1,14 @@
 // External
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Shared
 import type { ProjectScanData } from '@atlas/shared';
 
 // Lib
 import { logger } from '../logger.js';
-import { readJsonFile } from './detectors.js';
+import { detectCICD, detectMonorepo, detectPackageManager, readJsonFile } from './detectors.js';
 import { detectRepoUrl, parseGitHubInfo } from './git.js';
-import { detectPackageManager, detectCICD, detectMonorepo } from './detectors.js';
 
 function detectProjectType(dirPath: string): ProjectScanData['projectType'] {
   const pkg = readJsonFile(path.join(dirPath, 'package.json'));
@@ -20,10 +19,10 @@ function detectProjectType(dirPath: string): ProjectScanData['projectType'] {
   const depNames = Object.keys(allDeps);
 
   const hasFrontend = depNames.some((d) =>
-    ['react', 'vue', 'svelte', '@angular/core', 'next', 'nuxt', 'solid-js', 'lit'].includes(d)
+    ['react', 'vue', 'svelte', '@angular/core', 'next', 'nuxt', 'solid-js', 'lit'].includes(d),
   );
   const hasBackend = depNames.some((d) =>
-    ['express', 'fastify', 'hono', 'koa', '@nestjs/core', 'hapi', 'restify'].includes(d)
+    ['express', 'fastify', 'hono', 'koa', '@nestjs/core', 'hapi', 'restify'].includes(d),
   );
   const exists = (f: string) => fs.existsSync(path.join(dirPath, f));
 
@@ -139,13 +138,17 @@ function detectPorts(dirPath: string): number[] {
   const scripts = (pkg?.scripts ?? {}) as Record<string, string>;
   for (const script of Object.values(scripts)) {
     const portMatch = script.match(/(?:--port|PORT=|-p\s+)(\d{4,5})/);
-    if (portMatch) ports.add(parseInt(portMatch[1]));
+    if (portMatch) ports.add(parseInt(portMatch[1], 10));
   }
 
   const configFiles = [
-    'vite.config.ts', 'vite.config.js',
-    'next.config.js', 'next.config.mjs', 'next.config.ts',
-    'nuxt.config.ts', 'nuxt.config.js',
+    'vite.config.ts',
+    'vite.config.js',
+    'next.config.js',
+    'next.config.mjs',
+    'next.config.ts',
+    'nuxt.config.ts',
+    'nuxt.config.js',
     'webpack.config.js',
   ];
   for (const cf of configFiles) {
@@ -154,8 +157,10 @@ function detectPorts(dirPath: string): number[] {
       try {
         const content = fs.readFileSync(cfPath, 'utf-8');
         const portMatches = content.matchAll(/port\s*[:=]\s*(\d{4,5})/gi);
-        for (const m of portMatches) ports.add(parseInt(m[1]));
-      } catch (error: unknown) { logger.debug('scanner :: failed to read config file for ports', error); }
+        for (const m of portMatches) ports.add(parseInt(m[1], 10));
+      } catch (error: unknown) {
+        logger.debug('scanner :: failed to read config file for ports', error);
+      }
     }
   }
 
@@ -165,8 +170,10 @@ function detectPorts(dirPath: string): number[] {
       try {
         const content = fs.readFileSync(envPath, 'utf-8');
         const match = content.match(/^PORT\s*=\s*(\d{4,5})/m);
-        if (match) ports.add(parseInt(match[1]));
-      } catch (error: unknown) { logger.debug('scanner :: failed to read env file for ports', error); }
+        if (match) ports.add(parseInt(match[1], 10));
+      } catch (error: unknown) {
+        logger.debug('scanner :: failed to read env file for ports', error);
+      }
     }
   }
 
@@ -177,7 +184,17 @@ function detectFormatting(dirPath: string): ProjectScanData['formatting'] {
   const exists = (f: string) => fs.existsSync(path.join(dirPath, f));
   const result: NonNullable<ProjectScanData['formatting']> = {};
 
-  const prettierFiles = ['.prettierrc', '.prettierrc.json', '.prettierrc.js', '.prettierrc.cjs', '.prettierrc.yaml', '.prettierrc.yml', '.prettierrc.toml', 'prettier.config.js', 'prettier.config.cjs'];
+  const prettierFiles = [
+    '.prettierrc',
+    '.prettierrc.json',
+    '.prettierrc.js',
+    '.prettierrc.cjs',
+    '.prettierrc.yaml',
+    '.prettierrc.yml',
+    '.prettierrc.toml',
+    'prettier.config.js',
+    'prettier.config.cjs',
+  ];
   result.prettier = prettierFiles.some(exists);
 
   if (result.prettier) {
@@ -186,13 +203,25 @@ function detectFormatting(dirPath: string): ProjectScanData['formatting'] {
       if (fs.existsSync(pfPath)) {
         try {
           result.config = { prettier: JSON.parse(fs.readFileSync(pfPath, 'utf-8')) };
-        } catch (error: unknown) { logger.debug('scanner :: failed to parse prettier config', error); }
+        } catch (error: unknown) {
+          logger.debug('scanner :: failed to parse prettier config', error);
+        }
         break;
       }
     }
   }
 
-  const eslintFiles = ['.eslintrc', '.eslintrc.json', '.eslintrc.js', '.eslintrc.cjs', '.eslintrc.yaml', '.eslintrc.yml', 'eslint.config.js', 'eslint.config.mjs', 'eslint.config.ts'];
+  const eslintFiles = [
+    '.eslintrc',
+    '.eslintrc.json',
+    '.eslintrc.js',
+    '.eslintrc.cjs',
+    '.eslintrc.yaml',
+    '.eslintrc.yml',
+    'eslint.config.js',
+    'eslint.config.mjs',
+    'eslint.config.ts',
+  ];
   result.eslint = eslintFiles.some(exists);
 
   result.editorconfig = exists('.editorconfig');
@@ -206,7 +235,20 @@ function detectScripts(dirPath: string): Record<string, string> {
   if (!pkg?.scripts) return {};
 
   const scripts = pkg.scripts as Record<string, string>;
-  const important = ['dev', 'start', 'build', 'test', 'lint', 'format', 'typecheck', 'preview', 'serve', 'watch', 'clean', 'deploy'];
+  const important = [
+    'dev',
+    'start',
+    'build',
+    'test',
+    'lint',
+    'format',
+    'typecheck',
+    'preview',
+    'serve',
+    'watch',
+    'clean',
+    'deploy',
+  ];
   const result: Record<string, string> = {};
   for (const key of important) {
     if (scripts[key]) result[key] = scripts[key];
@@ -263,12 +305,13 @@ function detectAiConfigs(dirPath: string): AiConfigFile[] {
             name: baseName,
             content,
           });
-        } catch (error: unknown) { logger.debug('scanner :: skip unreadable ai config file', error); }
+        } catch (error: unknown) {
+          logger.debug('scanner :: skip unreadable ai config file', error);
+        }
       } else if (stat.isDirectory() && entry.glob) {
         try {
           const extensions = entry.glob.replace('*.{', '').replace('}', '').split(',');
-          const files = fs.readdirSync(fullPath)
-            .filter((f) => extensions.some((ext) => f.endsWith(`.${ext}`)));
+          const files = fs.readdirSync(fullPath).filter((f) => extensions.some((ext) => f.endsWith(`.${ext}`)));
 
           for (const file of files) {
             try {
@@ -283,9 +326,13 @@ function detectAiConfigs(dirPath: string): AiConfigFile[] {
                 name: frontmatterName || baseName,
                 content,
               });
-            } catch (error: unknown) { logger.debug('scanner :: skip unreadable ai config file in dir', error); }
+            } catch (error: unknown) {
+              logger.debug('scanner :: skip unreadable ai config file in dir', error);
+            }
           }
-        } catch (error: unknown) { logger.debug('scanner :: skip unreadable ai config dir', error); }
+        } catch (error: unknown) {
+          logger.debug('scanner :: skip unreadable ai config dir', error);
+        }
       }
     }
   }

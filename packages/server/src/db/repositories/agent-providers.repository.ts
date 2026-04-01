@@ -9,8 +9,8 @@ import type { DB } from '../index.js';
 import { agentProviders } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/agent-providers.repository.ts';
 

@@ -1,5 +1,10 @@
+// Components
 import { Badge } from '@/components/ui/badge';
+
+// Types
 import type { ReviewBadgeProps } from './reviews.types';
+
+// Constants
 import { STATUS_CONFIG } from './reviews.constants';
 
 export function ReviewBadge({ status }: ReviewBadgeProps) {

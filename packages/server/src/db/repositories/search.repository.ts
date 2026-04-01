@@ -1,15 +1,16 @@
 // External
 import { like, or } from 'drizzle-orm';
 
+// Services
+import type { SearchResult } from '../../services/search/search.types.js';
+
 // DB
 import type { DB } from '../index.js';
-import { agents, skills, rules, memory, tasks, projects } from '../schema/index.js';
+import { agents, memory, projects, rules, skills, tasks } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
-
-import type { SearchResult } from '../../services/search/search.types.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/search.repository.ts';
 

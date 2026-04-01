@@ -3,21 +3,21 @@ import { eq } from 'drizzle-orm';
 
 // Shared
 import type {
-  CreateGlobalInstructions,
-  UpdateGlobalInstructions,
-  GlobalInstructions,
   CreateDispatchRule,
-  UpdateDispatchRule,
+  CreateGlobalInstructions,
   DispatchRule,
+  GlobalInstructions,
+  UpdateDispatchRule,
+  UpdateGlobalInstructions,
 } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
-import { globalInstructions, dispatchRules } from '../schema/index.js';
+import { dispatchRules, globalInstructions } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/settings.repository.ts';
 
@@ -40,11 +40,7 @@ export class SettingsRepository {
   findGlobalInstructionsById(id: string): GlobalInstructions | null {
     const FUNCTION_NAME = 'findGlobalInstructionsById';
     try {
-      const row = this.db
-        .select()
-        .from(globalInstructions)
-        .where(eq(globalInstructions.id, id))
-        .get();
+      const row = this.db.select().from(globalInstructions).where(eq(globalInstructions.id, id)).get();
       return (row as GlobalInstructions) ?? null;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -65,11 +61,7 @@ export class SettingsRepository {
   insertGlobalInstructions(data: CreateGlobalInstructions): GlobalInstructions {
     const FUNCTION_NAME = 'insertGlobalInstructions';
     try {
-      const result = this.db
-        .insert(globalInstructions)
-        .values(data)
-        .returning()
-        .get();
+      const result = this.db.insert(globalInstructions).values(data).returning().get();
       return result as GlobalInstructions;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -78,10 +70,7 @@ export class SettingsRepository {
   }
 
   /** Updates global instructions and returns the updated record. */
-  updateGlobalInstructions(
-    id: string,
-    data: UpdateGlobalInstructions
-  ): GlobalInstructions {
+  updateGlobalInstructions(id: string, data: UpdateGlobalInstructions): GlobalInstructions {
     const FUNCTION_NAME = 'updateGlobalInstructions';
     try {
       const result = this.db
@@ -101,10 +90,7 @@ export class SettingsRepository {
   removeGlobalInstructions(id: string): void {
     const FUNCTION_NAME = 'removeGlobalInstructions';
     try {
-      this.db
-        .delete(globalInstructions)
-        .where(eq(globalInstructions.id, id))
-        .run();
+      this.db.delete(globalInstructions).where(eq(globalInstructions.id, id)).run();
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete global instructions', {
@@ -129,11 +115,7 @@ export class SettingsRepository {
   findDispatchRuleById(id: string): DispatchRule | null {
     const FUNCTION_NAME = 'findDispatchRuleById';
     try {
-      const row = this.db
-        .select()
-        .from(dispatchRules)
-        .where(eq(dispatchRules.id, id))
-        .get();
+      const row = this.db.select().from(dispatchRules).where(eq(dispatchRules.id, id)).get();
       return (row as DispatchRule) ?? null;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

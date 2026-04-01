@@ -1,3 +1,4 @@
+// Types
 import type { Agent } from '@atlas/shared';
 
 export type KanbanFilterBarProps = {

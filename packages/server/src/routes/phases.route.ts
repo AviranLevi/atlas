@@ -1,13 +1,18 @@
+// External
 import { Hono } from 'hono';
+
+// Shared
+import { CreatePhaseSchema, ReorderPhaseSchema, UpdatePhaseSchema } from '@atlas/shared';
 import { zValidator } from '@hono/zod-validator';
-import { CreatePhaseSchema, UpdatePhaseSchema, ReorderPhaseSchema } from '@atlas/shared';
+
+// Controllers
 import {
-  listPhases,
-  getPhase,
   createPhase,
-  updatePhase,
   deletePhase,
+  getPhase,
+  listPhases,
   reorderPhase,
+  updatePhase,
 } from '../controllers/phases.controller.js';
 
 export const phasesRoute = new Hono()

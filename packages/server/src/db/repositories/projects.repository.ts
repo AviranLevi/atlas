@@ -2,15 +2,15 @@
 import { eq, sql } from 'drizzle-orm';
 
 // Shared
-import type { CreateProject, UpdateProject, Project } from '@atlas/shared';
+import type { CreateProject, Project, UpdateProject } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
-import { projects, tasks, agentProjects, agents, memory, workspaces, phases } from '../schema/index.js';
+import { agentProjects, agents, memory, phases, projects, tasks, workspaces } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 import { parseTags } from '../../lib/utils/index.js';
 
 const FILE_PATH = 'db/repositories/projects.repository.ts';
@@ -77,7 +77,11 @@ export class ProjectsRepository {
     try {
       const serialized = serializeScanData(data as Record<string, unknown>);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = this.db.insert(projects).values(serialized as any).returning().get();
+      const result = this.db
+        .insert(projects)
+        .values(serialized as any)
+        .returning()
+        .get();
       return hydrateProject(result as Record<string, unknown>);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -90,12 +94,7 @@ export class ProjectsRepository {
     const FUNCTION_NAME = 'update';
     try {
       const serialized = serializeScanData({ ...data, updatedAt: new Date().toISOString() });
-      const result = this.db
-        .update(projects)
-        .set(serialized)
-        .where(eq(projects.id, id))
-        .returning()
-        .get();
+      const result = this.db.update(projects).set(serialized).where(eq(projects.id, id)).returning().get();
       return hydrateProject(result as Record<string, unknown>);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -194,10 +193,7 @@ export class ProjectsRepository {
   findMemoriesByProjectId(projectId: string): Record<string, unknown>[] {
     const FUNCTION_NAME = 'findMemoriesByProjectId';
     try {
-      return this.db.select().from(memory).where(eq(memory.projectId, projectId)).all() as Record<
-        string,
-        unknown
-      >[];
+      return this.db.select().from(memory).where(eq(memory.projectId, projectId)).all() as Record<string, unknown>[];
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query project memories', { cause: error });

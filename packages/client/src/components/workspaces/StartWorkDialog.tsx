@@ -1,26 +1,20 @@
 // React / library
-import { useState, useEffect, useMemo, type ReactElement } from 'react';
-import { Play, Lightbulb } from 'lucide-react';
+import { Lightbulb, Play } from 'lucide-react';
+import { type ReactElement, useEffect, useMemo, useState } from 'react';
 
 // Components
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ModelSection } from './ModelSection';
-import { TaskSummary } from './TaskSummary';
-import { RuntimeSelect } from './RuntimeSelect';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BranchSelect } from './BranchSelect';
+import { ModelSection } from './ModelSection';
+import { RuntimeSelect } from './RuntimeSelect';
+import { TaskSummary } from './TaskSummary';
 
 // Hooks
-import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
-import { useProjectBranches, useProject, useCreateBranch } from '@/hooks/use-projects.hook';
-import { useAgent } from '@/hooks/use-agents.hook';
 import { useProviderModels } from '@/hooks/use-agent-providers.hook';
+import { useAgent } from '@/hooks/use-agents.hook';
+import { useCreateBranch, useProject, useProjectBranches } from '@/hooks/use-projects.hook';
+import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
 
 // Types
 import type { ModelPreset } from '@atlas/shared';
@@ -28,13 +22,13 @@ import type { StartWorkDialogProps } from './workspaces.types';
 
 // Constants
 import {
-  RUNTIME_STORAGE_KEY,
-  DEFAULT_BRANCH_VALUE,
-  NEW_BRANCH_VALUE,
-  DEFAULT_MODEL_VALUE,
   CUSTOM_MODEL_VALUE,
+  DEFAULT_BRANCH_VALUE,
+  DEFAULT_MODEL_VALUE,
   ESTIMATE_MODEL_HINT,
   getModelStorageKey,
+  NEW_BRANCH_VALUE,
+  RUNTIME_STORAGE_KEY,
 } from './workspaces.constants';
 
 export function StartWorkDialog({
@@ -49,7 +43,9 @@ export function StartWorkDialog({
   const { data: branches = [], isLoading: branchesLoading } = useProjectBranches(projectId);
   const { data: project } = useProject(projectId);
   const { data: agent } = useAgent(task?.agentId ?? undefined);
-  const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(agent?.providerId ?? undefined);
+  const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(
+    agent?.providerId ?? undefined,
+  );
   const startWork = useStartWork();
   const createBranch = useCreateBranch(projectId);
 
@@ -59,10 +55,7 @@ export function StartWorkDialog({
   const [customModelText, setCustomModelText] = useState<string>('');
   const [newBranchName, setNewBranchName] = useState<string>('');
 
-  const currentRuntime = useMemo(
-    () => runtimes.find((r) => r.id === selectedRuntime),
-    [runtimes, selectedRuntime],
-  );
+  const currentRuntime = useMemo(() => runtimes.find((r) => r.id === selectedRuntime), [runtimes, selectedRuntime]);
 
   useEffect(() => {
     if (runtimes.length === 0 || selectedRuntime) return;
@@ -99,7 +92,7 @@ export function StartWorkDialog({
       createBranch.reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, createBranch.reset]);
 
   const handleRuntimeChange = (value: string) => {
     setSelectedRuntime(value);
@@ -146,10 +139,7 @@ export function StartWorkDialog({
 
   const handleStart = () => {
     if (selectedBranch === NEW_BRANCH_VALUE && newBranchName.trim()) {
-      createBranch.mutate(
-        { name: newBranchName.trim() },
-        { onSuccess: (data) => doStartWork(data.branch) },
-      );
+      createBranch.mutate({ name: newBranchName.trim() }, { onSuccess: (data) => doStartWork(data.branch) });
     } else {
       const baseBranch = selectedBranch !== DEFAULT_BRANCH_VALUE ? selectedBranch : undefined;
       doStartWork(baseBranch);
@@ -169,9 +159,7 @@ export function StartWorkDialog({
             <Play className="h-4 w-4" />
             Start Work
           </DialogTitle>
-          <DialogDescription>
-            Spawn an agent to work on this task in an isolated git worktree.
-          </DialogDescription>
+          <DialogDescription>Spawn an agent to work on this task in an isolated git worktree.</DialogDescription>
         </DialogHeader>
 
         {task && (
@@ -217,11 +205,7 @@ export function StartWorkDialog({
               createError={createBranch.isError ? (createBranch.error as Error).message : undefined}
             />
 
-            {startWork.isError && (
-              <p className="text-destructive text-sm">
-                {(startWork.error as Error).message}
-              </p>
-            )}
+            {startWork.isError && <p className="text-destructive text-sm">{(startWork.error as Error).message}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>

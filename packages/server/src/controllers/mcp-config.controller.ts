@@ -9,7 +9,7 @@ const MCP_MESSAGES_URL = `http://localhost:${MCP_HTTP_PORT}/messages`;
 export async function getMcpConnectionInfo(c: Context) {
   const cursorConfig = {
     mcpServers: {
-      'atlas': {
+      atlas: {
         url: MCP_SSE_URL,
       },
     },
@@ -17,7 +17,7 @@ export async function getMcpConnectionInfo(c: Context) {
 
   const claudeDesktopConfig = {
     mcpServers: {
-      'atlas': {
+      atlas: {
         transport: 'sse',
         url: MCP_SSE_URL,
       },
@@ -26,7 +26,7 @@ export async function getMcpConnectionInfo(c: Context) {
 
   const stdioConfig = {
     mcpServers: {
-      'atlas': {
+      atlas: {
         command: 'npx',
         args: ['tsx', 'packages/server/src/mcp.ts'],
       },

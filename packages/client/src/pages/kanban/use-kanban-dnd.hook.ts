@@ -1,15 +1,13 @@
-import { useState } from 'react';
-import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-
-import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
+// React / library
 import { TASK_STATUS } from '@atlas/shared';
-import type { Task, TaskStatus } from '@atlas/shared';
+import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { useState } from 'react';
 
-const MANUAL_DROP_TARGETS = new Set<TaskStatus>([
-  TASK_STATUS.BACKLOG,
-  TASK_STATUS.TODO,
-  TASK_STATUS.BLOCKED,
-]);
+// Types
+import type { Task, TaskStatus } from '@atlas/shared';
+import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
+
+const MANUAL_DROP_TARGETS = new Set<TaskStatus>([TASK_STATUS.BACKLOG, TASK_STATUS.TODO, TASK_STATUS.BLOCKED]);
 
 /**
  * Encapsulates drag-and-drop state and handlers for the kanban board.
@@ -18,15 +16,10 @@ const MANUAL_DROP_TARGETS = new Set<TaskStatus>([
  * Forward transitions (In Progress → In Review → Done) are controlled by
  * explicit agent actions so they are not drag-droppable.
  */
-export function useKanbanDnd(
-  tasks: Task[],
-  onStatusChange: (taskId: string, newStatus: TaskStatus) => void,
-) {
+export function useKanbanDnd(tasks: Task[], onStatusChange: (taskId: string, newStatus: TaskStatus) => void) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   function handleDragStart(event: DragStartEvent) {
     const task = tasks.find((t) => t.id === event.active.id);

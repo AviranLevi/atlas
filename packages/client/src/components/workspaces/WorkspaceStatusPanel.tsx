@@ -13,9 +13,7 @@ export function WorkspaceStatusPanel() {
   const { data: workspaces = [], isLoading } = useWorkspaces();
 
   const active = workspaces.filter((w) => w.status === 'running' || w.status === 'pending');
-  const recent = workspaces
-    .filter((w) => w.status !== 'running' && w.status !== 'pending')
-    .slice(0, 5);
+  const recent = workspaces.filter((w) => w.status !== 'running' && w.status !== 'pending').slice(0, 5);
 
   if (isLoading || workspaces.length === 0) {
     return null;

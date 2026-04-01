@@ -4,11 +4,11 @@ import { GitBranch, Clock, Terminal, Cpu } from 'lucide-react';
 // Components
 import { Card } from '@/components/ui/card';
 
+// Lib
+import { calcDuration } from '@/lib/format';
+
 // Types
 import type { WorkspaceInfoCardsProps } from '../workspaces.types';
-
-// Utilities
-import { calcDuration } from '@/lib/format';
 
 export function WorkspaceInfoCards({ workspace }: WorkspaceInfoCardsProps) {
   return (
@@ -27,9 +27,7 @@ export function WorkspaceInfoCards({ workspace }: WorkspaceInfoCardsProps) {
           <Clock className="h-3.5 w-3.5" />
           Duration
         </div>
-        <p className="text-sm font-medium">
-          {calcDuration(workspace.startedAt, workspace.completedAt)}
-        </p>
+        <p className="text-sm font-medium">{calcDuration(workspace.startedAt, workspace.completedAt)}</p>
       </Card>
       {workspace.model && (
         <Card className="p-4">
@@ -56,9 +54,7 @@ export function WorkspaceInfoCards({ workspace }: WorkspaceInfoCardsProps) {
           <Clock className="h-3.5 w-3.5" />
           Started
         </div>
-        <p className="text-xs">
-          {workspace.startedAt ? new Date(workspace.startedAt).toLocaleString() : '—'}
-        </p>
+        <p className="text-xs">{workspace.startedAt ? new Date(workspace.startedAt).toLocaleString() : '—'}</p>
       </Card>
     </div>
   );

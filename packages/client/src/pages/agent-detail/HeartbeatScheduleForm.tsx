@@ -1,19 +1,17 @@
-import type { Project } from '@atlas/shared';
-
+// React / library
 import { Play, Trash2 } from 'lucide-react';
 
+// Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
+// Types
+import type { Project } from '@atlas/shared';
+
+// Constants
 import { ALL_PROJECTS_VALUE, SCHEDULE_PRESETS } from './heartbeat-section.constants';
 
 type AgentRuntime = {
@@ -130,11 +128,7 @@ export function HeartbeatScheduleForm({
             </SelectTrigger>
             <SelectContent>
               {runtimes.map((rt) => (
-                <SelectItem
-                  key={rt.id}
-                  value={rt.id}
-                  disabled={!rt.installed || !rt.authenticated}
-                >
+                <SelectItem key={rt.id} value={rt.id} disabled={!rt.installed || !rt.authenticated}>
                   {rt.name}
                 </SelectItem>
               ))}
@@ -145,11 +139,7 @@ export function HeartbeatScheduleForm({
 
       <div className="space-y-2">
         <Label>Project scope</Label>
-        <Select
-          value={projectScope}
-          onValueChange={onProjectScopeChange}
-          disabled={projectsLoading}
-        >
+        <Select value={projectScope} onValueChange={onProjectScopeChange} disabled={projectsLoading}>
           <SelectTrigger>
             <SelectValue placeholder="All projects" />
           </SelectTrigger>
@@ -173,9 +163,7 @@ export function HeartbeatScheduleForm({
             min={1}
             max={3}
             value={maxConcurrent}
-            onChange={(e) =>
-              onMaxConcurrentChange(Math.min(3, Math.max(1, parseInt(e.target.value, 10) || 1)))
-            }
+            onChange={(e) => onMaxConcurrentChange(Math.min(3, Math.max(1, parseInt(e.target.value, 10) || 1)))}
           />
         </div>
         <div className="space-y-2">
@@ -186,9 +174,7 @@ export function HeartbeatScheduleForm({
             min={1}
             max={50}
             value={maxRunsPerDay}
-            onChange={(e) =>
-              onMaxRunsPerDayChange(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 1)))
-            }
+            onChange={(e) => onMaxRunsPerDayChange(Math.min(50, Math.max(1, parseInt(e.target.value, 10) || 1)))}
           />
         </div>
       </div>
@@ -199,12 +185,7 @@ export function HeartbeatScheduleForm({
         </Button>
         {!isNew && (
           <>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onTestNow}
-              disabled={isTriggering}
-            >
+            <Button type="button" variant="outline" onClick={onTestNow} disabled={isTriggering}>
               <Play className="mr-1.5 h-4 w-4" />
               Test now
             </Button>

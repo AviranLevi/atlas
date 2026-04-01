@@ -1,3 +1,4 @@
+// Shared
 import type { Skill } from '@atlas/shared';
 
 export type SkillDetail = {

@@ -1,11 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const PhaseStatusEnum = z.enum([
-  "planning",
-  "active",
-  "review",
-  "completed",
-]);
+export const PhaseStatusEnum = z.enum(['planning', 'active', 'review', 'completed']);
 
 export const PhaseSchema = z.object({
   id: z.string().uuid(),
@@ -26,7 +21,7 @@ export const CreatePhaseSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().nullable().optional(),
   successCriteria: z.string().max(5000).nullable().optional(),
-  status: PhaseStatusEnum.optional().default("planning"),
+  status: PhaseStatusEnum.optional().default('planning'),
   orderIndex: z.number().int().min(0).optional().default(0),
 });
 

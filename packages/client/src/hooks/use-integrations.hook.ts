@@ -1,5 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// React / library
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
+
+// Types
 import type { Integration, UpsertIntegration } from '@atlas/shared';
 
 const INTEGRATIONS_KEY = ['integrations'] as const;

@@ -53,7 +53,9 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
           h3: ({ children }) => <h3 className="text-sm font-medium mt-2 mb-1 first:mt-0">{children}</h3>,
           p: ({ children }) => <p className="text-sm text-foreground leading-relaxed mb-2 last:mb-0">{children}</p>,
           ul: ({ children }) => <ul className="text-sm text-foreground list-disc pl-4 mb-2 space-y-0.5">{children}</ul>,
-          ol: ({ children }) => <ol className="text-sm text-foreground list-decimal pl-4 mb-2 space-y-0.5">{children}</ol>,
+          ol: ({ children }) => (
+            <ol className="text-sm text-foreground list-decimal pl-4 mb-2 space-y-0.5">{children}</ol>
+          ),
           li: ({ children }) => <li className="text-sm leading-relaxed text-foreground">{children}</li>,
           blockquote: ({ children }) => (
             <blockquote className="border-l-2 border-muted-foreground/30 pl-3 my-2 text-sm text-muted-foreground italic">
@@ -62,7 +64,12 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
           ),
           strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
           a: ({ href, children }) => (
-            <a href={href} className="text-primary underline underline-offset-2" target="_blank" rel="noopener noreferrer">
+            <a
+              href={href}
+              className="text-primary underline underline-offset-2"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {children}
             </a>
           ),

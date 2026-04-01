@@ -1,24 +1,24 @@
 // React / library
+import { ArrowLeft, Bot, Pencil, Sparkles, BookOpen, Download } from 'lucide-react';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bot, Pencil, Sparkles, BookOpen, Download } from 'lucide-react';
 
 // Components
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { AgentDialog } from '@/components/agents/AgentDialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { EditableCard } from '@/components/ui/editable-card';
-import { DefaultModelSelector } from './DefaultModelSelector';
-import { AttachableItemsSection } from './AttachableItemsSection';
 import { AssignedProjectsSection } from './AssignedProjectsSection';
+import { AttachableItemsSection } from './AttachableItemsSection';
+import { DefaultModelSelector } from './DefaultModelSelector';
 import { HeartbeatSection } from './HeartbeatSection';
 
 // Hooks
-import { useUpdateAgent } from '@/hooks/use-agents.hook';
-import { useAgentDetail, useAttachSkill, useDetachSkill, useAttachRule, useDetachRule } from '@/hooks/use-agents.hook';
-import { useSkills } from '@/hooks/use-skills.hook';
-import { useRules } from '@/hooks/use-rules.hook';
 import { useAgentProviders } from '@/hooks/use-agent-providers.hook';
+import { useAgentDetail, useAttachSkill, useDetachSkill, useAttachRule, useDetachRule } from '@/hooks/use-agents.hook';
+import { useUpdateAgent } from '@/hooks/use-agents.hook';
+import { useRules } from '@/hooks/use-rules.hook';
+import { useSkills } from '@/hooks/use-skills.hook';
 
 export function AgentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -82,9 +82,7 @@ export function AgentDetailPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">{agent.name}</h1>
-              {agent.description && (
-                <p className="text-muted-foreground mt-1 text-sm">{agent.description}</p>
-              )}
+              {agent.description && <p className="text-muted-foreground mt-1 text-sm">{agent.description}</p>}
               {provider && (
                 <div className="mt-2 flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs">

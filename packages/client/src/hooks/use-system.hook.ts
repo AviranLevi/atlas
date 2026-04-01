@@ -1,5 +1,7 @@
+// React / library
 import { useMutation, useQuery } from '@tanstack/react-query';
 
+// Lib
 import { api } from '@/lib/api';
 
 type SystemInfo = {

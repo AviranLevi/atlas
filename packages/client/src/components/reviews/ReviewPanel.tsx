@@ -1,28 +1,17 @@
 // React / library
+import { Bot, CheckCircle2, CheckSquare, Loader2, RotateCcw, Square } from 'lucide-react';
 import { useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { CheckSquare, Square, CheckCircle2, RotateCcw, Bot, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { ReviewBadge } from './ReviewBadge';
 
 // Hooks
-import {
-  useReview,
-  useUpdateReview,
-  useDecideReview,
-  useTriggerAiReview,
-} from '@/hooks/use-reviews.hook';
 import { useAgents } from '@/hooks/use-agents.hook';
+import { useDecideReview, useReview, useTriggerAiReview, useUpdateReview } from '@/hooks/use-reviews.hook';
 
 // Lib
 import { cn } from '@/lib/utils';
@@ -57,7 +46,7 @@ export function ReviewPanel({ taskId }: ReviewPanelProps) {
   const handleChecklistToggle = (index: number) => {
     if (isDecided || !review.checklist) return;
     const updated = review.checklist.map((item: ChecklistItem, i: number) =>
-      i === index ? { ...item, checked: !item.checked } : item
+      i === index ? { ...item, checked: !item.checked } : item,
     );
     updateReview.mutate({ id: review.id, data: { checklist: updated } });
   };
@@ -88,14 +77,15 @@ export function ReviewPanel({ taskId }: ReviewPanelProps) {
 
       {review.checklist && review.checklist.length > 0 && (
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-            Definition of Done
-          </Label>
+          <Label className="text-xs text-muted-foreground uppercase tracking-wide">Definition of Done</Label>
           <div className="space-y-1">
             {review.checklist.map((item: ChecklistItem, i: number) => (
               <button
                 key={i}
-                className={cn('flex items-start gap-2 w-full text-left text-sm py-0.5', isDecided ? 'cursor-default' : 'hover:text-foreground cursor-pointer')}
+                className={cn(
+                  'flex items-start gap-2 w-full text-left text-sm py-0.5',
+                  isDecided ? 'cursor-default' : 'hover:text-foreground cursor-pointer',
+                )}
                 onClick={() => handleChecklistToggle(i)}
                 disabled={isDecided}
               >
@@ -104,9 +94,7 @@ export function ReviewPanel({ taskId }: ReviewPanelProps) {
                 ) : (
                   <Square className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
                 )}
-                <span className={item.checked ? 'line-through text-muted-foreground' : ''}>
-                  {item.item}
-                </span>
+                <span className={item.checked ? 'line-through text-muted-foreground' : ''}>{item.item}</span>
               </button>
             ))}
           </div>
@@ -130,9 +118,7 @@ export function ReviewPanel({ taskId }: ReviewPanelProps) {
 
       {review.notes && (
         <div className="rounded-md bg-muted px-3 py-2 text-sm">
-          <span className="font-medium text-xs text-muted-foreground uppercase tracking-wide block mb-1">
-            Notes
-          </span>
+          <span className="font-medium text-xs text-muted-foreground uppercase tracking-wide block mb-1">Notes</span>
           {review.notes}
         </div>
       )}
@@ -192,9 +178,7 @@ export function ReviewPanel({ taskId }: ReviewPanelProps) {
                 onClick={handleAiReview}
                 disabled={!selectedAgentId || triggerAiReview.isPending}
               >
-                {triggerAiReview.isPending && (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                )}
+                {triggerAiReview.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
                 Run
               </Button>
             </div>

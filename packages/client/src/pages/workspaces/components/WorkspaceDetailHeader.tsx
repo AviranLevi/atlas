@@ -33,16 +33,12 @@ export function WorkspaceDetailHeader({
       <div className="flex items-start gap-3">
         <StatusIcon status={workspace.status} className="mt-1 h-6 w-6" />
         <div className="space-y-1">
-          <h1 className="text-xl font-bold tracking-tight">
-            {workspace.taskName ?? 'Unknown task'}
-          </h1>
+          <h1 className="text-xl font-bold tracking-tight">{workspace.taskName ?? 'Unknown task'}</h1>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className={meta.badgeClass}>
               {meta.label}
             </Badge>
-            {workspace.projectName && (
-              <span className="text-sm text-muted-foreground">{workspace.projectName}</span>
-            )}
+            {workspace.projectName && <span className="text-sm text-muted-foreground">{workspace.projectName}</span>}
             <span className="text-sm text-muted-foreground">{workspace.agentRuntime}</span>
           </div>
         </div>

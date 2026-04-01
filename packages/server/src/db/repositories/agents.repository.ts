@@ -1,26 +1,26 @@
 // External
-import { eq, and } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 // Shared
-import type { Agent, CreateAgent, UpdateAgent, Skill, Rule, Project } from '@atlas/shared';
+import type { Agent, CreateAgent, Project, Rule, Skill, UpdateAgent } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
 import {
-  agents,
-  agentSkills,
-  agentRules,
   agentProjects,
-  skills,
-  rules,
-  memory,
+  agentRules,
+  agentSkills,
+  agents,
   globalInstructions,
+  memory,
   projects,
+  rules,
+  skills,
 } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 import { parseTags } from '../../lib/utils/index.js';
 
 const FILE_PATH = 'db/repositories/agents.repository.ts';
@@ -200,11 +200,7 @@ export class AgentsRepository {
   findProjectsByAgentId(agentId: string): (Project & { role: string | null })[] {
     const FUNCTION_NAME = 'findProjectsByAgentId';
     try {
-      const projectRows = this.db
-        .select()
-        .from(agentProjects)
-        .where(eq(agentProjects.agentId, agentId))
-        .all();
+      const projectRows = this.db.select().from(agentProjects).where(eq(agentProjects.agentId, agentId)).all();
       const result: (Project & { role: string | null })[] = [];
       for (const row of projectRows) {
         const project = this.db.select().from(projects).where(eq(projects.id, row.projectId)).get();
@@ -223,11 +219,7 @@ export class AgentsRepository {
   findAgentsByProjectIdWithRole(projectId: string): (Agent & { role: string | null })[] {
     const FUNCTION_NAME = 'findAgentsByProjectIdWithRole';
     try {
-      const rows = this.db
-        .select()
-        .from(agentProjects)
-        .where(eq(agentProjects.projectId, projectId))
-        .all();
+      const rows = this.db.select().from(agentProjects).where(eq(agentProjects.projectId, projectId)).all();
       const result: (Agent & { role: string | null })[] = [];
       for (const row of rows) {
         const agent = this.db.select().from(agents).where(eq(agents.id, row.agentId)).get();

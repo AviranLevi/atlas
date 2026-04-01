@@ -1,9 +1,12 @@
+// Shared
 import type { AgentProvider } from '@atlas/shared';
+
+// Lib
 import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 import { streamAnthropic } from './chat-stream-anthropic.js';
-import { streamOpenAI } from './chat-stream-openai.js';
 import { streamGoogle } from './chat-stream-google.js';
 import { streamOllama } from './chat-stream-ollama.js';
+import { streamOpenAI } from './chat-stream-openai.js';
 
 export async function* streamChat(
   provider: AgentProvider,
@@ -19,7 +22,15 @@ export async function* streamChat(
       break;
     case 'openai':
     case 'openai-compatible':
-      yield* streamOpenAI(provider.apiKey ?? '', model, systemPrompt, messages, tools, provider.baseUrl ?? undefined, signal);
+      yield* streamOpenAI(
+        provider.apiKey ?? '',
+        model,
+        systemPrompt,
+        messages,
+        tools,
+        provider.baseUrl ?? undefined,
+        signal,
+      );
       break;
     case 'google':
       yield* streamGoogle(provider.apiKey ?? '', model, systemPrompt, messages, tools, signal);

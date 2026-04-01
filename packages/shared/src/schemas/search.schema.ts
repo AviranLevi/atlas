@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const SearchQuerySchema = z.object({
   q: z.string().min(1),

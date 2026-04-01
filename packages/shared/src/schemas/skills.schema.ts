@@ -1,14 +1,14 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const SkillTypeEnum = z.enum([
-  "Planning",
-  "Coding",
-  "Review",
-  "Architecture / Data",
-  "Planning / Roadmapping",
-  "Design / Systems",
-  "Design",
-  "Design / Balancing",
+  'Planning',
+  'Coding',
+  'Review',
+  'Architecture / Data',
+  'Planning / Roadmapping',
+  'Design / Systems',
+  'Design',
+  'Design / Balancing',
 ]);
 
 export const SkillSchema = z.object({

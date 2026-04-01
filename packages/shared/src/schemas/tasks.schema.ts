@@ -1,19 +1,12 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const TaskStatusEnum = z.enum([
-  "Backlog",
-  "To Do",
-  "In Progress",
-  "In Review",
-  "Done",
-  "Blocked",
-]);
+export const TaskStatusEnum = z.enum(['Backlog', 'To Do', 'In Progress', 'In Review', 'Done', 'Blocked']);
 
-export const TaskPriorityEnum = z.enum(["Low", "Medium", "High"]);
+export const TaskPriorityEnum = z.enum(['Low', 'Medium', 'High']);
 
-export const TaskEstimateEnum = z.enum(["S", "M", "L"]);
+export const TaskEstimateEnum = z.enum(['S', 'M', 'L']);
 
-export const TaskSourceEnum = z.enum(["human", "agent", "dispatch", "github"]);
+export const TaskSourceEnum = z.enum(['human', 'agent', 'dispatch', 'github']);
 
 export const TaskSchema = z.object({
   id: z.string().uuid(),

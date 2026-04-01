@@ -31,8 +31,12 @@ export function parsePatch(patch: string): ParsedLine[] {
   for (let i = 0; i < rawLines.length; i++) {
     const line = rawLines[i];
 
-    if (line.startsWith('diff --git') || line.startsWith('index ') ||
-        line.startsWith('---') || line.startsWith('+++')) {
+    if (
+      line.startsWith('diff --git') ||
+      line.startsWith('index ') ||
+      line.startsWith('---') ||
+      line.startsWith('+++')
+    ) {
       result.push({ type: 'meta', content: line, patchIndex: i });
       continue;
     }

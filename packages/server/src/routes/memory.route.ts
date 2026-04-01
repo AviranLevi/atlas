@@ -1,12 +1,12 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { CreateMemorySchema, UpdateMemorySchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
-import { listMemory, getMemory, createMemory, updateMemory, deleteMemory } from '../controllers/memory.controller.js';
+import { createMemory, deleteMemory, getMemory, listMemory, updateMemory } from '../controllers/memory.controller.js';
 
 export const memoryRoute = new Hono()
   .get('/', listMemory)

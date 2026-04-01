@@ -1,15 +1,24 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { CreateAgentSchema, UpdateAgentSchema, AttachSkillSchema, AttachRuleSchema } from '@atlas/shared';
+import { AttachRuleSchema, AttachSkillSchema, CreateAgentSchema, UpdateAgentSchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import {
-  listAgents, getAgent, createAgent, updateAgent, deleteAgent,
-  getAgentDetail, listAgentSkills, attachAgentSkill, detachAgentSkill,
-  listAgentRules, attachAgentRule, detachAgentRule,
+  attachAgentRule,
+  attachAgentSkill,
+  createAgent,
+  deleteAgent,
+  detachAgentRule,
+  detachAgentSkill,
+  getAgent,
+  getAgentDetail,
+  listAgentRules,
+  listAgentSkills,
+  listAgents,
+  updateAgent,
 } from '../controllers/agents.controller.js';
 
 export const agentsRoute = new Hono()

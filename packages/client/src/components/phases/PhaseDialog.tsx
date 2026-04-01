@@ -2,23 +2,12 @@
 import { useEffect, useState } from 'react';
 
 // Components
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 // Hooks
 import { useCreatePhase, useUpdatePhase } from '@/hooks/use-phases.hook';
@@ -61,15 +50,9 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
       status,
     };
     if (isEditing) {
-      updatePhase.mutate(
-        { id: phase.id, data },
-        { onSuccess: () => onOpenChange(false) }
-      );
+      updatePhase.mutate({ id: phase.id, data }, { onSuccess: () => onOpenChange(false) });
     } else {
-      createPhase.mutate(
-        { projectId, orderIndex: 0, ...data },
-        { onSuccess: () => onOpenChange(false) }
-      );
+      createPhase.mutate({ projectId, orderIndex: 0, ...data }, { onSuccess: () => onOpenChange(false) });
     }
   };
 
@@ -120,13 +103,11 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.entries(STATUS_LABELS) as [PhaseStatus, string][]).map(
-                  ([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  )
-                )}
+                {(Object.entries(STATUS_LABELS) as [PhaseStatus, string][]).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

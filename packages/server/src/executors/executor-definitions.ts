@@ -1,3 +1,4 @@
+// Executors
 import type { ExecutorConfig } from './executor.types.js';
 
 export const KNOWN_EXECUTORS: ExecutorConfig[] = [
@@ -72,9 +73,7 @@ export const KNOWN_EXECUTORS: ExecutorConfig[] = [
       { value: 'gpt-5.1-codex-mini', label: 'GPT-5.1 Codex Mini', provider: 'openai' },
       { value: 'o3', label: 'o3', provider: 'openai' },
     ],
-    providerMapping: [
-      { providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } },
-    ],
+    providerMapping: [{ providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } }],
   },
   {
     id: 'gemini-cli',
@@ -96,9 +95,7 @@ export const KNOWN_EXECUTORS: ExecutorConfig[] = [
       { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
       { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
     ],
-    providerMapping: [
-      { providerType: 'google', envVars: { GEMINI_API_KEY: 'apiKey' } },
-    ],
+    providerMapping: [{ providerType: 'google', envVars: { GEMINI_API_KEY: 'apiKey' } }],
   },
   {
     id: 'amp',
@@ -112,9 +109,7 @@ export const KNOWN_EXECUTORS: ExecutorConfig[] = [
     description: 'Sourcegraph Amp coding agent',
     docsUrl: 'https://ampcode.com',
     modelFlag: '--model',
-    modelPresets: [
-      { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
-    ],
+    modelPresets: [{ value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' }],
   },
   {
     id: 'opencode',

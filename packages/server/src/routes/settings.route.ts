@@ -1,29 +1,29 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import {
-  CreateGlobalInstructionsSchema,
-  UpdateGlobalInstructionsSchema,
   CreateDispatchRuleSchema,
+  CreateGlobalInstructionsSchema,
   UpdateDispatchRuleSchema,
+  UpdateGlobalInstructionsSchema,
 } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import {
-  getCurrentGlobalInstructions,
-  updateCurrentGlobalInstructions,
-  listGlobalInstructions,
-  getGlobalInstruction,
-  createGlobalInstruction,
-  updateGlobalInstruction,
-  deleteGlobalInstruction,
-  listDispatchRules,
-  getDispatchRule,
   createDispatchRule,
-  updateDispatchRule,
+  createGlobalInstruction,
   deleteDispatchRule,
+  deleteGlobalInstruction,
+  getCurrentGlobalInstructions,
+  getDispatchRule,
+  getGlobalInstruction,
+  listDispatchRules,
+  listGlobalInstructions,
+  updateCurrentGlobalInstructions,
+  updateDispatchRule,
+  updateGlobalInstruction,
 } from '../controllers/settings.controller.js';
 
 const globalInstructionsRoute = new Hono()

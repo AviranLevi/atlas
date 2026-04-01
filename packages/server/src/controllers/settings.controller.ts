@@ -3,10 +3,10 @@ import type { Context } from 'hono';
 
 // Shared
 import type {
-  CreateGlobalInstructions,
-  UpdateGlobalInstructions,
   CreateDispatchRule,
+  CreateGlobalInstructions,
   UpdateDispatchRule,
+  UpdateGlobalInstructions,
 } from '@atlas/shared';
 
 // Services
@@ -83,10 +83,7 @@ export async function createDispatchRule(c: Context) {
 
 /** Updates a dispatch rule by ID. */
 export async function updateDispatchRule(c: Context) {
-  const item = await settingsService.updateDispatchRule(
-    c.req.param('id')!,
-    getValidatedBody<UpdateDispatchRule>(c),
-  );
+  const item = await settingsService.updateDispatchRule(c.req.param('id')!, getValidatedBody<UpdateDispatchRule>(c));
   return c.json(item);
 }
 

@@ -1,19 +1,17 @@
 // React / library
+import { ChevronDown, ChevronUp, RefreshCw, Terminal } from 'lucide-react';
 import { useState } from 'react';
-import { RefreshCw, ChevronUp, ChevronDown, Terminal } from 'lucide-react';
 
 // Components
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ExecutorPopover } from './ExecutorPopover';
 
 // Hooks
 import { useAgentRuntimes, useRefreshRuntimes } from '@/hooks/use-workspaces.hook';
+
+// Lib
+import { cn } from '@/lib/utils';
 
 // Types
 import type { AgentStatusPanelProps } from './layout.types';
@@ -41,9 +39,7 @@ export function AgentStatusPanel({ expanded }: AgentStatusPanelProps) {
                 <span
                   className={cn(
                     'absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full',
-                    readyCount > 0
-                      ? hasUnauthenticated ? 'bg-yellow-500' : 'bg-green-500'
-                      : 'bg-zinc-400',
+                    readyCount > 0 ? (hasUnauthenticated ? 'bg-yellow-500' : 'bg-green-500') : 'bg-zinc-400',
                   )}
                 />
               </div>
@@ -94,17 +90,8 @@ export function AgentStatusPanel({ expanded }: AgentStatusPanelProps) {
 
           <div className="px-2.5 pt-1.5">
             <Button variant="ghost" size="sm" className="h-6 w-full text-[10px] text-muted-foreground" asChild>
-              <button
-                type="button"
-                onClick={() => refreshRuntimes.mutate()}
-                disabled={refreshRuntimes.isPending}
-              >
-                <RefreshCw
-                  className={cn(
-                    'mr-1 h-3 w-3',
-                    refreshRuntimes.isPending && 'animate-spin',
-                  )}
-                />
+              <button type="button" onClick={() => refreshRuntimes.mutate()} disabled={refreshRuntimes.isPending}>
+                <RefreshCw className={cn('mr-1 h-3 w-3', refreshRuntimes.isPending && 'animate-spin')} />
                 {refreshRuntimes.isPending ? 'Scanning...' : 'Rescan'}
               </button>
             </Button>

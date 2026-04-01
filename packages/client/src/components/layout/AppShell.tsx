@@ -1,23 +1,21 @@
 // React / library
+import { PanelLeftClose } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { PanelLeftClose } from 'lucide-react';
 
 // Components
-import { cn } from '@/lib/utils';
+import { AtlasLogo } from '@/components/icons/AtlasLogo.icon';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ActiveWorkspaceDot } from './ActiveWorkspaceDot';
 import { AgentStatusPanel } from './AgentStatusPanel';
 import { ProjectTabBar } from './ProjectTabBar';
-import { AtlasLogo } from '@/components/icons/AtlasLogo.icon';
-import { ActiveWorkspaceDot } from './ActiveWorkspaceDot';
 
-// Contexts
+// Context
 import { useActiveProject } from '@/contexts/ProjectContext';
+
+// Lib
+import { cn } from '@/lib/utils';
 
 // Constants
 import { navItems, projectContextNavItem } from './layout.constants';
@@ -44,22 +42,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside
         className={cn(
           'sticky top-0 flex h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar-background transition-[width] duration-200',
-          expanded ? 'w-[220px]' : 'w-14'
+          expanded ? 'w-[220px]' : 'w-14',
         )}
       >
         <div
           className={cn(
             'flex h-14 shrink-0 items-center border-b border-sidebar-border px-3',
-            expanded ? 'justify-between' : 'justify-center'
+            expanded ? 'justify-between' : 'justify-center',
           )}
         >
           {expanded ? (
             <>
               <div className="flex items-center gap-2 min-w-0">
                 <AtlasLogo className="h-5 w-5 shrink-0 text-sidebar-foreground" />
-                <span className="truncate text-sm font-semibold tracking-wide text-sidebar-foreground">
-                  Atlas
-                </span>
+                <span className="truncate text-sm font-semibold tracking-wide text-sidebar-foreground">Atlas</span>
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -108,7 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           expanded ? 'gap-3 px-3' : 'w-9 justify-center',
                           isActive
                             ? 'bg-primary/10 text-primary'
-                            : 'text-sidebar-foreground hover:bg-accent hover:text-accent-foreground'
+                            : 'text-sidebar-foreground hover:bg-accent hover:text-accent-foreground',
                         )
                       }
                     >
@@ -120,9 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </NavLink>
                   </div>
                 </TooltipTrigger>
-                {!expanded && (
-                  <TooltipContent side="right">{label}</TooltipContent>
-                )}
+                {!expanded && <TooltipContent side="right">{label}</TooltipContent>}
               </Tooltip>
             );
           })}

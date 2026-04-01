@@ -1,6 +1,6 @@
 // React / library
-import { useMemo } from 'react';
 import { Cpu, Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 
 // Components
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ import type { ModelPreset } from '@atlas/shared';
 import type { ModelSectionProps } from './workspaces.types';
 
 // Constants
-import { DEFAULT_MODEL_VALUE, CUSTOM_MODEL_VALUE } from './workspaces.constants';
+import { CUSTOM_MODEL_VALUE, DEFAULT_MODEL_VALUE } from './workspaces.constants';
 
 export function ModelSection({
   runtime,
@@ -32,8 +32,6 @@ export function ModelSection({
   onModelChange,
   onCustomTextChange,
 }: ModelSectionProps) {
-  if (!runtime.modelFlag) return null;
-
   const presets = runtime.modelPresets ?? [];
   const supportsCustom = runtime.supportsCustomModel !== false;
 
@@ -41,6 +39,8 @@ export function ModelSection({
     const presetValues = new Set(presets.map((p: ModelPreset) => p.value));
     return providerModels.filter((m) => !presetValues.has(m.value));
   }, [presets, providerModels]);
+
+  if (!runtime.modelFlag) return null;
 
   const hasAnyModels = presets.length > 0 || extraModels.length > 0;
 
@@ -61,11 +61,7 @@ export function ModelSection({
             <Loader2 className="h-3 w-3 animate-spin" /> Loading models from provider...
           </p>
         )}
-        {agentDefaultModel && (
-          <p className="text-muted-foreground text-xs">
-            Agent default: {agentDefaultModel}
-          </p>
-        )}
+        {agentDefaultModel && <p className="text-muted-foreground text-xs">Agent default: {agentDefaultModel}</p>}
       </div>
     );
   }
@@ -106,11 +102,7 @@ export function ModelSection({
               ))}
             </SelectGroup>
           )}
-          {supportsCustom && (
-            <SelectItem value={CUSTOM_MODEL_VALUE}>
-              Custom...
-            </SelectItem>
-          )}
+          {supportsCustom && <SelectItem value={CUSTOM_MODEL_VALUE}>Custom...</SelectItem>}
         </SelectContent>
       </Select>
       {selectedModel === CUSTOM_MODEL_VALUE && (
@@ -126,11 +118,7 @@ export function ModelSection({
           <Loader2 className="h-3 w-3 animate-spin" /> Loading models from provider...
         </p>
       )}
-      {agentDefaultModel && (
-        <p className="text-muted-foreground text-xs">
-          Agent default: {agentDefaultModel}
-        </p>
-      )}
+      {agentDefaultModel && <p className="text-muted-foreground text-xs">Agent default: {agentDefaultModel}</p>}
     </div>
   );
 }

@@ -1,12 +1,12 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { CreateTaskSchema, UpdateTaskSchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
-import { listTasks, getTask, createTask, updateTask, deleteTask } from '../controllers/tasks.controller.js';
+import { createTask, deleteTask, getTask, listTasks, updateTask } from '../controllers/tasks.controller.js';
 
 export const tasksRoute = new Hono()
   .get('/', listTasks)

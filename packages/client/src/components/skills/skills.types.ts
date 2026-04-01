@@ -1,3 +1,4 @@
+// Types
 import type { Skill } from '@atlas/shared';
 
 export type SkillDialogProps = {

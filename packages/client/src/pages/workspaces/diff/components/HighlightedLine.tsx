@@ -41,10 +41,10 @@ const CODE_TAG_STYLE: React.CSSProperties = { background: 'transparent' };
 
 /** Renders a single line of code with syntax highlighting. Falls back to plain text for unknown languages. */
 export const HighlightedLine = memo(function HighlightedLine({ content, language }: HighlightedLineProps) {
-  if (!language || !content) return <>{content}</>;
-
   const isDark = useIsDark();
   const theme = isDark ? darkTheme : lightTheme;
+
+  if (!language || !content) return <>{content}</>;
 
   return (
     <SyntaxHighlighter

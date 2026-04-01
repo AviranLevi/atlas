@@ -1,7 +1,10 @@
+// External
 import type { ChatCompletionCreateParamsStreaming } from 'openai/resources/chat/completions';
+
+// Lib
+import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 import { createOpenAIClient } from '../providers/provider-clients.js';
 import { logger } from '../logger.js';
-import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
 
 export async function* streamOpenAI(
   apiKey: string,
@@ -46,10 +49,9 @@ export async function* streamOpenAI(
   };
   if (!baseUrl) createParams.stream_options = { include_usage: true };
 
-  const stream = await client.chat.completions.create(
-    createParams as unknown as ChatCompletionCreateParamsStreaming,
-    { signal },
-  );
+  const stream = await client.chat.completions.create(createParams as unknown as ChatCompletionCreateParamsStreaming, {
+    signal,
+  });
 
   const toolCalls = new Map<number, { id: string; name: string; argsJson: string }>();
 
@@ -78,7 +80,11 @@ export async function* streamOpenAI(
     if (chunk.choices[0]?.finish_reason) {
       for (const [, tc] of toolCalls) {
         let args: Record<string, unknown> = {};
-        try { args = JSON.parse(tc.argsJson || '{}'); } catch (e: unknown) { logger.debug('chat-stream :: openai tool args parse failed', e); }
+        try {
+          args = JSON.parse(tc.argsJson || '{}');
+        } catch (e: unknown) {
+          logger.debug('chat-stream :: openai tool args parse failed', e);
+        }
         yield { type: 'tool_call', id: tc.id, name: tc.name, args };
         yield { type: 'tool_call_done' };
       }

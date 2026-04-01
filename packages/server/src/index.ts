@@ -1,11 +1,15 @@
+// External
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { AppError } from './lib/errors.js';
-import { logger } from './lib/logger.js';
+
+import { startMcpHttpServer } from './mcp-http.js';
 import { apiRoutes } from './routes/index.js';
 import { heartbeatService, orchestratorService } from './services/index.js';
-import { startMcpHttpServer } from './mcp-http.js';
+
+// Lib
+import { AppError } from './lib/errors.js';
+import { logger } from './lib/logger.js';
 
 const app = new Hono();
 
@@ -21,7 +25,7 @@ app.onError((err, c) => {
 
 app.route('/api/v1', apiRoutes);
 
-const port = parseInt(process.env.PORT || '3100');
+const port = parseInt(process.env.PORT || '3100', 10);
 serve({ fetch: app.fetch, port });
 logger.info(`Server running on http://localhost:${port}`);
 

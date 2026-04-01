@@ -2,15 +2,15 @@
 import { eq, or } from 'drizzle-orm';
 
 // Shared
-import type { CreateMemory, UpdateMemory, Memory } from '@atlas/shared';
+import type { CreateMemory, Memory, UpdateMemory } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
 import { memory } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/memory.repository.ts';
 
@@ -56,12 +56,7 @@ export class MemoryRepository {
       return this.db
         .select()
         .from(memory)
-        .where(
-          or(
-            eq(memory.projectId, projectId),
-            eq(memory.scope, 'global'),
-          ),
-        )
+        .where(or(eq(memory.projectId, projectId), eq(memory.scope, 'global')))
         .all() as Memory[];
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

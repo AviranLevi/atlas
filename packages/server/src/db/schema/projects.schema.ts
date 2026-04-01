@@ -1,10 +1,11 @@
+// External
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { uuidDefault, timestampDefault } from '../helpers/index.js';
+
+// DB
+import { timestampDefault, uuidDefault } from '../helpers/index.js';
 
 export const projects = sqliteTable('projects', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(uuidDefault),
+  id: text('id').primaryKey().$defaultFn(uuidDefault),
   name: text('name').notNull(),
   description: text('description'),
   techStack: text('tech_stack'),
@@ -12,14 +13,10 @@ export const projects = sqliteTable('projects', {
   repositoryUrl: text('repository_url'),
   localPath: text('local_path'),
   defaultBranch: text('default_branch'),
-  scanData: text('scan_data'),  // JSON blob of ProjectScanData
-  projectBrief: text('project_brief'),  // Auto-generated compressed context for agents
+  scanData: text('scan_data'), // JSON blob of ProjectScanData
+  projectBrief: text('project_brief'), // Auto-generated compressed context for agents
   color: text('color'),
   mission: text('mission'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(timestampDefault),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(timestampDefault),
+  createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
+  updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

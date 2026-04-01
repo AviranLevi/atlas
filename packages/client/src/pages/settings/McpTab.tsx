@@ -1,6 +1,6 @@
 // Components
-import { McpServersTab } from './McpServersTab';
 import { McpConnectionPanel } from '@/components/settings/McpConnectionPanel';
+import { McpServersTab } from './McpServersTab';
 
 export function McpTab() {
   return (

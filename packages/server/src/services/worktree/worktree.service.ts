@@ -1,11 +1,11 @@
 // External
-import { execSync } from 'child_process';
-import path from 'path';
-import fs from 'fs';
+import { execSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/worktree/worktree.service.ts';
 const WORKSPACES_DIR = '.agent-workspaces';
@@ -29,7 +29,12 @@ export class WorktreeService {
   /**
    * Creates a git worktree for a task. Returns the absolute worktree path.
    */
-  create(projectLocalPath: string, taskId: string, taskName: string, baseBranch?: string): { worktreePath: string; branchName: string } {
+  create(
+    projectLocalPath: string,
+    taskId: string,
+    taskName: string,
+    baseBranch?: string,
+  ): { worktreePath: string; branchName: string } {
     const FUNCTION_NAME = 'create';
     try {
       const shortId = taskId.slice(0, 8);
@@ -122,22 +127,27 @@ export class WorktreeService {
   /**
    * Returns the git diff for a worktree branch vs its base (main/master).
    */
-  getDiff(worktreePath: string, projectLocalPath: string): { files: DiffFile[]; summary: { additions: number; deletions: number; filesChanged: number } } {
+  getDiff(
+    worktreePath: string,
+    projectLocalPath: string,
+  ): { files: DiffFile[]; summary: { additions: number; deletions: number; filesChanged: number } } {
     const FUNCTION_NAME = 'getDiff';
     try {
       const baseBranch = this.getDefaultBranch(projectLocalPath);
 
       // Get list of changed files with stats
-      const diffStat = execSync(
-        `git diff ${baseBranch}...HEAD --numstat`,
-        { cwd: worktreePath, encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 },
-      ).trim();
+      const diffStat = execSync(`git diff ${baseBranch}...HEAD --numstat`, {
+        cwd: worktreePath,
+        encoding: 'utf-8',
+        maxBuffer: 10 * 1024 * 1024,
+      }).trim();
 
       // Get the actual diff
-      const diffOutput = execSync(
-        `git diff ${baseBranch}...HEAD`,
-        { cwd: worktreePath, encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 },
-      ).trim();
+      const diffOutput = execSync(`git diff ${baseBranch}...HEAD`, {
+        cwd: worktreePath,
+        encoding: 'utf-8',
+        maxBuffer: 10 * 1024 * 1024,
+      }).trim();
 
       const files: DiffFile[] = [];
       let totalAdditions = 0;
@@ -173,7 +183,7 @@ export class WorktreeService {
   /**
    * Merges a worktree branch back into the base branch (main/master).
    */
-  merge(worktreePath: string, projectLocalPath: string, branchName: string): void {
+  merge(_worktreePath: string, projectLocalPath: string, branchName: string): void {
     const FUNCTION_NAME = 'merge';
     try {
       const baseBranch = this.getDefaultBranch(projectLocalPath);
@@ -223,7 +233,7 @@ export class WorktreeService {
       // Extract filename from "a/path b/path"
       const headerMatch = section.match(/^a\/(.+?) b\//);
       if (headerMatch) {
-        patches.set(headerMatch[1], 'diff --git ' + section);
+        patches.set(headerMatch[1], `diff --git ${section}`);
       }
     }
     return patches;

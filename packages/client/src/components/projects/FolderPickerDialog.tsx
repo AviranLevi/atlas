@@ -1,18 +1,12 @@
 // React / library
-import { useState, useEffect, useMemo } from 'react';
-import { Folder, FolderGit2, ChevronRight, ArrowUp, Search } from 'lucide-react';
+import { ArrowUp, ChevronRight, Folder, FolderGit2, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 // Components
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 // Hooks
 import { useBrowseFilesystem } from '@/hooks/use-projects.hook';
@@ -20,12 +14,7 @@ import { useBrowseFilesystem } from '@/hooks/use-projects.hook';
 // Types
 import type { FolderPickerDialogProps } from './projects.types';
 
-export function FolderPickerDialog({
-  open,
-  onOpenChange,
-  initialPath,
-  onSelect,
-}: FolderPickerDialogProps) {
+export function FolderPickerDialog({ open, onOpenChange, initialPath, onSelect }: FolderPickerDialogProps) {
   const [currentPath, setCurrentPath] = useState(initialPath || '');
   const [manualInput, setManualInput] = useState('');
   const [filter, setFilter] = useState('');
@@ -79,9 +68,7 @@ export function FolderPickerDialog({
       <DialogContent className="sm:max-w-[560px] max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Select Folder</DialogTitle>
-          <DialogDescription>
-            Choose the local git repository for this project.
-          </DialogDescription>
+          <DialogDescription>Choose the local git repository for this project.</DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-2">
@@ -101,21 +88,15 @@ export function FolderPickerDialog({
 
         {data && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground overflow-x-auto py-1">
-            <button
-              onClick={() => setCurrentPath('/')}
-              className="hover:text-foreground shrink-0"
-            >
+            <button onClick={() => setCurrentPath('/')} className="hover:text-foreground shrink-0">
               /
             </button>
             {pathSegments.map((segment, i) => {
-              const segmentPath = '/' + pathSegments.slice(0, i + 1).join('/');
+              const segmentPath = `/${pathSegments.slice(0, i + 1).join('/')}`;
               return (
                 <span key={segmentPath} className="flex items-center gap-1 shrink-0">
                   <ChevronRight className="h-3 w-3" />
-                  <button
-                    onClick={() => setCurrentPath(segmentPath)}
-                    className="hover:text-foreground hover:underline"
-                  >
+                  <button onClick={() => setCurrentPath(segmentPath)} className="hover:text-foreground hover:underline">
                     {segment}
                   </button>
                 </span>
@@ -160,9 +141,7 @@ export function FolderPickerDialog({
 
           {!isLoading && filteredDirs.length === 0 && (
             <div className="flex items-center justify-center py-8">
-              <p className="text-muted-foreground text-sm">
-                {filter ? 'No matching folders' : 'No subdirectories'}
-              </p>
+              <p className="text-muted-foreground text-sm">{filter ? 'No matching folders' : 'No subdirectories'}</p>
             </div>
           )}
 
@@ -188,9 +167,7 @@ export function FolderPickerDialog({
         </div>
 
         <div className="flex items-center justify-between pt-2">
-          <p className="text-muted-foreground text-[11px] truncate max-w-[300px]">
-            {data?.currentPath ?? ''}
-          </p>
+          <p className="text-muted-foreground text-[11px] truncate max-w-[300px]">{data?.currentPath ?? ''}</p>
           <div className="flex gap-2 shrink-0">
             <Button variant="outline" asChild>
               <button type="button" onClick={() => onOpenChange(false)}>

@@ -1,8 +1,15 @@
+// React / library
 import { MessageSquarePlus } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { ParsedLine } from '../diff-parser';
-import { LineNum } from './LineNum';
+
+// Components
 import { HighlightedLine } from './HighlightedLine';
+import { LineNum } from './LineNum';
+
+// Lib
+import { cn } from '@/lib/utils';
+
+// Types
+import type { ParsedLine } from '../diff-parser';
 
 export function SplitDiffSide({
   line,

@@ -42,10 +42,7 @@ export async function createHeartbeatConfig(c: Context) {
 
 /** Updates a heartbeat config by ID. */
 export async function updateHeartbeatConfig(c: Context) {
-  const item = await heartbeatService.updateConfig(
-    c.req.param('id')!,
-    getValidatedBody<UpdateHeartbeatConfig>(c),
-  );
+  const item = await heartbeatService.updateConfig(c.req.param('id')!, getValidatedBody<UpdateHeartbeatConfig>(c));
   await heartbeatService.refreshSchedules();
   return c.json(item);
 }

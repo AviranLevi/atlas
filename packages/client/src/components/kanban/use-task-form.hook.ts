@@ -1,18 +1,35 @@
-import { useState, useEffect, useCallback } from 'react';
+// React / library
 import { TASK_STATUS } from '@atlas/shared';
-import type { TaskStatus, TaskPriority, TaskEstimate, CreateTask, UpdateTask } from '@atlas/shared';
+import { useCallback, useEffect, useState } from 'react';
+
+// Hooks
 import { useAgents } from '@/hooks/use-agents.hook';
-import { useProjects } from '@/hooks/use-projects.hook';
 import { usePhases } from '@/hooks/use-phases.hook';
+import { useProjects } from '@/hooks/use-projects.hook';
 import { useCreateTask, useUpdateTask } from '@/hooks/use-tasks.hook';
+
+// Types
+import type { CreateTask, TaskEstimate, TaskPriority, TaskStatus, UpdateTask } from '@atlas/shared';
 import type { TaskDialogProps } from './kanban.types';
+
+// Constants
 import { NONE_VALUE } from './kanban.constants';
 
-type UseTaskFormParams = Pick<TaskDialogProps, 'task' | 'open' | 'defaultProjectId' | 'defaultStatus' | 'followUpContext'> & {
+type UseTaskFormParams = Pick<
+  TaskDialogProps,
+  'task' | 'open' | 'defaultProjectId' | 'defaultStatus' | 'followUpContext'
+> & {
   onClose: () => void;
 };
 
-export function useTaskForm({ task, open, defaultProjectId, defaultStatus, followUpContext, onClose }: UseTaskFormParams) {
+export function useTaskForm({
+  task,
+  open,
+  defaultProjectId,
+  defaultStatus,
+  followUpContext,
+  onClose,
+}: UseTaskFormParams) {
   const [name, setName] = useState('');
   const [status, setStatus] = useState<TaskStatus>(TASK_STATUS.TODO);
   const [priority, setPriority] = useState<TaskPriority>('Medium');
@@ -65,52 +82,87 @@ export function useTaskForm({ task, open, defaultProjectId, defaultStatus, follo
     setPhaseId(NONE_VALUE);
   }, []);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || projectId === NONE_VALUE) return;
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!name.trim() || projectId === NONE_VALUE) return;
 
-    const parsedTags = tagsInput.trim()
-      ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
-      : null;
+      const parsedTags = tagsInput.trim()
+        ? tagsInput
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : null;
 
-    const base = {
-      name: name.trim(),
+      const base = {
+        name: name.trim(),
+        status,
+        priority,
+        estimate,
+        definitionOfDone: definitionOfDone.trim() || null,
+        notes: notes.trim() || null,
+        tags: parsedTags,
+        agentId: agentId === NONE_VALUE ? null : agentId,
+        projectId: projectId === NONE_VALUE ? null : projectId,
+        phaseId: phaseId === NONE_VALUE ? null : phaseId,
+      };
+
+      const onSuccess = () => onClose();
+
+      if (isEditing && task) {
+        updateTask.mutate({ id: task.id, data: base satisfies UpdateTask }, { onSuccess });
+      } else {
+        createTask.mutate(base satisfies CreateTask, { onSuccess });
+      }
+    },
+    [
+      name,
       status,
       priority,
       estimate,
-      definitionOfDone: definitionOfDone.trim() || null,
-      notes: notes.trim() || null,
-      tags: parsedTags,
-      agentId: agentId === NONE_VALUE ? null : agentId,
-      projectId: projectId === NONE_VALUE ? null : projectId,
-      phaseId: phaseId === NONE_VALUE ? null : phaseId,
-    };
-
-    const onSuccess = () => onClose();
-
-    if (isEditing && task) {
-      updateTask.mutate({ id: task.id, data: base satisfies UpdateTask }, { onSuccess });
-    } else {
-      createTask.mutate(base satisfies CreateTask, { onSuccess });
-    }
-  }, [name, status, priority, estimate, definitionOfDone, notes, agentId, projectId, phaseId, tagsInput, isEditing, task, createTask, updateTask, onClose]);
+      definitionOfDone,
+      notes,
+      agentId,
+      projectId,
+      phaseId,
+      tagsInput,
+      isEditing,
+      task,
+      createTask,
+      updateTask,
+      onClose,
+    ],
+  );
 
   const isPending = createTask.isPending || updateTask.isPending;
   const submitMutation = isEditing ? updateTask : createTask;
 
   return {
-    name, setName,
-    status, setStatus,
-    priority, setPriority,
-    estimate, setEstimate,
-    definitionOfDone, setDefinitionOfDone,
-    notes, setNotes,
-    agentId, setAgentId,
-    projectId, handleProjectChange,
-    tagsInput, setTagsInput,
-    phaseId, setPhaseId,
-    agents, projects, phases,
-    isEditing, isPending,
+    name,
+    setName,
+    status,
+    setStatus,
+    priority,
+    setPriority,
+    estimate,
+    setEstimate,
+    definitionOfDone,
+    setDefinitionOfDone,
+    notes,
+    setNotes,
+    agentId,
+    setAgentId,
+    projectId,
+    handleProjectChange,
+    tagsInput,
+    setTagsInput,
+    phaseId,
+    setPhaseId,
+    agents,
+    projects,
+    phases,
+    isEditing,
+    isPending,
     submitError: submitMutation.isError ? (submitMutation.error as Error) : null,
     canSubmit: !!name.trim() && projectId !== NONE_VALUE,
     handleSubmit,

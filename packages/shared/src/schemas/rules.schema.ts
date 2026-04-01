@@ -1,11 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const RuleTypeEnum = z.enum([
-  "Backend",
-  "Frontend",
-  "Godot",
-  "General",
-]);
+export const RuleTypeEnum = z.enum(['Backend', 'Frontend', 'Godot', 'General']);
 
 export const RuleSchema = z.object({
   id: z.string().uuid(),

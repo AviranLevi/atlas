@@ -1,3 +1,4 @@
+// Types
 import type { PhaseStatus } from '@atlas/shared';
 
 export const STATUS_LABELS: Record<PhaseStatus, string> = {

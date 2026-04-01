@@ -1,19 +1,19 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { CreateHeartbeatConfigSchema, UpdateHeartbeatConfigSchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import {
-  listHeartbeatConfigs,
-  getHeartbeatConfig,
   createHeartbeatConfig,
-  updateHeartbeatConfig,
   deleteHeartbeatConfig,
+  getHeartbeatConfig,
+  listHeartbeatConfigs,
   listHeartbeatHistory,
   triggerHeartbeat,
+  updateHeartbeatConfig,
 } from '../controllers/heartbeats.controller.js';
 
 export const heartbeatsRoute = new Hono()

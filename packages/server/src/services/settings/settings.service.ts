@@ -1,22 +1,22 @@
-// Shared
-import type {
-  GlobalInstructions,
-  CreateGlobalInstructions,
-  UpdateGlobalInstructions,
-  DispatchRule,
-  CreateDispatchRule,
-  UpdateDispatchRule,
-} from '@atlas/shared';
-
 // External
 import { minimatch } from 'minimatch';
+
+// Shared
+import type {
+  CreateDispatchRule,
+  CreateGlobalInstructions,
+  DispatchRule,
+  GlobalInstructions,
+  UpdateDispatchRule,
+  UpdateGlobalInstructions,
+} from '@atlas/shared';
 
 // Repositories
 import { settingsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/settings/settings.service.ts';
 
@@ -37,9 +37,7 @@ export class SettingsService {
   }
 
   /** Updates the singleton global instructions, creating the row if needed. */
-  async updateOrCreateGlobalInstructions(
-    data: UpdateGlobalInstructions,
-  ): Promise<GlobalInstructions> {
+  async updateOrCreateGlobalInstructions(data: UpdateGlobalInstructions): Promise<GlobalInstructions> {
     const FUNCTION_NAME = 'updateOrCreateGlobalInstructions';
     try {
       const current = await this.getOrCreateGlobalInstructions();
@@ -73,9 +71,7 @@ export class SettingsService {
   }
 
   /** Creates new global instructions. */
-  async createGlobalInstructions(
-    data: CreateGlobalInstructions
-  ): Promise<GlobalInstructions> {
+  async createGlobalInstructions(data: CreateGlobalInstructions): Promise<GlobalInstructions> {
     const FUNCTION_NAME = 'createGlobalInstructions';
     try {
       return this.repo.insertGlobalInstructions(data);
@@ -88,10 +84,7 @@ export class SettingsService {
   }
 
   /** Updates global instructions by ID. */
-  async updateGlobalInstructions(
-    id: string,
-    data: UpdateGlobalInstructions
-  ): Promise<GlobalInstructions> {
+  async updateGlobalInstructions(id: string, data: UpdateGlobalInstructions): Promise<GlobalInstructions> {
     const FUNCTION_NAME = 'updateGlobalInstructions';
     try {
       return this.repo.updateGlobalInstructions(id, data);
@@ -150,10 +143,7 @@ export class SettingsService {
   }
 
   /** Updates a dispatch rule by ID. */
-  async updateDispatchRule(
-    id: string,
-    data: UpdateDispatchRule
-  ): Promise<DispatchRule> {
+  async updateDispatchRule(id: string, data: UpdateDispatchRule): Promise<DispatchRule> {
     const FUNCTION_NAME = 'updateDispatchRule';
     try {
       return this.repo.updateDispatchRule(id, data);
@@ -189,10 +179,7 @@ export class SettingsService {
       const lowerName = taskName.toLowerCase();
       const match = rules.find((r) => {
         const lowerPattern = r.pattern.toLowerCase();
-        return (
-          minimatch(lowerName, lowerPattern, { nocase: true }) ||
-          lowerName.includes(lowerPattern)
-        );
+        return minimatch(lowerName, lowerPattern, { nocase: true }) || lowerName.includes(lowerPattern);
       });
       if (!match) return null;
       return { agentId: match.agentId, skillId: match.skillId, autoStart: match.autoStart ?? false };

@@ -6,8 +6,8 @@ import type { DB } from '../index.js';
 import { preferences } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/preferences.repository.ts';
 
@@ -30,11 +30,7 @@ export class PreferencesRepository {
   get(key: string): string | null {
     const FUNCTION_NAME = 'get';
     try {
-      const row = this.db
-        .select()
-        .from(preferences)
-        .where(eq(preferences.key, key))
-        .get();
+      const row = this.db.select().from(preferences).where(eq(preferences.key, key)).get();
       return row?.value ?? null;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

@@ -1,3 +1,4 @@
+// Types
 import type { ExecutorStatus } from '@atlas/shared';
 
 export type NavItem = {

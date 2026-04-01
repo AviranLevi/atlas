@@ -1,3 +1,4 @@
+// React / library
 import { useCallback, useSyncExternalStore } from 'react';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -38,8 +39,7 @@ const serverSnapshot: ThemeState = {
   resolvedTheme: 'light',
 };
 
-let state: ThemeState =
-  typeof window !== 'undefined' ? createInitialState() : serverSnapshot;
+let state: ThemeState = typeof window !== 'undefined' ? createInitialState() : serverSnapshot;
 
 function applyTheme(resolved: ResolvedTheme): void {
   // Suppress all CSS transitions during the switch so every token updates
@@ -49,9 +49,7 @@ function applyTheme(resolved: ResolvedTheme): void {
   root.classList.toggle('dark', resolved === 'dark');
   // Two rAFs: first lets the browser process the class change, second
   // lets it paint, after which transitions are safe to re-enable.
-  requestAnimationFrame(() =>
-    requestAnimationFrame(() => root.classList.remove('theme-switching')),
-  );
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')));
 }
 
 if (typeof window !== 'undefined') {
@@ -68,7 +66,7 @@ if (typeof window !== 'undefined') {
     if (next === state.resolvedTheme) return;
     state = { preference: 'system', resolvedTheme: next };
     applyTheme(next);
-    listeners.forEach((cb) => cb());
+    for (const cb of listeners) cb();
   });
 }
 
@@ -92,7 +90,7 @@ function setTheme(pref: ThemePreference): void {
   };
   localStorage.setItem(STORAGE_KEY, pref);
   applyTheme(state.resolvedTheme);
-  listeners.forEach((cb) => cb());
+  for (const cb of listeners) cb();
 }
 
 export function useTheme(): {

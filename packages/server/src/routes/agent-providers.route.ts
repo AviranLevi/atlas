@@ -1,19 +1,19 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { CreateAgentProviderSchema, UpdateAgentProviderSchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import {
-  listAgentProviders,
-  getAgentProvider,
   createAgentProvider,
-  updateAgentProvider,
   deleteAgentProvider,
-  testAgentProviderConnection,
+  getAgentProvider,
   listAgentProviderModels,
+  listAgentProviders,
+  testAgentProviderConnection,
+  updateAgentProvider,
 } from '../controllers/agent-providers.controller.js';
 
 export const agentProvidersRoute = new Hono()

@@ -1,5 +1,4 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+// React / library
 import {
   FileCode,
   GitMerge,
@@ -16,15 +15,18 @@ import {
   AlertTriangle,
   ExternalLink,
 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+// Components
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { SplitDiffView } from './split-diff-view';
+import { UnifiedDiffView } from './unified-diff-view';
+
+// Hooks
 import {
   useWorkspaceDiff,
   useMergeWorkspace,
@@ -35,15 +37,16 @@ import {
   useEditDiffComment,
   useRemoveDiffComment,
 } from '@/hooks/use-workspaces.hook';
-import type { DiffFile } from '@/hooks/use-workspaces.hook';
-import type { DiffComment } from '@atlas/shared';
-import type { DiffViewMode, CommentingTarget } from './diff-parser';
+
+// Lib
+import { cn } from '@/lib/utils';
 import { parsePatch } from './diff-parser';
 import { detectLanguage } from './lang-detect';
-import { UnifiedDiffView } from './unified-diff-view';
-import { SplitDiffView } from './split-diff-view';
 
-// ─── DiffFileRow ─────────────────────────────────────────────────────
+// Types
+import type { DiffComment } from '@atlas/shared';
+import type { DiffViewMode, CommentingTarget } from './diff-parser';
+import type { DiffFile } from '@/hooks/use-workspaces.hook';
 
 function DiffFileRow({
   file,
@@ -114,7 +117,11 @@ function DiffFileRow({
         )}
       >
         {file.patch ? (
-          open ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          open ? (
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          )
         ) : (
           <FileCode className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
@@ -128,11 +135,9 @@ function DiffFileRow({
         <span className="shrink-0 text-xs text-green-600 dark:text-green-400">+{file.additions}</span>
         <span className="shrink-0 text-xs text-red-600 dark:text-red-400 ml-2">-{file.deletions}</span>
       </button>
-      {open && file.patch && (
-        viewMode === 'unified'
-          ? <UnifiedDiffView {...sharedProps} />
-          : <SplitDiffView {...sharedProps} />
-      )}
+      {open &&
+        file.patch &&
+        (viewMode === 'unified' ? <UnifiedDiffView {...sharedProps} /> : <SplitDiffView {...sharedProps} />)}
     </div>
   );
 }
@@ -188,9 +193,7 @@ export function DiffSection({
     return (
       <Card>
         <CardContent className="flex items-center justify-between p-6">
-          <p className="text-sm text-muted-foreground">
-            No code changes in this workspace.
-          </p>
+          <p className="text-sm text-muted-foreground">No code changes in this workspace.</p>
           <Button
             size="sm"
             onClick={() => {

@@ -1,6 +1,6 @@
 // Shared
+import type { ChecklistItem, Review } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
-import type { Review, ChecklistItem } from '@atlas/shared';
 
 // Services
 import { activityLogService } from '../index.js';
@@ -9,8 +9,8 @@ import { activityLogService } from '../index.js';
 import { reviewsRepository, tasksRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/reviews/reviews.service.ts';
 
@@ -80,10 +80,13 @@ export class ReviewsService {
   }
 
   /** Updates a review's checklist or notes. */
-  async update(id: string, data: {
-    checklist?: ChecklistItem[] | null;
-    notes?: string | null;
-  }): Promise<Review> {
+  async update(
+    id: string,
+    data: {
+      checklist?: ChecklistItem[] | null;
+      notes?: string | null;
+    },
+  ): Promise<Review> {
     const FUNCTION_NAME = 'update';
     try {
       return this.repo.update(id, data);
@@ -94,11 +97,7 @@ export class ReviewsService {
   }
 
   /** Records an approval or change-request decision and updates task status accordingly. */
-  async decide(
-    id: string,
-    decision: 'approved' | 'changes_requested',
-    notes?: string | null,
-  ): Promise<Review> {
+  async decide(id: string, decision: 'approved' | 'changes_requested', notes?: string | null): Promise<Review> {
     const FUNCTION_NAME = 'decide';
     try {
       const review = this.repo.findByIdOrThrow(id);
@@ -130,12 +129,15 @@ export class ReviewsService {
   }
 
   /** Submits an AI agent's review with checklist updates, then records the decision. */
-  async submitAiReview(id: string, data: {
-    decision: 'approved' | 'changes_requested';
-    notes?: string | null;
-    checklistUpdates?: { item: string; checked: boolean }[];
-    agentId?: string;
-  }): Promise<Review> {
+  async submitAiReview(
+    id: string,
+    data: {
+      decision: 'approved' | 'changes_requested';
+      notes?: string | null;
+      checklistUpdates?: { item: string; checked: boolean }[];
+      agentId?: string;
+    },
+  ): Promise<Review> {
     const FUNCTION_NAME = 'submitAiReview';
     try {
       const review = this.repo.findByIdOrThrow(id);

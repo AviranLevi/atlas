@@ -1,9 +1,9 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { BrowseQuerySchema, ScanQuerySchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import { browseFilesystem, scanFilesystem } from '../controllers/filesystem.controller.js';

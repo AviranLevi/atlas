@@ -1,12 +1,13 @@
+// External
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { uuidDefault, timestampDefault } from '../helpers/index.js';
-import { tasks } from './tasks.schema.js';
+
+// DB
+import { timestampDefault, uuidDefault } from '../helpers/index.js';
 import { agents } from './agents.schema.js';
+import { tasks } from './tasks.schema.js';
 
 export const reviews = sqliteTable('reviews', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(uuidDefault),
+  id: text('id').primaryKey().$defaultFn(uuidDefault),
   taskId: text('task_id')
     .notNull()
     .references(() => tasks.id),
@@ -16,10 +17,6 @@ export const reviews = sqliteTable('reviews', {
   checklist: text('checklist'), // JSON: [{item: string, checked: boolean}]
   notes: text('notes'),
   decidedAt: text('decided_at'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(timestampDefault),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(timestampDefault),
+  createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
+  updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

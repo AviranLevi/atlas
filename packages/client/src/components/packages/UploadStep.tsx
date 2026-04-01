@@ -1,11 +1,14 @@
+// React / library
+import { Bot, ChevronDown, FileJson, ScrollText, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { FileJson, ChevronDown, Bot, Zap, ScrollText } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import { Label } from '@/components/ui/label';
+// Components
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 
+// Constants
 import { EXAMPLE_JSON } from './packages.constants';
 
 type UploadStepProps = {
@@ -30,13 +33,7 @@ export function UploadStep({ onFileSelect, parseError, isPreviewing, previewErro
         <Label htmlFor="package-file" className="cursor-pointer text-sm font-medium text-primary hover:underline">
           Choose JSON file
         </Label>
-        <input
-          id="package-file"
-          type="file"
-          accept=".json,.atlas.json"
-          className="hidden"
-          onChange={onFileSelect}
-        />
+        <input id="package-file" type="file" accept=".json,.atlas.json" className="hidden" onChange={onFileSelect} />
         <div className="flex items-center gap-1.5">
           <Badge variant="secondary" className="gap-1 text-[10px]">
             <Bot className="h-2.5 w-2.5" /> Agent
@@ -74,15 +71,9 @@ export function UploadStep({ onFileSelect, parseError, isPreviewing, previewErro
         </div>
       )}
 
-      {parseError && (
-        <p className="text-sm text-destructive">{parseError}</p>
-      )}
-      {isPreviewing && (
-        <p className="text-sm text-muted-foreground">Analyzing package...</p>
-      )}
-      {previewError && (
-        <p className="text-sm text-destructive">{previewError.message}</p>
-      )}
+      {parseError && <p className="text-sm text-destructive">{parseError}</p>}
+      {isPreviewing && <p className="text-sm text-muted-foreground">Analyzing package...</p>}
+      {previewError && <p className="text-sm text-destructive">{previewError.message}</p>}
     </div>
   );
 }

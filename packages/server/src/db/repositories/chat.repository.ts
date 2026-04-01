@@ -9,17 +9,16 @@ import type { DB } from '../index.js';
 import { chatConversations, chatMessages } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/chat.repository.ts';
 
 function parseMessage(row: Record<string, unknown>): ChatMessage {
   return {
     ...row,
-    toolCalls: typeof row.toolCalls === 'string' ? JSON.parse(row.toolCalls) : row.toolCalls ?? null,
-    toolResults:
-      typeof row.toolResults === 'string' ? JSON.parse(row.toolResults) : row.toolResults ?? null,
+    toolCalls: typeof row.toolCalls === 'string' ? JSON.parse(row.toolCalls) : (row.toolCalls ?? null),
+    toolResults: typeof row.toolResults === 'string' ? JSON.parse(row.toolResults) : (row.toolResults ?? null),
   } as ChatMessage;
 }
 
@@ -80,10 +79,7 @@ export class ChatRepository {
   }
 
   /** Updates a conversation title and/or bumps updatedAt. */
-  updateConversation(
-    id: string,
-    data: Partial<{ title: string; updatedAt: string }>,
-  ): ChatConversation {
+  updateConversation(id: string, data: Partial<{ title: string; updatedAt: string }>): ChatConversation {
     const FUNCTION_NAME = 'updateConversation';
     try {
       return this.db

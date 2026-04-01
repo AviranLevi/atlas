@@ -1,30 +1,32 @@
 // React / library
-import { useState, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { TASK_STATUS } from '@atlas/shared';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
 import { Plus } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 // Components
+import { BacklogList } from '@/components/kanban/BacklogList';
+import { KanbanCard } from '@/components/kanban/KanbanCard';
+import { KanbanColumn } from '@/components/kanban/KanbanColumn';
+import { TaskDialog } from '@/components/kanban/TaskDialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { KanbanColumn } from '@/components/kanban/KanbanColumn';
-import { KanbanCard } from '@/components/kanban/KanbanCard';
-import { BacklogList } from '@/components/kanban/BacklogList';
-import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { StartWorkDialog } from '@/components/workspaces/StartWorkDialog';
 import { KanbanFilterBar } from './KanbanFilterBar';
 
 // Hooks
-import { useTasks, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks.hook';
-import { useProjects } from '@/hooks/use-projects.hook';
 import { useAgents } from '@/hooks/use-agents.hook';
+import { useProjects } from '@/hooks/use-projects.hook';
+import { useTasks, useUpdateTask, useDeleteTask } from '@/hooks/use-tasks.hook';
 import { useWorkspaces } from '@/hooks/use-workspaces.hook';
-import { useActiveProject } from '@/contexts/ProjectContext';
 import { useKanbanDnd } from './use-kanban-dnd.hook';
 
+// Context
+import { useActiveProject } from '@/contexts/ProjectContext';
+
 // Types
-import { TASK_STATUS } from '@atlas/shared';
 import type { Task, TaskStatus } from '@atlas/shared';
 
 // Constants
@@ -68,17 +70,17 @@ export function KanbanPage() {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
 
-  const { sensors, activeTask, handleDragStart, handleDragEnd } = useKanbanDnd(
-    tasks,
-    (taskId, newStatus) => updateTask.mutate({ id: taskId, data: { status: newStatus } }),
+  const { sensors, activeTask, handleDragStart, handleDragEnd } = useKanbanDnd(tasks, (taskId, newStatus) =>
+    updateTask.mutate({ id: taskId, data: { status: newStatus } }),
   );
 
   const activeWorkspaceMap = useMemo(
-    () => new Map(
-      workspaces
-        .filter((w) => w.status === 'running' || w.status === 'pending' || w.status === 'completed')
-        .map((w) => [w.taskId, w.id]),
-    ),
+    () =>
+      new Map(
+        workspaces
+          .filter((w) => w.status === 'running' || w.status === 'pending' || w.status === 'completed')
+          .map((w) => [w.taskId, w.id]),
+      ),
     [workspaces],
   );
 
@@ -108,11 +110,15 @@ export function KanbanPage() {
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Kanban Board</h1>
-          <p className="text-muted-foreground mt-0.5 text-sm">
-            Manage and track tasks across your workflow
-          </p>
+          <p className="text-muted-foreground mt-0.5 text-sm">Manage and track tasks across your workflow</p>
         </div>
-        <Button onClick={() => { setNewTaskStatus(TASK_STATUS.TODO); setDialogOpen(true); }} size="sm">
+        <Button
+          onClick={() => {
+            setNewTaskStatus(TASK_STATUS.TODO);
+            setDialogOpen(true);
+          }}
+          size="sm"
+        >
           <Plus className="mr-1.5 h-4 w-4" />
           New Task
         </Button>
@@ -148,9 +154,15 @@ export function KanbanPage() {
                   key={status}
                   status={status}
                   tasks={tasksByStatus[status] ?? []}
-                  onEdit={(task) => { setEditingTask(task); setDialogOpen(true); }}
+                  onEdit={(task) => {
+                    setEditingTask(task);
+                    setDialogOpen(true);
+                  }}
                   onDelete={(id) => deleteTask.mutate(id)}
-                  onStartWork={(task) => { setStartWorkTask(task); setStartWorkDialogOpen(true); }}
+                  onStartWork={(task) => {
+                    setStartWorkTask(task);
+                    setStartWorkDialogOpen(true);
+                  }}
                   agentMap={agentMap}
                   projectMap={projectMap}
                   showProject={!projectFilter}
@@ -160,9 +172,7 @@ export function KanbanPage() {
               ))}
             </div>
             <DragOverlay dropAnimation={null}>
-              {activeTask ? (
-                <KanbanCard task={activeTask} onEdit={() => {}} onDelete={() => {}} isOverlay />
-              ) : null}
+              {activeTask ? <KanbanCard task={activeTask} onEdit={() => {}} onDelete={() => {}} isOverlay /> : null}
             </DragOverlay>
           </DndContext>
         </TabsContent>
@@ -186,7 +196,10 @@ export function KanbanPage() {
             agentMap={agentMap}
             projectMap={projectMap}
             showProject={!projectFilter}
-            onEdit={(task) => { setEditingTask(task); setDialogOpen(true); }}
+            onEdit={(task) => {
+              setEditingTask(task);
+              setDialogOpen(true);
+            }}
             onDelete={(id) => deleteTask.mutate(id)}
             onPromote={(id) => updateTask.mutate({ id, data: { status: TASK_STATUS.TODO } })}
           />
@@ -195,7 +208,13 @@ export function KanbanPage() {
 
       <TaskDialog
         open={dialogOpen}
-        onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingTask(null); setNewTaskStatus(TASK_STATUS.TODO); } }}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setEditingTask(null);
+            setNewTaskStatus(TASK_STATUS.TODO);
+          }
+        }}
         task={editingTask}
         defaultProjectId={projectFilter}
         defaultStatus={newTaskStatus}
@@ -203,7 +222,10 @@ export function KanbanPage() {
 
       <StartWorkDialog
         open={startWorkDialogOpen}
-        onOpenChange={(open) => { setStartWorkDialogOpen(open); if (!open) setStartWorkTask(null); }}
+        onOpenChange={(open) => {
+          setStartWorkDialogOpen(open);
+          if (!open) setStartWorkTask(null);
+        }}
         task={startWorkTask}
         agentName={startWorkTask?.agentId ? agentMap.get(startWorkTask.agentId) : undefined}
         projectName={startWorkTask?.projectId ? projectMap.get(startWorkTask.projectId) : undefined}

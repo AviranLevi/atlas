@@ -1,10 +1,11 @@
-import { useState, useCallback, useRef } from 'react';
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+// React / library
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useRef, useState } from 'react';
+
+// Lib
 import { api } from '@/lib/api';
+
+// Types
 import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 import type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat-page.types';
 
@@ -40,8 +41,7 @@ export function useConversationMessages(conversationId: string | undefined) {
 export function useCreateConversation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateConversation) =>
-      api.post<ChatConversation>('/chat/conversations', data),
+    mutationFn: (data: CreateConversation) => api.post<ChatConversation>('/chat/conversations', data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY }),
   });
 }
@@ -63,108 +63,112 @@ export function useChatStream(conversationId: string | undefined) {
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const send = useCallback(async (content: string) => {
-    if (!conversationId || state === 'streaming') return;
+  const send = useCallback(
+    async (content: string) => {
+      if (!conversationId || state === 'streaming') return;
 
-    setPendingUserMessage(content);
-    setState('streaming');
-    setStreamingText('');
-    setToolCalls([]);
-    setError(null);
+      setPendingUserMessage(content);
+      setState('streaming');
+      setStreamingText('');
+      setToolCalls([]);
+      setError(null);
 
-    const controller = new AbortController();
-    abortRef.current = controller;
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    try {
-      const resp = await api.stream(
-        `/chat/conversations/${conversationId}/messages`,
-        { content },
-        controller.signal,
-      );
+      try {
+        const resp = await api.stream(`/chat/conversations/${conversationId}/messages`, { content }, controller.signal);
 
-      if (!resp.ok) {
-        const body = await resp.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(body.error || `HTTP ${resp.status}`);
-      }
+        if (!resp.ok) {
+          const body = await resp.json().catch(() => ({ error: 'Request failed' }));
+          throw new Error(body.error || `HTTP ${resp.status}`);
+        }
 
-      const reader = resp.body?.getReader();
-      if (!reader) throw new Error('No response body');
+        const reader = resp.body?.getReader();
+        if (!reader) throw new Error('No response body');
 
-      const decoder = new TextDecoder();
-      let buffer = '';
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
 
-        let currentEvent = '';
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7).trim();
-          } else if (line.startsWith('data: ')) {
-            const json = line.slice(6).trim();
-            if (!json) continue;
-            try {
-              const data = JSON.parse(json);
-              handleEvent(currentEvent, data);
-            } catch { /* skip malformed */ }
+          let currentEvent = '';
+          for (const line of lines) {
+            if (line.startsWith('event: ')) {
+              currentEvent = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+              const json = line.slice(6).trim();
+              if (!json) continue;
+              try {
+                const data = JSON.parse(json);
+                handleEvent(currentEvent, data);
+              } catch {
+                /* skip malformed */
+              }
+            }
           }
         }
-      }
 
-      setState('idle');
-      setPendingUserMessage(null);
-      queryClient.invalidateQueries({ queryKey: [...MESSAGES_KEY, conversationId] });
-      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
-    } catch (err: unknown) {
-      if (controller.signal.aborted) {
         setState('idle');
         setPendingUserMessage(null);
-        return;
+        queryClient.invalidateQueries({ queryKey: [...MESSAGES_KEY, conversationId] });
+        queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+      } catch (err: unknown) {
+        if (controller.signal.aborted) {
+          setState('idle');
+          setPendingUserMessage(null);
+          return;
+        }
+        const message = err instanceof Error ? err.message : 'Stream failed';
+        setError(message);
+        setState('error');
+        setPendingUserMessage(null);
+      } finally {
+        abortRef.current = null;
       }
-      const message = err instanceof Error ? err.message : 'Stream failed';
-      setError(message);
-      setState('error');
-      setPendingUserMessage(null);
-    } finally {
-      abortRef.current = null;
-    }
 
-    function handleEvent(event: string, data: Record<string, unknown>) {
-      switch (event) {
-        case 'text_delta':
-          setStreamingText((prev) => prev + (data.text as string));
-          break;
-        case 'tool_call':
-          setToolCalls((prev) => [...prev, {
-            id: data.id as string,
-            name: data.name as string,
-            args: data.args as Record<string, unknown>,
-            status: 'pending',
-          }]);
-          break;
-        case 'tool_result':
-          setToolCalls((prev) => prev.map((tc) =>
-            tc.id === data.toolCallId
-              ? { ...tc, result: data.result, status: 'done' as const }
-              : tc,
-          ));
-          break;
-        case 'error':
-          setError(data.message as string);
-          setState('error');
-          break;
-        case 'done':
-          setStreamingText('');
-          setToolCalls([]);
-          break;
+      function handleEvent(event: string, data: Record<string, unknown>) {
+        switch (event) {
+          case 'text_delta':
+            setStreamingText((prev) => prev + (data.text as string));
+            break;
+          case 'tool_call':
+            setToolCalls((prev) => [
+              ...prev,
+              {
+                id: data.id as string,
+                name: data.name as string,
+                args: data.args as Record<string, unknown>,
+                status: 'pending',
+              },
+            ]);
+            break;
+          case 'tool_result':
+            setToolCalls((prev) =>
+              prev.map((tc) =>
+                tc.id === data.toolCallId ? { ...tc, result: data.result, status: 'done' as const } : tc,
+              ),
+            );
+            break;
+          case 'error':
+            setError(data.message as string);
+            setState('error');
+            break;
+          case 'done':
+            setStreamingText('');
+            setToolCalls([]);
+            break;
+        }
       }
-    }
-  }, [conversationId, state, queryClient]);
+    },
+    [conversationId, state, queryClient],
+  );
 
   const abort = useCallback(() => {
     abortRef.current?.abort();

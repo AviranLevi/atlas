@@ -1,15 +1,13 @@
 // Shared
-import type { Skill, CreateSkill, UpdateSkill } from '@atlas/shared';
-
-// Types
-import type { SkillDetail } from './skills.types.js';
+import type { CreateSkill, Skill, UpdateSkill } from '@atlas/shared';
 
 // Repositories
 import { skillsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
+import type { SkillDetail } from './skills.types.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/skills/skills.service.ts';
 

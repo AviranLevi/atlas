@@ -1,6 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// React / library
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
-import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider, ProviderModel } from '@atlas/shared';
+
+// Types
+import type { AgentProvider, CreateAgentProvider, ProviderModel, UpdateAgentProvider } from '@atlas/shared';
 
 const PROVIDERS_KEY = ['agent-providers'] as const;
 const PROVIDER_MODELS_KEY = ['agent-provider-models'] as const;
@@ -15,8 +20,7 @@ export function useAgentProviders() {
 export function useCreateAgentProvider() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateAgentProvider) =>
-      api.post<AgentProvider>('/agent-providers', data),
+    mutationFn: (data: CreateAgentProvider) => api.post<AgentProvider>('/agent-providers', data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: PROVIDERS_KEY }),
   });
 }
@@ -40,8 +44,7 @@ export function useDeleteAgentProvider() {
 
 export function useTestAgentProvider() {
   return useMutation({
-    mutationFn: (id: string) =>
-      api.post<{ ok: boolean; error?: string }>(`/agent-providers/${id}/test`, {}),
+    mutationFn: (id: string) => api.post<{ ok: boolean; error?: string }>(`/agent-providers/${id}/test`, {}),
   });
 }
 

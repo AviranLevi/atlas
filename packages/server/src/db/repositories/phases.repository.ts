@@ -2,15 +2,15 @@
 import { eq, sql } from 'drizzle-orm';
 
 // Shared
-import type { Phase, CreatePhase, UpdatePhase } from '@atlas/shared';
+import type { CreatePhase, Phase, UpdatePhase } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
 import { phases, tasks } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/phases.repository.ts';
 

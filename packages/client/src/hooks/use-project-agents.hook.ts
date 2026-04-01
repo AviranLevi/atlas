@@ -1,5 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// React / library
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+// Lib
 import { api } from '@/lib/api';
+
+// Types
 import type { Agent } from '@atlas/shared';
 
 type ProjectAgent = Agent & { role: string | null };

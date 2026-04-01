@@ -1,5 +1,8 @@
+// Shared
 import type { AgentProvider, ProviderModel } from '@atlas/shared';
-import { createAnthropicClient, createOpenAIClient, ollamaBaseUrl, GOOGLE_AI_BASE } from './provider-clients.js';
+
+// Lib
+import { createAnthropicClient, createOpenAIClient, GOOGLE_AI_BASE, ollamaBaseUrl } from './provider-clients.js';
 
 // ---------------------------------------------------------------------------
 // Per-provider: test connection
@@ -24,9 +27,7 @@ async function testOpenAI(provider: AgentProvider): Promise<void> {
 }
 
 async function testGoogle(provider: AgentProvider): Promise<void> {
-  const resp = await fetch(
-    `${GOOGLE_AI_BASE}/models/${provider.modelName}?key=${provider.apiKey ?? ''}`,
-  );
+  const resp = await fetch(`${GOOGLE_AI_BASE}/models/${provider.modelName}?key=${provider.apiKey ?? ''}`);
   if (!resp.ok) {
     const body = await resp.text().catch(() => '');
     throw new Error(`Google AI returned ${resp.status}: ${body.slice(0, 200)}`);

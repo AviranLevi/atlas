@@ -9,8 +9,8 @@ import type { DB } from '../index.js';
 import { integrations } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/integrations.repository.ts';
 

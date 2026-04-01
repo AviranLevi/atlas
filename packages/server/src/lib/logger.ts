@@ -8,8 +8,8 @@ interface Logger {
 }
 
 const stderrWrite: LogFn = (msg, ...args) => {
-  const extra = args.length ? ' ' + args.map(String).join(' ') : '';
-  process.stderr.write(msg + extra + '\n');
+  const extra = args.length ? ` ${args.map(String).join(' ')}` : '';
+  process.stderr.write(`${msg + extra}\n`);
 };
 
 const stdoutLogger: Logger = {

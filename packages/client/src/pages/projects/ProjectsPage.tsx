@@ -1,18 +1,12 @@
 // React / library
+import { FolderOpen, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FolderOpen, Plus } from 'lucide-react';
 
 // Components
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProjectCard } from './ProjectCard';
 
 // Hooks
@@ -48,18 +42,14 @@ export function ProjectsPage() {
     }
   };
 
-  const filtered = projects?.filter(
-    (p) => statusFilter === 'all' || p.status === statusFilter,
-  );
+  const filtered = projects?.filter((p) => statusFilter === 'all' || p.status === statusFilter);
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground mt-0.5 text-sm">
-            Manage project configurations and agent assignments
-          </p>
+          <p className="text-muted-foreground mt-0.5 text-sm">Manage project configurations and agent assignments</p>
         </div>
         <Button onClick={handleCreate} size="sm">
           <Plus className="mr-1.5 h-4 w-4" />
@@ -88,9 +78,7 @@ export function ProjectsPage() {
         <div className="rounded-lg border border-dashed p-12 text-center">
           <FolderOpen className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
           <h3 className="mb-1 text-base font-medium">No projects yet</h3>
-          <p className="text-muted-foreground mb-4 text-sm">
-            Create your first project to manage configurations.
-          </p>
+          <p className="text-muted-foreground mb-4 text-sm">Create your first project to manage configurations.</p>
           <Button onClick={handleCreate} variant="outline" size="sm">
             <Plus className="mr-1.5 h-4 w-4" />
             New Project
@@ -110,11 +98,7 @@ export function ProjectsPage() {
         </div>
       )}
 
-      <ProjectDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        project={editingProject}
-      />
+      <ProjectDialog open={dialogOpen} onOpenChange={setDialogOpen} project={editingProject} />
     </div>
   );
 }

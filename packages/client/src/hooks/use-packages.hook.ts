@@ -1,6 +1,11 @@
+// React / library
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { AtlasPackage, ImportRequest } from '@atlas/shared';
+
+// Lib
 import { api } from '@/lib/api';
+
+// Types
+import type { AtlasPackage, ImportRequest } from '@atlas/shared';
 
 type ImportPreview = {
   agent: { data: unknown; conflict: { id: string; name: string } | null } | null;
@@ -20,16 +25,14 @@ type ImportSummary = {
 
 export function useImportPreview() {
   return useMutation({
-    mutationFn: (pkg: AtlasPackage) =>
-      api.post<ImportPreview>('/packages/import/preview', pkg),
+    mutationFn: (pkg: AtlasPackage) => api.post<ImportPreview>('/packages/import/preview', pkg),
   });
 }
 
 export function useImportPackage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: ImportRequest) =>
-      api.post<ImportSummary>('/packages/import', request),
+    mutationFn: (request: ImportRequest) => api.post<ImportSummary>('/packages/import', request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agents'] });
       queryClient.invalidateQueries({ queryKey: ['skills'] });

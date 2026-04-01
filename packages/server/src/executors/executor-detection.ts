@@ -1,6 +1,11 @@
-import { exec as execCb } from 'child_process';
-import { promisify } from 'util';
-import type { ExecutorConfig, DetectionResult } from './executor.types.js';
+// External
+import { exec as execCb } from 'node:child_process';
+import { promisify } from 'node:util';
+
+// Executors
+import type { DetectionResult, ExecutorConfig } from './executor.types.js';
+
+// Lib
 import { logger } from '../lib/logger.js';
 
 const exec = promisify(execCb);
@@ -14,7 +19,7 @@ export async function execWithTimeout(
   const { timeout = 5000, input } = options;
 
   if (input) {
-    const { spawn } = await import('child_process');
+    const { spawn } = await import('node:child_process');
     return new Promise((resolve, reject) => {
       const child = spawn('bash', ['-c', command], {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -27,8 +32,12 @@ export async function execWithTimeout(
         reject(new Error('timeout'));
       }, timeout);
 
-      child.stdout.on('data', (d) => { stdout += d; });
-      child.stderr.on('data', (d) => { stderr += d; });
+      child.stdout.on('data', (d) => {
+        stdout += d;
+      });
+      child.stderr.on('data', (d) => {
+        stderr += d;
+      });
       child.on('close', (code) => {
         clearTimeout(timer);
         if (code === 0) resolve({ stdout, stderr });
@@ -59,10 +68,7 @@ export async function detectExecutor(executor: ExecutorConfig): Promise<Detectio
   const [versionResult, authResult] = await Promise.all([
     (async () => {
       try {
-        const { stdout } = await execWithTimeout(
-          `${executor.command} ${executor.versionFlag}`,
-          { timeout: 5000 },
-        );
+        const { stdout } = await execWithTimeout(`${executor.command} ${executor.versionFlag}`, { timeout: 5000 });
         const raw = stdout.trim();
         const semverMatch = raw.match(/(\d+\.\d+[\w.-]*)/);
         return semverMatch ? semverMatch[1] : raw.split('\n')[0].slice(0, 50);
@@ -84,13 +90,10 @@ async function checkAuth(executor: ExecutorConfig): Promise<boolean> {
   if (!authCheck) return true;
 
   try {
-    await execWithTimeout(
-      `${executor.command} ${authCheck.args.join(' ')}`,
-      {
-        timeout: authCheck.timeoutMs ?? 10000,
-        input: authCheck.stdin,
-      },
-    );
+    await execWithTimeout(`${executor.command} ${authCheck.args.join(' ')}`, {
+      timeout: authCheck.timeoutMs ?? 10000,
+      input: authCheck.stdin,
+    });
     return true;
   } catch (err: unknown) {
     const stderr = (err as { stderr?: string }).stderr ?? '';

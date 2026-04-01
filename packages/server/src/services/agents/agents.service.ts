@@ -1,15 +1,13 @@
 // Shared
-import type { Agent, CreateAgent, UpdateAgent, Skill, Rule } from '@atlas/shared';
-
-// Types
-import type { AgentContext, AgentDetail } from './agents.types.js';
+import type { Agent, CreateAgent, Rule, Skill, UpdateAgent } from '@atlas/shared';
 
 // Repositories
 import { agentsRepository } from '../../db/repositories/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
+import type { AgentContext, AgentDetail } from './agents.types.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/agents/agents.service.ts';
 

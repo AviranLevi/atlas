@@ -1,19 +1,19 @@
 // External
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
 
 // Shared
 import { CreateConversationSchema, SendMessageSchema } from '@atlas/shared';
+import { zValidator } from '@hono/zod-validator';
 
 // Controllers
 import {
-  listConversations,
-  getConversation,
+  abortStream,
   createConversation,
   deleteConversation,
+  getConversation,
   getMessages,
+  listConversations,
   sendMessage,
-  abortStream,
 } from '../controllers/chat.controller.js';
 
 export const chatRoute = new Hono()

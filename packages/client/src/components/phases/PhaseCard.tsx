@@ -10,7 +10,7 @@ import type { PhaseStatus } from '@atlas/shared';
 import type { PhaseCardProps } from './phases.types';
 
 // Constants
-import { STATUS_LABELS, STATUS_COLORS } from './phases.constants';
+import { STATUS_COLORS, STATUS_LABELS } from './phases.constants';
 
 export function PhaseCard({ phase, onEdit, onDelete }: PhaseCardProps) {
   const total = phase.taskCount ?? 0;
@@ -24,18 +24,11 @@ export function PhaseCard({ phase, onEdit, onDelete }: PhaseCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="font-medium text-sm truncate">{phase.name}</span>
-            <Badge
-              variant="outline"
-              className={`text-xs shrink-0 ${STATUS_COLORS[status] ?? ''}`}
-            >
+            <Badge variant="outline" className={`text-xs shrink-0 ${STATUS_COLORS[status] ?? ''}`}>
               {STATUS_LABELS[status] ?? status}
             </Badge>
           </div>
-          {phase.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-              {phase.description}
-            </p>
-          )}
+          {phase.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{phase.description}</p>}
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>
@@ -44,21 +37,12 @@ export function PhaseCard({ phase, onEdit, onDelete }: PhaseCardProps) {
               <span>{percent}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${percent}%` }}
-              />
+              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${percent}%` }} />
             </div>
           </div>
         </div>
         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => onEdit(phase)}
-            aria-label="Edit phase"
-          >
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(phase)} aria-label="Edit phase">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
           <Button

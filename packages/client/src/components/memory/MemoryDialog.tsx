@@ -2,29 +2,23 @@
 import { useState } from 'react';
 
 // Components
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 // Hooks
 import { useCreateMemory } from '@/hooks/use-memory.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
-import type { MemoryType, MemoryScope } from '@atlas/shared';
+import type { MemoryScope, MemoryType } from '@atlas/shared';
 import type { MemoryDialogProps } from './memory.types';
 
 // Constants
-import { MEMORY_TYPES, MEMORY_SCOPES } from './memory.constants';
+import { MEMORY_SCOPES, MEMORY_TYPES } from './memory.constants';
 
 export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
   const createMemory = useCreateMemory();
@@ -64,7 +58,13 @@ export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => { if (!val) resetForm(); onOpenChange(val); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!val) resetForm();
+        onOpenChange(val);
+      }}
+    >
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>New Memory</DialogTitle>
@@ -100,7 +100,9 @@ export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {MEMORY_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -113,7 +115,9 @@ export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {MEMORY_SCOPES.map((s) => (
-                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -128,14 +132,23 @@ export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                onOpenChange(false);
+              }}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={createMemory.isPending || !name.trim() || !content.trim()}>

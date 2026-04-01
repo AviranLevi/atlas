@@ -6,14 +6,18 @@
  * Run: pnpm --filter @atlas/server validate-migrations
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// External
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.resolve(__dirname, '../src/db/migrations');
 
-const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
+const files = fs
+  .readdirSync(migrationsDir)
+  .filter((f) => f.endsWith('.sql'))
+  .sort();
 
 let hasErrors = false;
 
@@ -35,7 +39,7 @@ for (const file of files) {
     if (semicolonStatements.length > 1) {
       errors.push(
         `Contains multiple SQL statements without --> statement-breakpoint separator. ` +
-        `Found ${semicolonStatements.length} statements in one block.`,
+          `Found ${semicolonStatements.length} statements in one block.`,
       );
     }
   }

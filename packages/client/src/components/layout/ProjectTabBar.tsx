@@ -1,22 +1,18 @@
 // React / library
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { Layers, Plus, Settings2 } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // Components
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TabButton } from './TabButton';
 
-// Contexts
+// Context
 import { useActiveProject } from '@/contexts/ProjectContext';
 
 export function ProjectTabBar() {
-  const { activeProjectId, activeProject, projects, setActiveProjectId } = useActiveProject();
+  const { activeProjectId, projects, setActiveProjectId } = useActiveProject();
   const navigate = useNavigate();
   const location = useLocation();
   const [createOpen, setCreateOpen] = useState(false);

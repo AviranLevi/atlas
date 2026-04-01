@@ -1,28 +1,22 @@
+// React / library
+import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { CreateAgentProvider, ProviderType } from '@atlas/shared';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+
+// Components
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  useCreateAgentProvider,
-  useUpdateAgentProvider,
-  useTestAgentProvider,
-} from '@/hooks/use-agent-providers.hook';
-import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+// Hooks
+import { useCreateAgentProvider, useTestAgentProvider, useUpdateAgentProvider } from '@/hooks/use-agent-providers.hook';
+
+// Types
+import type { CreateAgentProvider, ProviderType } from '@atlas/shared';
 import type { AgentProviderDialogProps } from './agents.types';
+
+// Constants
 import { PROVIDER_LABELS, PROVIDER_MODEL_PLACEHOLDERS } from './agents.constants';
 
 export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProviderDialogProps) {
@@ -65,10 +59,7 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
       modelName,
     };
     if (isEditing) {
-      updateProvider.mutate(
-        { id: provider.id, data },
-        { onSuccess: () => onOpenChange(false) }
-      );
+      updateProvider.mutate({ id: provider.id, data }, { onSuccess: () => onOpenChange(false) });
     } else {
       createProvider.mutate(data, { onSuccess: () => onOpenChange(false) });
     }
@@ -111,13 +102,11 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.entries(PROVIDER_LABELS) as [ProviderType, string][]).map(
-                  ([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  )
-                )}
+                {(Object.entries(PROVIDER_LABELS) as [ProviderType, string][]).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -140,11 +129,7 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
                 id="base-url"
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder={
-                  type === 'ollama'
-                    ? 'http://localhost:11434'
-                    : 'https://api.your-provider.com/v1'
-                }
+                placeholder={type === 'ollama' ? 'http://localhost:11434' : 'https://api.your-provider.com/v1'}
               />
             </div>
           )}
@@ -161,16 +146,8 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
 
           {isEditing && (
             <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleTest}
-                disabled={testProvider.isPending}
-              >
-                {testProvider.isPending ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                ) : null}
+              <Button type="button" variant="outline" size="sm" onClick={handleTest} disabled={testProvider.isPending}>
+                {testProvider.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
                 Test Connection
               </Button>
               {testResult && (

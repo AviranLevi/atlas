@@ -1,16 +1,16 @@
 // External
-import { eq, or, isNull } from 'drizzle-orm';
+import { eq, isNull, or } from 'drizzle-orm';
 
 // Shared
-import type { CreateRule, UpdateRule, Rule } from '@atlas/shared';
+import type { CreateRule, Rule, UpdateRule } from '@atlas/shared';
 
 // DB
 import type { DB } from '../index.js';
-import { rules, agentRules, agents } from '../schema/index.js';
+import { agentRules, agents, rules } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError, NotFoundError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 import { parseTags } from '../../lib/utils/index.js';
 
 const FILE_PATH = 'db/repositories/rules.repository.ts';
@@ -91,12 +91,7 @@ export class RulesRepository {
       if (data.tags !== undefined) {
         updateData.tags = JSON.stringify(data.tags);
       }
-      const result = this.db
-        .update(rules)
-        .set(updateData)
-        .where(eq(rules.id, id))
-        .returning()
-        .get();
+      const result = this.db.update(rules).set(updateData).where(eq(rules.id, id)).returning().get();
       return {
         ...result,
         tags: data.tags !== undefined ? data.tags : JSON.parse(result.tags ?? '[]'),
@@ -141,11 +136,7 @@ export class RulesRepository {
   findAgentsByRuleId(ruleId: string): { id: string; name: string }[] {
     const FUNCTION_NAME = 'findAgentsByRuleId';
     try {
-      const rows = this.db
-        .select()
-        .from(agentRules)
-        .where(eq(agentRules.ruleId, ruleId))
-        .all();
+      const rows = this.db.select().from(agentRules).where(eq(agentRules.ruleId, ruleId)).all();
       const result: { id: string; name: string }[] = [];
       for (const row of rows) {
         const agent = this.db.select().from(agents).where(eq(agents.id, row.agentId)).get();

@@ -2,21 +2,15 @@
 import { useEffect, useState } from 'react';
 
 // Components
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks
-import { useCreateAgent, useUpdateAgent } from '@/hooks/use-agents.hook';
 import { useAgentProviders } from '@/hooks/use-agent-providers.hook';
+import { useCreateAgent, useUpdateAgent } from '@/hooks/use-agents.hook';
 
 // Types
 import type { AgentDialogProps } from './agents.types';
@@ -55,10 +49,7 @@ export function AgentDialog({ open, onOpenChange, agent, onCreated }: AgentDialo
     };
 
     if (isEditing) {
-      updateAgent.mutate(
-        { id: agent.id, data },
-        { onSuccess: () => onOpenChange(false) },
-      );
+      updateAgent.mutate({ id: agent.id, data }, { onSuccess: () => onOpenChange(false) });
     } else {
       createAgent.mutate(
         { ...data, personality: null, unbreakableRules: null, defaultModel: null },

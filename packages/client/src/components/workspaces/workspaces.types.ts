@@ -1,4 +1,5 @@
-import type { Task, Workspace, ExecutorStatus, ProviderModel } from '@atlas/shared';
+// Types
+import type { ExecutorStatus, ProviderModel, Task, Workspace } from '@atlas/shared';
 
 export type RerunDialogProps = {
   open: boolean;

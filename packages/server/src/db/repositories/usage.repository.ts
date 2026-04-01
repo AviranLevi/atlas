@@ -9,8 +9,8 @@ import type { DB } from '../index.js';
 import { usageLogs } from '../schema/index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
 import { AppError } from '../../lib/errors.js';
+import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/usage.repository.ts';
 
@@ -81,12 +81,7 @@ export class UsageRepository {
       const conds = since
         ? and(eq(usageLogs.agentId, agentId), gte(usageLogs.createdAt, since))
         : eq(usageLogs.agentId, agentId);
-      const rows = this.db
-        .select()
-        .from(usageLogs)
-        .where(conds!)
-        .orderBy(desc(usageLogs.createdAt))
-        .all();
+      const rows = this.db.select().from(usageLogs).where(conds!).orderBy(desc(usageLogs.createdAt)).all();
       return rows.map(mapRow);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -101,12 +96,7 @@ export class UsageRepository {
       const conds = since
         ? and(eq(usageLogs.projectId, projectId), gte(usageLogs.createdAt, since))
         : eq(usageLogs.projectId, projectId);
-      const rows = this.db
-        .select()
-        .from(usageLogs)
-        .where(conds!)
-        .orderBy(desc(usageLogs.createdAt))
-        .all();
+      const rows = this.db.select().from(usageLogs).where(conds!).orderBy(desc(usageLogs.createdAt)).all();
       return rows.map(mapRow);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

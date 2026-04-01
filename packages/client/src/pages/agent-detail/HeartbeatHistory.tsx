@@ -1,12 +1,18 @@
-import { Link } from 'react-router-dom';
+// React / library
 import { History } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
+// Components
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { timeAgo } from '@/lib/format';
 
+// Lib
+import { timeAgo } from '@/lib/format';
+import { cn } from '@/lib/utils';
+
+// Types
 import type { HeartbeatRun } from '@atlas/shared';
 
+// Constants
 import { formatResult, statusBadgeClass } from './heartbeat-section.constants';
 
 type HeartbeatHistoryProps = {
@@ -40,21 +46,14 @@ export function HeartbeatHistory({ runs, isLoading }: HeartbeatHistoryProps) {
               {runs.map((run) => (
                 <tr key={run.id} className="border-b last:border-0">
                   <td className="text-muted-foreground p-2 whitespace-nowrap">
-                    <span title={new Date(run.triggeredAt).toLocaleString()}>
-                      {timeAgo(run.triggeredAt)}
-                    </span>
+                    <span title={new Date(run.triggeredAt).toLocaleString()}>{timeAgo(run.triggeredAt)}</span>
                   </td>
                   <td className="p-2">
-                    <Badge
-                      variant="outline"
-                      className={cn('text-xs capitalize', statusBadgeClass(run.status))}
-                    >
+                    <Badge variant="outline" className={cn('text-xs capitalize', statusBadgeClass(run.status))}>
                       {run.status}
                     </Badge>
                   </td>
-                  <td className="text-muted-foreground p-2 capitalize">
-                    {formatResult(run.result)}
-                  </td>
+                  <td className="text-muted-foreground p-2 capitalize">{formatResult(run.result)}</td>
                   <td className="p-2">
                     {run.workspaceId ? (
                       <Link
