@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 
 // Shared
-import { UpsertIntegrationSchema } from '@atlas/shared';
+import { UpsertIntegrationSchema, TestSupermemorySchema } from '@atlas/shared';
 
 // Controllers
 import {
@@ -17,4 +17,4 @@ export const integrationsRoute = new Hono()
   .get('/', listIntegrations)
   .get('/:name', getIntegration)
   .put('/:name', zValidator('json', UpsertIntegrationSchema), upsertIntegration)
-  .post('/supermemory/test', testSupermemoryConnection);
+  .post('/supermemory/test', zValidator('json', TestSupermemorySchema), testSupermemoryConnection);

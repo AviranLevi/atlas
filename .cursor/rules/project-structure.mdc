@@ -28,8 +28,23 @@ data/
 ## File Suffixes
 
 Server: `.service.ts`, `.route.ts`, `.repository.ts`, `.schema.ts`, `.tools.ts`
-Client: `.hook.ts` for hooks, `.tsx` for components and pages
+Client: `.page.tsx` for page components, `.hook.ts` for hooks, `.tsx` for components
 Shared: `.schema.ts`
+
+## Client Page Folder Structure
+
+Each page folder under `pages/` follows this layout:
+
+```
+pages/<feature>/
+  <feature>.page.tsx            # Main routed page (kebab-case)
+  <feature>-detail.page.tsx     # Detail page if applicable
+  <feature>.types.ts            # Shared types for the page
+  <feature>.constants.ts        # Shared constants for the page
+  components/                   # Sub-components used only within this page
+    ComponentName.tsx            # PascalCase component files
+  <sub-feature>/                # Complex sub-features get their own subfolder
+```
 
 ## Architecture Layers
 

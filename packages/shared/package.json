@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "description": "Atlas shared — Zod schemas, TypeScript types, and constants",
   "main": "./src/index.ts",
   "types": "./dist/index.d.ts",
   "exports": {

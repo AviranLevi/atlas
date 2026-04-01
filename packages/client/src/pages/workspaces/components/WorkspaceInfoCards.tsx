@@ -5,7 +5,7 @@ import { GitBranch, Clock, Terminal, Cpu } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
 // Types
-import type { WorkspaceInfoCardsProps } from './workspaces-page.types';
+import type { WorkspaceInfoCardsProps } from '../workspaces.types';
 
 // Utilities
 import { calcDuration } from '@/lib/format';

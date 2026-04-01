@@ -142,7 +142,7 @@ export class ReviewsService {
 
       let checklist = review.checklist;
       if (data.checklistUpdates && checklist) {
-        checklist = checklist.map((c) => {
+        checklist = checklist.map((c: ChecklistItem) => {
           const update = data.checklistUpdates!.find((u) => u.item === c.item);
           return update ? { ...c, checked: update.checked } : c;
         });

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 
 // Types
+import type { ModelPreset } from '@atlas/shared';
 import type { ModelSectionProps } from './workspaces.types';
 
 // Constants
@@ -37,7 +38,7 @@ export function ModelSection({
   const supportsCustom = runtime.supportsCustomModel !== false;
 
   const extraModels = useMemo(() => {
-    const presetValues = new Set(presets.map((p) => p.value));
+    const presetValues = new Set(presets.map((p: ModelPreset) => p.value));
     return providerModels.filter((m) => !presetValues.has(m.value));
   }, [presets, providerModels]);
 
@@ -88,7 +89,7 @@ export function ModelSection({
           {presets.length > 0 && (
             <SelectGroup>
               <SelectLabel className="text-xs text-muted-foreground">Presets</SelectLabel>
-              {presets.map((preset) => (
+              {presets.map((preset: ModelPreset) => (
                 <SelectItem key={preset.value} value={preset.value}>
                   {preset.label}
                 </SelectItem>

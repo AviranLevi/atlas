@@ -6,12 +6,12 @@ import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 // Components
 import { Button } from '@/components/ui/button';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
-import { WorkspaceDetailHeader } from './WorkspaceDetailHeader';
-import { WorkspaceInfoCards } from './WorkspaceInfoCards';
+import { WorkspaceDetailHeader } from './components/WorkspaceDetailHeader';
+import { WorkspaceInfoCards } from './components/WorkspaceInfoCards';
 import { DiffSection } from './diff';
-import { AiReviewDialog } from './AiReviewDialog';
+import { AiReviewDialog } from './components/AiReviewDialog';
 import { RerunDialog } from '@/components/workspaces/RerunDialog';
-import { TerminalOutput } from './TerminalOutput';
+import { TerminalOutput } from './components/TerminalOutput';
 
 // Hooks
 import {

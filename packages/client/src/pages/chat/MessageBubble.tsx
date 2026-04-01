@@ -4,6 +4,7 @@ import { User, Bot } from 'lucide-react';
 import { AgentThinking } from './AgentThinking';
 
 // Types
+import type { ChatToolCall } from '@atlas/shared';
 import type { ThinkingStep, MessageBubbleProps } from './chat-page.types';
 
 // Utils
@@ -31,7 +32,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   const apiSteps: ThinkingStep[] | null =
     message.toolCalls && message.toolCalls.length > 0
-      ? message.toolCalls.map((tc) => ({ id: tc.id, toolName: tc.name, hint: '' }))
+      ? message.toolCalls.map((tc: ChatToolCall) => ({ id: tc.id, toolName: tc.name, hint: '' }))
       : null;
 
   const { steps, response } = apiSteps

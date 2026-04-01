@@ -13,10 +13,10 @@ import { StatusIcon } from './StatusIcon';
 import { useStopWork, useCleanupWorkspace } from '@/hooks/use-workspaces.hook';
 
 // Types
-import type { WorkspaceRowProps } from './workspaces-page.types';
+import type { WorkspaceRowProps } from '../workspaces.types';
 
 // Constants & utilities
-import { statusMeta } from './workspaces-page.constants';
+import { statusMeta } from '../workspaces.constants';
 import { calcDuration } from '@/lib/format';
 
 export function WorkspaceRow({ workspace }: WorkspaceRowProps) {

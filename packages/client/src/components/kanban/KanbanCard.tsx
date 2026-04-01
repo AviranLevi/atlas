@@ -56,7 +56,7 @@ export function KanbanCard({
     <>
       {task.tags && task.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          {task.tags.map((tag) => (
+          {task.tags.map((tag: string) => (
             <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
           ))}
         </div>

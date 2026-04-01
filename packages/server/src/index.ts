@@ -21,7 +21,7 @@ app.onError((err, c) => {
 
 app.route('/api/v1', apiRoutes);
 
-const port = 3100;
+const port = parseInt(process.env.PORT || '3100');
 serve({ fetch: app.fetch, port });
 logger.info(`Server running on http://localhost:${port}`);
 

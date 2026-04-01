@@ -51,7 +51,8 @@ export class PromptBuilderService {
           if (phase.description) goalLines.push(`\n${phase.description}`);
           if (phase.successCriteria) goalLines.push(`\n**Success criteria:** ${phase.successCriteria}`);
           sections.push(goalLines.join(''));
-        } catch {
+        } catch (error: unknown) {
+          logger.warn('prompt-builder.service :: phase lookup failed', error);
         }
       }
 

@@ -63,7 +63,7 @@ export function ProjectTasksTable({ tasks, onNavigateToKanban }: ProjectTasksTab
                     </td>
                     <td className="hidden px-3 py-2 lg:table-cell">
                       <div className="flex flex-wrap gap-1">
-                        {task.tags?.map((tag) => (
+                        {task.tags?.map((tag: string) => (
                           <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
                         ))}
                       </div>

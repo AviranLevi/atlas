@@ -1,4 +1,4 @@
-import type { StatusFilter } from './workspaces-page.types';
+import type { StatusFilter } from './workspaces.types';
 
 export const statusMeta: Record<
   string,

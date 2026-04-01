@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "description": "Atlas server — Hono REST API + MCP server + Drizzle SQLite",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

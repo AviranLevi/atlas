@@ -23,6 +23,7 @@ import { useAgent } from '@/hooks/use-agents.hook';
 import { useProviderModels } from '@/hooks/use-agent-providers.hook';
 
 // Types
+import type { ModelPreset } from '@atlas/shared';
 import type { StartWorkDialogProps } from './workspaces.types';
 
 // Constants
@@ -77,7 +78,7 @@ export function StartWorkDialog({
   useEffect(() => {
     if (!selectedRuntime) return;
     const rt = runtimes.find((r) => r.id === selectedRuntime);
-    const presetValues = new Set(rt?.modelPresets?.map((p) => p.value) ?? []);
+    const presetValues = new Set(rt?.modelPresets?.map((p: ModelPreset) => p.value) ?? []);
     const isCompatible = (model: string) => presetValues.size === 0 || presetValues.has(model);
 
     const savedModel = localStorage.getItem(getModelStorageKey(selectedRuntime));

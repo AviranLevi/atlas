@@ -120,7 +120,7 @@ export function RulesPage() {
 
         {rule.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {rule.tags.map((tag) => (
+            {rule.tags.map((tag: string) => (
               <Badge key={tag} variant="outline" className="text-[11px]">{tag}</Badge>
             ))}
           </div>

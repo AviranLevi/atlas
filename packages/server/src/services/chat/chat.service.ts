@@ -239,8 +239,8 @@ export class ChatService {
         try {
           const { project } = await projectsService.getContext(conversation.projectId);
           projectCwd = project.localPath ?? undefined;
-        } catch {
-          // Fall through to default cwd
+        } catch (error: unknown) {
+          logger.warn('chat.service :: failed to resolve project cwd', error);
         }
       }
 
@@ -329,8 +329,8 @@ export class ChatService {
             .join('\n');
           sections.push(`## Recent Project Knowledge\n\n${memList}`);
         }
-      } catch {
-        // Project context not available -- continue without it
+      } catch (error: unknown) {
+        logger.warn('chat.service :: project context unavailable for system prompt', error);
       }
     }
 
@@ -357,7 +357,8 @@ export class ChatService {
     try {
       const { project } = await projectsService.getContext(projectId);
       return { projectId, projectLocalPath: project.localPath ?? null };
-    } catch {
+    } catch (error: unknown) {
+      logger.warn('chat.service :: getProjectContext failed', error);
       return { projectId };
     }
   }

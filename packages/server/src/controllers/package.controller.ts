@@ -40,7 +40,7 @@ export async function exportRule(c: Context): Promise<Response> {
 }
 
 export async function previewImport(c: Context): Promise<Response> {
-  const body = await c.req.json();
+  const body = getValidatedBody<AtlasPackage>(c);
   const preview = await packageService.previewImport(body);
   return c.json(preview);
 }

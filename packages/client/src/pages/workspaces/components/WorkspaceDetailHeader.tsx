@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { StatusIcon } from './StatusIcon';
 
 // Types
-import type { WorkspaceDetailHeaderProps } from './workspaces-page.types';
+import type { WorkspaceDetailHeaderProps } from '../workspaces.types';
 
 // Constants
-import { statusMeta } from './workspaces-page.constants';
+import { statusMeta } from '../workspaces.constants';
 
 export function WorkspaceDetailHeader({
   workspace,

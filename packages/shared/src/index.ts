@@ -17,3 +17,4 @@ export * from "./schemas/package.schema";
 export * from "./schemas/integrations.schema";
 export * from "./schemas/heartbeats.schema";
 export * from "./schemas/usage.schema";
+export * from "./schemas/system.schema";

@@ -2,6 +2,9 @@
 node_modules
 dist
 .env
+.env.*
+.env.local
+.env.*.local
 *.db
 *.db-journal
 *.db-wal

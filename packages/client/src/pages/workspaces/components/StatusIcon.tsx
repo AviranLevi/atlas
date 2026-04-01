@@ -6,7 +6,7 @@ import { GitMerge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Types
-import type { StatusIconProps } from './workspaces-page.types';
+import type { StatusIconProps } from '../workspaces.types';
 
 export function StatusIcon({ status, className }: StatusIconProps) {
   if (status === 'running') return <Loader2 className={cn('animate-spin text-blue-500', className)} />;

@@ -54,7 +54,7 @@ export function BacklogList({
               {task.estimate && (
                 <Badge variant="outline" className="text-xs">{task.estimate}</Badge>
               )}
-              {task.tags?.map((tag) => (
+              {task.tags?.map((tag: string) => (
                 <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
               ))}
               {task.agentId && agentMap.get(task.agentId) && (

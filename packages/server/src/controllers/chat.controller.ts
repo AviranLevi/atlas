@@ -8,6 +8,9 @@ import type { CreateConversation, SendMessage } from '@atlas/shared';
 // Services
 import { chatService } from '../services/index.js';
 
+// Lib
+import { getValidatedBody } from '../lib/hono-helpers.js';
+
 export async function listConversations(c: Context) {
   const projectId = c.req.query('projectId') || null;
   const conversations = await chatService.listConversations(projectId);
@@ -20,7 +23,7 @@ export async function getConversation(c: Context) {
 }
 
 export async function createConversation(c: Context) {
-  const data = (c.req as unknown as { valid(target: 'json'): CreateConversation }).valid('json');
+  const data = getValidatedBody<CreateConversation>(c);
   const conversation = await chatService.createConversation(data);
   return c.json(conversation, 201);
 }
@@ -37,7 +40,7 @@ export async function getMessages(c: Context) {
 
 export async function sendMessage(c: Context) {
   const conversationId = c.req.param('id')!;
-  const data = (c.req as unknown as { valid(target: 'json'): SendMessage }).valid('json');
+  const data = getValidatedBody<SendMessage>(c);
 
   return streamSSE(c, async (stream) => {
     await chatService.sendMessage(conversationId, data.content, async (event, payload) => {

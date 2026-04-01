@@ -7,6 +7,9 @@ import path from 'path';
 // Shared
 import type { CreateWorkspace, AddDiffComment, RerunWorkspace, CreatePullRequest, EditDiffComment } from '@atlas/shared';
 
+// Lib
+import { logger } from '../lib/logger.js';
+
 // Services
 import { orchestratorService } from '../services/index.js';
 
@@ -164,8 +167,8 @@ export async function streamWorkspaceLogs(c: Context) {
         fs.closeSync(fd);
         offset = stat.size;
         await stream.writeSSE({ event: 'log', data: JSON.stringify(buf.toString('utf-8')) });
-      } catch {
-        // file may not exist yet or be mid-write — ignore
+      } catch (error: unknown) {
+        logger.warn('workspaces.controller :: log file read failed', error);
       }
     };
 
@@ -174,7 +177,8 @@ export async function streamWorkspaceLogs(c: Context) {
         const { workspacesRepository } = await import('../db/repositories/index.js');
         const ws = workspacesRepository.findById(workspaceId);
         return !!ws && (ws.status === 'running' || ws.status === 'pending');
-      } catch {
+      } catch (error: unknown) {
+        logger.warn('workspaces.controller :: workspace status check failed', error);
         return false;
       }
     };

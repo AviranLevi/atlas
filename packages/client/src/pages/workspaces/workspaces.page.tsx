@@ -4,17 +4,17 @@ import { Terminal, Activity } from 'lucide-react';
 
 // Components
 import { Card } from '@/components/ui/card';
-import { WorkspaceRow } from './WorkspaceRow';
+import { WorkspaceRow } from './components/WorkspaceRow';
 
 // Hooks
 import { useWorkspaces } from '@/hooks/use-workspaces.hook';
 import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Types
-import type { StatusFilter } from './workspaces-page.types';
+import type { StatusFilter } from './workspaces.types';
 
 // Constants
-import { filterTabs } from './workspaces-page.constants';
+import { filterTabs } from './workspaces.constants';
 
 export function WorkspacesPage() {
   const { data: allWorkspaces = [], isLoading } = useWorkspaces();

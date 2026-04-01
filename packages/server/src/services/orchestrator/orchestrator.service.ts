@@ -5,7 +5,7 @@ import path from 'path';
 
 // Shared
 import { TASK_STATUS } from '@atlas/shared';
-import type { Workspace } from '@atlas/shared';
+import type { Workspace, ChecklistItem } from '@atlas/shared';
 
 // Services
 import { tasksService, projectsService, activityLogService, agentProvidersService, agentsService } from '../index.js';
@@ -740,7 +740,7 @@ export class OrchestratorService {
 
       const checklist = review?.checklist ?? [];
       const checklistText = checklist.length > 0
-        ? checklist.map((c) => `- [${c.checked ? 'x' : ' '}] ${c.item}`).join('\n')
+        ? checklist.map((c: ChecklistItem) => `- [${c.checked ? 'x' : ' '}] ${c.item}`).join('\n')
         : '(no checklist items defined)';
 
       const reviewPrompt = [

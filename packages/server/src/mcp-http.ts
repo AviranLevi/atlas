@@ -4,7 +4,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { registerAllTools } from './mcp/register-all.js';
 import { logger } from './lib/logger.js';
 
-const MCP_HTTP_PORT = 3101;
+const MCP_HTTP_PORT = parseInt(process.env.MCP_PORT || '3101');
 
 export function startMcpHttpServer() {
   const mcpServer = new McpServer({

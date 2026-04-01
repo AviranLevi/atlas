@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme.hook';
 
 // Types
-import type { TerminalOutputProps } from './workspaces-page.types';
+import type { TerminalOutputProps } from '../workspaces.types';
 
 // Lib
 import { cn } from '@/lib/utils';

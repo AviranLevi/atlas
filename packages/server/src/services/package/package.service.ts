@@ -5,6 +5,8 @@ import type {
   Skill,
   Rule,
   AgentProvider,
+  PackageSkill,
+  PackageRule,
 } from '@atlas/shared';
 import { AtlasPackageSchema } from '@atlas/shared';
 
@@ -146,12 +148,12 @@ export class PackageService {
           }
         : null;
 
-      const skillPreviews = (pkg.skills ?? []).map((s) => ({
+      const skillPreviews = (pkg.skills ?? []).map((s: PackageSkill) => ({
         data: s,
         conflict: findByName(allSkills, s.name),
       }));
 
-      const rulePreviews = (pkg.rules ?? []).map((r) => ({
+      const rulePreviews = (pkg.rules ?? []).map((r: PackageRule) => ({
         data: r,
         conflict: findByName(allRules, r.name),
       }));
@@ -272,11 +274,13 @@ export class PackageService {
           agentId = existing.id;
         }
 
-        for (const sid of skillIds) {
-          await agentsService.attachSkill(agentId, sid);
-        }
-        for (const rid of ruleIds) {
-          await agentsService.attachRule(agentId, rid);
+        if (agentId) {
+          for (const sid of skillIds) {
+            await agentsService.attachSkill(agentId, sid);
+          }
+          for (const rid of ruleIds) {
+            await agentsService.attachRule(agentId, rid);
+          }
         }
       }
 

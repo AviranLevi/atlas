@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "description": "Atlas client — React SPA with Vite, Tailwind, and shadcn/ui",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { UpsertIntegration } from '@atlas/shared';
+import type { UpsertIntegration, TestSupermemory } from '@atlas/shared';
 
 // Services
 import { integrationsService, supermemoryService } from '../services/index.js';
@@ -33,9 +33,7 @@ export async function upsertIntegration(c: Context) {
 
 /** Tests the Supermemory connection using the provided (or stored) credentials. */
 export async function testSupermemoryConnection(c: Context) {
-  // Prefer credentials from request body; fall back to stored config
-  let body: { apiKey?: string; baseUrl?: string } = {};
-  try { body = await c.req.json(); } catch { /* no body */ }
+  const body = getValidatedBody<TestSupermemory>(c);
 
   const stored = await integrationsService.getByName('supermemory');
   const apiKey = body.apiKey ?? stored?.apiKey ?? '';

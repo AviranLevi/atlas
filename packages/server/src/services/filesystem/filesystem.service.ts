@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { logger } from '../../lib/logger.js';
 import {
   detectName,
   detectDescription,
@@ -44,7 +45,8 @@ export class FilesystemService {
           const isGitRepo = fs.existsSync(path.join(fullPath, '.git'));
           return { name: item.name, path: fullPath, isGitRepo };
         });
-    } catch {
+    } catch (error: unknown) {
+      logger.warn('filesystem.service :: browse readdirSync failed', error);
       entries = [];
     }
 

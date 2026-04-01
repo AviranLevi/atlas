@@ -102,31 +102,6 @@ export class ProjectsService {
     }
   }
 
-  /** Bootstraps a new project with default agents, skills, and memory. */
-  async bootstrapProject(_projectId: string): Promise<void> {
-    const FUNCTION_NAME = 'bootstrapProject';
-    try {
-      // TODO: Implement bootstrap logic (create default agents, skills, memory)
-      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - stub not implemented`);
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to bootstrap project', { cause: error });
-    }
-  }
-
-  /** Exports project-specific Cursor rules. */
-  async exportCursorRules(_projectId: string): Promise<string> {
-    const FUNCTION_NAME = 'exportCursorRules';
-    try {
-      // TODO: Implement export logic
-      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - stub not implemented`);
-      return '';
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to export cursor rules', { cause: error });
-    }
-  }
-
   /**
    * Returns the full context for a project: details, assigned agents,
    * project tasks, and project-scoped memories.

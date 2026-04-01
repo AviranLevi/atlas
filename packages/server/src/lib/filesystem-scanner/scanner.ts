@@ -6,6 +6,7 @@ import path from 'path';
 import type { ProjectScanData } from '@atlas/shared';
 
 // Lib
+import { logger } from '../logger.js';
 import { readJsonFile } from './detectors.js';
 import { detectRepoUrl, parseGitHubInfo } from './git.js';
 import { detectPackageManager, detectCICD, detectMonorepo } from './detectors.js';
@@ -154,7 +155,7 @@ function detectPorts(dirPath: string): number[] {
         const content = fs.readFileSync(cfPath, 'utf-8');
         const portMatches = content.matchAll(/port\s*[:=]\s*(\d{4,5})/gi);
         for (const m of portMatches) ports.add(parseInt(m[1]));
-      } catch { /* ignore */ }
+      } catch (error: unknown) { logger.debug('scanner :: failed to read config file for ports', error); }
     }
   }
 
@@ -165,7 +166,7 @@ function detectPorts(dirPath: string): number[] {
         const content = fs.readFileSync(envPath, 'utf-8');
         const match = content.match(/^PORT\s*=\s*(\d{4,5})/m);
         if (match) ports.add(parseInt(match[1]));
-      } catch { /* ignore */ }
+      } catch (error: unknown) { logger.debug('scanner :: failed to read env file for ports', error); }
     }
   }
 
@@ -185,7 +186,7 @@ function detectFormatting(dirPath: string): ProjectScanData['formatting'] {
       if (fs.existsSync(pfPath)) {
         try {
           result.config = { prettier: JSON.parse(fs.readFileSync(pfPath, 'utf-8')) };
-        } catch { /* ignore */ }
+        } catch (error: unknown) { logger.debug('scanner :: failed to parse prettier config', error); }
         break;
       }
     }
@@ -262,7 +263,7 @@ function detectAiConfigs(dirPath: string): AiConfigFile[] {
             name: baseName,
             content,
           });
-        } catch { /* skip unreadable files */ }
+        } catch (error: unknown) { logger.debug('scanner :: skip unreadable ai config file', error); }
       } else if (stat.isDirectory() && entry.glob) {
         try {
           const extensions = entry.glob.replace('*.{', '').replace('}', '').split(',');
@@ -282,9 +283,9 @@ function detectAiConfigs(dirPath: string): AiConfigFile[] {
                 name: frontmatterName || baseName,
                 content,
               });
-            } catch { /* skip unreadable files */ }
+            } catch (error: unknown) { logger.debug('scanner :: skip unreadable ai config file in dir', error); }
           }
-        } catch { /* skip unreadable dirs */ }
+        } catch (error: unknown) { logger.debug('scanner :: skip unreadable ai config dir', error); }
       }
     }
   }
