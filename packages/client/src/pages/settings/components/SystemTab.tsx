@@ -26,7 +26,7 @@ export function SystemTab() {
         </div>
         <div className="flex gap-6">
           <a
-            href="https://github.com/YOUR_USERNAME/atlas"
+            href="https://github.com/AviranLevi/atlas"
             target="_blank"
             rel="noopener noreferrer"
             className={LINK_CLASS}
@@ -34,7 +34,7 @@ export function SystemTab() {
             GitHub
           </a>
           <a
-            href="https://github.com/YOUR_USERNAME/atlas#readme"
+            href="https://github.com/AviranLevi/atlas#readme"
             target="_blank"
             rel="noopener noreferrer"
             className={LINK_CLASS}

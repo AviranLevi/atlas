@@ -7,9 +7,9 @@
   "description": "AI agent management platform for orchestrating coding agents, tracking tasks, and managing project knowledge",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/atlas.git"
+    "url": "https://github.com/AviranLevi/atlas.git"
   },
-  "homepage": "https://github.com/YOUR_USERNAME/atlas#readme",
+  "homepage": "https://github.com/AviranLevi/atlas#readme",
   "scripts": {
     "dev": "pnpm --filter @atlas/shared build && concurrently -n shared,server,client -c yellow,blue,green \"pnpm --filter @atlas/shared dev\" \"pnpm --filter @atlas/server dev\" \"pnpm --filter @atlas/client dev\"",
     "dev:server": "pnpm --filter @atlas/server dev",

@@ -1,6 +1,6 @@
 # Atlas
 
-[![CI](https://github.com/YOUR_USERNAME/atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/atlas/actions/workflows/ci.yml)
+[![CI](https://github.com/AviranLevi/atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/AviranLevi/atlas/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 AI agent management platform for orchestrating coding agents, tracking tasks, and managing project knowledge.
@@ -41,7 +41,7 @@ See `MEMORIES.md` for detailed architecture documentation.
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/atlas.git
+git clone https://github.com/AviranLevi/atlas.git
 cd atlas
 nvm use           # switches to Node 24
 pnpm install      # installs all workspace dependencies

@@ -10,7 +10,7 @@ Thanks for your interest in contributing to Atlas! This guide will help you get 
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/atlas.git
+git clone https://github.com/AviranLevi/atlas.git
 cd atlas
 nvm use
 pnpm install
