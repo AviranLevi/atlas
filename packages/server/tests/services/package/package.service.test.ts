@@ -1,126 +1,38 @@
 // External
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // Shared
-import type { Agent, AgentProvider, Rule, Skill } from '@atlas/shared';
 import { AtlasPackageSchema } from '@atlas/shared';
 
-vi.mock('../index.js', () => ({
-  agentsService: {
-    list: vi.fn(),
-    getById: vi.fn(),
-    getDetail: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    attachSkill: vi.fn(),
-    attachRule: vi.fn(),
-  },
-  skillsService: {
-    list: vi.fn(),
-    getById: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-  },
-  rulesService: {
-    list: vi.fn(),
-    getById: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-  },
-  agentProvidersService: {
-    list: vi.fn(),
-    getById: vi.fn(),
-  },
-}));
+// SUT
+import { agentProvidersService, agentsService, rulesService, skillsService } from '../../../src/services/index.js';
+import { PackageService } from '../../../src/services/package/package.service.js';
 
-vi.mock('../../lib/logger.js', () => ({
-  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-}));
+// Factories & Constants
+import { makeAgent, makeProvider, makeRule, makeSkill } from '../../factories/index.js';
+import { PKG_DEFAULTS } from '../../constants/index.js';
 
-vi.mock('../../lib/errors.js', () => ({
-  AppError: class AppError extends Error {
-    constructor(message: string, opts?: { cause?: unknown }) {
-      super(message);
-      this.cause = opts?.cause;
-    }
-  },
-}));
+// Module mocks (test-specific)
+vi.mock('../../../src/services/index.js', async () => {
+  const { mockAgentsService } = await import('../../mocks/agents.service.mock.js');
+  const { mockSkillsService } = await import('../../mocks/skills.service.mock.js');
+  const { mockRulesService } = await import('../../mocks/rules.service.mock.js');
+  const { mockProvidersService } = await import('../../mocks/agent-providers.service.mock.js');
+  return {
+    agentsService: mockAgentsService,
+    skillsService: mockSkillsService,
+    rulesService: mockRulesService,
+    agentProvidersService: mockProvidersService,
+  };
+});
 
-// Services
-import { agentProvidersService, agentsService, rulesService, skillsService } from '../index.js';
-import { PackageService } from './package.service.js';
-
+// Typed wrappers
 const mAgents = vi.mocked(agentsService);
 const mSkills = vi.mocked(skillsService);
 const mRules = vi.mocked(rulesService);
 const mProviders = vi.mocked(agentProvidersService);
 
 const svc = new PackageService();
-
-const TS = '2025-01-01T00:00:00.000Z';
-const PKG_DEFAULTS = { description: '', author: '', tags: [] as string[] };
-
-function makeAgent(overrides: Partial<Agent> = {}): Agent {
-  return {
-    id: 'agent-1',
-    name: 'Test Agent',
-    description: 'desc',
-    personality: 'friendly',
-    unbreakableRules: 'be safe',
-    providerId: 'prov-1',
-    defaultModel: 'claude-sonnet',
-    createdAt: TS,
-    updatedAt: TS,
-    ...overrides,
-  };
-}
-
-function makeSkill(overrides: Partial<Skill> = {}): Skill {
-  return {
-    id: 'skill-1',
-    name: 'Test Skill',
-    type: 'Coding',
-    steps: 'step 1\nstep 2',
-    inputFormat: 'markdown',
-    outputFormat: 'code',
-    projectId: null,
-    createdAt: TS,
-    updatedAt: TS,
-    ...overrides,
-  };
-}
-
-function makeRule(overrides: Partial<Rule> = {}): Rule {
-  return {
-    id: 'rule-1',
-    name: 'Test Rule',
-    type: 'General',
-    tags: ['ts'],
-    content: 'Always use TypeScript',
-    projectId: null,
-    createdAt: TS,
-    updatedAt: TS,
-    ...overrides,
-  };
-}
-
-function makeProvider(overrides: Partial<AgentProvider> = {}): AgentProvider {
-  return {
-    id: 'prov-1',
-    name: 'My Anthropic',
-    type: 'anthropic',
-    apiKey: 'sk-xxx',
-    baseUrl: null,
-    modelName: 'claude-sonnet-4-20250514',
-    createdAt: TS,
-    updatedAt: TS,
-    ...overrides,
-  };
-}
-
-beforeEach(() => {
-  vi.clearAllMocks();
-});
 
 describe('PackageService', () => {
   describe('exportAgent', () => {

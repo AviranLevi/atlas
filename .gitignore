@@ -27,3 +27,4 @@ packages/shared/src/**/*.d.ts.map
 .claude-plugins/
 CLAUDE.md
 packages/*/CLAUDE.md
+.cursor/
