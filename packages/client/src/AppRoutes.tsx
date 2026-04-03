@@ -12,7 +12,7 @@ import { ProjectDetailPage } from '@/pages/project-detail/ProjectDetailPage';
 import { ProjectsPage } from '@/pages/projects/ProjectsPage';
 import { RuleDetailPage } from '@/pages/rule-detail/RuleDetailPage';
 import { RulesPage } from '@/pages/rules/RulesPage';
-import { SettingsPage } from '@/pages/settings/SettingsPage';
+import { SettingsPage } from '@/pages/settings/settings.page';
 import { SkillDetailPage } from '@/pages/skill-detail/SkillDetailPage';
 import { SkillsPage } from '@/pages/skills/SkillsPage';
 import { UsagePage } from '@/pages/usage/UsagePage';

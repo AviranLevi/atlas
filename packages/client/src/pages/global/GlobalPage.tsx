@@ -15,8 +15,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { DispatchRulesCard } from '@/pages/settings/DispatchRulesCard';
-import { GlobalInstructionsCard } from '@/pages/settings/GlobalInstructionsCard';
+import { DispatchRulesCard } from '@/pages/settings/components/DispatchRulesCard';
+import { GlobalInstructionsCard } from '@/pages/settings/components/GlobalInstructionsCard';
 
 // Hooks
 import { useAgents } from '@/hooks/use-agents.hook';
@@ -32,10 +32,10 @@ import { useSkills } from '@/hooks/use-skills.hook';
 
 // Types
 import type { DispatchRule } from '@atlas/shared';
-import type { RuleForm } from '@/pages/settings/settings-page.types';
+import type { RuleForm } from '@/pages/settings/settings.types';
 
 // Constants
-import { NONE_SKILL_VALUE, emptyRuleForm } from '@/pages/settings/settings-page.constants';
+import { NONE_SKILL_VALUE, emptyRuleForm } from '@/pages/settings/settings.constants';
 
 const VALID_TABS = ['general', 'dispatch-rules'] as const;
 type GlobalTab = (typeof VALID_TABS)[number];

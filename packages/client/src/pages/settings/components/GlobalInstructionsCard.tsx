@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 
 // Types
-import type { GlobalInstructionsCardProps } from './settings-page.types';
+import type { GlobalInstructionsCardProps } from '../settings.types';
 
 export function GlobalInstructionsCard({
   instructions,

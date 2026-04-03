@@ -4,11 +4,11 @@ import { useSearchParams } from 'react-router-dom';
 
 // Components
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { AppearanceTab } from './AppearanceTab';
-import { DefaultWorkspaceTab } from './DefaultWorkspaceTab';
-import { IntegrationsTab } from './IntegrationsTab';
-import { McpTab } from './McpTab';
-import { SystemTab } from './SystemTab';
+import { AppearanceTab } from './components/AppearanceTab';
+import { DefaultWorkspaceTab } from './components/DefaultWorkspaceTab';
+import { IntegrationsTab } from './components/IntegrationsTab';
+import { McpTab } from './components/McpTab';
+import { SystemTab } from './components/SystemTab';
 
 const VALID_TABS = ['appearance', 'workspace', 'mcp', 'integrations', 'system'] as const;
 

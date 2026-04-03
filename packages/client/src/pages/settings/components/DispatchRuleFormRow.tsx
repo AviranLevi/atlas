@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Types
-import type { DispatchRuleFormRowProps } from './settings-page.types';
+import type { DispatchRuleFormRowProps } from '../settings.types';
 
 // Constants
-import { NONE_SKILL_VALUE } from './settings-page.constants';
+import { NONE_SKILL_VALUE } from '../settings.constants';
 
 /** Inline form row used for both creating and editing dispatch rules. */
 export function DispatchRuleFormRow({

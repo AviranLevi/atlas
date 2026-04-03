@@ -1,5 +1,5 @@
 // Types
-import type { RuleForm } from './settings-page.types';
+import type { RuleForm } from './settings.types';
 
 export const NONE_SKILL_VALUE = '__none__';
 

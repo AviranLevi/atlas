@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { DispatchRuleFormRow } from './DispatchRuleFormRow';
 
 // Types
-import type { DispatchRulesCardProps } from './settings-page.types';
+import type { DispatchRulesCardProps } from '../settings.types';
 
 export function DispatchRulesCard({
   rules,
