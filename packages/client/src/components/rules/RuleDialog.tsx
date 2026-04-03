@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,18 +14,20 @@ import { useProjects } from '@/hooks/use-projects.hook';
 import { useCreateRule } from '@/hooks/use-rules.hook';
 
 // Types
-import type { Rule, RuleType } from '@atlas/shared';
+import type { Rule } from '@atlas/shared';
 import type { RuleDialogProps } from './rules.types';
 
 // Constants
 import { NONE, RULE_TYPES } from './rules.constants';
+
+const typeOptions = RULE_TYPES.map((t) => ({ value: t, label: t }));
 
 export function RuleDialog({ open, onOpenChange, onCreated }: RuleDialogProps) {
   const createRule = useCreateRule();
   const { data: projects = [] } = useProjects();
 
   const [name, setName] = useState('');
-  const [type, setType] = useState<RuleType>('General');
+  const [type, setType] = useState('General');
   const [tagsStr, setTagsStr] = useState('');
   const [projectId, setProjectId] = useState<string>(NONE);
 
@@ -84,19 +87,15 @@ export function RuleDialog({ open, onOpenChange, onCreated }: RuleDialogProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
-            <Select value={type} onValueChange={(v) => setType(v as RuleType)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {RULE_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Type</Label>
+            <Combobox
+              options={typeOptions}
+              value={type}
+              onValueChange={setType}
+              placeholder="Select type"
+              searchPlaceholder="Search or create type..."
+              allowCustom
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="projectScope">Project Scope</Label>

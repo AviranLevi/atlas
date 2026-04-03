@@ -1,5 +1,5 @@
 // Shared
-import type { CreateRule, Rule, UpdateRule } from '@atlas/shared';
+import type { AiConfig, CreateRule, Rule, UpdateRule } from '@atlas/shared';
 
 // Repositories
 import { rulesRepository } from '../../db/repositories/index.js';
@@ -84,7 +84,7 @@ export class RulesService {
   /** Bulk-imports detected AI config files as rules linked to a project. */
   async bulkImportRules(
     projectId: string,
-    items: Array<{ name: string; content: string; source: string; filePath: string }>,
+    items: AiConfig[],
   ): Promise<{ imported: number; ids: string[] }> {
     const FUNCTION_NAME = 'bulkImportRules';
     try {
@@ -92,8 +92,8 @@ export class RulesService {
       for (const item of items) {
         const rule = this.repo.insert({
           name: item.name,
-          type: item.source,
-          tags: item.filePath,
+          type: item.type ?? 'General',
+          tags: [item.source, item.filePath],
           content: item.content,
           projectId,
         });

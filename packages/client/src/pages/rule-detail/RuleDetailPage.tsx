@@ -7,6 +7,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Combobox } from '@/components/ui/combobox';
 import { EditableCard } from '@/components/ui/editable-card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,9 +19,6 @@ import { useUpdateRule, useDeleteRule } from '@/hooks/use-rules.hook';
 
 // Lib
 import { timeAgo } from '@/lib/format';
-
-// Types
-import type { RuleType } from '@atlas/shared';
 
 // Constants
 import { RULE_TYPES, NONE } from '@/components/rules/rules.constants';
@@ -172,21 +170,15 @@ export function RuleDetailPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
           <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Type</label>
-          <Select
+          <Combobox
+            options={RULE_TYPES.map((t) => ({ value: t, label: t }))}
             value={rule.type}
-            onValueChange={(v) => updateRule.mutate({ id: rule.id, data: { type: v as RuleType } })}
-          >
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RULE_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onValueChange={(v) => updateRule.mutate({ id: rule.id, data: { type: v } })}
+            placeholder="Select type"
+            searchPlaceholder="Search or create type..."
+            className="h-8 text-xs"
+            allowCustom
+          />
         </Card>
 
         <Card className="p-4">

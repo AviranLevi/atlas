@@ -8,6 +8,7 @@ export const AiConfigSchema = z.object({
   filePath: z.string(),
   name: z.string(),
   content: z.string(),
+  type: z.string().min(1).optional(),
 });
 
 export const CreateBranchSchema = z.object({

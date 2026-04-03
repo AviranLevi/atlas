@@ -2,9 +2,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-// Shared
-import { RuleTypeEnum } from '@atlas/shared';
-
 // Services
 import { rulesService } from '../services/index.js';
 
@@ -14,7 +11,7 @@ export function registerRuleTools(server: McpServer): void {
     {
       description: 'List coding rules and conventions, optionally filtered by type',
       inputSchema: z.object({
-        type: RuleTypeEnum.optional().describe('Filter by rule type'),
+        type: z.string().optional().describe('Filter by rule type (e.g. General, Backend, Frontend)'),
       }),
     },
     async (filters) => {

@@ -24,6 +24,7 @@ interface ComboboxProps {
   emptyText?: string;
   disabled?: boolean;
   className?: string;
+  allowCustom?: boolean;
 }
 
 export function Combobox({
@@ -35,10 +36,15 @@ export function Combobox({
   emptyText = 'No results found.',
   disabled,
   className,
+  allowCustom = false,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
 
-  const selectedLabel = options.find((o) => o.value === value)?.label;
+  const selectedLabel = options.find((o) => o.value === value)?.label ?? (value || undefined);
+
+  const showCustomOption =
+    allowCustom && search.trim() !== '' && !options.some((o) => o.label.toLowerCase() === search.trim().toLowerCase());
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,26 +62,41 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+        <Command shouldFilter={!allowCustom}>
+          <CommandInput placeholder={searchPlaceholder} value={search} onValueChange={setSearch} />
           <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
+            {!showCustomOption && <CommandEmpty>{emptyText}</CommandEmpty>}
             <CommandGroup>
-              {options.map((option) => (
+              {options
+                .filter((o) => !allowCustom || !search || o.label.toLowerCase().includes(search.trim().toLowerCase()))
+                .map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.label}
+                    onSelect={() => {
+                      onValueChange(option.value === value ? '' : option.value);
+                      setSearch('');
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn('mr-2 h-3.5 w-3.5 shrink-0', value === option.value ? 'opacity-100' : 'opacity-0')}
+                    />
+                    <span className="truncate">{option.label}</span>
+                  </CommandItem>
+                ))}
+              {showCustomOption && (
                 <CommandItem
-                  key={option.value}
-                  value={option.label}
+                  value={search.trim()}
                   onSelect={() => {
-                    onValueChange(option.value === value ? '' : option.value);
+                    onValueChange(search.trim());
+                    setSearch('');
                     setOpen(false);
                   }}
                 >
-                  <Check
-                    className={cn('mr-2 h-3.5 w-3.5 shrink-0', value === option.value ? 'opacity-100' : 'opacity-0')}
-                  />
-                  <span className="truncate">{option.label}</span>
+                  <span className="truncate">Create &ldquo;{search.trim()}&rdquo;</span>
                 </CommandItem>
-              ))}
+              )}
             </CommandGroup>
           </CommandList>
         </Command>
