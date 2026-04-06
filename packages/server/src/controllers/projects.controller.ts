@@ -5,7 +5,13 @@ import type { Context } from 'hono';
 import type { AssignAgent, CreateBranch, CreateProject, ImportRules, UpdateProject } from '@atlas/shared';
 
 // Services
-import { agentsService, briefGeneratorService, projectsService, rulesService } from '../services/index.js';
+import {
+  agentsService,
+  briefGeneratorService,
+  designContextGeneratorService,
+  projectsService,
+  rulesService,
+} from '../services/index.js';
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
@@ -74,6 +80,12 @@ export async function scanProject(c: Context) {
 export async function generateProjectBrief(c: Context) {
   await briefGeneratorService.generateAndSave(c.req.param('id')!);
   const project = await projectsService.getById(c.req.param('id')!);
+  return c.json(project);
+}
+
+/** Generates a DESIGN.md for the project using AI and saves it as the design context. */
+export async function generateDesignContext(c: Context) {
+  const project = await designContextGeneratorService.generateAndSave(c.req.param('id')!);
   return c.json(project);
 }
 

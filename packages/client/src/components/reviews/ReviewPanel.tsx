@@ -81,7 +81,8 @@ export function ReviewPanel({ taskId }: ReviewPanelProps) {
           <div className="space-y-1">
             {review.checklist.map((item: ChecklistItem, i: number) => (
               <button
-                key={i}
+                type="button"
+                key={item.item}
                 className={cn(
                   'flex items-start gap-2 w-full text-left text-sm py-0.5',
                   isDecided ? 'cursor-default' : 'hover:text-foreground cursor-pointer',

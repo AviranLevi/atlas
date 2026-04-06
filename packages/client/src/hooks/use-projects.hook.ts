@@ -127,6 +127,15 @@ export function useGenerateBrief() {
   });
 }
 
+/** Generates a DESIGN.md for the project using AI and saves it as the design context. */
+export function useGenerateDesignContext() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.post<Project>(`/projects/${id}/generate-design-context`, {}),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+  });
+}
+
 const FILESYSTEM_KEY = ['filesystem'] as const;
 
 /** Scans a local folder and returns auto-detected project metadata. */

@@ -85,7 +85,7 @@ export function RuleDetailPage() {
   }
 
   const { rule, agents } = detail;
-  const projectName = rule.projectId ? projects.find((p) => p.id === rule.projectId)?.name : null;
+  const _projectName = rule.projectId ? projects.find((p) => p.id === rule.projectId)?.name : null;
 
   const handleDelete = () => {
     if (confirm('Delete this rule? This cannot be undone.')) {
@@ -169,7 +169,7 @@ export function RuleDetailPage() {
       {/* Metadata row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-4">
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Type</label>
+          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Type</span>
           <Combobox
             options={RULE_TYPES.map((t) => ({ value: t, label: t }))}
             value={rule.type}
@@ -182,7 +182,7 @@ export function RuleDetailPage() {
         </Card>
 
         <Card className="p-4">
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Project Scope</label>
+          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Project Scope</span>
           <Select
             value={rule.projectId ?? NONE}
             onValueChange={(v) => updateRule.mutate({ id: rule.id, data: { projectId: v === NONE ? null : v } })}
@@ -208,7 +208,7 @@ export function RuleDetailPage() {
 
         <Card className="col-span-full p-4 sm:col-span-2">
           <div className="mb-1.5 flex items-center justify-between">
-            <label className="text-xs font-medium text-muted-foreground">Tags</label>
+            <span className="text-xs font-medium text-muted-foreground">Tags</span>
             {!editingTags && (
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startEditTags}>
                 <Pencil className="h-3 w-3" />

@@ -68,6 +68,7 @@ export class WorkspacesRepository {
         .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
         .leftJoin(projects, eq(workspaces.projectId, projects.id))
         .all();
+      // biome-ignore lint/suspicious/noExplicitAny: Drizzle join result type requires casting
       return rows.map((r) => this.enrichRow(r as any));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -86,6 +87,7 @@ export class WorkspacesRepository {
         .leftJoin(projects, eq(workspaces.projectId, projects.id))
         .where(eq(workspaces.status, status))
         .all();
+      // biome-ignore lint/suspicious/noExplicitAny: Drizzle join result type requires casting
       return rows.map((r) => this.enrichRow(r as any));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -118,6 +120,7 @@ export class WorkspacesRepository {
         .where(eq(workspaces.id, id))
         .get();
       if (!row) return null;
+      // biome-ignore lint/suspicious/noExplicitAny: Drizzle join result type requires casting
       return this.enrichRow(row as any);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

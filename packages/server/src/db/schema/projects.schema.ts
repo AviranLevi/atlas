@@ -15,6 +15,7 @@ export const projects = sqliteTable('projects', {
   defaultBranch: text('default_branch'),
   scanData: text('scan_data'), // JSON blob of ProjectScanData
   projectBrief: text('project_brief'), // Auto-generated compressed context for agents
+  designContext: text('design_context'), // Human-authored design system context (DESIGN.md) for UI agents
   color: text('color'),
   mission: text('mission'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),

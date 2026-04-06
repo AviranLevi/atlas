@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { ProjectAgentsSectionProps } from './project-detail-page.types';
 
 export function ProjectAgentsSection({
-  projectId,
+  projectId: _projectId,
   projectAgents,
   unassignedAgents,
   assignPopoverOpen,

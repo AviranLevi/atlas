@@ -49,6 +49,9 @@ export const priorityBadgeClass: Record<string, string> = {
   Low: 'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
 };
 
+/** Project types that have a UI surface and should show the Design Context section. */
+export const UI_PROJECT_TYPES = new Set(['frontend', 'fullstack', 'mobile']);
+
 export const SOURCE_LABELS: Record<string, string> = {
   cursor: 'Cursor',
   claude: 'Claude Code',

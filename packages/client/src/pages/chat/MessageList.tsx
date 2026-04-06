@@ -28,7 +28,7 @@ export function MessageList({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingText, streamingToolCalls, isStreaming, pendingUserMessage]);
+  }, []);
 
   const lastMessageIsFromUser = messages.length > 0 && messages[messages.length - 1]?.role === 'user';
   const showPendingMessage = pendingUserMessage && !lastMessageIsFromUser;

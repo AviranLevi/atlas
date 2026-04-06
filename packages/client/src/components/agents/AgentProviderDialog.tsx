@@ -47,7 +47,7 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
       setModelName('');
     }
     setTestResult(null);
-  }, [provider, open]);
+  }, [provider]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,7 +2,7 @@
 import { LineNum, CommentGutter, InlineCommentForm, InlineCommentBubble, HighlightedLine } from '../components';
 
 // Hooks
-import { useAddDiffComment, useEditDiffComment, useRemoveDiffComment } from '@/hooks/use-workspaces.hook';
+import type { useAddDiffComment, useEditDiffComment, useRemoveDiffComment } from '@/hooks/use-workspaces.hook';
 
 // Lib
 import { cn } from '@/lib/utils';

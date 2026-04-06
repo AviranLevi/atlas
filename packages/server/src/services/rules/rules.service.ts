@@ -82,10 +82,7 @@ export class RulesService {
   }
 
   /** Bulk-imports detected AI config files as rules linked to a project. */
-  async bulkImportRules(
-    projectId: string,
-    items: AiConfig[],
-  ): Promise<{ imported: number; ids: string[] }> {
+  async bulkImportRules(projectId: string, items: AiConfig[]): Promise<{ imported: number; ids: string[] }> {
     const FUNCTION_NAME = 'bulkImportRules';
     try {
       const ids: string[] = [];

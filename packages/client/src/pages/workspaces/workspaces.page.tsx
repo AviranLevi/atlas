@@ -69,6 +69,7 @@ export function WorkspacesPage() {
         {filterTabs.map((tab) => (
           <button
             key={tab.key}
+            type="button"
             onClick={() => setFilter(tab.key)}
             className={`-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
               filter === tab.key

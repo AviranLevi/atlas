@@ -38,7 +38,7 @@ export function AgentDialog({ open, onOpenChange, agent, onCreated }: AgentDialo
       setDescription('');
       setProviderId(NONE);
     }
-  }, [agent, open]);
+  }, [agent]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

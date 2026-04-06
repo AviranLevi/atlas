@@ -6,7 +6,7 @@ import type { Context } from 'hono';
  * Used in controllers where zValidator middleware has already validated the input.
  */
 export function getValidatedBody<T>(c: Context): T {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- zValidator augments context at runtime
+  // biome-ignore lint/suspicious/noExplicitAny: zValidator augments the request object at runtime
   return (c.req as any).valid('json') as T;
 }
 
@@ -15,6 +15,6 @@ export function getValidatedBody<T>(c: Context): T {
  * Used in controllers where zValidator middleware has already validated the input.
  */
 export function getValidatedQuery<T>(c: Context): T {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- zValidator augments context at runtime
+  // biome-ignore lint/suspicious/noExplicitAny: zValidator augments the request object at runtime
   return (c.req as any).valid('query') as T;
 }

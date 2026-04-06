@@ -145,6 +145,11 @@ export class PromptBuilderService {
         sections.push(`## Relevant Context (from Supermemory)\n\n${smList}`);
       }
 
+      // ─── Design context (human-authored design system for UI tasks) ────
+      if (project.designContext) {
+        sections.push(`## Design Context\n\n${project.designContext}`);
+      }
+
       // ─── Project context (brief-based or fallback) ─────────────
 
       if (project.projectBrief) {

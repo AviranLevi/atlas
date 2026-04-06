@@ -109,7 +109,7 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
       prevLengthRef.current = 0;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isDark, text]);
 
   useEffect(() => {
     const term = termRef.current;

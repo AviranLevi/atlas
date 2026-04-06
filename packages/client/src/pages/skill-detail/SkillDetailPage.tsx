@@ -165,7 +165,7 @@ export function SkillDetailPage() {
       {/* Metadata row */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="p-4">
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Type</label>
+          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Type</span>
           <Select
             value={skill.type ?? undefined}
             onValueChange={(v) => updateSkill.mutate({ id: skill.id, data: { type: v as SkillType } })}
@@ -184,7 +184,7 @@ export function SkillDetailPage() {
         </Card>
 
         <Card className="p-4">
-          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Project Scope</label>
+          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Project Scope</span>
           <Select
             value={skill.projectId ?? NONE}
             onValueChange={(v) => updateSkill.mutate({ id: skill.id, data: { projectId: v === NONE ? null : v } })}

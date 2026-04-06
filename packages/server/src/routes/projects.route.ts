@@ -17,6 +17,7 @@ import {
   createProject,
   createProjectBranch,
   deleteProject,
+  generateDesignContext,
   generateProjectBrief,
   getProject,
   getProjectBranches,
@@ -39,6 +40,7 @@ export const projectsRoute = new Hono()
   .post('/', zValidator('json', CreateProjectSchema), createProject)
   .post('/:id/scan', scanProject)
   .post('/:id/generate-brief', generateProjectBrief)
+  .post('/:id/generate-design-context', generateDesignContext)
   .put('/:id', zValidator('json', UpdateProjectSchema), updateProject)
   .delete('/:id', deleteProject)
   .get('/:id/agents', listProjectAgents)

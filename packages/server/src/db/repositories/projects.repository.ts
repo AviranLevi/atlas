@@ -76,9 +76,9 @@ export class ProjectsRepository {
     const FUNCTION_NAME = 'insert';
     try {
       const serialized = serializeScanData(data as Record<string, unknown>);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = this.db
         .insert(projects)
+        // biome-ignore lint/suspicious/noExplicitAny: Drizzle insert requires casting serialized scan data
         .values(serialized as any)
         .returning()
         .get();

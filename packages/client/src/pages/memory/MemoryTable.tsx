@@ -110,8 +110,9 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
 
         return (
           <div key={mem.id} className="border-b last:border-0">
-            <div
-              className="grid grid-cols-[24px_1fr_auto_auto_auto_auto_auto_auto] items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
+            <button
+              type="button"
+              className="grid w-full grid-cols-[24px_1fr_auto_auto_auto_auto_auto_auto] items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors text-left"
               onClick={() => toggleExpand(mem.id)}
             >
               <div className="text-muted-foreground">
@@ -134,18 +135,21 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
               </span>
               <span className="text-xs text-muted-foreground truncate max-w-[100px]">{agentName}</span>
               <span className="text-xs text-muted-foreground whitespace-nowrap">{formatLastUsed(mem.lastUsed)}</span>
-              <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
-                  onClick={() => onDelete(mem.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(mem.id);
+                  }}
                   aria-label="Delete memory"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
-            </div>
+            </button>
 
             {isExpanded && <MemoryExpandedRow memory={mem} projectMap={projectMap} agentMap={agentMap} />}
           </div>

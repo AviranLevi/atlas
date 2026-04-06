@@ -24,7 +24,7 @@ type UseTaskFormParams = Pick<
 
 export function useTaskForm({
   task,
-  open,
+  open: _open,
   defaultProjectId,
   defaultStatus,
   followUpContext,
@@ -75,7 +75,7 @@ export function useTaskForm({
       setPhaseId(NONE_VALUE);
       setTagsInput(followUpContext ? 'follow-up' : '');
     }
-  }, [task, open, defaultProjectId, defaultStatus, projects, followUpContext]);
+  }, [task, defaultProjectId, defaultStatus, projects, followUpContext]);
 
   const handleProjectChange = useCallback((id: string) => {
     setProjectId(id);

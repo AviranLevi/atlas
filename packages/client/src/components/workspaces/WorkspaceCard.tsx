@@ -48,7 +48,7 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
                     className="h-7 w-7 text-destructive hover:text-destructive"
                     asChild
                   >
-                    <button onClick={() => stopWork.mutate(workspace.id)} disabled={stopWork.isPending}>
+                    <button type="button" onClick={() => stopWork.mutate(workspace.id)} disabled={stopWork.isPending}>
                       <Square className="h-3.5 w-3.5" />
                     </button>
                   </Button>
@@ -60,7 +60,7 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                    <button onClick={() => cleanup.mutate(workspace.id)} disabled={cleanup.isPending}>
+                    <button type="button" onClick={() => cleanup.mutate(workspace.id)} disabled={cleanup.isPending}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </Button>

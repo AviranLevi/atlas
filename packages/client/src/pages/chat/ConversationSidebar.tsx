@@ -86,11 +86,12 @@ export function ConversationSidebar({
           </div>
         ) : (
           filteredConversations.map((conv) => (
-            <div
+            <button
               key={conv.id}
+              type="button"
               onClick={() => onSelect(conv.id)}
               className={cn(
-                'group flex cursor-pointer items-center gap-2 px-3 py-2.5 transition-colors hover:bg-muted/60',
+                'group flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 transition-colors hover:bg-muted/60',
                 activeId === conv.id && 'bg-muted',
               )}
             >
@@ -110,7 +111,7 @@ export function ConversationSidebar({
               >
                 <Trash2 className="h-3 w-3" />
               </button>
-            </div>
+            </button>
           ))
         )}
       </div>
@@ -151,7 +152,7 @@ export function ConversationSidebar({
         {backendType === 'api' ? (
           <>
             <div className="space-y-1">
-              <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Provider</label>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Provider</span>
               <Select value={selectedProviderId} onValueChange={onProviderChange}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Select provider" />
@@ -167,10 +168,10 @@ export function ConversationSidebar({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 Model
                 {modelsLoading && <Loader2 className="inline ml-1 h-3 w-3 animate-spin" />}
-              </label>
+              </span>
               <Combobox
                 options={models}
                 value={selectedModel}
@@ -186,25 +187,21 @@ export function ConversationSidebar({
             </div>
           </>
         ) : (
-          <>
-            <div className="space-y-1">
-              <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                CLI Agent
-              </label>
-              <Select value={selectedExecutorId} onValueChange={onExecutorChange}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Select CLI" />
-                </SelectTrigger>
-                <SelectContent>
-                  {installedExecutors.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
+          <div className="space-y-1">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">CLI Agent</span>
+            <Select value={selectedExecutorId} onValueChange={onExecutorChange}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Select CLI" />
+              </SelectTrigger>
+              <SelectContent>
+                {installedExecutors.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
     </div>

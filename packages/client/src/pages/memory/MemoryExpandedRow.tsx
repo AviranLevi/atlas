@@ -21,7 +21,7 @@ import { MEMORY_TYPES, MEMORY_SCOPES } from '@/components/memory/memory.constant
 
 const NONE = '__none__';
 
-export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpandedRowProps) {
+export function MemoryExpandedRow({ memory, projectMap: _projectMap, agentMap }: MemoryExpandedRowProps) {
   const updateMemory = useUpdateMemory();
   const { data: projects = [] } = useProjects();
 
@@ -58,7 +58,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
     <div className="space-y-4 px-4 pb-4 pl-11">
       {/* Name */}
       <div>
-        <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Name</label>
+        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Name</span>
         {editingName ? (
           <div className="flex items-center gap-2">
             <Input
@@ -92,7 +92,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
 
       {/* Content */}
       <div>
-        <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Content</label>
+        <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Content</span>
         {editingContent ? (
           <div className="space-y-2">
             <Textarea
@@ -132,7 +132,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
       {/* Metadata row */}
       <div className="grid gap-3 sm:grid-cols-3">
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Type</label>
+          <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Type</span>
           <Select
             value={memory.type ?? undefined}
             onValueChange={(v) => updateMemory.mutate({ id: memory.id, data: { type: v as MemoryType } })}
@@ -151,7 +151,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Scope</label>
+          <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Scope</span>
           <Select
             value={memory.scope ?? undefined}
             onValueChange={(v) => updateMemory.mutate({ id: memory.id, data: { scope: v as MemoryScope } })}
@@ -170,7 +170,7 @@ export function MemoryExpandedRow({ memory, projectMap, agentMap }: MemoryExpand
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Project</label>
+          <span className="mb-1 block text-[11px] font-medium text-muted-foreground">Project</span>
           <Select
             value={memory.projectId ?? NONE}
             onValueChange={(v) => updateMemory.mutate({ id: memory.id, data: { projectId: v === NONE ? null : v } })}

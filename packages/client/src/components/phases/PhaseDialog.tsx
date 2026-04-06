@@ -39,7 +39,7 @@ export function PhaseDialog({ open, onOpenChange, projectId, phase }: PhaseDialo
       setDescription('');
       setStatus('planning');
     }
-  }, [phase, open]);
+  }, [phase]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

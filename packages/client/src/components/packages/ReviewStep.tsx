@@ -44,9 +44,9 @@ export function ReviewStep({ pkg, preview, providers, resolutions, onResolutions
         />
       )}
 
-      {preview.skills.map((s, i) => (
+      {preview.skills.map((s, _i) => (
         <ConflictItem
-          key={`skill-${i}`}
+          key={(s.data as { name: string }).name}
           label="Skill"
           name={(s.data as { name: string }).name}
           conflict={s.conflict}
@@ -60,9 +60,9 @@ export function ReviewStep({ pkg, preview, providers, resolutions, onResolutions
         />
       ))}
 
-      {preview.rules.map((r, i) => (
+      {preview.rules.map((r, _i) => (
         <ConflictItem
-          key={`rule-${i}`}
+          key={(r.data as { name: string }).name}
           label="Rule"
           name={(r.data as { name: string }).name}
           conflict={r.conflict}

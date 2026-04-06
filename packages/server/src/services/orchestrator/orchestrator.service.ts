@@ -444,6 +444,7 @@ export class OrchestratorService {
               output,
               completedAt: new Date().toISOString(),
               diffComments: JSON.stringify([]),
+              // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
             } as any);
             tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
               logger.warn(`${FILE_PATH} :: requestChanges - failed to move task to In Review`, e);
@@ -491,6 +492,7 @@ export class OrchestratorService {
         pid: result.process.pid ?? null,
         startedAt: new Date().toISOString(),
         completedAt: null,
+        // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
       } as any);
 
       await tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_PROGRESS });
@@ -785,7 +787,12 @@ export class OrchestratorService {
         .filter(Boolean)
         .join('\n');
 
-      const { resolvedModel, spawnOpts } = await this.resolveSpawnOptions(executor, task.agentId, undefined, undefined);
+      const { resolvedModel: _resolvedModel, spawnOpts } = await this.resolveSpawnOptions(
+        executor,
+        task.agentId,
+        undefined,
+        undefined,
+      );
 
       const cwd = executor.usesProjectRoot
         ? ((await projectsService.getById(workspace.projectId)).localPath ?? workspace.worktreePath)
@@ -851,6 +858,7 @@ export class OrchestratorService {
     existing.push(newComment);
     return workspacesRepository.update(workspaceId, {
       diffComments: JSON.stringify(existing),
+      // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
     } as any);
   }
 
@@ -858,11 +866,13 @@ export class OrchestratorService {
   editDiffComment(workspaceId: string, commentId: string, body: string): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];
+    // biome-ignore lint/suspicious/noExplicitAny: DiffComment type is inferred at runtime from JSON
     const idx = existing.findIndex((c: any) => c.id === commentId);
     if (idx === -1) throw new AppError('Comment not found', { status: 404 });
     existing[idx] = { ...existing[idx], body, updatedAt: new Date().toISOString() };
     return workspacesRepository.update(workspaceId, {
       diffComments: JSON.stringify(existing),
+      // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
     } as any);
   }
 
@@ -870,9 +880,11 @@ export class OrchestratorService {
   removeDiffComment(workspaceId: string, commentId: string): Workspace {
     const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
     const existing = Array.isArray(workspace.diffComments) ? [...workspace.diffComments] : [];
+    // biome-ignore lint/suspicious/noExplicitAny: DiffComment type is inferred at runtime from JSON
     const filtered = existing.filter((c: any) => c.id !== commentId);
     return workspacesRepository.update(workspaceId, {
       diffComments: JSON.stringify(filtered),
+      // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
     } as any);
   }
 

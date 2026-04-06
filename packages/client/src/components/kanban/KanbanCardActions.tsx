@@ -19,7 +19,13 @@ export function KanbanCardActions({
   activeWorkspaceId,
 }: KanbanCardActionsProps) {
   return (
-    <div className="flex shrink-0 gap-1" onClick={(e) => e.stopPropagation()}>
+    // biome-ignore lint/a11y/noStaticElementInteractions: propagation guard wrapping interactive children, not interactive itself
+    <div
+      className="flex shrink-0 gap-1"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      role="presentation"
+    >
       {activeWorkspaceId && task.status !== TASK_STATUS.IN_REVIEW && (
         <Tooltip>
           <TooltipTrigger asChild>

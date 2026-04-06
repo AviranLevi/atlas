@@ -1,5 +1,5 @@
 // Types
-import type { Project, ProjectScanData, ProjectStatus, Task, Phase, Agent } from '@atlas/shared';
+import type { Project, ProjectScanData, Task, Agent } from '@atlas/shared';
 import type { UseMutationResult } from '@tanstack/react-query';
 
 export type ProjectAgent = Agent & { role: string | null };
@@ -40,7 +40,24 @@ export type ProjectMemoriesSectionProps = {
   memories: Record<string, unknown>[];
 };
 
+export type ProjectDesignContextSectionProps = {
+  project: Project;
+};
+
 export type DetectedRulesSectionProps = {
   projectId: string;
   aiConfigs: NonNullable<ProjectScanData['aiConfigs']>;
+};
+
+export type ProjectScanSectionProps = {
+  project: Project;
+  scanProject: UseMutationResult<unknown, Error, string>;
+};
+
+export type ProjectPhasesSectionProps = {
+  projectId: string;
+};
+
+export type ProjectStatsRowProps = {
+  tasks: Task[];
 };

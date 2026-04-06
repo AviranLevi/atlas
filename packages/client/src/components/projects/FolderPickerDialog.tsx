@@ -88,7 +88,7 @@ export function FolderPickerDialog({ open, onOpenChange, initialPath, onSelect }
 
         {data && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground overflow-x-auto py-1">
-            <button onClick={() => setCurrentPath('/')} className="hover:text-foreground shrink-0">
+            <button type="button" onClick={() => setCurrentPath('/')} className="hover:text-foreground shrink-0">
               /
             </button>
             {pathSegments.map((segment, i) => {
@@ -96,7 +96,11 @@ export function FolderPickerDialog({ open, onOpenChange, initialPath, onSelect }
               return (
                 <span key={segmentPath} className="flex items-center gap-1 shrink-0">
                   <ChevronRight className="h-3 w-3" />
-                  <button onClick={() => setCurrentPath(segmentPath)} className="hover:text-foreground hover:underline">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPath(segmentPath)}
+                    className="hover:text-foreground hover:underline"
+                  >
                     {segment}
                   </button>
                 </span>
@@ -125,6 +129,7 @@ export function FolderPickerDialog({ open, onOpenChange, initialPath, onSelect }
         <div className="flex-1 overflow-y-auto border rounded-md min-h-[200px] max-h-[360px]">
           {data?.parentPath && !filter && (
             <button
+              type="button"
               onClick={handleGoUp}
               className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 border-b text-muted-foreground"
             >
@@ -147,6 +152,7 @@ export function FolderPickerDialog({ open, onOpenChange, initialPath, onSelect }
 
           {filteredDirs.map((dir) => (
             <button
+              type="button"
               key={dir.path}
               onClick={() => handleNavigate(dir.path)}
               className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 border-b last:border-b-0"

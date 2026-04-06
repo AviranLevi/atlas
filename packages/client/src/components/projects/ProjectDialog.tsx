@@ -71,7 +71,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
       setMission('');
       setScanned(false);
     }
-  }, [project, open]);
+  }, [project]);
 
   const doScan = useCallback(
     (folderPath: string) => {

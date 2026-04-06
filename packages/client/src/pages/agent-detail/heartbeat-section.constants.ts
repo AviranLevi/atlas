@@ -38,7 +38,6 @@ export function statusBadgeClass(status: HeartbeatRun['status']): string {
       return 'border-muted-foreground/30 bg-muted text-muted-foreground';
     case 'failed':
       return 'border-destructive/40 bg-destructive/10 text-destructive';
-    case 'triggered':
     default:
       return 'border-muted-foreground/30 bg-muted/50 text-muted-foreground';
   }

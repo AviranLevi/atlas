@@ -17,6 +17,7 @@ export function applySchemaPatches(sqlite: Database.Database): void {
     'ALTER TABLE skills ADD COLUMN project_id TEXT REFERENCES projects(id)',
     'ALTER TABLE resources ADD COLUMN project_id TEXT REFERENCES projects(id)',
     'ALTER TABLE agents ADD COLUMN default_model TEXT',
+    'ALTER TABLE projects ADD COLUMN design_context TEXT',
   ];
 
   for (const sql of patches) {

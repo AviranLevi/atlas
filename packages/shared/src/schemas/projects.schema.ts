@@ -58,6 +58,7 @@ export const ProjectSchema = z.object({
   defaultBranch: z.string().nullable(),
   scanData: ProjectScanDataSchema.nullable(),
   projectBrief: z.string().nullable(),
+  designContext: z.string().nullable(),
   color: z.string().nullable(),
   mission: z.string().max(2000).nullable(),
   createdAt: z.string().datetime(),
@@ -74,6 +75,7 @@ export const CreateProjectSchema = z.object({
   defaultBranch: z.string().nullable().optional(),
   scanData: ProjectScanDataSchema.nullable().optional(),
   projectBrief: z.string().nullable().optional(),
+  designContext: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   mission: z.string().max(2000).nullable().optional(),
 });

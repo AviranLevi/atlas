@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { SplitDiffSide, InlineCommentForm, InlineCommentBubble } from '../components';
 
 // Hooks
-import { useAddDiffComment, useEditDiffComment, useRemoveDiffComment } from '@/hooks/use-workspaces.hook';
+import type { useAddDiffComment, useEditDiffComment, useRemoveDiffComment } from '@/hooks/use-workspaces.hook';
 
 // Lib
 import { buildSplitRows } from '../diff-parser';
@@ -45,7 +45,7 @@ export function SplitDiffView({
   return (
     <div className="bg-muted/30">
       <div>
-        {splitRows.map((row, i) => {
+        {splitRows.map((row) => {
           const leftIdx = row.left?.patchIndex;
           const rightIdx = row.right?.patchIndex;
           const leftComments = leftIdx != null ? (commentsByLine.get(leftIdx) ?? []) : [];
@@ -111,7 +111,7 @@ export function SplitDiffView({
           const hasExtras = hasLeftExtras || hasRightExtras;
 
           return (
-            <div key={i}>
+            <div key={`${leftIdx ?? 'l'}-${rightIdx ?? 'r'}`}>
               <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <SplitDiffSide
                   line={row.left}
