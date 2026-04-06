@@ -26,7 +26,31 @@ export function AgentStatusPanel({ expanded }: AgentStatusPanelProps) {
   const readyCount = runtimes.filter((r) => r.installed && r.authenticated).length;
   const hasUnauthenticated = installed.some((r) => !r.authenticated);
 
-  if (isLoading) return null;
+  if (isLoading) {
+    if (!expanded) {
+      return (
+        <div className="border-t border-sidebar-border p-2">
+          <div className="flex w-9 h-9 items-center justify-center rounded-md text-sidebar-foreground">
+            <RefreshCw className="h-[18px] w-[18px] animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="border-t border-sidebar-border">
+        <div className="flex w-full items-center justify-between px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <span>Agent CLIs</span>
+        </div>
+        <div className="px-1.5 pb-2">
+          <div className="flex items-center justify-center gap-1.5 py-3 text-[10px] text-muted-foreground">
+            <RefreshCw className="h-3 w-3 animate-spin" />
+            <span>Scanning...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!expanded) {
     return (
