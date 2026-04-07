@@ -231,8 +231,9 @@ A single package can bundle an agent with its skills and rules. No IDs, timestam
 | `/agents/:id` | AgentDetailPage | Agent detail with skills, rules, projects, model selector |
 | `/kanban` | KanbanPage | Drag-and-drop board with active workspace indicators |
 | `/workspaces` | WorkspacesPage | Full workspace management with status tabs |
+| `/workspaces/:id` | WorkspaceDetailPage | Individual workspace detail and logs |
 | `/projects` | ProjectsPage | Project cards |
-| `/projects/:id` | ProjectDetailPage | Project detail with phases, tasks |
+| `/projects/:id` | ProjectDetailPage | Project detail with phases, tasks, knowledge graph |
 | `/skills` | SkillsPage | Skills list |
 | `/skills/:id` | SkillDetailPage | Skill detail |
 | `/rules` | RulesPage | Rules list |
@@ -240,13 +241,17 @@ A single package can bundle an agent with its skills and rules. No IDs, timestam
 | `/memory` | MemoryPage | Memory entries with expandable rows |
 | `/chat` | ChatPage | Chat interface with conversation history |
 | `/global` | GlobalPage | Global instructions |
+| `/usage` | UsagePage | Token usage and cost tracking |
 | `/settings` | SettingsPage | MCP connection panel + settings |
 
-### Component Organization
-Each component directory contains:
-- `ComponentName.tsx` — the component
-- `directory.types.ts` — all types for that directory
-- `directory.constants.ts` — constants and config objects
+### Page File Convention
+Each page directory follows the kebab-case naming convention:
+- `page-name.page.tsx` — the page component
+- `page-name.types.ts` — types local to that page
+- `page-name.constants.ts` — constants and config objects
+- `components/` — sub-components used only by that page
+
+Some older pages (e.g. `agent-detail/`, `chat/`, `project-detail/`) still use PascalCase files directly in the folder; these are being migrated incrementally.
 
 ### Key Components
 - `KanbanCard` — shows `ReviewBadge` for "In Review" tasks, pulsing terminal icon for active agents
@@ -331,7 +336,7 @@ packages/
     mcp-http.ts         ← HTTP/SSE MCP server entry
     index.ts            ← Hono app + HTTP server entry
   client/src/
-    pages/              ← 14 page directories
+    pages/              ← 15 page directories (kebab-case .page.tsx convention; some older pages still PascalCase, migrating)
     components/
       agents/           ← AgentDialog, AgentProviderDialog, ProviderTypeBadge
       kanban/           ← KanbanCard, KanbanColumn, TaskDialog

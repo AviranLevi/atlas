@@ -1,21 +1,21 @@
 // React / library
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-// Components
-import { AgentDetailPage } from '@/pages/agent-detail/AgentDetailPage';
-import { AgentsPage } from '@/pages/agents/AgentsPage';
-import { ChatPage } from '@/pages/chat/ChatPage';
-import { GlobalPage } from '@/pages/global/GlobalPage';
-import { KanbanPage } from '@/pages/kanban/KanbanPage';
-import { MemoryPage } from '@/pages/memory/MemoryPage';
-import { ProjectDetailPage } from '@/pages/project-detail/ProjectDetailPage';
-import { ProjectsPage } from '@/pages/projects/ProjectsPage';
-import { RuleDetailPage } from '@/pages/rule-detail/RuleDetailPage';
-import { RulesPage } from '@/pages/rules/RulesPage';
+// Pages
+import { AgentDetailPage } from '@/pages/agent-detail/agent-detail.page';
+import { AgentsPage } from '@/pages/agents/agents.page';
+import { ChatPage } from '@/pages/chat/chat.page';
+import { GlobalPage } from '@/pages/global/global.page';
+import { KanbanPage } from '@/pages/kanban/kanban.page';
+import { MemoryPage } from '@/pages/memory/memory.page';
+import { ProjectDetailPage } from '@/pages/project-detail/project-detail.page';
+import { ProjectsPage } from '@/pages/projects/projects.page';
+import { RuleDetailPage } from '@/pages/rule-detail/rule-detail.page';
+import { RulesPage } from '@/pages/rules/rules.page';
 import { SettingsPage } from '@/pages/settings/settings.page';
-import { SkillDetailPage } from '@/pages/skill-detail/SkillDetailPage';
-import { SkillsPage } from '@/pages/skills/SkillsPage';
-import { UsagePage } from '@/pages/usage/UsagePage';
+import { SkillDetailPage } from '@/pages/skill-detail/skill-detail.page';
+import { SkillsPage } from '@/pages/skills/skills.page';
+import { UsagePage } from '@/pages/usage/usage.page';
 import { WorkspaceDetailPage } from '@/pages/workspaces/workspace-detail.page';
 import { WorkspacesPage } from '@/pages/workspaces/workspaces.page';
 

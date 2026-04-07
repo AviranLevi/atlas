@@ -1,5 +1,5 @@
 // React / library
-import { ALL_STATUSES } from '@/pages/kanban/kanban-page.constants';
+import { ALL_STATUSES } from '@/pages/kanban/kanban.constants';
 
 // Components
 import { Label } from '@/components/ui/label';

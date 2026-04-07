@@ -7,9 +7,9 @@ import { api } from '@/lib/api';
 
 // Types
 import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
-import type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat-page.types';
+import type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat.types';
 
-export type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat-page.types';
+export type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat.types';
 
 const CONVERSATIONS_KEY = ['chat-conversations'] as const;
 const MESSAGES_KEY = ['chat-messages'] as const;

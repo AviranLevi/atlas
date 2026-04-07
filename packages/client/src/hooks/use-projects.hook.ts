@@ -8,10 +8,10 @@ import { api } from '@/lib/api';
 import type { CreateProject, Project, UpdateProject } from '@atlas/shared';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { BrowseResponse, ScanResult } from '@/components/projects/projects.types';
-import type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projects-page.types';
+import type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projects.types';
 
 export type { BrowseResponse, DirectoryEntry, ScanResult } from '@/components/projects/projects.types';
-export type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projects-page.types';
+export type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projects.types';
 
 const PROJECTS_KEY = ['projects'] as const;
 
