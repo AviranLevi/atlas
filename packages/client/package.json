@@ -33,6 +33,7 @@
     "class-variance-authority": "^0.7",
     "clsx": "^2.1",
     "cmdk": "^1.1.1",
+    "force-graph": "^1.51.2",
     "lucide-react": "^0.474",
     "react": "^19.0",
     "react-dom": "^19.0",
