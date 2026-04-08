@@ -4,6 +4,7 @@ import { User, Bot } from 'lucide-react';
 // Components
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { AgentThinking } from './AgentThinking';
+import { AttachmentPreview } from './AttachmentPreview';
 import { parseAgentContent } from '../chat.utils';
 
 // Types
@@ -22,9 +23,14 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           <User className="h-4 w-4" />
         </div>
         <div className="flex max-w-[80%] items-end flex-col gap-1">
-          <div className="rounded-lg bg-primary px-3 py-2 text-primary-foreground">
-            <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-          </div>
+          {message.attachments && message.attachments.length > 0 && (
+            <AttachmentPreview attachments={message.attachments} />
+          )}
+          {message.content && (
+            <div className="rounded-lg bg-primary px-3 py-2 text-primary-foreground">
+              <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+            </div>
+          )}
         </div>
       </div>
     );

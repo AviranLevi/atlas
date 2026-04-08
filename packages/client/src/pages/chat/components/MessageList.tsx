@@ -50,6 +50,7 @@ export function MessageList({
               content: pendingUserMessage,
               toolCalls: null,
               toolResults: null,
+              attachments: null,
               createdAt: new Date().toISOString(),
             }}
           />

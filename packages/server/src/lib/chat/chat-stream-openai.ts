@@ -3,6 +3,7 @@ import type { ChatCompletionCreateParamsStreaming } from 'openai/resources/chat/
 
 // Lib
 import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
+import { decodeText, extractPdfText, isImage, isPdf, wrapFileContent } from './attachment-utils.js';
 import { createOpenAIClient } from '../providers/provider-clients.js';
 import { logger } from '../logger.js';
 
@@ -20,7 +21,30 @@ export async function* streamOpenAI(
   const openaiMessages: unknown[] = [{ role: 'system', content: systemPrompt }];
   for (const m of messages) {
     if (m.role === 'user') {
-      openaiMessages.push({ role: 'user', content: m.content });
+      if (!m.attachments?.length) {
+        openaiMessages.push({ role: 'user', content: m.content });
+      } else {
+        // Build a multi-part content array when attachments are present
+        const parts: unknown[] = [];
+        if (m.content) parts.push({ type: 'text', text: m.content });
+
+        for (const att of m.attachments) {
+          if (isImage(att)) {
+            parts.push({
+              type: 'image_url',
+              image_url: { url: `data:${att.mimeType};base64,${att.data}` },
+            });
+          } else if (isPdf(att)) {
+            // OpenAI has no native PDF block — extract text server-side
+            const text = await extractPdfText(att);
+            parts.push({ type: 'text', text: wrapFileContent(att.name, text) });
+          } else {
+            parts.push({ type: 'text', text: wrapFileContent(att.name, decodeText(att)) });
+          }
+        }
+
+        openaiMessages.push({ role: 'user', content: parts });
+      }
     } else if (m.role === 'tool') {
       openaiMessages.push({ role: 'tool', tool_call_id: m.toolCallId, content: m.content });
     } else {

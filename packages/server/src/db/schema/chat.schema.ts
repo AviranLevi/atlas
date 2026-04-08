@@ -31,5 +31,6 @@ export const chatMessages = sqliteTable('chat_messages', {
     .$defaultFn(() => ''),
   toolCalls: text('tool_calls'),
   toolResults: text('tool_results'),
+  attachments: text('attachments'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
 });

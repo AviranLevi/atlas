@@ -23,12 +23,7 @@ import { timeAgo, contentPreview } from '@/lib/format';
 import type { Skill } from '@atlas/shared';
 
 // Constants
-import {
-  SKILL_TYPE_OPTIONS,
-  SKILL_TYPE_COLORS,
-  PROJECT_SCOPE_ALL,
-  PROJECT_SCOPE_GLOBAL,
-} from './skills.constants';
+import { SKILL_TYPE_OPTIONS, SKILL_TYPE_COLORS, PROJECT_SCOPE_ALL, PROJECT_SCOPE_GLOBAL } from './skills.constants';
 
 export function SkillsPage() {
   const navigate = useNavigate();

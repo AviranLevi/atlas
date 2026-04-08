@@ -19,6 +19,7 @@ function parseMessage(row: Record<string, unknown>): ChatMessage {
     ...row,
     toolCalls: typeof row.toolCalls === 'string' ? JSON.parse(row.toolCalls) : (row.toolCalls ?? null),
     toolResults: typeof row.toolResults === 'string' ? JSON.parse(row.toolResults) : (row.toolResults ?? null),
+    attachments: typeof row.attachments === 'string' ? JSON.parse(row.attachments) : (row.attachments ?? null),
   } as ChatMessage;
 }
 
@@ -130,6 +131,7 @@ export class ChatRepository {
     content: string;
     toolCalls?: unknown[] | null;
     toolResults?: unknown[] | null;
+    attachments?: unknown[] | null;
   }): ChatMessage {
     const FUNCTION_NAME = 'insertMessage';
     try {
@@ -139,6 +141,7 @@ export class ChatRepository {
         content: data.content,
         toolCalls: data.toolCalls ? JSON.stringify(data.toolCalls) : null,
         toolResults: data.toolResults ? JSON.stringify(data.toolResults) : null,
+        attachments: data.attachments ? JSON.stringify(data.attachments) : null,
       };
       const result = this.db.insert(chatMessages).values(values).returning().get();
       return parseMessage(result as Record<string, unknown>);

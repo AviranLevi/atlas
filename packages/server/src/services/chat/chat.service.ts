@@ -1,5 +1,5 @@
 // Shared
-import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
+import type { ChatAttachment, ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 
 // Services
 import { agentProvidersService, memoryService, projectsService, settingsService, usageService } from '../index.js';
@@ -60,11 +60,22 @@ export class ChatService {
     }
   }
 
-  async sendMessage(conversationId: string, content: string, emit: StreamCallback): Promise<void> {
+  async sendMessage(
+    conversationId: string,
+    content: string,
+    emit: StreamCallback,
+    attachments?: ChatAttachment[],
+  ): Promise<void> {
     const conversation = this.repo.findConversationByIdOrThrow(conversationId);
-    this.repo.insertMessage({ conversationId, role: 'user', content });
+    this.repo.insertMessage({
+      conversationId,
+      role: 'user',
+      content,
+      attachments: attachments ?? null,
+    });
 
     if (conversation.backendType === 'cli') {
+      // CLI agents receive the text prompt only; file attachments are not supported
       await this.sendMessageCli(conversation, content, emit);
     } else {
       await this.sendMessageApi(conversation, content, emit);
@@ -345,7 +356,13 @@ export class ChatService {
 
   private toInternalMessages(messages: ChatMessage[]): InternalMessage[] {
     return messages.map((m) => {
-      if (m.role === 'user') return { role: 'user' as const, content: m.content };
+      if (m.role === 'user') {
+        return {
+          role: 'user' as const,
+          content: m.content,
+          attachments: m.attachments ?? undefined,
+        };
+      }
       if (m.role === 'tool') {
         const toolCallId = m.toolResults?.[0]?.toolCallId ?? 'unknown';
         return { role: 'tool' as const, toolCallId, content: m.content };
@@ -378,7 +395,12 @@ export class ChatService {
     const firstUserMsg = messages.find((m) => m.role === 'user');
     if (!firstUserMsg) return;
 
-    const title = firstUserMsg.content.slice(0, 50) + (firstUserMsg.content.length > 50 ? '...' : '');
+    // Prefer text content; fall back to the first attachment name for attachment-only messages
+    const rawTitle =
+      firstUserMsg.content.trim() ||
+      (firstUserMsg.attachments?.[0] ? `[${firstUserMsg.attachments[0].name}]` : 'New conversation');
+
+    const title = rawTitle.slice(0, 50) + (rawTitle.length > 50 ? '...' : '');
     this.repo.updateConversation(conversation.id, { title });
   }
 }

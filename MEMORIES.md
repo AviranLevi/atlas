@@ -65,7 +65,7 @@ MCP Tools (stdio/SSE) ───────────────────�
 | `reviews` | Task review system with JSON checklist, reviewer type, decision |
 | `activity_log` | Write-only audit trail (no FK references, best-effort) |
 | `chat_conversations` | Chat conversation metadata |
-| `chat_messages` | Chat messages with role, content, tool calls |
+| `chat_messages` | Chat messages with role, content, tool calls, and file attachments (base64 JSON) |
 | `preferences` | User preferences (key-value) |
 
 ### Migrations (SQL files in `db/migrations/`)
@@ -78,6 +78,7 @@ MCP Tools (stdio/SSE) ───────────────────�
 - `0006` — Secondary indexes on FK/filter columns, unique constraints on junction tables
 - `0007` — Dispatch rule auto-start column
 - `0008` — Task source field
+- `0014` — Add `attachments` column to `chat_messages`
 
 ### Schema Patches (`db/schema-patches.ts`)
 Runtime `ALTER TABLE ADD COLUMN` statements wrapped in try/catch for columns that may already exist. Applied after migrations on startup. Used for incremental schema changes that can't be cleanly expressed as Drizzle migrations (e.g., columns added via manual hacks before migrations existed).
@@ -177,10 +178,32 @@ Standalone Node.js `http.createServer` (NOT Hono — `SSEServerTransport` requir
 ## Chat System
 
 - `/chat` page with conversation sidebar, message list, tool call rendering
-- Server: `chat.service.ts` handles streaming via providers (Anthropic/OpenAI)
+- Server: `chat.service.ts` handles streaming via providers (Anthropic/OpenAI/Google/Ollama)
 - Client: `use-chat.hook.ts` uses `api.stream()` for SSE-style streaming
 - Tools available in chat: project context, task management, memory, file browsing
 - Chat conversations and messages persisted to SQLite
+
+### File Attachments
+
+Users can attach files to any chat message (max 5 files, max 10 MB each):
+
+| File type | Anthropic | OpenAI | Google | Ollama |
+|-----------|-----------|--------|--------|--------|
+| Images (PNG, JPEG, WebP, GIF) | vision block | `image_url` | `inline_data` | model-dependent |
+| PDF | native `document` block | text extraction (pdf-parse) | `inline_data` | — |
+| Text / code / CSV / JSON | `<file>` text block | `<file>` text block | text part | text part |
+
+**Data flow:**
+- Client encodes files to base64 via `FileReader` (`lib/file-utils.ts`) and sends in the POST body
+- Server stores base64 in `chat_messages.attachments` (JSON column, migration `0014`)
+- On conversation replay, attachments are re-sent to the AI with every follow-up turn
+- `lib/chat/attachment-utils.ts` — shared helpers: `isImage`, `isPdf`, `isTextFile`, `extractPdfText` (pdf-parse), `decodeText`, `wrapFileContent`
+
+**CLI backend**: attachments are not forwarded to CLI agents (Claude Code, Aider, etc.) — text prompt only.
+
+**UI components:**
+- `ChatInput` — paperclip button, staged file chip strip (`FileChip`), async send
+- `AttachmentPreview` — renders sent attachments in user message bubbles (image thumbnails, file icons)
 
 ---
 

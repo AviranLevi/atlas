@@ -43,9 +43,14 @@ export async function sendMessage(c: Context) {
   const data = getValidatedBody<SendMessage>(c);
 
   return streamSSE(c, async (stream) => {
-    await chatService.sendMessage(conversationId, data.content, async (event, payload) => {
-      await stream.writeSSE({ event, data: JSON.stringify(payload) });
-    });
+    await chatService.sendMessage(
+      conversationId,
+      data.content,
+      async (event, payload) => {
+        await stream.writeSSE({ event, data: JSON.stringify(payload) });
+      },
+      data.attachments,
+    );
   });
 }
 

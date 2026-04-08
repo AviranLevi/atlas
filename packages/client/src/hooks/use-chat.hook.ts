@@ -6,7 +6,7 @@ import { useCallback, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 
 // Types
-import type { ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
+import type { ChatAttachment, ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 import type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat.types';
 
 export type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat.types';
@@ -64,7 +64,7 @@ export function useChatStream(conversationId: string | undefined) {
   const abortRef = useRef<AbortController | null>(null);
 
   const send = useCallback(
-    async (content: string) => {
+    async (content: string, attachments?: ChatAttachment[]) => {
       if (!conversationId || state === 'streaming') return;
 
       setPendingUserMessage(content);
@@ -77,7 +77,8 @@ export function useChatStream(conversationId: string | undefined) {
       abortRef.current = controller;
 
       try {
-        const resp = await api.stream(`/chat/conversations/${conversationId}/messages`, { content }, controller.signal);
+        const body = attachments?.length ? { content, attachments } : { content };
+        const resp = await api.stream(`/chat/conversations/${conversationId}/messages`, body, controller.signal);
 
         if (!resp.ok) {
           const body = await resp.json().catch(() => ({ error: 'Request failed' }));

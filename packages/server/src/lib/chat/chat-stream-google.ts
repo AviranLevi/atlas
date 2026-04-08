@@ -1,5 +1,6 @@
 // Lib
 import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
+import { decodeText, isImage, isPdf, wrapFileContent } from './attachment-utils.js';
 import { GOOGLE_AI_BASE } from '../providers/provider-clients.js';
 import { logger } from '../logger.js';
 
@@ -14,7 +15,21 @@ export async function* streamGoogle(
   const geminiContents: unknown[] = [];
   for (const m of messages) {
     if (m.role === 'user') {
-      geminiContents.push({ role: 'user', parts: [{ text: m.content }] });
+      const parts: unknown[] = [];
+      if (m.content) parts.push({ text: m.content });
+
+      for (const att of m.attachments ?? []) {
+        if (isImage(att) || isPdf(att)) {
+          // Gemini 1.5+ supports inline images and PDFs via inline_data
+          parts.push({ inline_data: { mime_type: att.mimeType, data: att.data } });
+        } else {
+          parts.push({ text: wrapFileContent(att.name, decodeText(att)) });
+        }
+      }
+
+      // Google rejects messages with empty parts arrays — skip them
+      if (parts.length === 0) continue;
+      geminiContents.push({ role: 'user', parts });
     } else if (m.role === 'tool') {
       geminiContents.push({
         role: 'user',
@@ -30,6 +45,8 @@ export async function* streamGoogle(
           parts.push({ functionCall: { name: tc.name, args: tc.args } });
         }
       }
+      // Google rejects messages with empty parts arrays — skip them
+      if (parts.length === 0) continue;
       geminiContents.push({ role: 'model', parts });
     }
   }

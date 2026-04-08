@@ -1,5 +1,6 @@
 // Types
 import type {
+  ChatAttachment,
   ChatConversation,
   ChatMessage,
   AgentProvider,
@@ -9,6 +10,18 @@ import type {
 } from '@atlas/shared';
 
 export type ChatStreamState = 'idle' | 'streaming' | 'error';
+
+/** A file staged in the UI before it is sent (holds the raw File object and an optional preview URL). */
+export type AttachedFile = {
+  /** Unique client-side key for React rendering. */
+  id: string;
+  file: File;
+  /** Object URL for image previews — set via URL.createObjectURL, must be revoked on removal. */
+  previewUrl?: string;
+  mimeType: string;
+  name: string;
+  size: number;
+};
 
 export type StreamingToolCall = {
   id: string;
@@ -28,6 +41,13 @@ export type ThinkingStep = {
 export type AgentThinkingProps = {
   steps: ThinkingStep[];
   isStreaming: boolean;
+};
+
+export type ChatInputProps = {
+  onSend: (content: string, attachments?: ChatAttachment[]) => void;
+  disabled?: boolean;
+  isStreaming?: boolean;
+  onAbort?: () => void;
 };
 
 export type MessageBubbleProps = {

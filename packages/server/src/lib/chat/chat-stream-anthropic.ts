@@ -1,5 +1,6 @@
 // Lib
 import type { ChatEvent, InternalMessage, ToolDefinition } from './chat.types.js';
+import { decodeText, isImage, isPdf, wrapFileContent } from './attachment-utils.js';
 import { createAnthropicClient } from '../providers/provider-clients.js';
 import { logger } from '../logger.js';
 
@@ -13,23 +14,57 @@ export async function* streamAnthropic(
 ): AsyncGenerator<ChatEvent> {
   const client = await createAnthropicClient(apiKey);
 
-  const anthropicMessages = messages.map((m) => {
-    if (m.role === 'user') return { role: 'user' as const, content: m.content };
-    if (m.role === 'tool') {
-      return {
-        role: 'user' as const,
-        content: [{ type: 'tool_result' as const, tool_use_id: m.toolCallId, content: m.content }],
-      };
-    }
-    const blocks: unknown[] = [];
-    if (m.content) blocks.push({ type: 'text', content: m.content });
-    if (m.toolCalls) {
-      for (const tc of m.toolCalls) {
-        blocks.push({ type: 'tool_use', id: tc.id, name: tc.name, input: tc.args });
+  const anthropicMessages: unknown[] = [];
+  for (const m of messages) {
+    if (m.role === 'user') {
+      // Build content blocks — start with the text, then append any attachments
+      const blocks: unknown[] = [];
+      if (m.content) blocks.push({ type: 'text', text: m.content });
+
+      for (const att of m.attachments ?? []) {
+        if (isImage(att)) {
+          blocks.push({
+            type: 'image',
+            source: { type: 'base64', media_type: att.mimeType, data: att.data },
+          });
+        } else if (isPdf(att)) {
+          // Anthropic supports native PDF document blocks
+          blocks.push({
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: att.data },
+          });
+        } else {
+          // Plain-text files: inject as a labelled text block
+          blocks.push({ type: 'text', text: wrapFileContent(att.name, decodeText(att)) });
+        }
+      }
+
+      // Anthropic accepts a bare string when there is only a single text block
+      const content =
+        blocks.length === 1 && (blocks[0] as Record<string, unknown>).type === 'text'
+          ? (blocks[0] as { text: string }).text
+          : blocks;
+
+      anthropicMessages.push({ role: 'user', content });
+    } else if (m.role === 'tool') {
+      anthropicMessages.push({
+        role: 'user',
+        content: [{ type: 'tool_result', tool_use_id: m.toolCallId, content: m.content }],
+      });
+    } else {
+      const blocks: unknown[] = [];
+      if (m.content) blocks.push({ type: 'text', text: m.content });
+      if (m.toolCalls) {
+        for (const tc of m.toolCalls) {
+          blocks.push({ type: 'tool_use', id: tc.id, name: tc.name, input: tc.args });
+        }
+      }
+      // Anthropic rejects messages with empty content arrays — skip them
+      if (blocks.length > 0) {
+        anthropicMessages.push({ role: 'assistant', content: blocks });
       }
     }
-    return { role: 'assistant' as const, content: blocks };
-  });
+  }
 
   const anthropicTools = tools.map((t) => ({
     name: t.name,

@@ -26,11 +26,13 @@
     "minimatch": "^10.2.4",
     "node-cron": "^4.2.1",
     "openai": "^6.32.0",
+    "pdf-parse": "^2.4.5",
     "zod": "^3.24"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6",
     "@types/node-cron": "^3.0.11",
+    "@types/pdf-parse": "^1.1.5",
     "drizzle-kit": "^0.30",
     "tsx": "^4.19",
     "typescript": "^5.7"

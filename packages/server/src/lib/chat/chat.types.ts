@@ -1,3 +1,6 @@
+// Shared
+import type { ChatAttachment } from '@atlas/shared';
+
 export type ChatEvent =
   | { type: 'text_delta'; text: string }
   | { type: 'tool_call'; id: string; name: string; args: Record<string, unknown> }
@@ -6,7 +9,7 @@ export type ChatEvent =
   | { type: 'done'; stopReason: string };
 
 export type InternalMessage =
-  | { role: 'user'; content: string }
+  | { role: 'user'; content: string; attachments?: ChatAttachment[] }
   | { role: 'assistant'; content: string; toolCalls?: { id: string; name: string; args: Record<string, unknown> }[] }
   | { role: 'tool'; toolCallId: string; content: string };
 
