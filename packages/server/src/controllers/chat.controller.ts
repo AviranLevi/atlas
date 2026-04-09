@@ -43,6 +43,11 @@ export async function sendMessage(c: Context) {
   const data = getValidatedBody<SendMessage>(c);
 
   return streamSSE(c, async (stream) => {
+    // When the client disconnects (navigation, tab close, explicit abort),
+    // propagate the cancellation to the server-side stream so the CLI process is stopped
+    // and a cancellation placeholder is saved, preventing infinite "waiting" state.
+    stream.onAbort(() => chatService.abortStream(conversationId));
+
     await chatService.sendMessage(
       conversationId,
       data.content,

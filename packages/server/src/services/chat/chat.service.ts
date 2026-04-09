@@ -100,6 +100,8 @@ export class ChatService {
     let totalOutputTokens = 0;
 
     try {
+      const startMs = Date.now();
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}]`);
       const systemPrompt = await this.buildSystemPrompt(conversation.projectId);
       const history = this.repo.findMessagesByConversation(conversationId);
       let messages = this.toInternalMessages(history);
@@ -207,10 +209,19 @@ export class ChatService {
         }
       }
 
+      logger.info(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - done in ${Date.now() - startMs}ms` +
+          ` [${totalInputTokens}in/${totalOutputTokens}out tokens, ${toolRound} tool round(s)]`,
+      );
       await this.maybeGenerateTitle(conversation);
       this.repo.updateConversation(conversationId, {});
     } catch (error: unknown) {
-      if (abortController.signal.aborted) return;
+      if (abortController.signal.aborted) {
+        // Save a placeholder so the conversation is not left with 'user' as the last role,
+        // which would cause the UI to show an infinite "waiting" state.
+        this.repo.insertMessage({ conversationId, role: 'assistant', content: '(response cancelled)' });
+        return;
+      }
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       await emit('error', { message: error instanceof Error ? error.message : 'Stream failed' });
     } finally {
@@ -237,6 +248,10 @@ export class ChatService {
     this.activeStreams.set(conversationId, abortController);
 
     try {
+      const startMs = Date.now();
+      logger.info(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}, executor=${conversation.executorId}]`,
+      );
       const systemPrompt = await this.buildSystemPrompt(conversation.projectId);
       const history = this.repo.findMessagesByConversation(conversationId);
       const previousMessages = history
@@ -279,10 +294,16 @@ export class ChatService {
 
       await emit('done', { messageId: savedMsg.id });
 
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - done in ${Date.now() - startMs}ms`);
       await this.maybeGenerateTitle(conversation);
       this.repo.updateConversation(conversationId, {});
     } catch (error: unknown) {
-      if (abortController.signal.aborted) return;
+      if (abortController.signal.aborted) {
+        // Save a placeholder so the conversation is not left with 'user' as the last role,
+        // which would cause the UI to show an infinite "waiting" state.
+        this.repo.insertMessage({ conversationId, role: 'assistant', content: '(response cancelled)' });
+        return;
+      }
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       await emit('error', { message: error instanceof Error ? error.message : 'CLI chat failed' });
     } finally {

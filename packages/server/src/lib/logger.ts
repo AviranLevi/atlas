@@ -7,16 +7,20 @@ interface Logger {
   debug: LogFn;
 }
 
+function ts(): string {
+  return new Date().toISOString();
+}
+
 const stderrWrite: LogFn = (msg, ...args) => {
   const extra = args.length ? ` ${args.map(String).join(' ')}` : '';
-  process.stderr.write(`${msg + extra}\n`);
+  process.stderr.write(`${ts()} ${msg + extra}\n`);
 };
 
 const stdoutLogger: Logger = {
-  info: (msg, ...args) => console.log(`[INFO] ${msg}`, ...args),
-  error: (msg, ...args) => console.error(`[ERROR] ${msg}`, ...args),
-  warn: (msg, ...args) => console.warn(`[WARN] ${msg}`, ...args),
-  debug: (msg, ...args) => console.debug(`[DEBUG] ${msg}`, ...args),
+  info: (msg, ...args) => console.log(`${ts()} [INFO] ${msg}`, ...args),
+  error: (msg, ...args) => console.error(`${ts()} [ERROR] ${msg}`, ...args),
+  warn: (msg, ...args) => console.warn(`${ts()} [WARN] ${msg}`, ...args),
+  debug: (msg, ...args) => console.debug(`${ts()} [DEBUG] ${msg}`, ...args),
 };
 
 const stderrLogger: Logger = {

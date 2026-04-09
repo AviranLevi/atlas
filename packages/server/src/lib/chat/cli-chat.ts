@@ -2,7 +2,7 @@
 import { spawn } from 'node:child_process';
 
 // Shared
-import { stripCliPromptEcho } from '@atlas/shared';
+import { stripCliPromptEcho, stripCliPromptEchoStreaming } from '@atlas/shared';
 
 // Executors
 import type { ExecutorConfig } from '../../executors/executor.types.js';
@@ -13,7 +13,7 @@ import type { CliChatOptions, CliChatResult } from './chat.types.js';
 import { logger } from '../logger.js';
 
 const FILE_PATH = 'lib/chat/cli-chat.ts';
-const DEFAULT_TIMEOUT_MS = 120_000;
+const DEFAULT_TIMEOUT_MS = 300_000; // 5 minutes — complex tasks (scanning, multi-step agents) need time
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -138,6 +138,7 @@ export async function streamCliChat(options: CliChatOptions, onChunk: (text: str
   const env = { ...(process.env as Record<string, string>), ...executor.env };
 
   logger.info(`${FILE_PATH} :: streamCliChat - ${executor.command} ${args.join(' ').slice(0, 200)}...`);
+  const startMs = Date.now();
 
   return new Promise<CliChatResult>((resolve, reject) => {
     const proc = spawn(executor.command, args, {
@@ -150,6 +151,9 @@ export async function streamCliChat(options: CliChatOptions, onChunk: (text: str
     let fullText = '';
     let finalText = '';
     let stderr = '';
+    // Tracks how many characters of the echo-stripped buffer have already been emitted,
+    // so we only send new delta bytes to the client on each chunk.
+    let emittedCleanLength = 0;
 
     const handleRaw = (raw: string) => {
       if (executor.outputFormat === 'stream-json') {
@@ -168,8 +172,14 @@ export async function streamCliChat(options: CliChatOptions, onChunk: (text: str
           }
         }
       } else {
+        // Accumulate and apply echo-stripping before emitting to the client.
+        // This prevents prompt-echo artifacts from appearing during streaming.
         fullText += raw;
-        onChunk(raw);
+        const clean = stripCliPromptEchoStreaming(fullText);
+        if (clean.length > emittedCleanLength) {
+          onChunk(clean.slice(emittedCleanLength));
+          emittedCleanLength = clean.length;
+        }
       }
     };
 
@@ -215,13 +225,15 @@ export async function streamCliChat(options: CliChatOptions, onChunk: (text: str
 
     proc.on('close', (code) => {
       cleanup();
+      const elapsedMs = Date.now() - startMs;
       const text = stripCliPromptEcho((finalText || fullText).trim());
       if (code !== 0 && !text) {
         const errorMsg = stderr.trim() || `CLI exited with code ${code}`;
-        logger.error(`${FILE_PATH} :: streamCliChat`, errorMsg);
+        logger.error(`${FILE_PATH} :: streamCliChat - failed after ${elapsedMs}ms (exit ${code})`, errorMsg);
         reject(new Error(errorMsg));
         return;
       }
+      logger.info(`${FILE_PATH} :: streamCliChat - done in ${elapsedMs}ms, ${text.length} chars (exit ${code})`);
       resolve({ text, exitCode: code });
     });
 

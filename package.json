@@ -22,6 +22,7 @@
     "mcp": "pnpm --filter @atlas/server mcp",
     "db:generate": "pnpm --filter @atlas/server db:generate",
     "db:migrate": "pnpm --filter @atlas/server db:migrate",
+    "db:validate": "node scripts/validate-migrations.mjs",
     "lint": "biome check .",
     "lint:fix": "biome check --fix .",
     "format": "biome format --write .",

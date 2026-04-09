@@ -94,10 +94,11 @@ export const KNOWN_EXECUTORS: ExecutorConfig[] = [
     description: 'Google Gemini CLI agent (uses ~/.gemini/settings.json for MCP config)',
     docsUrl: 'https://github.com/google-gemini/gemini-cli',
     modelFlag: '--model',
-    defaultModel: 'gemini-2.5-pro',
+    defaultModel: 'gemini-2.5-flash',
     modelPresets: [
-      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
       { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
+      { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (fastest)', provider: 'google' },
+      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
     ],
     providerMapping: [{ providerType: 'google', envVars: { GEMINI_API_KEY: 'apiKey' } }],
   },

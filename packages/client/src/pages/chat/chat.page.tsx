@@ -39,7 +39,10 @@ export function ChatPage() {
   const { data: activeConversation } = useConversation(conversationId);
   const createConversation = useCreateConversation();
   const deleteConversation = useDeleteConversation();
-  const { state, streamingText, toolCalls, error, send, abort, pendingUserMessage } = useChatStream(conversationId);
+  const { state, streamingText, toolCalls, error, send, abort, clearError, pendingUserMessage } =
+    useChatStream(conversationId);
+  // True when the server is still processing a response (e.g. user navigated away mid-stream and back)
+  const isAwaitingResponse = state === 'idle' && messages.length > 0 && messages[messages.length - 1]?.role === 'user';
 
   const [backendType, setBackendType] = useState<ChatBackendType>('api');
   const [selectedProviderId, setSelectedProviderId] = useState('');
@@ -274,19 +277,26 @@ export function ChatPage() {
             messages={messages}
             streamingText={streamingText}
             streamingToolCalls={toolCalls}
-            isStreaming={state === 'streaming'}
+            isStreaming={state === 'streaming' || isAwaitingResponse}
             pendingUserMessage={pendingUserMessage}
           />
         )}
         {error && (
-          <div className="px-4 py-2 text-sm text-destructive bg-destructive/10 border-t border-destructive/20">
-            {error}
+          <div className="flex items-center gap-3 px-4 py-2 text-sm text-destructive bg-destructive/10 border-t border-destructive/20">
+            <span className="flex-1">{error}</span>
+            <button
+              type="button"
+              className="text-xs underline underline-offset-2 hover:no-underline shrink-0"
+              onClick={clearError}
+            >
+              Dismiss
+            </button>
           </div>
         )}
         <ChatInput
           onSend={handleSend}
-          disabled={!canSend || creatingChat || (state !== 'idle' && state !== 'error')}
-          isStreaming={state === 'streaming' || creatingChat}
+          disabled={!canSend || creatingChat || isAwaitingResponse || (state !== 'idle' && state !== 'error')}
+          isStreaming={state === 'streaming' || creatingChat || isAwaitingResponse}
           onAbort={abort}
         />
       </div>

@@ -1,6 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Lib
 import { api } from '@/lib/api';
@@ -30,11 +30,19 @@ export function useConversation(id: string | undefined) {
   });
 }
 
+/** Returns messages for a conversation, polling every 2s while the last message is still from the user (response pending). */
 export function useConversationMessages(conversationId: string | undefined) {
   return useQuery({
     queryKey: [...MESSAGES_KEY, conversationId],
     queryFn: () => api.get<ChatMessage[]>(`/chat/conversations/${conversationId}/messages`),
     enabled: !!conversationId,
+    // Poll while awaiting a response so navigating away and back still works
+    refetchInterval: (query) => {
+      const msgs = query.state.data;
+      if (!msgs || msgs.length === 0) return false;
+      const lastRole = msgs[msgs.length - 1]?.role;
+      return lastRole === 'user' ? 2000 : false;
+    },
   });
 }
 
@@ -62,6 +70,20 @@ export function useChatStream(conversationId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Reset all streaming state when switching conversations so the previous
+  // conversation's in-flight content never bleeds into the next one.
+  // conversationId is intentionally the only dep — it's a trigger, not a value read inside the effect.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: conversationId is the change trigger
+  useEffect(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setState('idle');
+    setStreamingText('');
+    setToolCalls([]);
+    setError(null);
+    setPendingUserMessage(null);
+  }, [conversationId]);
 
   const send = useCallback(
     async (content: string, attachments?: ChatAttachment[]) => {
@@ -181,5 +203,10 @@ export function useChatStream(conversationId: string | undefined) {
     setPendingUserMessage(null);
   }, [conversationId]);
 
-  return { state, streamingText, toolCalls, error, send, abort, pendingUserMessage };
+  const clearError = useCallback(() => {
+    setError(null);
+    setState('idle');
+  }, []);
+
+  return { state, streamingText, toolCalls, error, send, abort, clearError, pendingUserMessage };
 }

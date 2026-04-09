@@ -16,8 +16,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Monorepo root: go up 4 levels from packages/server/src/executors → root
 const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 
-// Absolute path to the MCP server entry point (never rely on cwd for this)
-const MCP_ENTRY = path.join(PROJECT_ROOT, 'packages/server/src/mcp.ts');
+// Absolute path to the MCP server TypeScript entry point.
+const TS_MCP_ENTRY = path.join(PROJECT_ROOT, 'packages/server/src/mcp.ts');
+
+// Local tsx binary — avoids the `npx` network-lookup overhead on every chat message.
+// pnpm workspaces ensures tsx is always present in packages/server/node_modules.
+const LOCAL_TSX = path.join(PROJECT_ROOT, 'packages/server/node_modules/tsx/dist/cli.mjs');
 
 // Store configs next to where the server runs
 const MCP_CONFIG_DIR = path.join(PROJECT_ROOT, 'data', 'mcp-configs');
@@ -45,18 +49,27 @@ async function buildMcpServers(atlasEntry: Record<string, unknown>): Promise<Rec
   return servers;
 }
 
+/** Write content to a file only if it differs from the current content — avoids redundant disk writes. */
+function writeIfChanged(filePath: string, content: string): void {
+  try {
+    if (fs.existsSync(filePath) && fs.readFileSync(filePath, 'utf8') === content) return;
+  } catch {
+    /* fall through and write */
+  }
+  fs.writeFileSync(filePath, content);
+}
+
 export async function generateMcpConfig(workspaceId: string, format: McpConfigFormat): Promise<string | undefined> {
   if (format === 'none') return undefined;
 
-  // Use absolute path for the MCP entry point so it works regardless of cwd
-  const mcpServerEntry = {
-    command: 'npx',
-    args: ['tsx', MCP_ENTRY],
-    cwd: PROJECT_ROOT,
-  };
+  // Use the local tsx binary to run the TypeScript MCP source directly.
+  // This avoids the npx network-lookup overhead while still running the TypeScript source.
+  const usesLocalTsx = fs.existsSync(LOCAL_TSX);
+  const mcpServerEntry = usesLocalTsx
+    ? { command: 'node', args: [LOCAL_TSX, TS_MCP_ENTRY] }
+    : { command: 'npx', args: ['tsx', TS_MCP_ENTRY], cwd: PROJECT_ROOT };
 
-  // Log the generated config for debugging
-  console.error(`[MCP Config] workspace=${workspaceId} cwd=${PROJECT_ROOT} entry=${MCP_ENTRY}`);
+  console.error(`[MCP Config] workspace=${workspaceId} tsx=${usesLocalTsx ? 'local' : 'npx'} entry=${TS_MCP_ENTRY}`);
 
   if (format === 'gemini') {
     // Gemini CLI reads MCP config from ~/.gemini/settings.json — merge our server in
@@ -73,7 +86,8 @@ export async function generateMcpConfig(workspaceId: string, format: McpConfigFo
     const allServers = await buildMcpServers(mcpServerEntry);
     Object.assign(mcpServers, allServers);
     settings.mcpServers = mcpServers;
-    fs.writeFileSync(GEMINI_SETTINGS_PATH, JSON.stringify(settings, null, 2));
+    // Only write if the content actually changed to avoid unnecessary disk I/O
+    writeIfChanged(GEMINI_SETTINGS_PATH, JSON.stringify(settings, null, 2));
     // Return the settings path so cleanup knows where to look
     return GEMINI_SETTINGS_PATH;
   }
@@ -94,7 +108,7 @@ export async function generateMcpConfig(workspaceId: string, format: McpConfigFo
   }
 
   const configPath = path.join(MCP_CONFIG_DIR, `${workspaceId}.json`);
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  writeIfChanged(configPath, JSON.stringify(config, null, 2));
   return configPath;
 }
 
