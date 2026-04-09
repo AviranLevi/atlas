@@ -30,32 +30,59 @@ You approve or request changes. Approved tasks move to **Done** and the worktree
 | [Amp](https://ampcode.com) | — | `npm install -g @sourcegraph/amp` |
 | [Goose](https://github.com/block/goose) | — | see Goose docs |
 | [OpenCode](https://github.com/opencode-ai/opencode) | — | `go install github.com/opencode-ai/opencode@latest` |
+| [Ollama](https://ollama.ai) *(local, no API key)* | — | `ollama serve` + `pip install aider-chat` |
 
 Agents marked **MCP ✓** get live access to the project knowledge base (tasks, memory, rules, skills) during a run. Others receive the task prompt only.
 
-## Prerequisites
+**Ollama (local AI):** Run open-source models like Qwen 2.5 Coder, DeepSeek R1, Gemma 3, Llama 3.2, and Phi-4 entirely offline — no API key needed. Install [Ollama](https://ollama.ai), pull a model (`ollama pull qwen2.5-coder`), and select **Ollama (Local AI)** as the executor.
 
-- **Node.js >= 24** — check with `node --version`, install via [nvm](https://github.com/nvm-sh/nvm)
+---
+
+## Installation
+
+### Prerequisites
+
+- **Node.js ≥ 24** — check with `node --version`, install via [nvm](https://github.com/nvm-sh/nvm)
 - **pnpm** — `npm install -g pnpm`
-- At least one agent CLI installed and authenticated (Claude Code recommended)
+- At least one agent CLI installed and authenticated (see table above)
 
-## Quickstart
+### Install
 
 ```bash
 git clone https://github.com/AviranLevi/atlas.git
 cd atlas
-nvm use        # switches to Node 24 from .nvmrc
+nvm use          # switches to the required Node version from .nvmrc
 pnpm install
 pnpm dev
 ```
 
-Open **http://localhost:5173**.
+Open **http://localhost:5173**. The SQLite database is created automatically — no setup required.
 
-The SQLite database is created automatically on first run — no setup required.
+---
+
+## Updating
+
+Pull the latest code and reinstall dependencies. The database migrates automatically when the server starts.
+
+```bash
+git pull
+pnpm install
+pnpm dev
+```
+
+That's it. No manual migration step needed.
+
+> **If something breaks after an update:** the most common cause is a stale build artifact. Run `pnpm build` once, then `pnpm dev`.
+
+---
+
+## First-time setup
 
 ### 1. Add a provider
 
-Go to **Agents → AI Providers → Add Provider** and enter your API key (Anthropic or OpenAI). This is what Atlas uses for its own features like chat, AI code review, and project briefs.
+Go to **Agents → AI Providers → Add Provider** and enter your API key (Anthropic or OpenAI). This is what Atlas uses for its own AI features (chat, code review, project briefs).
+
+> Skip this if you only plan to use Ollama — no key required.
 
 ### 2. Create a project
 
@@ -67,7 +94,9 @@ Go to **Agents → New Agent**. Pick an executor (Claude Code is recommended), l
 
 ### 4. Add a task and run it
 
-Open your project, create a task with a clear description and definition of done, then click **Start** to assign an agent to it. Atlas spawns the agent in a worktree and streams its output to the Workspace view. When the agent finishes, the task moves to **In Review** automatically.
+Open your project, create a task with a clear description and definition of done, then click **Start**. Atlas spawns the agent in a worktree and streams its output to the Workspace view. When the agent finishes, the task moves to **In Review** automatically.
+
+---
 
 ## MCP Integration
 
@@ -95,7 +124,9 @@ The HTTP/SSE MCP server runs automatically on **http://localhost:3101** when Atl
 
 ### Available MCP tools
 
-Agents with MCP access can use: `list_tasks`, `create_task`, `update_task`, `get_project_context`, `add_memory`, `list_memories`, `list_rules`, `list_skills`, `list_phases`, `get_review`, `submit_review`, `search`, `start_workspace`, and more.
+Agents with MCP access can use: `list_tasks`, `create_task`, `update_task`, `get_project_context`, `create_memory`, `update_memory`, `supersede_memory`, `list_memories`, `list_rules`, `list_skills`, `list_phases`, `get_review`, `submit_review`, `search`, `start_workspace`, and more.
+
+---
 
 ## Architecture
 
