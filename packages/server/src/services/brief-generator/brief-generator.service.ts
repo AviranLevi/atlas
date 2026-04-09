@@ -8,22 +8,31 @@ import { memoryService, projectsService } from '../index.js';
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 
-const FILE_PATH = 'services/brief-generator/brief-generator.service.ts';
+// Constants
+import {
+  BRIEF_MEMORY_CONTENT_PREVIEW_MAX,
+  BRIEF_MEMORY_CONTENT_SLICE_LENGTH,
+  BRIEF_MEMORY_TRUNCATION_ELLIPSIS,
+  IMPORTANT_DEPENDENCY_NAME_SET,
+  MAX_INLINE_MEMORIES,
+  MEMORY_TYPE_ORDER,
+} from './brief-generator.constants.js';
 
-/**
- * Max number of memories to include inline in the brief.
- * The rest are available via MCP `list_memories` tool.
- */
-const MAX_INLINE_MEMORIES = 15;
+// Types
+import type { BriefProjectScanData } from './brief-generator.types.js';
+
+const FILE_PATH = 'services/brief-generator/brief-generator.service.ts';
 
 /**
  * Generates a compact, structured project brief from scan data + memories.
  * Designed to be ~300-600 tokens — enough for an agent to understand the
  * project without needing to scan the codebase from scratch.
+ *
+ * Flow: load project + memories → concatenate markdown sections (each helper returns line arrays) → join with newlines → persist on `generateAndSave`.
  */
 export class BriefGeneratorService {
   /**
-   * Generate and persist the brief for a project.
+   * Loads the project, builds the brief markdown, writes `projectBrief` on the project row, and returns the string.
    */
   async generateAndSave(projectId: string): Promise<string> {
     const FUNCTION_NAME = 'generateAndSave';
@@ -44,14 +53,27 @@ export class BriefGeneratorService {
   }
 
   /**
-   * Generate the brief string (pure function, no side effects).
+   * Builds the full brief as markdown. Does not touch the database — safe to call from tests or previews.
    */
   generate(project: Project, memories: Memory[]): string {
-    const lines: string[] = [];
     const sd = project.scanData;
+    // Order matches the intended reading flow: identity → layout → how to run → tooling → knowledge → stack signal.
+    const lines: string[] = [
+      ...this.buildTitleAndMetaLines(project),
+      ...this.buildStructureLines(sd),
+      ...this.buildScriptsLines(sd),
+      ...this.buildEnvironmentLines(sd),
+      ...this.buildFormattingLines(sd),
+      ...this.buildMemoriesLines(memories),
+      ...this.buildDependenciesLines(sd),
+    ];
+    return lines.join('\n');
+  }
 
-    // ─── Header ──────────────────────────────────────────────────
-    lines.push(`# ${project.name}`);
+  /** H1 title, one-line scan summary (type, languages, package manager, branch, monorepo flag), then optional description. */
+  private buildTitleAndMetaLines(project: Project): string[] {
+    const sd = project.scanData;
+    const lines: string[] = [`# ${project.name}`];
 
     const meta: string[] = [];
     if (sd?.projectType) meta.push(sd.projectType);
@@ -63,150 +85,125 @@ export class BriefGeneratorService {
 
     if (project.description) lines.push(`\n${project.description}`);
 
-    // ─── Structure ───────────────────────────────────────────────
-    if (sd?.keyDirectories && Object.keys(sd.keyDirectories).length > 0) {
-      lines.push('\n## Structure');
-      for (const [label, dir] of Object.entries(sd.keyDirectories)) {
-        lines.push(`- **${label}**: \`${dir}\``);
-      }
-    }
+    return lines;
+  }
 
-    // ─── Scripts ─────────────────────────────────────────────────
-    if (sd?.scripts && Object.keys(sd.scripts).length > 0) {
-      lines.push('\n## Scripts');
-      for (const [name, cmd] of Object.entries(sd.scripts)) {
-        lines.push(`- \`${name}\`: \`${cmd}\``);
-      }
+  /** Maps labeled paths from the repo scanner (e.g. src, packages/client) into a bullet list. */
+  private buildStructureLines(sd: BriefProjectScanData): string[] {
+    if (!sd?.keyDirectories || Object.keys(sd.keyDirectories).length === 0) return [];
+    const lines: string[] = ['\n## Structure'];
+    for (const [label, dir] of Object.entries(sd.keyDirectories)) {
+      lines.push(`- **${label}**: \`${dir}\``);
     }
+    return lines;
+  }
 
-    // ─── Environment ─────────────────────────────────────────────
+  /** npm/pnpm scripts discovered from package.json, name → command. */
+  private buildScriptsLines(sd: BriefProjectScanData): string[] {
+    if (!sd?.scripts || Object.keys(sd.scripts).length === 0) return [];
+    const lines: string[] = ['\n## Scripts'];
+    for (const [name, cmd] of Object.entries(sd.scripts)) {
+      lines.push(`- \`${name}\`: \`${cmd}\``);
+    }
+    return lines;
+  }
+
+  /** Ports and required env var names from scan (values are never embedded). */
+  private buildEnvironmentLines(sd: BriefProjectScanData): string[] {
     const hasEnv = (sd?.envVars?.length ?? 0) > 0;
     const hasPorts = (sd?.ports?.length ?? 0) > 0;
-    if (hasEnv || hasPorts) {
-      lines.push('\n## Environment');
-      if (sd?.ports?.length) lines.push(`- Ports: ${sd.ports.join(', ')}`);
-      if (sd?.envVars?.length) lines.push(`- Required env vars: ${sd.envVars.join(', ')}`);
+    if (!hasEnv && !hasPorts) return [];
+
+    const lines: string[] = ['\n## Environment'];
+    if (sd?.ports?.length) lines.push(`- Ports: ${sd.ports.join(', ')}`);
+    if (sd?.envVars?.length) lines.push(`- Required env vars: ${sd.envVars.join(', ')}`);
+    return lines;
+  }
+
+  /** Which formatters/linters exist plus a short Prettier option summary when config was parsed. */
+  private buildFormattingLines(sd: BriefProjectScanData): string[] {
+    if (!sd?.formatting) return [];
+
+    const tools: string[] = [];
+    if (sd.formatting.prettier) tools.push('Prettier');
+    if (sd.formatting.eslint) tools.push('ESLint');
+    if (sd.formatting.biome) tools.push('Biome');
+    if (sd.formatting.editorconfig) tools.push('EditorConfig');
+    if (tools.length === 0) return [];
+
+    const lines: string[] = ['\n## Formatting', tools.join(', ')];
+
+    if (sd.formatting.config?.prettier) {
+      const pc = sd.formatting.config.prettier as Record<string, unknown>;
+      const settings: string[] = [];
+      if (pc.singleQuote !== undefined) settings.push(`singleQuote: ${pc.singleQuote}`);
+      if (pc.semi !== undefined) settings.push(`semi: ${pc.semi}`);
+      if (pc.tabWidth !== undefined) settings.push(`tabWidth: ${pc.tabWidth}`);
+      if (pc.printWidth !== undefined) settings.push(`printWidth: ${pc.printWidth}`);
+      if (pc.trailingComma !== undefined) settings.push(`trailingComma: ${pc.trailingComma}`);
+      if (settings.length) lines.push(`Prettier config: ${settings.join(', ')}`);
     }
 
-    // ─── Formatting ──────────────────────────────────────────────
-    if (sd?.formatting) {
-      const tools: string[] = [];
-      if (sd.formatting.prettier) tools.push('Prettier');
-      if (sd.formatting.eslint) tools.push('ESLint');
-      if (sd.formatting.biome) tools.push('Biome');
-      if (sd.formatting.editorconfig) tools.push('EditorConfig');
-      if (tools.length > 0) {
-        lines.push(`\n## Formatting`);
-        lines.push(tools.join(', '));
-        if (sd.formatting.config?.prettier) {
-          const pc = sd.formatting.config.prettier as Record<string, unknown>;
-          const settings: string[] = [];
-          if (pc.singleQuote !== undefined) settings.push(`singleQuote: ${pc.singleQuote}`);
-          if (pc.semi !== undefined) settings.push(`semi: ${pc.semi}`);
-          if (pc.tabWidth !== undefined) settings.push(`tabWidth: ${pc.tabWidth}`);
-          if (pc.printWidth !== undefined) settings.push(`printWidth: ${pc.printWidth}`);
-          if (pc.trailingComma !== undefined) settings.push(`trailingComma: ${pc.trailingComma}`);
-          if (settings.length) lines.push(`Prettier config: ${settings.join(', ')}`);
-        }
-      }
+    return lines;
+  }
+
+  /**
+   * Recent memories only (cap in constants), grouped under fixed subsection headings.
+   * Types outside `MEMORY_TYPE_ORDER` are omitted here; overflow points agents to MCP `list_memories`.
+   */
+  private buildMemoriesLines(memories: Memory[]): string[] {
+    if (memories.length === 0) return [];
+
+    const sorted = [...memories].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    const selected = sorted.slice(0, MAX_INLINE_MEMORIES);
+    const overflow = memories.length - selected.length;
+
+    const byType = new Map<string, Memory[]>();
+    for (const m of selected) {
+      const key = m.type ?? 'Other';
+      const list = byType.get(key) ?? [];
+      list.push(m);
+      byType.set(key, list);
     }
 
-    // ─── Memories (grouped by type, condensed) ───────────────────
-    if (memories.length > 0) {
-      // Sort by most recently updated, then take top N
-      const sorted = [...memories].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-      const selected = sorted.slice(0, MAX_INLINE_MEMORIES);
-      const overflow = memories.length - selected.length;
+    const lines: string[] = ['\n## Project Knowledge'];
 
-      // Group by type
-      const byType = new Map<string, Memory[]>();
-      for (const m of selected) {
-        const key = m.type ?? 'Other';
-        const list = byType.get(key) ?? [];
-        list.push(m);
-        byType.set(key, list);
-      }
-
-      lines.push('\n## Project Knowledge');
-
-      const typeOrder = ['Convention', 'Decision', 'Problem', 'Preference'];
-      for (const type of typeOrder) {
-        const items = byType.get(type);
-        if (!items?.length) continue;
-        lines.push(`\n### ${type}s`);
-        for (const m of items) {
-          // Truncate long content to keep brief compact
-          const content = m.content.length > 150 ? `${m.content.slice(0, 147)}...` : m.content;
-          lines.push(`- **${m.name}**: ${content}`);
-        }
-      }
-
-      if (overflow > 0) {
-        lines.push(`\n_${overflow} more memories available via \`list_memories\` MCP tool._`);
-      }
-    }
-
-    // ─── Dependencies (condensed) ────────────────────────────────
-    if (sd?.dependencies?.length) {
-      lines.push('\n## Key Dependencies');
-      // Show only the most important ones (frameworks, ORMs, etc.)
-      const important = sd.dependencies.filter((d) =>
-        [
-          'react',
-          'vue',
-          'svelte',
-          'angular',
-          'next',
-          'nuxt',
-          'solid-js',
-          'express',
-          'fastify',
-          'hono',
-          'koa',
-          'nestjs',
-          '@nestjs/core',
-          'drizzle-orm',
-          'prisma',
-          '@prisma/client',
-          'typeorm',
-          'sequelize',
-          'mongoose',
-          'tailwindcss',
-          'vite',
-          'webpack',
-          'esbuild',
-          'rollup',
-          'electron',
-          'react-native',
-          'expo',
-          'zod',
-          'joi',
-          'yup',
-          'jest',
-          'vitest',
-          'mocha',
-          'playwright',
-          'cypress',
-          'better-sqlite3',
-          'pg',
-          'postgres',
-          'mongodb',
-          'redis',
-          'ioredis',
-          'axios',
-          'trpc',
-          '@tanstack/react-query',
-        ].includes(d),
-      );
-      if (important.length) {
-        lines.push(important.join(', '));
-      }
-      const remaining = sd.dependencies.length - important.length;
-      if (remaining > 0) {
-        lines.push(`_+ ${remaining} other dependencies_`);
+    // Subsections appear in a stable order (Convention, Decision, …) so the brief is skimmable.
+    for (const type of MEMORY_TYPE_ORDER) {
+      const items = byType.get(type);
+      if (!items?.length) continue;
+      lines.push(`\n### ${type}s`);
+      for (const m of items) {
+        // Keep each bullet short so the brief stays within the target token budget.
+        const content =
+          m.content.length > BRIEF_MEMORY_CONTENT_PREVIEW_MAX
+            ? `${m.content.slice(0, BRIEF_MEMORY_CONTENT_SLICE_LENGTH)}${BRIEF_MEMORY_TRUNCATION_ELLIPSIS}`
+            : m.content;
+        lines.push(`- **${m.name}**: ${content}`);
       }
     }
 
-    return lines.join('\n');
+    if (overflow > 0) {
+      lines.push(`\n_${overflow} more memories available via \`list_memories\` MCP tool._`);
+    }
+
+    return lines;
+  }
+
+  /**
+   * Lists “signal” dependencies (frameworks, DB clients, test runners, etc.) from an allowlist; everything else is only a count.
+   */
+  private buildDependenciesLines(sd: BriefProjectScanData): string[] {
+    if (!sd?.dependencies?.length) return [];
+
+    const important = sd.dependencies.filter((d) => IMPORTANT_DEPENDENCY_NAME_SET.has(d));
+    const lines: string[] = ['\n## Key Dependencies'];
+
+    if (important.length) lines.push(important.join(', '));
+
+    const remaining = sd.dependencies.length - important.length;
+    if (remaining > 0) lines.push(`_+ ${remaining} other dependencies_`);
+
+    return lines;
   }
 }

@@ -1,8 +1,14 @@
+/**
+ * Chat orchestration: persists messages, streams model output through an SSE-style emit callback.
+ * API path: provider streaming with multi-round tool execution. CLI path: formatCliPrompt + streamCliChat.
+ * Streaming failures use emit('error', …) rather than AppError so the HTTP layer can keep the stream contract.
+ */
+
 // Shared
-import type { ChatAttachment, ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
+import type { AgentProvider, ChatAttachment, ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 
 // Services
-import { agentProvidersService, memoryService, projectsService, settingsService, usageService } from '../index.js';
+import { agentProvidersService, projectsService, usageService } from '../index.js';
 
 // Executors
 import { executorRegistry } from '../../executors/index.js';
@@ -21,11 +27,14 @@ import {
 } from '../../lib/chat/index.js';
 import { logger } from '../../lib/logger.js';
 
+import { buildChatSystemPrompt } from './chat-system-prompt.js';
+
 const FILE_PATH = 'services/chat/chat.service.ts';
 const MAX_TOOL_ROUNDS = 10;
-const MAX_RECENT_MEMORIES = 5;
 
 type StreamCallback = (event: string, data: unknown) => void | Promise<void>;
+
+type PendingToolCall = { id: string; name: string; args: Record<string, unknown> };
 
 export class ChatService {
   private readonly repo = chatRepository;
@@ -78,11 +87,26 @@ export class ChatService {
       // CLI agents receive the text prompt only; file attachments are not supported
       await this.sendMessageCli(conversation, content, emit);
     } else {
-      await this.sendMessageApi(conversation, content, emit);
+      await this.sendMessageApi(conversation, emit);
     }
   }
 
-  private async sendMessageApi(conversation: ChatConversation, _content: string, emit: StreamCallback): Promise<void> {
+  private beginStreamSession(conversationId: string): AbortController {
+    const controller = new AbortController();
+    this.activeStreams.set(conversationId, controller);
+    return controller;
+  }
+
+  private endStreamSession(conversationId: string): void {
+    this.activeStreams.delete(conversationId);
+  }
+
+  /** Avoids leaving the last message as user-only when the client aborts mid-stream. */
+  private insertCancelledAssistantMessage(conversationId: string): void {
+    this.repo.insertMessage({ conversationId, role: 'assistant', content: '(response cancelled)' });
+  }
+
+  private async sendMessageApi(conversation: ChatConversation, emit: StreamCallback): Promise<void> {
     const FUNCTION_NAME = 'sendMessageApi';
     const conversationId = conversation.id;
 
@@ -92,9 +116,7 @@ export class ChatService {
     }
 
     const provider = await agentProvidersService.getById(conversation.providerId);
-
-    const abortController = new AbortController();
-    this.activeStreams.set(conversationId, abortController);
+    const abortController = this.beginStreamSession(conversationId);
 
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
@@ -102,9 +124,8 @@ export class ChatService {
     try {
       const startMs = Date.now();
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}]`);
-      const systemPrompt = await this.buildSystemPrompt(conversation.projectId);
-      const history = this.repo.findMessagesByConversation(conversationId);
-      let messages = this.toInternalMessages(history);
+      const systemPrompt = await buildChatSystemPrompt(conversation.projectId);
+      let messages = this.toInternalMessages(this.repo.findMessagesByConversation(conversationId));
 
       let toolRound = 0;
       let done = false;
@@ -112,67 +133,29 @@ export class ChatService {
       while (!done && toolRound < MAX_TOOL_ROUNDS) {
         if (abortController.signal.aborted) break;
 
-        const pendingToolCalls: { id: string; name: string; args: Record<string, unknown> }[] = [];
-        let assistantText = '';
+        const { assistantText, pendingToolCalls, roundInputTokens, roundOutputTokens } =
+          await this.runSingleModelStream({
+            conversation,
+            provider,
+            systemPrompt,
+            messages,
+            signal: abortController.signal,
+            emit,
+          });
 
-        const stream = streamChat(
-          provider,
-          conversation.model ?? 'default',
-          systemPrompt,
-          messages,
-          CHAT_TOOLS,
-          abortController.signal,
-        );
-
-        for await (const event of stream) {
-          if (abortController.signal.aborted) break;
-
-          switch (event.type) {
-            case 'text_delta':
-              assistantText += event.text;
-              await emit('text_delta', { text: event.text });
-              break;
-            case 'tool_call':
-              pendingToolCalls.push({ id: event.id, name: event.name, args: event.args });
-              await emit('tool_call', { id: event.id, name: event.name, args: event.args });
-              break;
-            case 'usage':
-              totalInputTokens += event.inputTokens;
-              totalOutputTokens += event.outputTokens;
-              break;
-            case 'done':
-              if (pendingToolCalls.length === 0) {
-                done = true;
-              }
-              break;
-          }
-        }
+        totalInputTokens += roundInputTokens;
+        totalOutputTokens += roundOutputTokens;
 
         if (abortController.signal.aborted) break;
 
         if (pendingToolCalls.length > 0) {
-          this.repo.insertMessage({
+          messages = await this.persistToolRoundAndExecute(
             conversationId,
-            role: 'assistant',
-            content: assistantText,
-            toolCalls: pendingToolCalls,
-          });
-
-          const projectContext = await this.getProjectContext(conversation.projectId);
-
-          for (const tc of pendingToolCalls) {
-            const result = await executeTool(tc.name, tc.args, projectContext);
-            await emit('tool_result', { toolCallId: tc.id, name: tc.name, result });
-
-            this.repo.insertMessage({
-              conversationId,
-              role: 'tool',
-              content: JSON.stringify(result),
-              toolResults: [{ toolCallId: tc.id, result }],
-            });
-          }
-
-          messages = this.toInternalMessages(this.repo.findMessagesByConversation(conversationId));
+            conversation,
+            assistantText,
+            pendingToolCalls,
+            emit,
+          );
           toolRound++;
         } else {
           const savedMsg = this.repo.insertMessage({
@@ -217,16 +200,91 @@ export class ChatService {
       this.repo.updateConversation(conversationId, {});
     } catch (error: unknown) {
       if (abortController.signal.aborted) {
-        // Save a placeholder so the conversation is not left with 'user' as the last role,
-        // which would cause the UI to show an infinite "waiting" state.
-        this.repo.insertMessage({ conversationId, role: 'assistant', content: '(response cancelled)' });
+        this.insertCancelledAssistantMessage(conversationId);
         return;
       }
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       await emit('error', { message: error instanceof Error ? error.message : 'Stream failed' });
     } finally {
-      this.activeStreams.delete(conversationId);
+      this.endStreamSession(conversationId);
     }
+  }
+
+  private async runSingleModelStream(params: {
+    conversation: ChatConversation;
+    provider: AgentProvider;
+    systemPrompt: string;
+    messages: InternalMessage[];
+    signal: AbortSignal;
+    emit: StreamCallback;
+  }): Promise<{
+    assistantText: string;
+    pendingToolCalls: PendingToolCall[];
+    roundInputTokens: number;
+    roundOutputTokens: number;
+  }> {
+    const { conversation, provider, systemPrompt, messages, signal, emit } = params;
+    const pendingToolCalls: PendingToolCall[] = [];
+    let assistantText = '';
+    let roundInputTokens = 0;
+    let roundOutputTokens = 0;
+
+    const stream = streamChat(provider, conversation.model ?? 'default', systemPrompt, messages, CHAT_TOOLS, signal);
+
+    for await (const event of stream) {
+      if (signal.aborted) break;
+
+      switch (event.type) {
+        case 'text_delta':
+          assistantText += event.text;
+          await emit('text_delta', { text: event.text });
+          break;
+        case 'tool_call':
+          pendingToolCalls.push({ id: event.id, name: event.name, args: event.args });
+          await emit('tool_call', { id: event.id, name: event.name, args: event.args });
+          break;
+        case 'usage':
+          roundInputTokens += event.inputTokens;
+          roundOutputTokens += event.outputTokens;
+          break;
+        case 'tool_call_done':
+        case 'done':
+          break;
+      }
+    }
+
+    return { assistantText, pendingToolCalls, roundInputTokens, roundOutputTokens };
+  }
+
+  private async persistToolRoundAndExecute(
+    conversationId: string,
+    conversation: ChatConversation,
+    assistantText: string,
+    pendingToolCalls: PendingToolCall[],
+    emit: StreamCallback,
+  ): Promise<InternalMessage[]> {
+    this.repo.insertMessage({
+      conversationId,
+      role: 'assistant',
+      content: assistantText,
+      toolCalls: pendingToolCalls,
+    });
+
+    const projectContext = await this.getProjectContext(conversation.projectId);
+
+    for (const tc of pendingToolCalls) {
+      const result = await executeTool(tc.name, tc.args, projectContext);
+      await emit('tool_result', { toolCallId: tc.id, name: tc.name, result });
+
+      this.repo.insertMessage({
+        conversationId,
+        role: 'tool',
+        content: JSON.stringify(result),
+        toolResults: [{ toolCallId: tc.id, result }],
+      });
+    }
+
+    return this.toInternalMessages(this.repo.findMessagesByConversation(conversationId));
   }
 
   private async sendMessageCli(conversation: ChatConversation, content: string, emit: StreamCallback): Promise<void> {
@@ -244,15 +302,14 @@ export class ChatService {
       return;
     }
 
-    const abortController = new AbortController();
-    this.activeStreams.set(conversationId, abortController);
+    const abortController = this.beginStreamSession(conversationId);
 
     try {
       const startMs = Date.now();
       logger.info(
         `${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}, executor=${conversation.executorId}]`,
       );
-      const systemPrompt = await this.buildSystemPrompt(conversation.projectId);
+      const systemPrompt = await buildChatSystemPrompt(conversation.projectId);
       const history = this.repo.findMessagesByConversation(conversationId);
       const previousMessages = history
         .filter((m) => m.role !== 'tool')
@@ -267,7 +324,7 @@ export class ChatService {
           const { project } = await projectsService.getContext(conversation.projectId);
           projectCwd = project.localPath ?? undefined;
         } catch (error: unknown) {
-          logger.warn('chat.service :: failed to resolve project cwd', error);
+          logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} failed to resolve project cwd`, error);
         }
       }
 
@@ -299,80 +356,14 @@ export class ChatService {
       this.repo.updateConversation(conversationId, {});
     } catch (error: unknown) {
       if (abortController.signal.aborted) {
-        // Save a placeholder so the conversation is not left with 'user' as the last role,
-        // which would cause the UI to show an infinite "waiting" state.
-        this.repo.insertMessage({ conversationId, role: 'assistant', content: '(response cancelled)' });
+        this.insertCancelledAssistantMessage(conversationId);
         return;
       }
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       await emit('error', { message: error instanceof Error ? error.message : 'CLI chat failed' });
     } finally {
-      this.activeStreams.delete(conversationId);
+      this.endStreamSession(conversationId);
     }
-  }
-
-  private async buildSystemPrompt(projectId: string | null): Promise<string> {
-    const sections: string[] = [];
-
-    sections.push(
-      'You are a helpful AI assistant integrated into a project management and AI agent orchestration platform. ' +
-        'You can answer questions about the project, create tasks, agents, rules, skills, and memories using the available tools. ' +
-        'Be concise and direct. When creating entities, confirm what you created.',
-    );
-
-    const globalInstructions = await settingsService.listGlobalInstructions();
-    if (globalInstructions.length > 0) {
-      const content = globalInstructions
-        .map((gi) => gi.content)
-        .filter(Boolean)
-        .join('\n\n');
-      if (content) sections.push(`## Global Instructions\n\n${content}`);
-    }
-
-    if (projectId) {
-      try {
-        const { project } = await projectsService.getContext(projectId);
-
-        if (project.projectBrief) {
-          sections.push(`## Project Context\n\n${project.projectBrief}`);
-        } else {
-          const projLines: string[] = [`## Project: ${project.name}`];
-          if (project.description) projLines.push(project.description);
-          if (project.techStack) projLines.push(`**Tech Stack:** ${project.techStack}`);
-          sections.push(projLines.join('\n'));
-        }
-
-        if (project.scanData) {
-          const sd = project.scanData;
-          const scanLines: string[] = [];
-          if (sd.languages?.length) scanLines.push(`**Languages:** ${sd.languages.join(', ')}`);
-          if (sd.packageManager) scanLines.push(`**Package Manager:** ${sd.packageManager}`);
-          if (sd.projectType) scanLines.push(`**Type:** ${sd.projectType}`);
-          if (sd.keyDirectories && Object.keys(sd.keyDirectories).length > 0) {
-            const dirs = Object.entries(sd.keyDirectories)
-              .map(([k, v]) => `${k}: \`${v}\``)
-              .join(', ');
-            scanLines.push(`**Key Directories:** ${dirs}`);
-          }
-          if (scanLines.length > 0) {
-            sections.push(`## Project Structure\n\n${scanLines.join('\n')}`);
-          }
-        }
-
-        const allMemories = await memoryService.listByProject(projectId);
-        const recentMemories = allMemories
-          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-          .slice(0, MAX_RECENT_MEMORIES);
-        if (recentMemories.length > 0) {
-          const memList = recentMemories.map((m) => `- [${m.type}] **${m.name}**: ${m.content}`).join('\n');
-          sections.push(`## Recent Project Knowledge\n\n${memList}`);
-        }
-      } catch (error: unknown) {
-        logger.warn('chat.service :: project context unavailable for system prompt', error);
-      }
-    }
-
-    return sections.join('\n\n---\n\n');
   }
 
   private toInternalMessages(messages: ChatMessage[]): InternalMessage[] {
@@ -404,7 +395,7 @@ export class ChatService {
       const { project } = await projectsService.getContext(projectId);
       return { projectId, projectLocalPath: project.localPath ?? null };
     } catch (error: unknown) {
-      logger.warn('chat.service :: getProjectContext failed', error);
+      logger.warn(`${FILE_PATH} :: getProjectContext failed`, error);
       return { projectId };
     }
   }
