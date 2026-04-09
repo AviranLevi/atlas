@@ -25,6 +25,7 @@ import {
   importProjectRules,
   listProjectAgents,
   listProjects,
+  openProjectInEditor,
   scanProject,
   unassignProjectAgent,
   updateProject,
@@ -45,4 +46,5 @@ export const projectsRoute = new Hono()
   .delete('/:id', deleteProject)
   .get('/:id/agents', listProjectAgents)
   .post('/:id/agents', zValidator('json', AssignAgentSchema), assignProjectAgent)
-  .delete('/:id/agents/:agentId', unassignProjectAgent);
+  .delete('/:id/agents/:agentId', unassignProjectAgent)
+  .post('/:id/open-in-editor', openProjectInEditor);

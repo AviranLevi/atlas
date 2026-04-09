@@ -26,6 +26,7 @@ import {
   listArchivedLogs,
   listWorkspaces,
   mergeWorkspace,
+  openWorkspaceInEditor,
   refreshAgentRuntimes,
   removeWorkspaceComment,
   requestWorkspaceChanges,
@@ -53,4 +54,5 @@ export const workspacesRoute = new Hono()
   .post('/:id/comments/:commentId', zValidator('json', EditDiffCommentSchema), editWorkspaceComment)
   .delete('/:id/comments/:commentId', removeWorkspaceComment)
   .post('/:id/stop', stopWorkspace)
+  .post('/:id/open-in-editor', openWorkspaceInEditor)
   .delete('/:id', deleteWorkspace);

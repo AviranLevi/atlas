@@ -22,9 +22,11 @@ export type WorkspaceDetailHeaderProps = {
   onRerun: () => void;
   onFollowUp: () => void;
   onCleanup: () => void;
+  onOpenInEditor: () => void;
   isStopping: boolean;
   isRerunning: boolean;
   isCleaning: boolean;
+  isOpeningInEditor: boolean;
 };
 
 export type WorkspaceInfoCardsProps = {

@@ -102,9 +102,10 @@ export async function spawnAgent(
     }
   }
 
-  logger.info(`${FILE_PATH} :: spawnAgent - spawning ${executor.command} ${args.join(' ').slice(0, 200)}... in ${cwd}`);
+  const spawnBin = executor.spawnCommand ?? executor.command;
+  logger.info(`${FILE_PATH} :: spawnAgent - spawning ${spawnBin} ${args.join(' ').slice(0, 200)}... in ${cwd}`);
 
-  const proc = spawn(executor.command, args, {
+  const proc = spawn(spawnBin, args, {
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env,

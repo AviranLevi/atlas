@@ -1,6 +1,7 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 // Lib
 import { ApiError, api } from '@/lib/api';
@@ -69,6 +70,16 @@ export function useStartWork() {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
+  });
+}
+
+/** Opens the workspace's worktree path in the first available editor (Cursor → VS Code → Windsurf). */
+export function useOpenWorkspaceInEditor() {
+  return useMutation({
+    mutationFn: (workspaceId: string) =>
+      api.post<{ editor: string; path: string }>(`/workspaces/${workspaceId}/open-in-editor`, {}),
+    onSuccess: (data) => toast.success(`Opened in ${data.editor}`),
+    onError: () => toast.error('No supported editor found. Install Cursor, VS Code, or Windsurf.'),
   });
 }
 

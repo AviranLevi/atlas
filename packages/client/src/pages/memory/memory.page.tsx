@@ -18,11 +18,12 @@ import { useProjects } from '@/hooks/use-projects.hook';
 import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Constants
-import { TYPE_OPTIONS, SCOPE_OPTIONS } from './memory.constants';
+import { TYPE_OPTIONS, SCOPE_OPTIONS, STATUS_OPTIONS } from './memory.constants';
 
 export function MemoryPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [scopeFilter, setScopeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('active');
   const [search, setSearch] = useState('');
   const { data: projects = [] } = useProjects();
   const { data: agents = [] } = useAgents();
@@ -45,10 +46,12 @@ export function MemoryPage() {
   const agentMap = useMemo(() => new Map(agents.map((a) => [a.id, a.name])), [agents]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return memories;
+    let result = memories;
+    if (statusFilter !== 'all') result = result.filter((m) => (m.status ?? 'active') === statusFilter);
+    if (!search.trim()) return result;
     const q = search.toLowerCase();
-    return memories.filter((m) => (m.name ?? '').toLowerCase().includes(q) || m.content.toLowerCase().includes(q));
-  }, [memories, search]);
+    return result.filter((m) => (m.name ?? '').toLowerCase().includes(q) || m.content.toLowerCase().includes(q));
+  }, [memories, search, statusFilter]);
 
   return (
     <div>
@@ -93,6 +96,18 @@ export function MemoryPage() {
           </SelectTrigger>
           <SelectContent>
             {SCOPE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-8 w-[130px] text-xs">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>

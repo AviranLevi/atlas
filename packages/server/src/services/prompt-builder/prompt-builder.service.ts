@@ -1,3 +1,6 @@
+// Shared
+import type { Memory } from '@atlas/shared';
+
 // Services
 import {
   agentsService,
@@ -152,6 +155,20 @@ export class PromptBuilderService {
         sections.push(`## Design Context\n\n${project.designContext}`);
       }
 
+      // ─── Pinned memories (always-load tier, L0) ─────────────────
+      // These load unconditionally regardless of brief or recency.
+      const allProjectMemories = await memoryService.listByProject(params.projectId);
+      const pinnedMemories = allProjectMemories.filter((m) => m.isPinned);
+      if (pinnedMemories.length > 0) {
+        const memList = pinnedMemories
+          .map((m) => `- [${m.type}]${m.scope === 'global' ? ' (global)' : ''} **${m.name}**: ${m.content}`)
+          .join('\n');
+        sections.push(
+          `## Critical Project Facts\n\nThese are pinned facts that always apply to this project:\n\n${memList}`,
+        );
+      }
+      const pinnedIds = new Set(pinnedMemories.map((m) => m.id));
+
       // ─── Project context (brief-based or fallback) ─────────────
 
       if (project.projectBrief) {
@@ -159,7 +176,12 @@ export class PromptBuilderService {
         sections.push(`## Project Context\n\n${project.projectBrief}`);
 
         // Include only recent memories that may not be in the brief yet
-        const recentMemories = await this.getRecentMemories(params.projectId, params.agentId);
+        const recentMemories = await this.getRecentMemories(
+          params.projectId,
+          params.agentId,
+          pinnedIds,
+          allProjectMemories,
+        );
         if (recentMemories.length > 0) {
           const memList = recentMemories
             .map((m) => `- [${m.type}]${m.scope === 'global' ? ' (global)' : ''} **${m.name}**: ${m.content}`)
@@ -197,8 +219,8 @@ export class PromptBuilderService {
         }
         sections.push(projLines.join('\n'));
 
-        // Include ALL memories (legacy, unbounded)
-        const projectMemories = await memoryService.listByProject(params.projectId);
+        // Include ALL memories (legacy, unbounded) — skip pinned (already above)
+        const projectMemories = allProjectMemories;
         const agentMemoryIds = new Set<string>();
         if (params.agentId) {
           const agentContext = await agentsService.getContext(params.agentId);
@@ -206,7 +228,7 @@ export class PromptBuilderService {
             agentMemoryIds.add(m.id as string);
           }
         }
-        const uniqueProjectMemories = projectMemories.filter((m) => !agentMemoryIds.has(m.id));
+        const uniqueProjectMemories = projectMemories.filter((m) => !agentMemoryIds.has(m.id) && !pinnedIds.has(m.id));
 
         if (uniqueProjectMemories.length > 0) {
           const memList = uniqueProjectMemories
@@ -319,8 +341,9 @@ export class PromptBuilderService {
           'You have access to the "atlas" MCP server with the following tools:',
           '- `update_task` -- Update this task\'s status (e.g., to "In Review" or "Done"), add notes',
           '- `create_task` -- Create new tasks on the Kanban board if you discover sub-tasks or bugs',
-          '- `create_memory` -- Save important decisions, conventions, or problems discovered',
-          '- `update_memory` -- Update an existing memory entry',
+          '- `create_memory` -- Save important decisions, conventions, or problems discovered (pass supersedesId to replace an outdated memory)',
+          '- `update_memory` -- Update an existing memory entry (set status to "archived" to retire it)',
+          '- `supersede_memory` -- Replace a stale memory with updated information in one operation',
           '- `list_memories` -- List existing memories for reference (full detail)',
           '- `list_tasks` -- List other tasks for context',
           '- `get_project_context` -- Get full project context (all tasks, agents, memories)',
@@ -364,11 +387,18 @@ export class PromptBuilderService {
   /**
    * Get the most recent memories that were created/updated AFTER the brief
    * was last generated. These supplement the brief with fresh knowledge.
+   * Pinned memories are excluded since they're already injected in the L0 tier.
+   * Pass pre-fetched memories to avoid a redundant DB call.
    */
-  private async getRecentMemories(projectId: string, agentId?: string | null) {
-    const allMemories = await memoryService.listByProject(projectId);
+  private async getRecentMemories(
+    projectId: string,
+    agentId?: string | null,
+    pinnedIds?: Set<string>,
+    prefetched?: Memory[],
+  ) {
+    const allMemories = prefetched ?? (await memoryService.listByProject(projectId));
 
-    // Exclude agent-specific memories to avoid duplication
+    // Exclude agent-specific memories and already-injected pinned memories
     const agentMemoryIds = new Set<string>();
     if (agentId) {
       const agentContext = await agentsService.getContext(agentId);
@@ -377,7 +407,7 @@ export class PromptBuilderService {
       }
     }
 
-    const filtered = allMemories.filter((m) => !agentMemoryIds.has(m.id));
+    const filtered = allMemories.filter((m) => !agentMemoryIds.has(m.id) && !pinnedIds?.has(m.id));
 
     // Sort by most recently updated and take only the latest N
     return filtered

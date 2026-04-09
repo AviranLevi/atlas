@@ -12,10 +12,12 @@ const MEMORY_KEY = ['memory'] as const;
 type MemoryFilters = {
   type?: string;
   scope?: string;
+  status?: string;
   search?: string;
   projectId?: string;
 };
 
+/** Returns all memory entries, optionally filtered. */
 export function useMemories(filters?: MemoryFilters) {
   const params = new URLSearchParams();
   if (filters?.type) params.set('type', filters.type);
@@ -29,6 +31,7 @@ export function useMemories(filters?: MemoryFilters) {
   });
 }
 
+/** Returns a single memory entry by ID. */
 export function useMemory(id: string | undefined) {
   return useQuery({
     queryKey: [...MEMORY_KEY, id],
@@ -37,6 +40,7 @@ export function useMemory(id: string | undefined) {
   });
 }
 
+/** Creates a new memory entry. */
 export function useCreateMemory() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -45,6 +49,7 @@ export function useCreateMemory() {
   });
 }
 
+/** Updates a memory entry by ID. */
 export function useUpdateMemory() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -53,10 +58,20 @@ export function useUpdateMemory() {
   });
 }
 
+/** Deletes a memory entry by ID. */
 export function useDeleteMemory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/memory/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMORY_KEY }),
+  });
+}
+
+/** Toggles the isPinned flag on a memory entry. */
+export function useTogglePinMemory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, isPinned }: { id: string; isPinned: boolean }) => api.put<Memory>(`/memory/${id}`, { isPinned }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMORY_KEY }),
   });
 }

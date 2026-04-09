@@ -1,5 +1,5 @@
 // External
-import { eq, or } from 'drizzle-orm';
+import { and, eq, ne, or } from 'drizzle-orm';
 
 // Shared
 import type { CreateMemory, Memory, UpdateMemory } from '@atlas/shared';
@@ -49,14 +49,20 @@ export class MemoryRepository {
     return row;
   }
 
-  /** Returns memories relevant to a project (project-scoped + global). */
+  /** Returns active memories relevant to a project (project-scoped + global, excludes superseded/archived). */
   findByProject(projectId: string): Memory[] {
     const FUNCTION_NAME = 'findByProject';
     try {
       return this.db
         .select()
         .from(memory)
-        .where(or(eq(memory.projectId, projectId), eq(memory.scope, 'global')))
+        .where(
+          and(
+            or(eq(memory.projectId, projectId), eq(memory.scope, 'global')),
+            ne(memory.status, 'superseded'),
+            ne(memory.status, 'archived'),
+          ),
+        )
         .all() as Memory[];
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -90,6 +96,27 @@ export class MemoryRepository {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to update memory', { cause: error });
+    }
+  }
+
+  /** Marks a memory as superseded, optionally linking to its replacement. */
+  supersede(id: string, replacementId?: string): Memory {
+    const FUNCTION_NAME = 'supersede';
+    try {
+      const result = this.db
+        .update(memory)
+        .set({
+          status: 'superseded',
+          supersededBy: replacementId ?? null,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(memory.id, id))
+        .returning()
+        .get();
+      return result as Memory;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to supersede memory', { cause: error });
     }
   }
 

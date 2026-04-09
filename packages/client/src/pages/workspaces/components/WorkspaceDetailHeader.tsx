@@ -1,5 +1,5 @@
 // React / library
-import { Square, Trash2, RotateCcw, ListPlus } from 'lucide-react';
+import { FolderOpen, Square, Trash2, RotateCcw, ListPlus } from 'lucide-react';
 
 // Components
 import { Badge } from '@/components/ui/badge';
@@ -22,9 +22,11 @@ export function WorkspaceDetailHeader({
   onRerun,
   onFollowUp,
   onCleanup,
+  onOpenInEditor,
   isStopping,
   isRerunning,
   isCleaning,
+  isOpeningInEditor,
 }: WorkspaceDetailHeaderProps) {
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
 
@@ -45,6 +47,16 @@ export function WorkspaceDetailHeader({
       </div>
 
       <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onOpenInEditor}
+          disabled={isOpeningInEditor}
+          title="Open worktree in Cursor / VS Code"
+        >
+          <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+          {isOpeningInEditor ? 'Opening...' : 'Open in Editor'}
+        </Button>
         {isActive && (
           <Button
             variant="outline"

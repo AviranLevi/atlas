@@ -21,6 +21,13 @@ export interface ExecutorConfig {
   id: string;
   name: string;
   command: string;
+  /**
+   * Override the binary used when spawning the agent process.
+   * When set, `command` is still used for detection (command -v, version, auth check)
+   * but `spawnCommand` is used for the actual agent invocation.
+   * Useful when detection and execution use different binaries (e.g. detect `ollama`, spawn `aider`).
+   */
+  spawnCommand?: string;
   args: string[];
   promptDelivery: PromptDelivery;
   promptFlag?: string;

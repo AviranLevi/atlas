@@ -36,3 +36,10 @@ export const SCOPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'global', label: 'Global' },
   { value: 'project', label: 'Project' },
 ];
+
+export const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'superseded', label: 'Superseded' },
+  { value: 'archived', label: 'Archived' },
+  { value: 'all', label: 'All' },
+];

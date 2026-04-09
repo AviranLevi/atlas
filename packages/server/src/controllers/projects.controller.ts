@@ -15,6 +15,7 @@ import {
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
+import { openInEditor } from '../lib/open-in-editor.js';
 
 /** Lists all projects. Pass include=summary for task/agent counts. */
 export async function listProjects(c: Context) {
@@ -118,4 +119,17 @@ export async function assignProjectAgent(c: Context) {
 export async function unassignProjectAgent(c: Context) {
   await agentsService.unassignFromProject(c.req.param('agentId')!, c.req.param('id')!);
   return c.body(null, 204);
+}
+
+/** Opens the project's local path in the first available editor (Cursor → VS Code → Windsurf). */
+export async function openProjectInEditor(c: Context) {
+  const project = await projectsService.getById(c.req.param('id')!);
+  if (!project?.localPath) {
+    return c.json({ error: 'Project has no local path configured' }, 400);
+  }
+  const editor = await openInEditor(project.localPath);
+  if (!editor) {
+    return c.json({ error: 'No supported editor found (tried: cursor, code, windsurf)' }, 404);
+  }
+  return c.json({ editor, path: project.localPath });
 }

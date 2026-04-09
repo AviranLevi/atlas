@@ -1,16 +1,20 @@
 // React / library
-import { ArrowLeft, ExternalLink, Pencil, GitBranch, ScanSearch } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FolderOpen, Pencil, GitBranch, ScanSearch } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
+// Hooks
+import { useOpenProjectInEditor } from '@/hooks/use-projects.hook';
+
 // Types
 import type { ProjectHeaderProps } from '../project-detail.types';
 
 export function ProjectHeader({ project, statusConfig: status, scanProject, onEdit }: ProjectHeaderProps) {
   const navigate = useNavigate();
+  const openInEditor = useOpenProjectInEditor();
 
   return (
     <div className="flex flex-col gap-4">
@@ -70,12 +74,24 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
         </div>
         <div className="flex items-center gap-2">
           {project.localPath && (
-            <Button variant="outline" size="sm" asChild>
-              <button type="button" onClick={() => scanProject.mutate(project.id)} disabled={scanProject.isPending}>
-                <ScanSearch className={`mr-1.5 h-4 w-4 ${scanProject.isPending ? 'animate-pulse' : ''}`} />
-                {scanProject.isPending ? 'Scanning...' : project.scanData ? 'Re-scan' : 'Scan Project'}
-              </button>
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openInEditor.mutate(project.id)}
+                disabled={openInEditor.isPending}
+                title="Open in Cursor / VS Code"
+              >
+                <FolderOpen className="mr-1.5 h-4 w-4" />
+                {openInEditor.isPending ? 'Opening...' : 'Open in Editor'}
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <button type="button" onClick={() => scanProject.mutate(project.id)} disabled={scanProject.isPending}>
+                  <ScanSearch className={`mr-1.5 h-4 w-4 ${scanProject.isPending ? 'animate-pulse' : ''}`} />
+                  {scanProject.isPending ? 'Scanning...' : project.scanData ? 'Re-scan' : 'Scan Project'}
+                </button>
+              </Button>
+            </>
           )}
           <Button variant="outline" size="sm" onClick={onEdit}>
             <Pencil className="mr-1.5 h-4 w-4" />

@@ -1,5 +1,5 @@
 // React / library
-import { Pencil, Check, X, FolderOpen } from 'lucide-react';
+import { Pencil, Check, X, FolderOpen, Pin, Archive, RefreshCw } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 // Components
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 
 // Hooks
-import { useUpdateMemory } from '@/hooks/use-memory.hook';
+import { useUpdateMemory, useTogglePinMemory } from '@/hooks/use-memory.hook';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
@@ -23,6 +23,7 @@ const NONE = '__none__';
 
 export function MemoryExpandedRow({ memory, projectMap: _projectMap, agentMap }: MemoryExpandedRowProps) {
   const updateMemory = useUpdateMemory();
+  const togglePin = useTogglePinMemory();
   const { data: projects = [] } = useProjects();
 
   const [editingName, setEditingName] = useState(false);
@@ -53,6 +54,8 @@ export function MemoryExpandedRow({ memory, projectMap: _projectMap, agentMap }:
   }, [memory.id, contentDraft, updateMemory]);
 
   const agentName = memory.agentId ? (agentMap.get(memory.agentId) ?? 'Unknown') : null;
+  const status = memory.status ?? 'active';
+  const isActive = status === 'active';
 
   return (
     <div className="space-y-4 px-4 pb-4 pl-11">
@@ -191,6 +194,53 @@ export function MemoryExpandedRow({ memory, projectMap: _projectMap, agentMap }:
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Actions row */}
+      <div className="flex flex-wrap items-center gap-2 pt-1 border-t">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => togglePin.mutate({ id: memory.id, isPinned: !memory.isPinned })}
+          disabled={togglePin.isPending}
+          className={memory.isPinned ? 'text-amber-600 border-amber-300' : ''}
+        >
+          <Pin className="mr-1.5 h-3.5 w-3.5" />
+          {memory.isPinned ? 'Unpin' : 'Pin (always load)'}
+        </Button>
+
+        {isActive && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (confirm('Mark this memory as archived? It will no longer load in agent prompts.')) {
+                updateMemory.mutate({ id: memory.id, data: { status: 'archived' } });
+              }
+            }}
+            disabled={updateMemory.isPending}
+            className="text-muted-foreground"
+          >
+            <Archive className="mr-1.5 h-3.5 w-3.5" />
+            Archive
+          </Button>
+        )}
+
+        {!isActive && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => updateMemory.mutate({ id: memory.id, data: { status: 'active' } })}
+            disabled={updateMemory.isPending}
+          >
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+            Restore
+          </Button>
+        )}
+
+        {memory.supersededBy && (
+          <span className="text-[11px] text-muted-foreground">Superseded — a newer memory replaced this one.</span>
+        )}
       </div>
 
       {agentName && (

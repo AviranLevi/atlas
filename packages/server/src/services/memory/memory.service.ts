@@ -70,21 +70,54 @@ export class MemoryService {
     }
   }
 
-  /** Creates a new memory entry and triggers a non-blocking brief refresh if project-scoped. */
+  /** Creates a new memory entry and triggers a non-blocking brief refresh if project-scoped. If supersedesId is provided, the old memory is marked as superseded. */
   async create(data: CreateMemory): Promise<Memory> {
     const FUNCTION_NAME = 'create';
     try {
-      const memory = this.repo.insert(data);
+      const { supersedesId, ...insertData } = data;
+      const mem = this.repo.insert(insertData);
+      if (supersedesId) {
+        this.repo.supersede(supersedesId, mem.id);
+      }
       if (data.projectId) {
         briefGeneratorService.generateAndSave(data.projectId).catch((err: unknown) => {
           logger.error(`${FILE_PATH} :: create - brief generation failed`, err);
         });
       }
-      supermemoryService.syncMemory(memory).catch(() => {});
-      return memory;
+      supermemoryService.syncMemory(mem).catch(() => {});
+      return mem;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to create memory', { cause: error });
+    }
+  }
+
+  /** Marks a memory as superseded by a new memory. Optionally creates the replacement in one step. */
+  async supersede(id: string, replacement?: { name: string; content: string; type: string }): Promise<Memory> {
+    const FUNCTION_NAME = 'supersede';
+    try {
+      const existing = this.repo.findByIdOrThrow(id);
+      if (replacement) {
+        const newMem = this.repo.insert({
+          name: replacement.name,
+          content: replacement.content,
+          type: replacement.type as NonNullable<Memory['type']>,
+          scope: existing.scope ?? 'project',
+          projectId: existing.projectId ?? undefined,
+          agentId: existing.agentId ?? undefined,
+        });
+        this.repo.supersede(id, newMem.id);
+        if (existing.projectId) {
+          briefGeneratorService.generateAndSave(existing.projectId).catch((err: unknown) => {
+            logger.error(`${FILE_PATH} :: supersede - brief generation failed`, err);
+          });
+        }
+        return newMem;
+      }
+      return this.repo.supersede(id);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to supersede memory', { cause: error });
     }
   }
 

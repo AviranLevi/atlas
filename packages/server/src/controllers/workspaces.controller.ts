@@ -22,6 +22,7 @@ import { orchestratorService } from '../services/index.js';
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
 import { logger } from '../lib/logger.js';
+import { openInEditor } from '../lib/open-in-editor.js';
 
 /** Lists all registered agent runtimes. */
 export async function listAgentRuntimes(c: Context) {
@@ -143,6 +144,18 @@ export async function stopWorkspace(c: Context) {
 export async function deleteWorkspace(c: Context) {
   await orchestratorService.cleanup(c.req.param('id')!);
   return c.body(null, 204);
+}
+
+/** Opens the workspace's worktree path in the first available editor (Cursor → VS Code → Windsurf). */
+export async function openWorkspaceInEditor(c: Context) {
+  const { workspacesRepository } = await import('../db/repositories/index.js');
+  const workspace = workspacesRepository.findById(c.req.param('id')!);
+  if (!workspace) return c.json({ error: 'Workspace not found' }, 404);
+  const editor = await openInEditor(workspace.worktreePath);
+  if (!editor) {
+    return c.json({ error: 'No supported editor found (tried: cursor, code, windsurf)' }, 404);
+  }
+  return c.json({ editor, path: workspace.worktreePath });
 }
 
 const LOG_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');

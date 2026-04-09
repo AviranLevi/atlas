@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -137,6 +138,16 @@ export function useGenerateDesignContext() {
 }
 
 const FILESYSTEM_KEY = ['filesystem'] as const;
+
+/** Opens the project's local path in the first available editor (Cursor → VS Code → Windsurf). */
+export function useOpenProjectInEditor() {
+  return useMutation({
+    mutationFn: (projectId: string) =>
+      api.post<{ editor: string; path: string }>(`/projects/${projectId}/open-in-editor`, {}),
+    onSuccess: (data) => toast.success(`Opened in ${data.editor}`),
+    onError: () => toast.error('No supported editor found. Install Cursor, VS Code, or Windsurf.'),
+  });
+}
 
 /** Scans a local folder and returns auto-detected project metadata. */
 export function useScanFolder() {

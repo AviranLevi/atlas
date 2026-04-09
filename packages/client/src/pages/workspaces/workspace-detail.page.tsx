@@ -22,6 +22,7 @@ import {
   useStopWork,
   useCleanupWorkspace,
   useWorkspaceLogStream,
+  useOpenWorkspaceInEditor,
 } from '@/hooks/use-workspaces.hook';
 
 // Types
@@ -33,6 +34,7 @@ export function WorkspaceDetailPage() {
   const { data: workspace, isLoading, error } = useWorkspaceStatus(id);
   const stopWork = useStopWork();
   const cleanup = useCleanupWorkspace();
+  const openInEditor = useOpenWorkspaceInEditor();
   const [followUpOpen, setFollowUpOpen] = useState(false);
   const [aiReviewOpen, setAiReviewOpen] = useState(false);
   const [rerunOpen, setRerunOpen] = useState(false);
@@ -87,9 +89,11 @@ export function WorkspaceDetailPage() {
         onRerun={() => setRerunOpen(true)}
         onFollowUp={() => setFollowUpOpen(true)}
         onCleanup={() => cleanup.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
+        onOpenInEditor={() => openInEditor.mutate(workspace.id)}
         isStopping={stopWork.isPending}
         isRerunning={false}
         isCleaning={cleanup.isPending}
+        isOpeningInEditor={openInEditor.isPending}
       />
 
       <WorkspaceInfoCards workspace={workspace} />
