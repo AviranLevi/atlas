@@ -8,6 +8,7 @@ import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { Button } from '@/components/ui/button';
 import { ProjectAgentsSection } from './components/ProjectAgentsSection';
 import { ProjectBriefSection } from './components/ProjectBriefSection';
+import { ProjectAgentBehaviorSection } from './components/ProjectAgentBehaviorSection';
 import { ProjectDesignContextSection } from './components/ProjectDesignContextSection';
 import { ProjectHeader } from './components/ProjectHeader';
 import { ProjectKnowledgeGraph } from './components/ProjectKnowledgeGraph';
@@ -145,6 +146,8 @@ export function ProjectDetailPage() {
             projectId={project.id}
             onNavigateToKanban={() => navigate(`/kanban?projectId=${project.id}`)}
           />
+
+          <ProjectAgentBehaviorSection project={project} />
 
           <ProjectMemoriesSection memories={memories} />
         </>

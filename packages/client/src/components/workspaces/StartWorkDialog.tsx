@@ -1,10 +1,12 @@
 // React / library
-import { Lightbulb, Play } from 'lucide-react';
+import { GitBranch, Lightbulb, Play } from 'lucide-react';
 import { type ReactElement, useEffect, useMemo, useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { BranchSelect } from './BranchSelect';
 import { ModelSection } from './ModelSection';
 import { RuntimeSelect } from './RuntimeSelect';
@@ -54,6 +56,10 @@ export function StartWorkDialog({
   const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL_VALUE);
   const [customModelText, setCustomModelText] = useState<string>('');
   const [newBranchName, setNewBranchName] = useState<string>('');
+  const [workflowEnabled, setWorkflowEnabled] = useState(false);
+
+  // Pre-fill workflow toggle from project's agent behavior setting
+  const projectWorkflowMode = project?.agentBehavior?.workflowMode ?? 'off';
 
   const currentRuntime = useMemo(() => runtimes.find((r) => r.id === selectedRuntime), [runtimes, selectedRuntime]);
 
@@ -132,6 +138,7 @@ export function StartWorkDialog({
         baseBranch,
         model,
         providerId: agent?.providerId ?? undefined,
+        workflowEnabled: workflowEnabled || projectWorkflowMode !== 'off',
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -204,6 +211,21 @@ export function StartWorkDialog({
               isCreating={createBranch.isPending}
               createError={createBranch.isError ? (createBranch.error as Error).message : undefined}
             />
+
+            <div className="flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="flex items-center gap-2">
+                <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm">Workflow Mode</Label>
+                  <p className="text-xs text-muted-foreground">Brainstorm → Plan → Execute with approval gates</p>
+                </div>
+              </div>
+              <Switch
+                checked={workflowEnabled || projectWorkflowMode !== 'off'}
+                onCheckedChange={setWorkflowEnabled}
+                disabled={projectWorkflowMode !== 'off'}
+              />
+            </div>
 
             {startWork.isError && <p className="text-destructive text-sm">{(startWork.error as Error).message}</p>}
 

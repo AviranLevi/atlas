@@ -7,6 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { Button } from '@/components/ui/button';
 import { RerunDialog } from '@/components/workspaces/RerunDialog';
+import { WorkflowApprovalPanel } from '@/components/workspaces/WorkflowApprovalPanel';
 import { AiReviewDialog } from './components/AiReviewDialog';
 import { TerminalOutput } from './components/TerminalOutput';
 import { WorkspaceDetailHeader } from './components/WorkspaceDetailHeader';
@@ -92,6 +93,10 @@ export function WorkspaceDetailPage() {
       />
 
       <WorkspaceInfoCards workspace={workspace} />
+
+      {workspace.status === 'completed' && workspace.workflowStage && workspace.workflowStage !== 'execute' && (
+        <WorkflowApprovalPanel workspace={workspace} />
+      )}
 
       {canReview && (
         <div>

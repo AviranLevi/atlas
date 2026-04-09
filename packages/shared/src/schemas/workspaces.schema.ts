@@ -33,6 +33,7 @@ export const WorkspaceSchema = z.object({
   pid: z.number().int().nullable(),
   status: WorkspaceStatusEnum,
   output: z.string().nullable(),
+  workflowStage: z.enum(['brainstorm', 'plan', 'execute']).nullable().optional(),
   diffComments: z.array(DiffCommentSchema).nullable().optional(),
   startedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
@@ -49,6 +50,7 @@ export const CreateWorkspaceSchema = z.object({
   baseBranch: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
   providerId: z.string().uuid().optional(),
+  workflowEnabled: z.boolean().optional(),
 });
 
 export const RerunWorkspaceSchema = z.object({

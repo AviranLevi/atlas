@@ -1,12 +1,22 @@
 import { z } from 'zod';
 
-export const TaskStatusEnum = z.enum(['Backlog', 'To Do', 'In Progress', 'In Review', 'Done', 'Blocked']);
+export const TaskStatusEnum = z.enum([
+  'Backlog',
+  'To Do',
+  'In Progress',
+  'Awaiting Approval',
+  'In Review',
+  'Done',
+  'Blocked',
+]);
 
 export const TaskPriorityEnum = z.enum(['Low', 'Medium', 'High']);
 
 export const TaskEstimateEnum = z.enum(['S', 'M', 'L']);
 
 export const TaskSourceEnum = z.enum(['human', 'agent', 'dispatch', 'github']);
+
+export const WorkflowStageEnum = z.enum(['brainstorm', 'plan', 'execute']);
 
 export const TaskSchema = z.object({
   id: z.string().uuid(),
@@ -21,6 +31,8 @@ export const TaskSchema = z.object({
   agentId: z.string().uuid().nullable(),
   phaseId: z.string().uuid().nullable(),
   source: TaskSourceEnum.nullable(),
+  workflowEnabled: z.boolean().default(false),
+  workflowStage: WorkflowStageEnum.nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -37,6 +49,8 @@ export const CreateTaskSchema = z.object({
   agentId: z.string().uuid().nullable().optional(),
   phaseId: z.string().uuid().nullable().optional(),
   source: TaskSourceEnum.optional(),
+  workflowEnabled: z.boolean().optional(),
+  workflowStage: WorkflowStageEnum.nullable().optional(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial();
@@ -45,6 +59,7 @@ export const TASK_STATUS = {
   BACKLOG: 'Backlog',
   TODO: 'To Do',
   IN_PROGRESS: 'In Progress',
+  AWAITING_APPROVAL: 'Awaiting Approval',
   IN_REVIEW: 'In Review',
   DONE: 'Done',
   BLOCKED: 'Blocked',
@@ -54,6 +69,7 @@ export type TaskStatus = z.infer<typeof TaskStatusEnum>;
 export type TaskPriority = z.infer<typeof TaskPriorityEnum>;
 export type TaskEstimate = z.infer<typeof TaskEstimateEnum>;
 export type TaskSource = z.infer<typeof TaskSourceEnum>;
+export type WorkflowStage = z.infer<typeof WorkflowStageEnum>;
 export type Task = z.infer<typeof TaskSchema>;
 export type CreateTask = z.infer<typeof CreateTaskSchema>;
 export type UpdateTask = z.infer<typeof UpdateTaskSchema>;

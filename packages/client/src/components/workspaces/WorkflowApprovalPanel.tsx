@@ -1,0 +1,83 @@
+// React / library
+import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
+
+// Components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+
+// Hooks
+import { useUpdateTask } from '@/hooks/use-tasks.hook';
+import { useAdvanceWorkflow } from '@/hooks/use-workspaces.hook';
+
+// Types
+import type { Workspace } from '@atlas/shared';
+
+const STAGE_LABELS: Record<string, string> = {
+  brainstorm: 'Brainstorm',
+  plan: 'Plan',
+  execute: 'Execute',
+};
+
+const NEXT_STAGE_LABELS: Record<string, string> = {
+  brainstorm: 'Plan',
+  plan: 'Execute',
+};
+
+type WorkflowApprovalPanelProps = {
+  workspace: Workspace;
+};
+
+export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps) {
+  const advance = useAdvanceWorkflow();
+  const updateTask = useUpdateTask();
+
+  const stage = workspace.workflowStage;
+  if (!stage || stage === 'execute') return null;
+
+  const currentLabel = STAGE_LABELS[stage] ?? stage;
+  const nextLabel = NEXT_STAGE_LABELS[stage];
+
+  const handleApprove = () => {
+    advance.mutate(workspace.taskId);
+  };
+
+  const handleReject = () => {
+    updateTask.mutate({ id: workspace.taskId, data: { status: 'To Do' } });
+  };
+
+  const isPending = advance.isPending || updateTask.isPending;
+
+  return (
+    <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+      <CardContent className="flex items-center justify-between gap-4 py-4">
+        <div>
+          <p className="text-sm font-semibold">{currentLabel} stage complete — awaiting your approval</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Review the agent's output above, then approve to continue to the <strong>{nextLabel}</strong> stage, or
+            reject to send the task back to To Do.
+          </p>
+          {(advance.isError || updateTask.isError) && (
+            <p className="mt-1 text-xs text-destructive">{((advance.error ?? updateTask.error) as Error).message}</p>
+          )}
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Button variant="outline" size="sm" onClick={handleReject} disabled={isPending}>
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+            Reject
+          </Button>
+          <Button size="sm" onClick={handleApprove} disabled={isPending}>
+            {advance.isPending ? (
+              'Starting…'
+            ) : (
+              <>
+                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                Approve & start {nextLabel}
+                <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

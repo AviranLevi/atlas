@@ -15,7 +15,7 @@ import { parseTags } from '../../lib/utils/index.js';
 
 const FILE_PATH = 'db/repositories/projects.repository.ts';
 
-/** Parse scanData JSON from DB row */
+/** Parse JSON blob fields from a DB row */
 function hydrateProject(row: Record<string, unknown>): Project {
   if (row.scanData && typeof row.scanData === 'string') {
     try {
@@ -24,15 +24,26 @@ function hydrateProject(row: Record<string, unknown>): Project {
       row.scanData = null;
     }
   }
+  if (row.agentBehavior && typeof row.agentBehavior === 'string') {
+    try {
+      row.agentBehavior = JSON.parse(row.agentBehavior);
+    } catch {
+      row.agentBehavior = null;
+    }
+  }
   return row as Project;
 }
 
-/** Serialize scanData to JSON string for DB */
+/** Serialize JSON blob fields to strings for DB storage */
 function serializeScanData(data: Record<string, unknown>): Record<string, unknown> {
-  if (data.scanData && typeof data.scanData === 'object') {
-    return { ...data, scanData: JSON.stringify(data.scanData) };
+  const result = { ...data };
+  if (result.scanData && typeof result.scanData === 'object') {
+    result.scanData = JSON.stringify(result.scanData);
   }
-  return data;
+  if (result.agentBehavior && typeof result.agentBehavior === 'object') {
+    result.agentBehavior = JSON.stringify(result.agentBehavior);
+  }
+  return result;
 }
 
 export class ProjectsRepository {

@@ -20,6 +20,13 @@ export const ImportRulesSchema = z.object({
   items: z.array(AiConfigSchema).min(1),
 });
 
+export const AgentBehaviorSchema = z.object({
+  requireVerification: z.boolean().default(true),
+  enforceNoStubs: z.boolean().default(true),
+  workflowMode: z.enum(['off', 'plan-only', 'full']).default('off'),
+  autoAiReview: z.boolean().default(false),
+});
+
 export const ProjectScanDataSchema = z.object({
   projectType: ProjectTypeEnum.nullable().optional(),
   languages: z.array(z.string()).optional(),
@@ -59,6 +66,7 @@ export const ProjectSchema = z.object({
   scanData: ProjectScanDataSchema.nullable(),
   projectBrief: z.string().nullable(),
   designContext: z.string().nullable(),
+  agentBehavior: AgentBehaviorSchema.nullable(),
   color: z.string().nullable(),
   mission: z.string().max(2000).nullable(),
   createdAt: z.string().datetime(),
@@ -76,12 +84,14 @@ export const CreateProjectSchema = z.object({
   scanData: ProjectScanDataSchema.nullable().optional(),
   projectBrief: z.string().nullable().optional(),
   designContext: z.string().nullable().optional(),
+  agentBehavior: AgentBehaviorSchema.nullable().optional(),
   color: z.string().nullable().optional(),
   mission: z.string().max(2000).nullable().optional(),
 });
 
 export const UpdateProjectSchema = CreateProjectSchema.partial();
 
+export type AgentBehavior = z.infer<typeof AgentBehaviorSchema>;
 export type AiConfig = z.infer<typeof AiConfigSchema>;
 export type CreateBranch = z.infer<typeof CreateBranchSchema>;
 export type ImportRules = z.infer<typeof ImportRulesSchema>;

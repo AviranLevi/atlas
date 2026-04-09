@@ -1,5 +1,5 @@
 // External
-import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 // DB
 import { timestampDefault, uuidDefault } from '../helpers/index.js';
@@ -20,6 +20,8 @@ export const tasks = sqliteTable('tasks', {
   phaseId: text('phase_id').references(() => phases.id),
   source: text('source'),
   tags: text('tags'),
+  workflowEnabled: integer('workflow_enabled', { mode: 'boolean' }).notNull().default(false),
+  workflowStage: text('workflow_stage'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

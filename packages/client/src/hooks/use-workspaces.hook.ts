@@ -63,7 +63,20 @@ export function useStartWork() {
       baseBranch?: string;
       model?: string;
       providerId?: string;
+      workflowEnabled?: boolean;
     }) => api.post<Workspace>('/workspaces', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
+/** Advances a workflow task from its current stage to the next (brainstorm → plan → execute). */
+export function useAdvanceWorkflow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (taskId: string) => api.post<Workspace>(`/tasks/${taskId}/advance-workflow`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });

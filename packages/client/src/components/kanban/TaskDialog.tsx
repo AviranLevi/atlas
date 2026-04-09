@@ -85,7 +85,9 @@ export function TaskDialog({
               id="task-dod"
               value={form.definitionOfDone}
               onChange={(e) => form.setDefinitionOfDone(e.target.value)}
-              placeholder="List the criteria the agent should meet. Be specific — this drives what the agent works toward."
+              placeholder={
+                'List acceptance criteria, one per line. Include the commands the agent should run to verify.\nExample:\n- All tests pass (npm test)\n- No TypeScript errors (npm run typecheck)\n- Feature works end-to-end in the browser'
+              }
               rows={5}
             />
           </div>
@@ -101,7 +103,9 @@ export function TaskDialog({
               id="task-notes"
               value={form.notes}
               onChange={(e) => form.setNotes(e.target.value)}
-              placeholder="Links, prior attempts, edge cases to consider…"
+              placeholder={
+                'Relevant files, links, constraints, prior attempts, or edge cases.\nExample: src/components/Auth.tsx, src/hooks/use-auth.hook.ts'
+              }
               rows={3}
             />
           </div>

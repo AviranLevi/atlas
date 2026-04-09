@@ -27,6 +27,8 @@ interface PromptBuildParams {
   projectId: string;
   agentId?: string | null;
   hasMcpAccess?: boolean;
+  /** Workflow stage — changes the agent's instructions for this workspace */
+  workflowStage?: 'brainstorm' | 'plan' | 'execute' | null;
 }
 
 export class PromptBuilderService {
@@ -224,12 +226,90 @@ export class PromptBuilderService {
       if (task.tags && task.tags.length > 0) taskLines.push(`**Tags:** ${task.tags.join(', ')}`);
       sections.push(taskLines.join('\n'));
 
-      const instructionLines = [
-        '## Instructions',
-        '',
-        'Complete the task described above. Follow the coding rules and project conventions.',
-        'When you are finished, ensure all changes are committed to the current branch.',
-      ];
+      // ─── Test & Verification Commands ────────────────────────────
+      const scripts = project.scanData?.scripts;
+      if (scripts && Object.keys(scripts).length > 0) {
+        const pm = project.scanData?.packageManager ?? 'npm';
+        const priorityKeys = ['test', 'lint', 'typecheck', 'build'];
+        const scriptLines: string[] = ['## Test & Verification Commands', ''];
+        for (const key of priorityKeys) {
+          if (scripts[key]) scriptLines.push(`- **${key}**: \`${pm} run ${key}\``);
+        }
+        if (scriptLines.length > 2) sections.push(scriptLines.join('\n'));
+      }
+
+      // ─── Agent behavior settings (project defaults) ─────────────
+      const behavior = project.agentBehavior ?? {
+        requireVerification: true,
+        enforceNoStubs: true,
+        workflowMode: 'off' as const,
+        autoAiReview: false,
+      };
+
+      // ─── Instructions (stage-aware) ──────────────────────────────
+      const stage = params.workflowStage ?? null;
+      const instructionLines: string[] = ['## Instructions', ''];
+
+      if (stage === 'brainstorm') {
+        instructionLines.push(
+          'Your job for this workspace is to BRAINSTORM ONLY — do not write any implementation code.',
+          '',
+          'Output the following sections:',
+          '1. **Problem Analysis** — restate the problem in your own words and identify any ambiguities',
+          '2. **Approaches** — propose 2–3 distinct implementation approaches, each with tradeoffs',
+          '3. **Recommendation** — which approach you recommend and why',
+          '',
+          'Do NOT create files, make commits, or implement anything.',
+          'Your output will be reviewed by a human before the next stage begins.',
+        );
+      } else if (stage === 'plan') {
+        instructionLines.push(
+          'Your job for this workspace is to CREATE A DETAILED IMPLEMENTATION PLAN — do not write any implementation code.',
+          '',
+          'Your plan must include for every step:',
+          '- The exact file(s) to create or modify (full paths)',
+          '- What the change is and why',
+          '- Any new function signatures or data structures',
+          '- The test(s) to write first (RED phase)',
+          '',
+          'Assume the person executing the plan has zero context beyond what you write.',
+          'Do NOT implement. Do NOT commit anything.',
+          'Your plan will be reviewed by a human before execution begins.',
+        );
+      } else {
+        // Default execute stage (or no workflow)
+        instructionLines.push('Complete the task described above. Follow the coding rules and project conventions.');
+        if (behavior.enforceNoStubs) {
+          instructionLines.push(
+            'Your implementation must be fully functional — no TODO comments, no placeholder values, no stub implementations.',
+          );
+        }
+        instructionLines.push(
+          'The task description above contains all context you need. Do not reference other tasks or assume outside context.',
+          'When you are finished, ensure all changes are committed to the current branch.',
+        );
+
+        if (behavior.requireVerification) {
+          instructionLines.push(
+            '',
+            '## Verification Requirement',
+            '',
+            'Before marking this task as complete, you MUST:',
+            '',
+            '1. Run the relevant test command (see Test & Verification Commands above, or check package.json/Makefile)',
+            '2. Run the linter or typechecker if available',
+            '3. Include the full terminal output of these commands in your completion message',
+            '',
+            'If any tests fail or the linter reports errors, fix them before completing.',
+            'Do NOT claim the task is done without running and showing proof. "It should work" is not evidence.',
+          );
+          if (!scripts) {
+            instructionLines.push(
+              'If this project has no automated tests, describe step-by-step what you manually verified.',
+            );
+          }
+        }
+      }
 
       if (params.hasMcpAccess) {
         instructionLines.push(

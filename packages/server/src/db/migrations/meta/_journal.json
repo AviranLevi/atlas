@@ -106,6 +106,13 @@
       "when": 1774500000000,
       "tag": "0014_chat_message_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1774600000000,
+      "tag": "0015_workflow_and_agent_behavior",
+      "breakpoints": true
     }
   ]
 }

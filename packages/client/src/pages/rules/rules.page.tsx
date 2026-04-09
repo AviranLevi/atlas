@@ -1,11 +1,12 @@
 // React / library
-import { ScrollText, Plus, Trash2, Search, FolderOpen, Upload } from 'lucide-react';
+import { ScrollText, Plus, Trash2, Search, FolderOpen, Upload, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
 import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
 import { RuleDialog } from '@/components/rules/RuleDialog';
+import { RuleTemplatesDialog } from '@/components/rules/RuleTemplatesDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -37,6 +38,7 @@ export function RulesPage() {
   const deleteRule = useDeleteRule();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   const projectMap = useMemo(() => new Map(projects.map((p) => [p.id, p.name])), [projects]);
 
@@ -140,6 +142,10 @@ export function RulesPage() {
           <p className="text-muted-foreground mt-0.5 text-sm">Coding standards and conventions for agents</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setTemplatesOpen(true)}>
+            <Sparkles className="mr-1.5 h-4 w-4" />
+            Templates
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
             <Upload className="mr-1.5 h-4 w-4" />
             Import
@@ -225,6 +231,8 @@ export function RulesPage() {
       <RuleDialog open={dialogOpen} onOpenChange={setDialogOpen} onCreated={(rule) => navigate(`/rules/${rule.id}`)} />
 
       <ImportPackageDialog open={importOpen} onOpenChange={setImportOpen} />
+
+      <RuleTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} />
     </div>
   );
 }

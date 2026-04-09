@@ -25,6 +25,7 @@ type InsertWorkspace = {
   pid?: number | null;
   status?: string;
   output?: string | null;
+  workflowStage?: string | null;
   startedAt?: string | null;
   completedAt?: string | null;
   createdAt?: string;

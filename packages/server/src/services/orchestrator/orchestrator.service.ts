@@ -94,6 +94,7 @@ export class OrchestratorService {
     baseBranch?: string,
     model?: string,
     providerId?: string,
+    workflowStage?: 'brainstorm' | 'plan' | 'execute' | null,
   ): Promise<Workspace> {
     const FUNCTION_NAME = 'startWork';
     try {
@@ -138,6 +139,10 @@ export class OrchestratorService {
         resolvedBaseBranch,
       );
 
+      // Determine the effective workflow stage for this run.
+      // workflowStage param takes precedence; otherwise derive from task settings and project defaults.
+      const effectiveStage = workflowStage ?? (task.workflowEnabled ? (task.workflowStage ?? 'brainstorm') : null);
+
       const workspace = workspacesRepository.insert({
         taskId,
         projectId: project.id,
@@ -147,6 +152,7 @@ export class OrchestratorService {
         branchName,
         worktreePath,
         status: 'pending',
+        workflowStage: effectiveStage ?? null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -156,6 +162,7 @@ export class OrchestratorService {
         projectId: project.id,
         agentId: task.agentId,
         hasMcpAccess: executor.mcpConfigFormat !== 'none',
+        workflowStage: effectiveStage,
       });
 
       const cwd = executor.usesProjectRoot ? project.localPath : worktreePath;
@@ -172,8 +179,12 @@ export class OrchestratorService {
               output,
               completedAt: new Date().toISOString(),
             });
-            tasksService.update(ws.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
-              logger.warn(`${FILE_PATH} :: spawnAgent - failed to move task to In Review`, e);
+
+            // Workflow mode: pause for human approval between stages
+            const isWorkflowStage = ws.workflowStage === 'brainstorm' || ws.workflowStage === 'plan';
+            const nextStatus = isWorkflowStage ? TASK_STATUS.AWAITING_APPROVAL : TASK_STATUS.IN_REVIEW;
+            tasksService.update(ws.taskId, { status: nextStatus }).catch((e) => {
+              logger.warn(`${FILE_PATH} :: spawnAgent - failed to update task status after completion`, e);
             });
             activityLogService.log({
               projectId: ws.projectId,
@@ -237,6 +248,52 @@ export class OrchestratorService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to start work', { cause: error });
+    }
+  }
+
+  /**
+   * Advances a workflow task to the next stage (brainstorm → plan → execute)
+   * by spawning a new workspace with the next stage's prompt.
+   */
+  async advanceWorkflow(taskId: string): Promise<Workspace> {
+    const FUNCTION_NAME = 'advanceWorkflow';
+    try {
+      const task = await tasksService.getById(taskId);
+
+      if (task.status !== TASK_STATUS.AWAITING_APPROVAL) {
+        throw new AppError('Task is not awaiting approval', { status: 400 });
+      }
+
+      const STAGE_ORDER = ['brainstorm', 'plan', 'execute'] as const;
+      const currentStage = task.workflowStage as (typeof STAGE_ORDER)[number] | null;
+      const currentIndex = currentStage ? STAGE_ORDER.indexOf(currentStage) : -1;
+      const nextStage = STAGE_ORDER[currentIndex + 1];
+
+      if (!nextStage) {
+        throw new AppError('No next workflow stage — task is already at the final stage', { status: 400 });
+      }
+
+      // Get the most recent workspace to reuse its runtime settings
+      const prevWorkspace = workspacesRepository.findByTaskId(taskId);
+      if (!prevWorkspace) {
+        throw new AppError('No previous workspace found for this task', { status: 404 });
+      }
+
+      // Update task to the next stage before spawning
+      await tasksService.update(taskId, { workflowStage: nextStage, status: TASK_STATUS.TODO });
+
+      return this.startWork(
+        taskId,
+        prevWorkspace.agentRuntime,
+        undefined,
+        prevWorkspace.model ?? undefined,
+        undefined,
+        nextStage,
+      );
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to advance workflow', { cause: error });
     }
   }
 

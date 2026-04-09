@@ -5,7 +5,7 @@ import type { Context } from 'hono';
 import type { CreateTask, UpdateTask } from '@atlas/shared';
 
 // Services
-import { tasksService } from '../services/index.js';
+import { orchestratorService, tasksService } from '../services/index.js';
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
@@ -42,4 +42,10 @@ export async function updateTask(c: Context) {
 export async function deleteTask(c: Context) {
   await tasksService.delete(c.req.param('id')!);
   return c.body(null, 204);
+}
+
+/** Advances a workflow task to the next stage (brainstorm → plan → execute). */
+export async function advanceWorkflow(c: Context) {
+  const workspace = await orchestratorService.advanceWorkflow(c.req.param('id')!);
+  return c.json(workspace);
 }
