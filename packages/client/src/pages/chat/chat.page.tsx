@@ -83,8 +83,7 @@ export function ChatPage() {
     if (installedExecutors.length > 0 && !selectedExecutorId) {
       setSelectedExecutorId(installedExecutors[0].id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [installedExecutors.length, selectedExecutorId, installedExecutors[0].id]);
+  }, [installedExecutors, selectedExecutorId]);
 
   // Sync sidebar with active conversation
   useEffect(() => {

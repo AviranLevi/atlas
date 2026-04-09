@@ -1,3 +1,6 @@
+// Shared
+import { stripCliPromptEchoStreaming } from '@atlas/shared';
+
 // Types
 import type { ThinkingStep } from './chat.types';
 
@@ -6,7 +9,8 @@ import type { ThinkingStep } from './chat.types';
  * structured steps and the actual response text.
  */
 export function parseAgentContent(content: string): { steps: ThinkingStep[]; response: string } {
-  const lines = content.split('\n');
+  const sanitized = stripCliPromptEchoStreaming(content);
+  const lines = sanitized.split('\n');
   const steps: ThinkingStep[] = [];
   const responseLines: string[] = [];
 

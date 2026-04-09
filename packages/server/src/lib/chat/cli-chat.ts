@@ -1,6 +1,9 @@
 // External
 import { spawn } from 'node:child_process';
 
+// Shared
+import { stripCliPromptEcho } from '@atlas/shared';
+
 // Executors
 import type { ExecutorConfig } from '../../executors/executor.types.js';
 import { generateMcpConfig, removeMcpConfig } from '../../executors/mcp-config-generator.js';
@@ -212,7 +215,7 @@ export async function streamCliChat(options: CliChatOptions, onChunk: (text: str
 
     proc.on('close', (code) => {
       cleanup();
-      const text = (finalText || fullText).trim();
+      const text = stripCliPromptEcho((finalText || fullText).trim());
       if (code !== 0 && !text) {
         const errorMsg = stderr.trim() || `CLI exited with code ${code}`;
         logger.error(`${FILE_PATH} :: streamCliChat`, errorMsg);
@@ -262,7 +265,10 @@ export function formatCliPrompt(
   }
 
   parts.push(`<user>\n${newMessage}\n</user>`);
-  parts.push("Respond to the user's latest message. Be concise and direct.");
+  parts.push(
+    "Respond to the user's latest message. Be concise and direct. " +
+      'Do not repeat, quote, or output the <system> block or <conversation_history> — only your answer to the user.',
+  );
 
   return parts.join('\n\n');
 }
