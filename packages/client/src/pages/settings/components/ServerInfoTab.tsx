@@ -1,11 +1,11 @@
 // React / library
-import { Loader2 } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
 
 // Hooks
-import { useSystemInfo } from '@/hooks/use-system.hook';
+import { useSystemInfo, useUpdateCheck } from '@/hooks/use-system.hook';
 
 function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
@@ -40,6 +40,7 @@ function InfoCard({ label, value }: InfoRowProps) {
 
 export function ServerInfoTab() {
   const { data, isLoading, isError, error, refetch } = useSystemInfo();
+  const updateCheck = useUpdateCheck();
 
   if (isLoading) {
     return (
@@ -69,11 +70,61 @@ export function ServerInfoTab() {
     { label: 'Server Uptime', value: formatUptime(data.uptimeSeconds) },
   ];
 
+  const result = updateCheck.data;
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {items.map(({ label, value }) => (
-        <InfoCard key={label} label={label} value={value} />
-      ))}
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map(({ label, value }) => (
+          <InfoCard key={label} label={label} value={value} />
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={updateCheck.isPending}
+          onClick={() => updateCheck.mutate()}
+        >
+          {updateCheck.isPending ? (
+            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-3.5 w-3.5" />
+          )}
+          Check for updates
+        </Button>
+
+        {updateCheck.isError && (
+          <p className="text-sm text-destructive">Could not reach GitHub. Check your connection.</p>
+        )}
+
+        {result && !result.hasUpdate && (
+          <span className="flex items-center gap-1.5 text-sm text-green-500">
+            <CheckCircle2 className="h-4 w-4" />
+            You&apos;re up to date (v{result.current})
+          </span>
+        )}
+
+        {result?.hasUpdate && (
+          <span className="flex items-center gap-1.5 text-sm text-yellow-500">
+            v{result.latest} available —{' '}
+            {result.releaseUrl ? (
+              <a
+                href={result.releaseUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-yellow-400"
+              >
+                Release notes <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              'check GitHub for details'
+            )}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

@@ -47,6 +47,13 @@ export type SystemInfo = {
   nodeVersion: string;
 };
 
+export type UpdateCheckResult = {
+  current: string;
+  latest: string;
+  hasUpdate: boolean;
+  releaseUrl: string | null;
+};
+
 export class SystemService {
   /** Returns server metadata and database file stats. */
   getInfo(): SystemInfo {
@@ -65,6 +72,27 @@ export class SystemService {
   exportDatabase(): { data: Uint8Array; filename: string } {
     const buffer = fs.readFileSync(dbPath);
     return { data: new Uint8Array(buffer), filename: path.basename(dbPath) };
+  }
+
+  /** Checks GitHub releases for a newer version of Atlas. */
+  async checkForUpdates(): Promise<UpdateCheckResult> {
+    const FUNCTION_NAME = 'checkForUpdates';
+    const current = this.getInfo().version;
+    try {
+      const response = await fetch('https://api.github.com/repos/AviranLevi/atlas/releases/latest', {
+        headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      });
+      if (response.status === 404) {
+        return { current, latest: current, hasUpdate: false, releaseUrl: null };
+      }
+      if (!response.ok) throw new Error(`GitHub API responded with ${response.status}`);
+      const data = (await response.json()) as { tag_name: string; html_url: string };
+      const latest = data.tag_name.replace(/^v/, '');
+      return { current, latest, hasUpdate: latest !== current, releaseUrl: data.html_url };
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to check for updates', { cause: error });
+    }
   }
 
   /** Deletes all rows from every application table (FK order). */

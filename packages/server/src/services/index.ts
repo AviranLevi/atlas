@@ -62,5 +62,5 @@ export type { ProjectContext, ProjectSummary } from './projects/projects.types.j
 export type { RuleDetail } from './rules/rules.types.js';
 export type { SearchResult } from './search/search.types.js';
 export type { SkillDetail } from './skills/skills.types.js';
-export type { SystemInfo } from './system/system.service.js';
+export type { SystemInfo, UpdateCheckResult } from './system/system.service.js';
 export type { DiffFile } from './worktree/worktree.service.js';

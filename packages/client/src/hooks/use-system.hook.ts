@@ -13,6 +13,13 @@ type SystemInfo = {
   nodeVersion: string;
 };
 
+export type UpdateCheckResult = {
+  current: string;
+  latest: string;
+  hasUpdate: boolean;
+  releaseUrl: string | null;
+};
+
 const SYSTEM_KEY = ['system-info'] as const;
 
 export function useSystemInfo() {
@@ -20,6 +27,12 @@ export function useSystemInfo() {
     queryKey: [...SYSTEM_KEY],
     queryFn: () => api.get<SystemInfo>('/system/info'),
     staleTime: 30_000,
+  });
+}
+
+export function useUpdateCheck() {
+  return useMutation({
+    mutationFn: () => api.get<UpdateCheckResult>('/system/update-check'),
   });
 }
 

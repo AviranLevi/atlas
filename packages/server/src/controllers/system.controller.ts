@@ -15,6 +15,11 @@ export async function getSystemInfo(c: Context): Promise<Response> {
   return c.json(systemService.getInfo());
 }
 
+/** Checks GitHub releases for a newer version of Atlas. */
+export async function getUpdateCheck(c: Context): Promise<Response> {
+  return c.json(await systemService.checkForUpdates());
+}
+
 /** Streams the SQLite database file as a download. */
 export async function exportDatabase(_c: Context): Promise<Response> {
   const { data, filename } = systemService.exportDatabase();
