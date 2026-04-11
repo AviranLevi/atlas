@@ -65,7 +65,10 @@ export function WorkspaceDetailPage() {
   }
 
   const isMerged = workspace.status === 'merged';
-  const canReview = workspace.status === 'completed';
+  const isWorkflowAwaitingApproval =
+    workspace.status === 'completed' &&
+    (workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan');
+  const canReview = workspace.status === 'completed' && !isWorkflowAwaitingApproval;
   const canRerun = workspace.status === 'failed' || workspace.status === 'stopped' || workspace.status === 'completed';
   const canCleanup = !isActive && !isMerged;
   const comments: DiffComment[] = Array.isArray(workspace.diffComments) ? workspace.diffComments : [];
@@ -97,10 +100,6 @@ export function WorkspaceDetailPage() {
       />
 
       <WorkspaceInfoCards workspace={workspace} />
-
-      {workspace.status === 'completed' && workspace.workflowStage && workspace.workflowStage !== 'execute' && (
-        <WorkflowApprovalPanel workspace={workspace} />
-      )}
 
       {canReview && (
         <div>
@@ -157,6 +156,10 @@ export function WorkspaceDetailPage() {
           text={isActive ? (streamedLog ?? '') : (workspace.fullOutput ?? workspace.output ?? '')}
           isLive={isActive}
         />
+      )}
+
+      {isWorkflowAwaitingApproval && (
+        <WorkflowApprovalPanel workspace={workspace} />
       )}
 
       {review && (

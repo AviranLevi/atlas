@@ -5,7 +5,7 @@ import type { Context } from 'hono';
 import type { TestSupermemory, UpsertIntegration } from '@atlas/shared';
 
 // Services
-import { integrationsService, supermemoryService } from '../services/index.js';
+import { integrationsService, obsidianService, supermemoryService } from '../services/index.js';
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
@@ -29,6 +29,12 @@ export async function upsertIntegration(c: Context) {
   const data = getValidatedBody<UpsertIntegration>(c);
   const integration = await integrationsService.upsert(name, data);
   return c.json(integration);
+}
+
+/** Triggers an Obsidian vault sync (import notes → memories, export memories → vault). */
+export async function syncObsidian(c: Context): Promise<Response> {
+  const result = await obsidianService.sync();
+  return c.json(result);
 }
 
 /** Tests the Supermemory connection using the provided (or stored) credentials. */

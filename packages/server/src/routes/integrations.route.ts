@@ -9,6 +9,7 @@ import { zValidator } from '@hono/zod-validator';
 import {
   getIntegration,
   listIntegrations,
+  syncObsidian,
   testSupermemoryConnection,
   upsertIntegration,
 } from '../controllers/integrations.controller.js';
@@ -17,4 +18,5 @@ export const integrationsRoute = new Hono()
   .get('/', listIntegrations)
   .get('/:name', getIntegration)
   .put('/:name', zValidator('json', UpsertIntegrationSchema), upsertIntegration)
-  .post('/supermemory/test', zValidator('json', TestSupermemorySchema), testSupermemoryConnection);
+  .post('/supermemory/test', zValidator('json', TestSupermemorySchema), testSupermemoryConnection)
+  .post('/obsidian/sync', syncObsidian);

@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <>
               <div className="flex items-center gap-2 min-w-0">
                 <AtlasLogo className="h-5 w-5 shrink-0 text-sidebar-foreground" />
-                <span className="truncate text-sm font-semibold tracking-wide text-sidebar-foreground">Atlas</span>
+                <span className="truncate text-sm font-medium tracking-tight text-sidebar-foreground">Atlas</span>
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>

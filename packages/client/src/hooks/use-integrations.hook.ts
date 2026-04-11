@@ -42,3 +42,16 @@ export function useTestSupermemory() {
       api.post<{ ok: boolean; error?: string }>('/integrations/supermemory/test', payload),
   });
 }
+
+export type ObsidianSyncResult = {
+  imported: number;
+  exported: number;
+  errors: string[];
+};
+
+/** Triggers an Obsidian vault sync. */
+export function useObsidianSync() {
+  return useMutation({
+    mutationFn: () => api.post<ObsidianSyncResult>('/integrations/obsidian/sync', {}),
+  });
+}

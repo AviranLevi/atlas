@@ -1,5 +1,6 @@
 // React / library
 import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ type WorkflowApprovalPanelProps = {
 };
 
 export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps) {
+  const navigate = useNavigate();
   const advance = useAdvanceWorkflow();
   const updateTask = useUpdateTask();
 
@@ -38,7 +40,9 @@ export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps)
   const nextLabel = NEXT_STAGE_LABELS[stage];
 
   const handleApprove = () => {
-    advance.mutate(workspace.taskId);
+    advance.mutate(workspace.taskId, {
+      onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`),
+    });
   };
 
   const handleReject = () => {

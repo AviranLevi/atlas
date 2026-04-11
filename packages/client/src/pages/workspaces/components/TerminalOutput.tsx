@@ -14,36 +14,34 @@ import { Button } from '@/components/ui/button';
 // Hooks
 import { useTheme } from '@/hooks/use-theme.hook';
 
-// Lib
-import { cn } from '@/lib/utils';
-
 // Types
 import type { TerminalOutputProps } from '../workspaces.types';
 
+/** xterm theme aligned with neutral app tokens (approx. oklch light/dark surfaces). */
 function buildTheme(dark: boolean) {
   return {
-    background: dark ? '#0c0c0e' : '#fafafa',
-    foreground: dark ? '#d4d4d8' : '#27272a',
+    background: dark ? '#0a0a0a' : '#fafafa',
+    foreground: dark ? '#e5e5e5' : '#171717',
     cursor: 'transparent',
     cursorAccent: 'transparent',
-    selectionBackground: dark ? '#3f3f46' : '#d4d4d8',
+    selectionBackground: dark ? '#262626' : '#e5e5e5',
     selectionForeground: undefined,
-    black: dark ? '#09090b' : '#fafafa',
-    red: '#ef4444',
-    green: '#22c55e',
-    yellow: '#eab308',
-    blue: '#3b82f6',
-    magenta: '#a855f7',
-    cyan: '#06b6d4',
-    white: dark ? '#fafafa' : '#09090b',
-    brightBlack: dark ? '#52525b' : '#a1a1aa',
+    black: dark ? '#050505' : '#fafafa',
+    red: '#dc2626',
+    green: '#16a34a',
+    yellow: '#ca8a04',
+    blue: '#2563eb',
+    magenta: '#7c3aed',
+    cyan: '#0891b2',
+    white: dark ? '#f5f5f5' : '#0a0a0a',
+    brightBlack: dark ? '#525252' : '#a3a3a3',
     brightRed: '#f87171',
     brightGreen: '#4ade80',
     brightYellow: '#facc15',
     brightBlue: '#60a5fa',
-    brightMagenta: '#c084fc',
+    brightMagenta: '#a78bfa',
     brightCyan: '#22d3ee',
-    brightWhite: '#ffffff',
+    brightWhite: '#fafafa',
   };
 }
 
@@ -65,7 +63,7 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
       convertEol: true,
       scrollback: 10000,
       fontSize: 13,
-      fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, 'Courier New', monospace",
+      fontFamily: "'Geist Mono Variable', ui-monospace, Menlo, Monaco, monospace",
       lineHeight: 1.5,
       letterSpacing: 0,
       cursorBlink: false,
@@ -139,33 +137,23 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
   }, []);
 
   return (
-    <div
-      className={cn(
-        'rounded-lg border overflow-hidden',
-        isDark ? 'border-zinc-800 bg-[#0c0c0e]' : 'border-zinc-200 bg-[#fafafa]',
-      )}
-    >
+    <div className="rounded-lg border border-border overflow-hidden bg-muted">
       {/* Header bar */}
-      <div
-        className={cn(
-          'flex items-center justify-between px-4 py-2 border-b',
-          isDark ? 'bg-zinc-900/80 border-zinc-800' : 'bg-zinc-100 border-zinc-200',
-        )}
-      >
+      <div className="flex items-center justify-between border-b border-border bg-muted/80 px-4 py-2 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
             <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/70" />
             <div className="h-2.5 w-2.5 rounded-full bg-green-500/70" />
           </div>
-          <span className={cn('text-xs font-medium', isDark ? 'text-zinc-400' : 'text-zinc-500')}>{title}</span>
+          <span className="text-xs font-medium text-muted-foreground">{title}</span>
           {isLive && (
             <span className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
               </span>
-              <span className="text-xs text-emerald-500 font-medium">Live</span>
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Live</span>
             </span>
           )}
         </div>
@@ -182,7 +170,11 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
             </Button>
           )}
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopy} title="Copy output">
-            {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+            {copied ? (
+              <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
           </Button>
         </div>
       </div>

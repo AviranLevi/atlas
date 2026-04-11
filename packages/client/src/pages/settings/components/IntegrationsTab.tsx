@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ObsidianCard } from './ObsidianCard';
 
 // Hooks
 import { useIntegration, useUpsertIntegration, useTestSupermemory } from '@/hooks/use-integrations.hook';
@@ -92,6 +93,8 @@ export function IntegrationsTab() {
           Connect external services to enhance Atlas with additional capabilities.
         </p>
       </div>
+
+      <ObsidianCard />
 
       {/* Supermemory card */}
       <div className="rounded-lg border border-border p-6 space-y-5">

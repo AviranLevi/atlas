@@ -12,6 +12,7 @@ export const integrations = sqliteTable(
     apiKey: text('api_key'),
     baseUrl: text('base_url'),
     enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+    config: text('config'),
     createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
     updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
   },

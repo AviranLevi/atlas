@@ -29,12 +29,13 @@ interface GraphNode {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
+/** Muted semantic hues so the graph fits a neutral (Vercel-style) UI. */
 const NODE_CONFIG: Record<NodeType, { color: string; radius: number }> = {
-  project: { color: '#6366f1', radius: 10 },
-  agent: { color: '#3b82f6', radius: 7 },
-  task: { color: '#f59e0b', radius: 5 },
-  memory: { color: '#10b981', radius: 5 },
-  rule: { color: '#ef4444', radius: 5 },
+  project: { color: '#a3a3a3', radius: 10 },
+  agent: { color: '#737373', radius: 7 },
+  task: { color: '#ca8a04', radius: 5 },
+  memory: { color: '#16a34a', radius: 5 },
+  rule: { color: '#dc2626', radius: 5 },
 };
 
 const LEGEND: { type: NodeType; label: string }[] = [

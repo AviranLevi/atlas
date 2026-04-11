@@ -1,5 +1,5 @@
 // React / library
-import { GitBranch, Clock, Square, Trash2, ChevronRight, FileCode } from 'lucide-react';
+import { GitBranch, Clock, Square, Trash2, ChevronRight, FileCode, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Components
@@ -27,7 +27,10 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
 
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
-  const canReview = workspace.status === 'completed';
+  const isWorkflowAwaitingApproval =
+    workspace.status === 'completed' &&
+    (workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan');
+  const canReview = workspace.status === 'completed' && !isWorkflowAwaitingApproval;
   const canCleanup = !isActive && workspace.status !== 'merged';
 
   return (
@@ -40,6 +43,15 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate text-sm font-semibold">{workspace.taskName ?? 'Unknown task'}</h3>
+            {isWorkflowAwaitingApproval && (
+              <Badge
+                variant="outline"
+                className="shrink-0 text-[10px] border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+              >
+                <CheckCircle2 className="mr-1 h-2.5 w-2.5" />
+                Awaiting Approval
+              </Badge>
+            )}
             {canReview && (
               <Badge
                 variant="outline"
