@@ -10,6 +10,7 @@ import {
   MessageSquare,
   ScrollText,
   Settings,
+  Store,
   Zap,
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export const navItems: NavItem[] = [
   { to: '/memory', icon: Brain, label: 'Memory' },
   { to: '/global', icon: Globe, label: 'Global' },
   { to: '/usage', icon: BarChart3, label: 'Usage' },
+  { to: '/marketplace', icon: Store, label: 'Marketplace' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

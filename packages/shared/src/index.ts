@@ -7,6 +7,7 @@ export * from './schemas/integrations.schema';
 export * from './schemas/mcp-servers.schema';
 export * from './schemas/memory.schema';
 export * from './schemas/package.schema';
+export * from './schemas/marketplace.schema';
 export * from './schemas/phases.schema';
 export * from './schemas/preferences.schema';
 export * from './schemas/projects.schema';

@@ -7,6 +7,7 @@ import { AgentsPage } from '@/pages/agents/agents.page';
 import { ChatPage } from '@/pages/chat/chat.page';
 import { GlobalPage } from '@/pages/global/global.page';
 import { KanbanPage } from '@/pages/kanban/kanban.page';
+import { MarketplacePage } from '@/pages/marketplace/marketplace.page';
 import { MemoryPage } from '@/pages/memory/memory.page';
 import { ProjectDetailPage } from '@/pages/project-detail/project-detail.page';
 import { ProjectsPage } from '@/pages/projects/projects.page';
@@ -39,6 +40,7 @@ export function AppRoutes() {
       <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
       <Route path="/global" element={<GlobalPage />} />
       <Route path="/usage" element={<UsagePage />} />
+      <Route path="/marketplace" element={<MarketplacePage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/chat" element={<ChatPage />} />
       <Route path="/chat/:id" element={<ChatPage />} />
