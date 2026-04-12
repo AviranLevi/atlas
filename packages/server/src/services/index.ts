@@ -2,6 +2,7 @@
 import { ActivityLogService } from './activity-log/activity-log.service.js';
 import { AgentProvidersService } from './agent-providers/agent-providers.service.js';
 import { AgentsService } from './agents/agents.service.js';
+import { AuthService } from './auth/auth.service.js';
 import { BriefGeneratorService } from './brief-generator/brief-generator.service.js';
 import { DesignContextGeneratorService } from './design-context-generator/design-context-generator.service.js';
 import { ChatService } from './chat/chat.service.js';
@@ -32,6 +33,7 @@ import { WorktreeService } from './worktree/worktree.service.js';
 
 export const activityLogService = new ActivityLogService();
 export const agentsService = new AgentsService();
+export const authService = new AuthService();
 export const skillsService = new SkillsService();
 export const rulesService = new RulesService();
 export const memoryService = new MemoryService();

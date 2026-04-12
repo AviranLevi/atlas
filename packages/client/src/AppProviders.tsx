@@ -8,6 +8,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Contexts
+import { AuthProvider } from '@/contexts/auth.context';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 
 const queryClient = new QueryClient({
@@ -24,7 +25,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ProjectProvider>
         <TooltipProvider>
-          <BrowserRouter>{children}</BrowserRouter>
+          <AuthProvider>
+            <BrowserRouter>{children}</BrowserRouter>
+          </AuthProvider>
         </TooltipProvider>
       </ProjectProvider>
     </QueryClientProvider>

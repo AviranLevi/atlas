@@ -20,3 +20,4 @@ export * from './schemas/tasks.schema';
 export * from './schemas/usage.schema';
 export * from './schemas/workspaces.schema';
 export * from './schemas/workflow-output.schema';
+export * from './schemas/auth.schema';

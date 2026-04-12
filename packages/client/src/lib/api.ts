@@ -1,5 +1,17 @@
 const BASE_URL = '/api/v1';
 
+let _apiKey: string | null = null;
+
+/** Sets the API key used for all subsequent requests. */
+export function setApiKey(key: string | null): void {
+  _apiKey = key;
+}
+
+/** Returns the current API key. */
+export function getApiKey(): string | null {
+  return _apiKey;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -11,7 +23,11 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(_apiKey ? { Authorization: `Bearer ${_apiKey}` } : {}),
+      ...options?.headers,
+    },
     ...options,
   });
   if (!res.ok) {
@@ -31,7 +47,10 @@ export const api = {
   stream: (path: string, data: unknown, signal?: AbortSignal): Promise<Response> =>
     fetch(`${BASE_URL}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(_apiKey ? { Authorization: `Bearer ${_apiKey}` } : {}),
+      },
       body: JSON.stringify(data),
       signal,
     }),

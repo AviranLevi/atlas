@@ -4,6 +4,7 @@ import { ActivityLogRepository } from './activity-log.repository.js';
 import { AgentProvidersRepository } from './agent-providers.repository.js';
 // Repositories
 import { AgentsRepository } from './agents.repository.js';
+import { ApiKeysRepository } from './api-keys.repository.js';
 import { ChatRepository } from './chat.repository.js';
 import { HeartbeatsRepository } from './heartbeats.repository.js';
 import { IntegrationsRepository } from './integrations.repository.js';
@@ -22,6 +23,7 @@ import { UsageRepository } from './usage.repository.js';
 import { WorkspacesRepository } from './workspaces.repository.js';
 
 export const agentsRepository = new AgentsRepository(db);
+export const apiKeysRepository = new ApiKeysRepository(db);
 export const skillsRepository = new SkillsRepository(db);
 export const rulesRepository = new RulesRepository(db);
 export const memoryRepository = new MemoryRepository(db);

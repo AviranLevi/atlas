@@ -13,6 +13,7 @@ import { ProjectsPage } from '@/pages/projects/projects.page';
 import { RuleDetailPage } from '@/pages/rule-detail/rule-detail.page';
 import { RulesPage } from '@/pages/rules/rules.page';
 import { SettingsPage } from '@/pages/settings/settings.page';
+import { SetupPage } from '@/pages/setup/setup.page';
 import { SkillDetailPage } from '@/pages/skill-detail/skill-detail.page';
 import { SkillsPage } from '@/pages/skills/skills.page';
 import { UsagePage } from '@/pages/usage/usage.page';
@@ -23,6 +24,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/kanban" replace />} />
+      <Route path="/setup" element={<SetupPage />} />
       <Route path="/agents" element={<AgentsPage />} />
       <Route path="/agents/:id" element={<AgentDetailPage />} />
       <Route path="/skills" element={<SkillsPage />} />

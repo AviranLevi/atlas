@@ -1,4 +1,5 @@
 export { activityLog } from './activity-log.schema.js';
+export { apiKeys } from './api-keys.schema.js';
 export { agentProviders } from './agent-providers.schema.js';
 export { agents } from './agents.schema.js';
 export { chatConversations, chatMessages } from './chat.schema.js';
