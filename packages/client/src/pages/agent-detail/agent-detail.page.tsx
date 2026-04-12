@@ -15,8 +15,15 @@ import { HeartbeatSection } from './components/HeartbeatSection';
 
 // Hooks
 import { useAgentProviders } from '@/hooks/use-agent-providers.hook';
-import { useAgentDetail, useAttachSkill, useDetachSkill, useAttachRule, useDetachRule } from '@/hooks/use-agents.hook';
-import { useUpdateAgent } from '@/hooks/use-agents.hook';
+import {
+  useAgentDetail,
+  useAttachSkill,
+  useDetachSkill,
+  useAttachRule,
+  useDetachRule,
+  useUpdateAgent,
+} from '@/hooks/use-agents.hook';
+import { useExportAgentPackage } from '@/hooks/use-packages.hook';
 import { useRules } from '@/hooks/use-rules.hook';
 import { useSkills } from '@/hooks/use-skills.hook';
 
@@ -32,6 +39,7 @@ export function AgentDetailPage() {
   const detachSkill = useDetachSkill();
   const attachRule = useAttachRule();
   const detachRule = useDetachRule();
+  const exportAgent = useExportAgentPackage();
 
   const [editOpen, setEditOpen] = useState(false);
   const [skillPopoverOpen, setSkillPopoverOpen] = useState(false);
@@ -101,10 +109,11 @@ export function AgentDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open(`/api/v1/packages/export/agent/${agent.id}`, '_blank')}
+              onClick={() => exportAgent.mutate({ id: agent.id, name: agent.name })}
+              disabled={exportAgent.isPending}
             >
               <Download className="mr-1.5 h-4 w-4" />
-              Export
+              {exportAgent.isPending ? 'Exporting...' : 'Export'}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
               <Pencil className="mr-1.5 h-4 w-4" />

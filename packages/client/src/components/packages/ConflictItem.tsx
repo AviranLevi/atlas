@@ -6,46 +6,57 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+// Types
+import type { ImportResolution } from '@atlas/shared';
+
 type ConflictItemProps = {
   label: string;
-  name: string;
-  conflict: { id: string; name: string } | null;
-  resolution?: { action: string; rename?: string };
-  onResolutionChange: (r: { action: 'overwrite' | 'rename'; rename?: string }) => void;
+  hasConflict: boolean;
+  resolution: ImportResolution;
+  onResolutionChange: (r: ImportResolution) => void;
 };
 
-export function ConflictItem({ label, name, conflict, resolution, onResolutionChange }: ConflictItemProps) {
-  if (!conflict) {
+export function ConflictItem({ label, hasConflict, resolution, onResolutionChange }: ConflictItemProps) {
+  if (!hasConflict) {
     return (
       <div className="flex items-center gap-2 rounded-lg border p-3">
-        <Check className="h-4 w-4 text-green-500 shrink-0" />
-        <span className="text-sm">{name}</span>
-        <Badge variant="secondary" className="text-xs ml-auto">
+        <Check className="h-4 w-4 shrink-0 text-green-500" />
+        <span className="text-sm">{resolution.name}</span>
+        <Badge variant="secondary" className="ml-auto text-xs">
           {label}
         </Badge>
       </div>
     );
   }
 
+  const defaultRenamed = resolution.renamedTo ?? `${resolution.name}-imported`;
+
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20 p-3 space-y-2">
+    <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
       <div className="flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
-        <span className="text-sm font-medium">{name}</span>
-        <Badge variant="outline" className="text-xs ml-auto">
+        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+        <span className="text-sm font-medium">{resolution.name}</span>
+        <Badge variant="outline" className="ml-auto text-xs">
           {label}
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground">
-        A {label.toLowerCase()} named &ldquo;{conflict.name}&rdquo; already exists.
+        A {label.toLowerCase()} with this name already exists. Skip it or import under a new name.
       </p>
       <Select
-        value={resolution?.action ?? 'rename'}
+        value={resolution.action}
         onValueChange={(v) => {
-          if (v === 'overwrite') {
-            onResolutionChange({ action: 'overwrite' });
+          const action = v as ImportResolution['action'];
+          if (action === 'skip') {
+            onResolutionChange({ name: resolution.name, action: 'skip' });
+          } else if (action === 'rename') {
+            onResolutionChange({
+              name: resolution.name,
+              action: 'rename',
+              renamedTo: resolution.renamedTo ?? defaultRenamed,
+            });
           } else {
-            onResolutionChange({ action: 'rename', rename: resolution?.rename ?? `${name} (imported)` });
+            onResolutionChange({ name: resolution.name, action: 'create' });
           }
         }}
       >
@@ -53,14 +64,14 @@ export function ConflictItem({ label, name, conflict, resolution, onResolutionCh
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="overwrite">Overwrite existing</SelectItem>
           <SelectItem value="rename">Import with new name</SelectItem>
+          <SelectItem value="skip">Skip</SelectItem>
         </SelectContent>
       </Select>
-      {(resolution?.action === 'rename' || !resolution) && (
+      {resolution.action === 'rename' && (
         <Input
-          value={resolution?.rename ?? `${name} (imported)`}
-          onChange={(e) => onResolutionChange({ action: 'rename', rename: e.target.value })}
+          value={resolution.renamedTo ?? defaultRenamed}
+          onChange={(e) => onResolutionChange({ name: resolution.name, action: 'rename', renamedTo: e.target.value })}
           className="h-8 text-xs"
           placeholder="New name..."
         />

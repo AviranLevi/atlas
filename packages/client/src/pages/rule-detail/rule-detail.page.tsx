@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useProjects } from '@/hooks/use-projects.hook';
 import { useRuleDetail } from '@/hooks/use-rules.hook';
 import { useUpdateRule, useDeleteRule } from '@/hooks/use-rules.hook';
+import { useExportRulePackage } from '@/hooks/use-packages.hook';
 
 // Lib
 import { timeAgo } from '@/lib/format';
@@ -30,6 +31,7 @@ export function RuleDetailPage() {
   const { data: projects = [] } = useProjects();
   const updateRule = useUpdateRule();
   const deleteRule = useDeleteRule();
+  const exportRule = useExportRulePackage();
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -105,10 +107,11 @@ export function RuleDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open(`/api/v1/packages/export/rule/${rule.id}`, '_blank')}
+            onClick={() => exportRule.mutate({ id: rule.id, name: rule.name })}
+            disabled={exportRule.isPending}
           >
-            <Download className="mr-1.5 h-3.5 w-3.5" />
-            Export
+            <Download className="mr-1.5 h-4 w-4" />
+            {exportRule.isPending ? 'Exporting...' : 'Export'}
           </Button>
           <Button
             variant="outline"

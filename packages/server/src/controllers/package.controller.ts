@@ -2,65 +2,49 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { AtlasPackage, ImportRequest } from '@atlas/shared';
+import type { AtlasPackage, ImportResolution } from '@atlas/shared';
 
 // Services
-import { packageService } from '../services/index.js';
+import { packageExporterService, packageImporterService } from '../services/index.js';
 
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
 
-export async function exportAgent(c: Context): Promise<Response> {
-  const id = c.req.param('id')!;
-  const pkg = await packageService.exportAgent(id);
-  const filename = `${slugify(pkg.name)}.atlas.json`;
-  return new Response(JSON.stringify(pkg, null, 2), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
-  });
-}
-
+/** Exports a skill as an Atlas Package. */
 export async function exportSkill(c: Context): Promise<Response> {
-  const id = c.req.param('id')!;
-  const pkg = await packageService.exportSkill(id);
-  const filename = `${slugify(pkg.name)}.atlas.json`;
-  return new Response(JSON.stringify(pkg, null, 2), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
-  });
+  const pkg = await packageExporterService.exportSkill(c.req.param('id')!);
+  return c.json(pkg);
 }
 
+/** Exports a rule as an Atlas Package. */
 export async function exportRule(c: Context): Promise<Response> {
-  const id = c.req.param('id')!;
-  const pkg = await packageService.exportRule(id);
-  const filename = `${slugify(pkg.name)}.atlas.json`;
-  return new Response(JSON.stringify(pkg, null, 2), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
-  });
+  const pkg = await packageExporterService.exportRule(c.req.param('id')!);
+  return c.json(pkg);
 }
 
+/** Exports an agent as an Atlas Package. */
+export async function exportAgent(c: Context): Promise<Response> {
+  const pkg = await packageExporterService.exportAgent(c.req.param('id')!);
+  return c.json(pkg);
+}
+
+/** Exports a collection of items as an Atlas Package. */
+export async function exportCollection(c: Context): Promise<Response> {
+  const body = getValidatedBody<{ skillIds: string[]; ruleIds: string[]; agentIds: string[] }>(c);
+  const pkg = await packageExporterService.exportCollection(body);
+  return c.json(pkg);
+}
+
+/** Previews importing an Atlas Package. */
 export async function previewImport(c: Context): Promise<Response> {
   const body = getValidatedBody<AtlasPackage>(c);
-  const preview = await packageService.previewImport(body);
+  const preview = await packageImporterService.previewImport(body);
   return c.json(preview);
 }
 
-export async function executeImport(c: Context): Promise<Response> {
-  const request = getValidatedBody<ImportRequest>(c);
-  const summary = await packageService.executeImport(request);
+/** Applies an import with resolved conflicts. */
+export async function applyImport(c: Context): Promise<Response> {
+  const body = getValidatedBody<{ package: AtlasPackage; resolutions: ImportResolution[]; projectId?: string }>(c);
+  const summary = await packageImporterService.applyImport(body.package, body.resolutions, body.projectId);
   return c.json(summary, 201);
-}
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
 }

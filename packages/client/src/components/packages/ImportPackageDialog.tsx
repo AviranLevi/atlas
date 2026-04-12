@@ -17,32 +17,38 @@ import { ReviewStep } from './ReviewStep';
 import { UploadStep } from './UploadStep';
 
 // Hooks
-import { useAgentProviders } from '@/hooks/use-agent-providers.hook';
-import { useImportPackage, useImportPreview } from '@/hooks/use-packages.hook';
+import { useApplyImportPackage, usePreviewImportPackage } from '@/hooks/use-packages.hook';
 
 // Types
-import type { AtlasPackage } from '@atlas/shared';
-import type { ImportPackageDialogProps, ImportPreviewData, Resolutions } from './packages.types';
+import type { AtlasPackage, ImportPreview } from '@atlas/shared';
+import type { ImportPackageDialogProps, Resolutions } from './packages.types';
 
 type Step = 'upload' | 'review';
 
-export function ImportPackageDialog({ open, onOpenChange }: ImportPackageDialogProps) {
+function buildInitialResolutions(data: ImportPreview): Resolutions {
+  return data.items.map((item) => ({
+    name: item.name,
+    action: item.action,
+    renamedTo: item.renamedTo,
+  }));
+}
+
+export function ImportPackageDialog({ open, onOpenChange, projectId }: ImportPackageDialogProps) {
   const [step, setStep] = useState<Step>('upload');
   const [pkg, setPkg] = useState<AtlasPackage | null>(null);
-  const [preview, setPreview] = useState<ImportPreviewData | null>(null);
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
-  const [resolutions, setResolutions] = useState<Resolutions>({ skills: {}, rules: {} });
+  const [resolutions, setResolutions] = useState<Resolutions>([]);
 
-  const previewMutation = useImportPreview();
-  const importMutation = useImportPackage();
-  const { data: providers = [] } = useAgentProviders();
+  const previewMutation = usePreviewImportPackage();
+  const importMutation = useApplyImportPackage();
 
   const reset = useCallback(() => {
     setStep('upload');
     setPkg(null);
     setPreview(null);
     setParseError(null);
-    setResolutions({ skills: {}, rules: {} });
+    setResolutions([]);
     previewMutation.reset();
     importMutation.reset();
   }, [previewMutation, importMutation]);
@@ -81,8 +87,8 @@ export function ImportPackageDialog({ open, onOpenChange }: ImportPackageDialogP
 
   const handleImport = useCallback(() => {
     if (!pkg) return;
-    importMutation.mutate({ package: pkg, resolutions }, { onSuccess: () => handleOpenChange(false) });
-  }, [pkg, resolutions, importMutation, handleOpenChange]);
+    importMutation.mutate({ package: pkg, resolutions, projectId }, { onSuccess: () => handleOpenChange(false) });
+  }, [pkg, resolutions, projectId, importMutation, handleOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -91,7 +97,7 @@ export function ImportPackageDialog({ open, onOpenChange }: ImportPackageDialogP
           <DialogTitle>{step === 'upload' ? 'Import Package' : 'Review Import'}</DialogTitle>
           <DialogDescription>
             {step === 'upload'
-              ? 'Import a JSON package containing agents, skills, rules, or any combination.'
+              ? 'Import a JSON package containing agents, skills, rules, or a collection.'
               : 'Review what will be imported and resolve any conflicts.'}
           </DialogDescription>
         </DialogHeader>
@@ -109,9 +115,14 @@ export function ImportPackageDialog({ open, onOpenChange }: ImportPackageDialogP
           <ReviewStep
             pkg={pkg}
             preview={preview}
-            providers={providers}
             resolutions={resolutions}
-            onResolutionsChange={setResolutions}
+            onResolutionAtIndexChange={(index, r) =>
+              setResolutions((prev) => {
+                const next = [...prev];
+                next[index] = r;
+                return next;
+              })
+            }
           />
         )}
 
@@ -134,27 +145,4 @@ export function ImportPackageDialog({ open, onOpenChange }: ImportPackageDialogP
       </DialogContent>
     </Dialog>
   );
-}
-
-function buildInitialResolutions(data: ImportPreviewData): Resolutions {
-  const initial: Resolutions = { skills: {}, rules: {} };
-
-  if (data.agent?.conflict) {
-    initial.agent = { action: 'rename', rename: `${data.agent.conflict.name} (imported)` };
-  }
-  for (const s of data.skills) {
-    if (s.conflict) {
-      initial.skills[s.conflict.name] = { action: 'rename', rename: `${s.conflict.name} (imported)` };
-    }
-  }
-  for (const r of data.rules) {
-    if (r.conflict) {
-      initial.rules[r.conflict.name] = { action: 'rename', rename: `${r.conflict.name} (imported)` };
-    }
-  }
-  if (data.providerHint?.matchedProvider) {
-    initial.providerId = data.providerHint.matchedProvider.id;
-  }
-
-  return initial;
 }
