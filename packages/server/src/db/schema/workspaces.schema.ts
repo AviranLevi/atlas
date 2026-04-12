@@ -24,11 +24,11 @@ export const workspaces = sqliteTable('workspaces', {
   status: text('status').notNull().default('pending'),
   output: text('output'),
   workflowStage: text('workflow_stage'),
-  parentWorkspaceId: text('parent_workspace_id').references(() => workspaces.id),
-  diffComments: text('diff_comments'),
+  parentWorkspaceId: text('parent_workspace_id'), // FK enforced via migration, not ORM (self-ref causes TS circular type)
+  diffComments: text('diff_comments'), // JSON: [{id, filename, lineNumber, lineContent, body, createdAt}]
   inputTokens: integer('input_tokens'),
   outputTokens: integer('output_tokens'),
-  costUsd: real('cost_usd'), // JSON: [{id, filename, lineNumber, lineContent, body, createdAt}]
+  costUsd: real('cost_usd'),
   startedAt: text('started_at'),
   completedAt: text('completed_at'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),

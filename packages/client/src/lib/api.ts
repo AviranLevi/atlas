@@ -56,7 +56,10 @@ export const api = {
     }),
   /** Fire-and-forget DELETE (e.g. abort stream). Logs errors instead of swallowing. */
   fireAndForget: (path: string, method: string = 'DELETE'): void => {
-    fetch(`${BASE_URL}${path}`, { method }).catch((err) => {
+    fetch(`${BASE_URL}${path}`, {
+      method,
+      headers: _apiKey ? { Authorization: `Bearer ${_apiKey}` } : {},
+    }).catch((err) => {
       console.warn(`[api] fire-and-forget ${method} ${path} failed:`, err);
     });
   },
