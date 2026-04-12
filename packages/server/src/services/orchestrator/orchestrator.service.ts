@@ -9,6 +9,7 @@ import { TASK_STATUS } from '@atlas/shared';
 
 // Services
 import { activityLogService, agentProvidersService, agentsService, projectsService, tasksService } from '../index.js';
+import { workflowRunnerService } from '../index.js';
 import { PromptBuilderService } from '../prompt-builder/prompt-builder.service.js';
 import { WorktreeService } from '../worktree/worktree.service.js';
 
@@ -87,6 +88,99 @@ export class OrchestratorService {
     return { resolvedModel, spawnOpts };
   }
 
+  /** Runs a structured brainstorm or plan stage via the AI SDK without creating a worktree. */
+  private async runStructuredStage(
+    stage: 'brainstorm' | 'plan',
+    task: {
+      name: string;
+      description?: string | null;
+      notes?: string | null;
+      definitionOfDone?: string | null;
+      agentId?: string | null;
+      projectId?: string | null;
+    },
+    project: { id: string },
+    taskId: string,
+    agentRuntimeId: string,
+    resolvedModel: string | null,
+    providerId?: string,
+  ): Promise<Workspace> {
+    const providerIdToLoad = providerId ?? (task.agentId ? (await agentsService.getById(task.agentId)).providerId : null);
+    if (!providerIdToLoad) {
+      throw new AppError(
+        'Structured workflow stages require a configured agent provider. Assign a provider to this agent.',
+        { status: 400 },
+      );
+    }
+
+    const resolvedProvider = await agentProvidersService.getById(providerIdToLoad);
+
+    const workspace = workspacesRepository.insert({
+      taskId,
+      projectId: project.id,
+      agentId: task.agentId ?? null,
+      agentRuntime: agentRuntimeId,
+      model: resolvedModel,
+      branchName: 'n/a',
+      worktreePath: 'n/a',
+      status: 'running',
+      workflowStage: stage,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    await tasksService.update(taskId, { status: TASK_STATUS.IN_PROGRESS });
+
+    try {
+      const result =
+        stage === 'brainstorm'
+          ? await workflowRunnerService.runBrainstorm(task, project.id, resolvedProvider, resolvedModel)
+          : await workflowRunnerService.runPlan(task, project.id, resolvedProvider, resolvedModel);
+
+      const serialized = JSON.stringify({ stage, data: result });
+
+      workspacesRepository.update(workspace.id, {
+        status: 'completed',
+        output: serialized,
+        completedAt: new Date().toISOString(),
+      });
+
+      await tasksService.update(taskId, { status: TASK_STATUS.AWAITING_APPROVAL });
+
+      activityLogService.log({
+        projectId: project.id,
+        taskId,
+        workspaceId: workspace.id,
+        agentId: task.agentId,
+        eventType: 'agent_completed',
+        description: `Structured ${stage} completed successfully`,
+        metadata: { stage },
+      });
+
+      return workspacesRepository.findByIdOrThrow(workspace.id);
+    } catch (error: unknown) {
+      workspacesRepository.update(workspace.id, {
+        status: 'failed',
+        output: error instanceof Error ? error.message : 'Unknown error',
+        completedAt: new Date().toISOString(),
+      });
+
+      await tasksService.update(taskId, { status: TASK_STATUS.TODO });
+
+      activityLogService.log({
+        projectId: project.id,
+        taskId,
+        workspaceId: workspace.id,
+        agentId: task.agentId,
+        eventType: 'agent_failed',
+        description: `Structured ${stage} failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+        metadata: { stage, error: error instanceof Error ? error.message : 'unknown' },
+      });
+
+      throw new AppError(`Failed to run structured ${stage}`, { cause: error });
+    }
+  }
+
   /** Creates a worktree, spawns the agent process, and opens a workspace. */
   async startWork(
     taskId: string,
@@ -126,6 +220,22 @@ export class OrchestratorService {
 
       const { resolvedModel, spawnOpts } = await this.resolveSpawnOptions(executor, task.agentId, model, providerId);
 
+      // Determine the effective workflow stage for this run.
+      const effectiveStage = workflowStage ?? (task.workflowEnabled ? (task.workflowStage ?? 'brainstorm') : null);
+      const isStructuredStage = effectiveStage === 'brainstorm' || effectiveStage === 'plan';
+
+      if (isStructuredStage) {
+        return await this.runStructuredStage(
+          effectiveStage as 'brainstorm' | 'plan',
+          task,
+          project,
+          taskId,
+          agentRuntimeId,
+          resolvedModel ?? null,
+          providerId,
+        );
+      }
+
       // Resolve which branch to base the worktree on:
       //   1. Explicit baseBranch from the request
       //   2. Project's configured default branch
@@ -138,10 +248,6 @@ export class OrchestratorService {
         task.name,
         resolvedBaseBranch,
       );
-
-      // Determine the effective workflow stage for this run.
-      // workflowStage param takes precedence; otherwise derive from task settings and project defaults.
-      const effectiveStage = workflowStage ?? (task.workflowEnabled ? (task.workflowStage ?? 'brainstorm') : null);
 
       const workspace = workspacesRepository.insert({
         taskId,
