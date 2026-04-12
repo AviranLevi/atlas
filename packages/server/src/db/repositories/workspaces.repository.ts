@@ -1,5 +1,5 @@
 // External
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 // Shared
 import type { Workspace } from '@atlas/shared';
@@ -26,6 +26,10 @@ type InsertWorkspace = {
   status?: string;
   output?: string | null;
   workflowStage?: string | null;
+  parentWorkspaceId?: string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  costUsd?: number | null;
   startedAt?: string | null;
   completedAt?: string | null;
   createdAt?: string;
@@ -106,6 +110,42 @@ export class WorkspacesRepository {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspace by task', { cause: error });
+    }
+  }
+
+  /** Returns child workspaces of a given parent, ordered newest first. */
+  findByParentId(parentId: string): Workspace[] {
+    const FUNCTION_NAME = 'findByParentId';
+    try {
+      const rows = this.db
+        .select()
+        .from(workspaces)
+        .where(eq(workspaces.parentWorkspaceId, parentId))
+        .orderBy(desc(workspaces.createdAt))
+        .all();
+      return rows.map((r) => ({ ...r, diffComments: this.parseComments(r.diffComments) }) as Workspace);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query child workspaces', { cause: error });
+    }
+  }
+
+  /** Walks the parent chain from a workspace back to the root, returning the full lineage (oldest first). */
+  findLineage(workspaceId: string): Workspace[] {
+    const FUNCTION_NAME = 'findLineage';
+    try {
+      const chain: Workspace[] = [];
+      let currentId: string | null = workspaceId;
+      while (currentId) {
+        const ws = this.findByIdOrThrow(currentId);
+        chain.unshift(ws);
+        currentId = ws.parentWorkspaceId ?? null;
+      }
+      return chain;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to build workspace lineage', { cause: error });
     }
   }
 

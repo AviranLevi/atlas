@@ -12,6 +12,12 @@ import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/workflow-runner/workflow-runner.service.ts';
 
+export type WorkflowStageResult<T> = {
+  output: T;
+  inputTokens: number | undefined;
+  outputTokens: number | undefined;
+};
+
 export class WorkflowRunnerService {
   /** Runs a structured brainstorm stage via the AI SDK. */
   async runBrainstorm(
@@ -19,7 +25,7 @@ export class WorkflowRunnerService {
     _projectId: string,
     provider: AgentProvider,
     model?: string | null,
-  ): Promise<BrainstormOutput> {
+  ): Promise<WorkflowStageResult<BrainstormOutput>> {
     const FUNCTION_NAME = 'runBrainstorm';
     try {
       const result = await generateObject({
@@ -37,7 +43,11 @@ export class WorkflowRunnerService {
         ].join('\n'),
       });
 
-      return result.object;
+      return {
+        output: result.object,
+        inputTokens: result.usage.inputTokens,
+        outputTokens: result.usage.outputTokens,
+      };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to run brainstorm', { cause: error });
@@ -50,7 +60,7 @@ export class WorkflowRunnerService {
     _projectId: string,
     provider: AgentProvider,
     model?: string | null,
-  ): Promise<PlanOutput> {
+  ): Promise<WorkflowStageResult<PlanOutput>> {
     const FUNCTION_NAME = 'runPlan';
     try {
       const result = await generateObject({
@@ -68,7 +78,11 @@ export class WorkflowRunnerService {
         ].join('\n'),
       });
 
-      return result.object;
+      return {
+        output: result.object,
+        inputTokens: result.usage.inputTokens,
+        outputTokens: result.usage.outputTokens,
+      };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to run plan', { cause: error });

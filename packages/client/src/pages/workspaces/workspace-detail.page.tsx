@@ -7,6 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { Button } from '@/components/ui/button';
 import { RerunDialog } from '@/components/workspaces/RerunDialog';
+import { WorkspaceLineage } from '@/components/workspaces/WorkspaceLineage';
 import { WorkflowApprovalPanel } from '@/components/workspaces/WorkflowApprovalPanel';
 import { AiReviewDialog } from './components/AiReviewDialog';
 import { TerminalOutput } from './components/TerminalOutput';
@@ -19,6 +20,7 @@ import { useProject } from '@/hooks/use-projects.hook';
 import { useReview, useStartAiReview } from '@/hooks/use-reviews.hook';
 import {
   useWorkspaceStatus,
+  useWorkspaceLineage,
   useStopWork,
   useCleanupWorkspace,
   useWorkspaceLogStream,
@@ -32,6 +34,7 @@ export function WorkspaceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: workspace, isLoading, error } = useWorkspaceStatus(id);
+  const { data: lineage = [] } = useWorkspaceLineage(workspace?.id);
   const stopWork = useStopWork();
   const cleanup = useCleanupWorkspace();
   const openInEditor = useOpenWorkspaceInEditor();
@@ -99,7 +102,19 @@ export function WorkspaceDetailPage() {
         isOpeningInEditor={openInEditor.isPending}
       />
 
+      {lineage.length > 1 && <WorkspaceLineage lineage={lineage} currentId={workspace.id} />}
+
       <WorkspaceInfoCards workspace={workspace} />
+
+      {(workspace.inputTokens != null ||
+        workspace.outputTokens != null ||
+        workspace.costUsd != null) && (
+        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+          {workspace.inputTokens != null && <span>Input: {workspace.inputTokens.toLocaleString()} tokens</span>}
+          {workspace.outputTokens != null && <span>Output: {workspace.outputTokens.toLocaleString()} tokens</span>}
+          {workspace.costUsd != null && <span>Cost: ${workspace.costUsd.toFixed(4)}</span>}
+        </div>
+      )}
 
       {canReview && (
         <div>

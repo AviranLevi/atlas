@@ -1,5 +1,5 @@
 // External
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 // DB
 import { timestampDefault, uuidDefault } from '../helpers/index.js';
@@ -24,7 +24,11 @@ export const workspaces = sqliteTable('workspaces', {
   status: text('status').notNull().default('pending'),
   output: text('output'),
   workflowStage: text('workflow_stage'),
-  diffComments: text('diff_comments'), // JSON: [{id, filename, lineNumber, lineContent, body, createdAt}]
+  parentWorkspaceId: text('parent_workspace_id').references(() => workspaces.id),
+  diffComments: text('diff_comments'),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
+  costUsd: real('cost_usd'), // JSON: [{id, filename, lineNumber, lineContent, body, createdAt}]
   startedAt: text('started_at'),
   completedAt: text('completed_at'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),

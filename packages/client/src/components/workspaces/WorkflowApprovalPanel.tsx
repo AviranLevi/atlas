@@ -47,7 +47,7 @@ export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps)
   const nextLabel = NEXT_STAGE_LABELS[stage];
 
   const handleApprove = () => {
-    advance.mutate(workspace.taskId, {
+    advance.mutate(workspace.id, {
       onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`),
     });
   };

@@ -32,6 +32,8 @@ import {
   requestWorkspaceChanges,
   rerunWorkspace,
   stopWorkspace,
+  advanceWorkspaceWorkflow,
+  getWorkspaceLineage,
   streamWorkspaceLogs,
 } from '../controllers/workspaces.controller.js';
 
@@ -55,4 +57,6 @@ export const workspacesRoute = new Hono()
   .delete('/:id/comments/:commentId', removeWorkspaceComment)
   .post('/:id/stop', stopWorkspace)
   .post('/:id/open-in-editor', openWorkspaceInEditor)
+  .get('/:id/lineage', getWorkspaceLineage)
+  .post('/:id/advance', advanceWorkspaceWorkflow)
   .delete('/:id', deleteWorkspace);

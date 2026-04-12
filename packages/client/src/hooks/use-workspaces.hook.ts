@@ -55,6 +55,15 @@ export function useWorkspaceStatus(id: string | undefined) {
   });
 }
 
+/** Returns the lineage chain for a workspace (root → current). */
+export function useWorkspaceLineage(workspaceId: string | undefined) {
+  return useQuery({
+    queryKey: [...WORKSPACES_KEY, workspaceId, 'lineage'],
+    queryFn: () => api.get<Workspace[]>(`/workspaces/${workspaceId}/lineage`),
+    enabled: !!workspaceId,
+  });
+}
+
 export function useStartWork() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -83,11 +92,11 @@ export function useOpenWorkspaceInEditor() {
   });
 }
 
-/** Advances a workflow task from its current stage to the next (brainstorm → plan → execute). */
+/** Advances a workflow from a specific workspace to the next stage. */
 export function useAdvanceWorkflow() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (taskId: string) => api.post<Workspace>(`/tasks/${taskId}/advance-workflow`, {}),
+    mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/advance`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });

@@ -226,3 +226,16 @@ export async function streamWorkspaceLogs(c: Context) {
     }
   });
 }
+
+/** Returns the workspace lineage chain (root → current). */
+export async function getWorkspaceLineage(c: Context) {
+  const { workspacesRepository } = await import('../db/repositories/index.js');
+  const lineage = workspacesRepository.findLineage(c.req.param('id')!);
+  return c.json(lineage);
+}
+
+/** Advances the workflow from a specific workspace to the next stage. */
+export async function advanceWorkspaceWorkflow(c: Context) {
+  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(c.req.param('id')!);
+  return c.json(workspace);
+}

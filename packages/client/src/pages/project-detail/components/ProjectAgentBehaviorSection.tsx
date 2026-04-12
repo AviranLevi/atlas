@@ -94,6 +94,51 @@ export function ProjectAgentBehaviorSection({ project }: ProjectAgentBehaviorSec
           </Select>
         </div>
 
+        {behavior.workflowMode !== 'off' && (
+          <>
+            <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <Label className="text-sm">Require approval after Brainstorm</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pause for your review when the brainstorm stage finishes (defaults on)
+                </p>
+              </div>
+              <Switch
+                checked={behavior.approvalGates?.brainstorm ?? true}
+                onCheckedChange={(val) =>
+                  update({
+                    approvalGates: {
+                      brainstorm: val,
+                      plan: behavior.approvalGates?.plan ?? true,
+                    },
+                  })
+                }
+                disabled={updateProject.isPending}
+              />
+            </div>
+            <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <Label className="text-sm">Require approval after Plan</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pause for your review when the plan stage finishes (defaults on)
+                </p>
+              </div>
+              <Switch
+                checked={behavior.approvalGates?.plan ?? true}
+                onCheckedChange={(val) =>
+                  update({
+                    approvalGates: {
+                      brainstorm: behavior.approvalGates?.brainstorm ?? true,
+                      plan: val,
+                    },
+                  })
+                }
+                disabled={updateProject.isPending}
+              />
+            </div>
+          </>
+        )}
+
         <div className="flex items-center justify-between px-4 py-3">
           <div>
             <Label className="text-sm">Auto AI Review</Label>

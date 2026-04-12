@@ -34,6 +34,7 @@ export const WorkspaceSchema = z.object({
   status: WorkspaceStatusEnum,
   output: z.string().nullable(),
   workflowStage: z.enum(['brainstorm', 'plan', 'execute']).nullable().optional(),
+  parentWorkspaceId: z.string().uuid().nullable().optional(),
   diffComments: z.array(DiffCommentSchema).nullable().optional(),
   startedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
@@ -42,6 +43,9 @@ export const WorkspaceSchema = z.object({
   // Enriched fields (joined at query time, not stored columns)
   taskName: z.string().optional(),
   projectName: z.string().optional(),
+  inputTokens: z.number().int().nullable().optional(),
+  outputTokens: z.number().int().nullable().optional(),
+  costUsd: z.number().nullable().optional(),
 });
 
 export const CreateWorkspaceSchema = z.object({

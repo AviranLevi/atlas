@@ -104,6 +104,7 @@ export class OrchestratorService {
     agentRuntimeId: string,
     resolvedModel: string | null,
     providerId?: string,
+    parentWorkspaceId?: string,
   ): Promise<Workspace> {
     const providerIdToLoad = providerId ?? (task.agentId ? (await agentsService.getById(task.agentId)).providerId : null);
     if (!providerIdToLoad) {
@@ -125,6 +126,7 @@ export class OrchestratorService {
       worktreePath: 'n/a',
       status: 'running',
       workflowStage: stage,
+      parentWorkspaceId: parentWorkspaceId ?? null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -132,20 +134,30 @@ export class OrchestratorService {
     await tasksService.update(taskId, { status: TASK_STATUS.IN_PROGRESS });
 
     try {
-      const result =
+      const stageResult =
         stage === 'brainstorm'
           ? await workflowRunnerService.runBrainstorm(task, project.id, resolvedProvider, resolvedModel)
           : await workflowRunnerService.runPlan(task, project.id, resolvedProvider, resolvedModel);
 
-      const serialized = JSON.stringify({ stage, data: result });
+      const serialized = JSON.stringify({ stage, data: stageResult.output });
 
       workspacesRepository.update(workspace.id, {
         status: 'completed',
         output: serialized,
+        inputTokens: stageResult.inputTokens ?? null,
+        outputTokens: stageResult.outputTokens ?? null,
         completedAt: new Date().toISOString(),
       });
 
-      await tasksService.update(taskId, { status: TASK_STATUS.AWAITING_APPROVAL });
+      const fullProject = await projectsService.getById(project.id);
+      const gates = (fullProject.agentBehavior as { approvalGates?: { brainstorm?: boolean; plan?: boolean } } | null)?.approvalGates;
+      const gateEnabled = stage === 'brainstorm' ? (gates?.brainstorm ?? true) : (gates?.plan ?? true);
+
+      if (gateEnabled) {
+        await tasksService.update(taskId, { status: TASK_STATUS.AWAITING_APPROVAL });
+      } else {
+        return this.advanceWorkflowFromWorkspace(workspace.id);
+      }
 
       activityLogService.log({
         projectId: project.id,
@@ -189,6 +201,7 @@ export class OrchestratorService {
     model?: string,
     providerId?: string,
     workflowStage?: 'brainstorm' | 'plan' | 'execute' | null,
+    parentWorkspaceId?: string,
   ): Promise<Workspace> {
     const FUNCTION_NAME = 'startWork';
     try {
@@ -233,6 +246,7 @@ export class OrchestratorService {
           agentRuntimeId,
           resolvedModel ?? null,
           providerId,
+          parentWorkspaceId,
         );
       }
 
@@ -259,6 +273,7 @@ export class OrchestratorService {
         worktreePath,
         status: 'pending',
         workflowStage: effectiveStage ?? null,
+        parentWorkspaceId: parentWorkspaceId ?? null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -400,6 +415,62 @@ export class OrchestratorService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to advance workflow', { cause: error });
+    }
+  }
+
+  /** Advances a workflow from a specific workspace ID to the next stage. */
+  async advanceWorkflowFromWorkspace(workspaceId: string): Promise<Workspace> {
+    const FUNCTION_NAME = 'advanceWorkflowFromWorkspace';
+    try {
+      const prevWorkspace = workspacesRepository.findByIdOrThrow(workspaceId);
+      const task = await tasksService.getById(prevWorkspace.taskId);
+
+      if (task.status !== TASK_STATUS.AWAITING_APPROVAL && task.status !== TASK_STATUS.IN_PROGRESS) {
+        throw new AppError('Task is not in a state that can advance', { status: 400 });
+      }
+
+      const STAGE_ORDER = ['brainstorm', 'plan', 'execute'] as const;
+      const currentStage = prevWorkspace.workflowStage as (typeof STAGE_ORDER)[number] | null;
+      const currentIndex = currentStage ? STAGE_ORDER.indexOf(currentStage) : -1;
+      const nextStage = STAGE_ORDER[currentIndex + 1];
+
+      if (!nextStage) {
+        throw new AppError('No next workflow stage — workspace is at the final stage', { status: 400 });
+      }
+
+      await tasksService.update(prevWorkspace.taskId, { workflowStage: nextStage, status: TASK_STATUS.TODO });
+
+      if (nextStage === 'execute' && prevWorkspace.output) {
+        try {
+          const parsed = JSON.parse(prevWorkspace.output);
+          if (parsed.stage === 'plan' && parsed.data) {
+            const { formatPlanAsMarkdown } = await import('../../lib/plan-formatter.js');
+            const fullProject = await projectsService.getById(task.projectId!);
+            if (fullProject.localPath) {
+              const specsDir = path.join(fullProject.localPath, 'specs');
+              if (!fs.existsSync(specsDir)) fs.mkdirSync(specsDir, { recursive: true });
+              fs.writeFileSync(path.join(specsDir, 'atlas-plan.md'), formatPlanAsMarkdown(parsed.data), 'utf-8');
+              logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - wrote specs/atlas-plan.md`);
+            }
+          }
+        } catch (e) {
+          logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to write plan artifact`, e);
+        }
+      }
+
+      return this.startWork(
+        prevWorkspace.taskId,
+        prevWorkspace.agentRuntime,
+        undefined,
+        prevWorkspace.model ?? undefined,
+        undefined,
+        nextStage,
+        workspaceId,
+      );
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to advance workflow from workspace', { cause: error });
     }
   }
 

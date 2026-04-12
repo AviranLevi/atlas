@@ -20,11 +20,17 @@ export const ImportRulesSchema = z.object({
   items: z.array(AiConfigSchema).min(1),
 });
 
+export const ApprovalGatesSchema = z.object({
+  brainstorm: z.boolean(),
+  plan: z.boolean(),
+});
+
 export const AgentBehaviorSchema = z.object({
   requireVerification: z.boolean().default(true),
   enforceNoStubs: z.boolean().default(true),
   workflowMode: z.enum(['off', 'plan-only', 'full']).default('off'),
   autoAiReview: z.boolean().default(false),
+  approvalGates: ApprovalGatesSchema.optional(),
 });
 
 export const ProjectScanDataSchema = z.object({
@@ -92,6 +98,7 @@ export const CreateProjectSchema = z.object({
 export const UpdateProjectSchema = CreateProjectSchema.partial();
 
 export type AgentBehavior = z.infer<typeof AgentBehaviorSchema>;
+export type ApprovalGates = z.infer<typeof ApprovalGatesSchema>;
 export type AiConfig = z.infer<typeof AiConfigSchema>;
 export type CreateBranch = z.infer<typeof CreateBranchSchema>;
 export type ImportRules = z.infer<typeof ImportRulesSchema>;
