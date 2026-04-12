@@ -190,6 +190,21 @@ export const CHAT_TOOLS: ToolDefinition[] = [
     },
   },
   {
+    name: 'read_file',
+    description:
+      'Read the contents of a file within the project. Use after browse_project_files to inspect specific files.',
+    parameters: {
+      type: 'object',
+      properties: {
+        relativePath: {
+          type: 'string',
+          description: 'Path to the file relative to the project root (e.g. "src/auth/auth.service.ts").',
+        },
+      },
+      required: ['relativePath'],
+    },
+  },
+  {
     name: 'list_workspaces',
     description: 'List agent workspaces (running, completed, or failed agent work sessions).',
     parameters: { type: 'object', properties: {} },
@@ -288,6 +303,26 @@ export async function executeTool(name: string, args: Record<string, unknown>, c
           return { error: 'Path traversal not allowed' };
         }
         return listDirectory(fullPath, maxDepth);
+      }
+      case 'read_file': {
+        if (!context.projectLocalPath) return { error: 'No project local path configured' };
+        const relativePath = typeof args.relativePath === 'string' ? args.relativePath : '';
+        if (!relativePath) return { error: 'relativePath is required' };
+        const root = path.resolve(context.projectLocalPath);
+        const fullPath = path.resolve(root, relativePath);
+        if (!isResolvedPathInsideRoot(root, fullPath)) {
+          return { error: 'Path traversal not allowed' };
+        }
+        if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+          return { error: `File not found: ${relativePath}` };
+        }
+        const MAX_BYTES = 100_000; // 100 KB cap — avoids sending huge build artifacts
+        const stat = fs.statSync(fullPath);
+        if (stat.size > MAX_BYTES) {
+          return { error: `File is too large to read (${Math.round(stat.size / 1024)} KB). Read a specific range instead.` };
+        }
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        return { relativePath, content };
       }
       case 'list_workspaces':
         return await orchestratorService.listAll();

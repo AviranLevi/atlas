@@ -31,7 +31,7 @@ export function AgentThinking({ steps, isStreaming }: AgentThinkingProps) {
 
   if (steps.length === 0 && !isStreaming) return null;
 
-  const label = isStreaming ? 'Thinking…' : steps.length === 1 ? '1 step' : `${steps.length} steps`;
+  const label = isStreaming ? 'Thinking…' : steps.length === 1 ? 'Used 1 tool' : `Used ${steps.length} tools`;
 
   return (
     <div className="rounded-lg border border-border/50 bg-muted/20 text-xs animate-fade-in-up overflow-hidden">

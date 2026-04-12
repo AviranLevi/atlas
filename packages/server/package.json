@@ -6,7 +6,7 @@
   "license": "MIT",
   "description": "Atlas server — Hono REST API + MCP server + Drizzle SQLite",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=.env.development src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "mcp": "tsx src/mcp.ts",
@@ -15,11 +15,15 @@
     "db:validate": "tsx scripts/validate-migrations.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.69",
+    "@ai-sdk/google": "^3.0.62",
+    "@ai-sdk/openai": "^3.0.52",
     "@anthropic-ai/sdk": "^0.80.0",
     "@atlas/shared": "workspace:*",
     "@hono/node-server": "^1.13",
     "@hono/zod-validator": "^0.4",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "ai": "^6.0.158",
     "better-sqlite3": "^11.7",
     "drizzle-orm": "^0.38",
     "hono": "^4.7",

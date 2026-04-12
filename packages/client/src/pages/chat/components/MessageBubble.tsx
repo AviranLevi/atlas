@@ -45,6 +45,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     ? { steps: apiSteps, response: message.content }
     : parseAgentContent(message.content);
 
+  // Tool-only messages (no response text) are rendered as grouped blocks by MessageList.
+  // Skip here to avoid duplicate rendering.
+  if (!response?.trim() && steps.length > 0) return null;
+
   return (
     <div className="flex gap-3 px-4 py-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
