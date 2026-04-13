@@ -2,6 +2,7 @@
 import {
   Activity,
   BarChart3,
+  BookOpen,
   Bot,
   Brain,
   Columns3,
@@ -25,6 +26,7 @@ export const navItems: NavItem[] = [
   { to: '/skills', icon: Zap, label: 'Skills' },
   { to: '/rules', icon: ScrollText, label: 'Rules' },
   { to: '/memory', icon: Brain, label: 'Memory' },
+  { to: '/documents', icon: BookOpen, label: 'Documents' },
   { to: '/global', icon: Globe, label: 'Global' },
   { to: '/usage', icon: BarChart3, label: 'Usage' },
   { to: '/marketplace', icon: Store, label: 'Marketplace' },

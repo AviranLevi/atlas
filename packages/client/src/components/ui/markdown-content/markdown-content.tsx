@@ -3,13 +3,21 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
+// Components
+import { MermaidDiagram } from '@/components/ui/mermaid-diagram';
+
 // Lib
 import { cn } from '@/lib/utils';
 
 // Types
-import type { MarkdownContentProps } from './ui.types';
+import type { MarkdownContentProps } from './markdown-content.types';
 
-/** Renders Markdown content with syntax-highlighted code blocks. */
+let mermaidCounter = 0;
+function nextMermaidId(): string {
+  return `mmd-${++mermaidCounter}`;
+}
+
+/** Renders Markdown content with syntax-highlighted code blocks and Mermaid diagrams. */
 export function MarkdownContent({ content, className }: MarkdownContentProps) {
   return (
     <div className={cn('prose prose-sm prose-invert max-w-none break-words', className)}>
@@ -29,6 +37,10 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
                   {children}
                 </code>
               );
+            }
+
+            if (match[1] === 'mermaid') {
+              return <MermaidDiagram definition={codeString} id={nextMermaidId()} />;
             }
 
             // Fenced code block with language

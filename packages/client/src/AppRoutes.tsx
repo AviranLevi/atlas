@@ -5,6 +5,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AgentDetailPage } from '@/pages/agent-detail/agent-detail.page';
 import { AgentsPage } from '@/pages/agents/agents.page';
 import { ChatPage } from '@/pages/chat/chat.page';
+import { DocumentsPage } from '@/pages/documents/documents.page';
 import { GlobalPage } from '@/pages/global/global.page';
 import { KanbanPage } from '@/pages/kanban/kanban.page';
 import { MarketplacePage } from '@/pages/marketplace/marketplace.page';
@@ -33,6 +34,7 @@ export function AppRoutes() {
       <Route path="/rules" element={<RulesPage />} />
       <Route path="/rules/:id" element={<RuleDetailPage />} />
       <Route path="/memory" element={<MemoryPage />} />
+      <Route path="/documents" element={<DocumentsPage />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/projects/:id" element={<ProjectDetailPage />} />
       <Route path="/kanban" element={<KanbanPage />} />

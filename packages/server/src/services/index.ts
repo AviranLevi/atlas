@@ -14,6 +14,8 @@ import { SupermemoryService } from './integrations/supermemory.service.js';
 import { McpServersService } from './mcp-servers/mcp-servers.service.js';
 import { MemoryService } from './memory/memory.service.js';
 import { OrchestratorService } from './orchestrator/orchestrator.service.js';
+import { DocsGeneratorService } from './project-docs/docs-generator.service.js';
+import { ProjectDocsService } from './project-docs/project-docs.service.js';
 import { MarketplaceService } from './marketplace/marketplace.service.js';
 import { PackageExporterService } from './package-io/package-exporter.service.js';
 import { PackageImporterService } from './package-io/package-importer.service.js';
@@ -64,6 +66,8 @@ export const obsidianService = new ObsidianService();
 export const supermemoryService = new SupermemoryService();
 export const mcpServersService = new McpServersService();
 export const heartbeatService = new HeartbeatService();
+export const projectDocsService = new ProjectDocsService();
+export const docsGeneratorService = new DocsGeneratorService();
 
 export type { AgentContext, AgentDetail } from './agents/agents.types.js';
 export type { DiffResult } from './orchestrator/orchestrator.types.js';

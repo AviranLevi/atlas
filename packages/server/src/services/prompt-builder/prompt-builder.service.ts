@@ -1,6 +1,9 @@
 // Shared
 import type { Memory } from '@atlas/shared';
 
+// Repositories
+import { projectDocsRepository } from '../../db/repositories/index.js';
+
 // Services
 import {
   agentsService,
@@ -153,6 +156,25 @@ export class PromptBuilderService {
       // ─── Design context (human-authored design system for UI tasks) ────
       if (project.designContext) {
         sections.push(`## Design Context\n\n${project.designContext}`);
+      }
+
+      // ─── Project documentation (diagrams, plans, custom docs) ────
+      const allDocs = projectDocsRepository.findByProjectId(params.projectId);
+      if (allDocs.length > 0) {
+        const structural = allDocs.filter((d) => d.type === 'db-schema' || d.type === 'architecture');
+        const isApiTask = /api|endpoint|route|controller|http/i.test(`${task.name} ${task.notes ?? ''}`);
+        const apiDocs = isApiTask ? allDocs.filter((d) => d.type === 'api-diagram') : [];
+        const planDocs = allDocs
+          .filter((d) => d.type === 'plan')
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+          .slice(0, 1);
+        const customDocs = allDocs.filter((d) => d.type === 'custom');
+
+        const relevantDocs = [...structural, ...apiDocs, ...planDocs, ...customDocs];
+        if (relevantDocs.length > 0) {
+          const docContent = relevantDocs.map((d) => `### ${d.title}\n\n${d.content}`).join('\n\n---\n\n');
+          sections.push(`## Project Documentation\n\n${docContent}`);
+        }
       }
 
       // ─── Pinned memories (always-load tier, L0) ─────────────────

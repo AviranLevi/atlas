@@ -22,3 +22,4 @@ export * from './schemas/usage.schema';
 export * from './schemas/workspaces.schema';
 export * from './schemas/workflow-output.schema';
 export * from './schemas/auth.schema';
+export * from './schemas/project-docs.schema';

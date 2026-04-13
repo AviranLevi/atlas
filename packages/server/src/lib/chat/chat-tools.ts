@@ -5,6 +5,9 @@ import path from 'node:path';
 // Shared
 import type { CreateAgent, CreateMemory, CreateRule, CreateSkill, CreateTask, UpdateTask } from '@atlas/shared';
 
+// Repositories
+import { projectDocsRepository } from '../../db/repositories/index.js';
+
 // Services
 import {
   agentsService,
@@ -209,6 +212,20 @@ export const CHAT_TOOLS: ToolDefinition[] = [
     description: 'List agent workspaces (running, completed, or failed agent work sessions).',
     parameters: { type: 'object', properties: {} },
   },
+  {
+    name: 'get_project_docs',
+    description: 'Get all documentation for the current project — API diagrams, DB schema, plans, and custom docs.',
+    parameters: {
+      type: 'object',
+      properties: {
+        type: {
+          type: 'string',
+          enum: ['api-diagram', 'db-schema', 'architecture', 'plan', 'custom'],
+          description: 'Filter by doc type. Omit to get all docs.',
+        },
+      },
+    },
+  },
 ];
 
 function isResolvedPathInsideRoot(root: string, candidate: string): boolean {
@@ -326,6 +343,12 @@ export async function executeTool(name: string, args: Record<string, unknown>, c
       }
       case 'list_workspaces':
         return await orchestratorService.listAll();
+      case 'get_project_docs': {
+        if (!context.projectId) return { error: 'No project selected' };
+        const docs = projectDocsRepository.findByProjectId(context.projectId);
+        const type = typeof args.type === 'string' ? args.type : null;
+        return type ? docs.filter((d) => d.type === type) : docs;
+      }
       default:
         return { error: `Unknown tool: ${name}` };
     }
