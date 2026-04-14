@@ -1,5 +1,6 @@
 // React / library
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -22,6 +23,7 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
   return (
     <div className={cn('prose prose-sm prose-invert max-w-none break-words', className)}>
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           code({ className: codeClassName, children, ...props }) {
             const match = /language-(\w+)/.exec(codeClassName || '');
@@ -86,6 +88,24 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
             </a>
           ),
           hr: () => <hr className="border-border my-3" />,
+          table: ({ children }) => (
+            <div className="my-3 overflow-x-auto">
+              <table className="w-full text-sm border-collapse">{children}</table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="border-b border-border bg-muted/30">{children}</thead>
+          ),
+          th: ({ children }) => (
+            <th className="px-3 py-1.5 text-left text-xs font-semibold text-muted-foreground">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-3 py-1.5 text-sm text-foreground border-b border-border/50">
+              {children}
+            </td>
+          ),
           pre: ({ children }) => <div className="my-2">{children}</div>,
         }}
       >

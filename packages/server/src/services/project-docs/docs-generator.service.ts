@@ -24,39 +24,67 @@ const SYSTEM_PROMPT =
   'Return ONLY a single markdown heading followed by a SINGLE ```mermaid code fence containing the complete diagram. ' +
   'Never split the diagram across multiple code fences. Never add prose, explanations, or extra code blocks.';
 
+const API_SYSTEM_PROMPT =
+  'You are a technical documentation expert. Generate concise, accurate API documentation from code. ' +
+  'Return ONLY structured markdown with grouped tables. No Mermaid, no diagrams, no prose outside headings and tables.';
+
 export class DocsGeneratorService {
-  /** Generates a Mermaid flowchart of API endpoints from route files. */
+  /** Generates a Mermaid flowchart of API endpoints from route files or an OpenAPI spec. */
   async generateApiDiagram(project: Project): Promise<string> {
     const FUNCTION_NAME = 'generateApiDiagram';
     try {
       const localPath = project.localPath!;
-      const routePatterns = [/\.route\.ts$/, /\.routes\.ts$/, /routes\.\w+$/, /\.controller\.ts$/];
-      const files = this.scanFiles(localPath, (name) => routePatterns.some((p) => p.test(name)));
-      const content = this.readFileContents(files);
+
+      // Prefer an OpenAPI/Swagger spec if one exists — it's more structured than raw route files.
+      const specContent = this.scanForOpenApiSpec(localPath);
+      let content: string;
+      let promptIntro: string;
+
+      if (specContent) {
+        content = specContent;
+        promptIntro = 'Given this OpenAPI/Swagger specification, generate a Mermaid flowchart diagram showing all API endpoints grouped by resource/tag.';
+      } else {
+        const routePatterns = [/\.route\.ts$/, /\.routes\.ts$/, /routes\.\w+$/, /\.controller\.ts$/];
+        const files = this.scanFiles(localPath, (name) => routePatterns.some((p) => p.test(name)));
+        content = this.readFileContents(files);
+        promptIntro = 'Given these route/controller files, generate a Mermaid flowchart diagram showing all API endpoints grouped by resource.';
+      }
 
       if (!content) {
-        return '# API Endpoints\n\nNo route files detected in this project.';
+        return '# API Endpoints\n\nNo route files or OpenAPI spec detected in this project.';
       }
 
       const model = await this.resolveModel(project.id);
       const result = await generateText({
         model,
-        system: SYSTEM_PROMPT,
+        system: API_SYSTEM_PROMPT,
         prompt: [
-          'Given these route/controller files, generate a Mermaid flowchart diagram showing all API endpoints grouped by resource.',
-          'Use `flowchart LR` format. Strict rules for valid Mermaid flowchart syntax:',
-          '- Node IDs must be single words with NO spaces (use camelCase: `getUsers`, `postsGroup`)',
-          '- Node labels go in brackets: `getUsers["GET /users"]`',
-          '- Use subgraphs to group by resource: `subgraph users ["Users"]`',
-          '- Edges use `-->` only',
-          '- NEVER use `=`, spaces in node IDs, or bare text outside node/edge/subgraph definitions',
-          '- Output ONE complete `flowchart LR` block only',
+          promptIntro,
+          'Format the output as grouped markdown tables:',
+          '',
+          '## Resource Name',
+          '',
+          '| Method | Path | Description |',
+          '|--------|------|-------------|',
+          '| GET | `/users` | List all users |',
+          '',
+          'Rules:',
+          '- Group endpoints by resource/domain (Users, Auth, Products, etc.)',
+          '- Every endpoint gets a one-line description inferred from the code',
+          '- Use exact paths with params as `:paramName`',
+          '- Method must be uppercase (GET, POST, PUT, PATCH, DELETE)',
+          '- If an OpenAPI spec is provided, include response codes in the description',
           '',
           content,
         ].join('\n'),
       });
 
-      return `# API Endpoints\n\n${result.text}`;
+      const swaggerUrl = this.detectSwaggerUrl(localPath);
+      const swaggerNote = swaggerUrl
+        ? `\n\n---\n\n> **Swagger UI** (auto-detected — may differ): [Open Swagger UI](${swaggerUrl})`
+        : '';
+
+      return `# API Endpoints\n\n${result.text}${swaggerNote}`;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
@@ -198,6 +226,102 @@ export class DocsGeneratorService {
       'No AI provider configured. Add a provider in Settings → Providers to enable doc generation.',
       { status: 400 },
     );
+  }
+
+  /**
+   * Looks for an OpenAPI/Swagger spec file in the project root and common subdirectories.
+   * Returns file contents (capped at 50 KB) if found, null otherwise.
+   */
+  private scanForOpenApiSpec(localPath: string): string | null {
+    const SPEC_NAMES = [
+      'openapi.json', 'openapi.yaml', 'openapi.yml',
+      'swagger.json', 'swagger.yaml', 'swagger.yml',
+      'swagger-spec.json',
+    ];
+    const SPEC_DIRS = ['', 'docs', 'swagger', 'api-docs', 'openapi'];
+    const MAX_SPEC_BYTES = 50 * 1024;
+
+    for (const dir of SPEC_DIRS) {
+      for (const name of SPEC_NAMES) {
+        const filePath = dir ? path.join(localPath, dir, name) : path.join(localPath, name);
+        try {
+          if (!fs.existsSync(filePath)) continue;
+          const stat = fs.statSync(filePath);
+          if (stat.size > MAX_SPEC_BYTES) continue;
+          return fs.readFileSync(filePath, 'utf-8');
+        } catch {
+          // Skip unreadable files
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Attempts to detect a Swagger UI URL by reading package.json scripts and .env files.
+   * Returns a URL string like "http://localhost:3000/api-docs" or null if no port is found.
+   */
+  private detectSwaggerUrl(localPath: string): string | null {
+    const port = this.detectPort(localPath);
+    if (!port) return null;
+
+    const swaggerPath = this.detectSwaggerPath(localPath);
+    return `http://localhost:${port}${swaggerPath}`;
+  }
+
+  private detectPort(localPath: string): number | null {
+    // 1. Scan package.json scripts
+    try {
+      const pkgPath = path.join(localPath, 'package.json');
+      if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as Record<string, unknown>;
+        const scripts = (pkg.scripts ?? {}) as Record<string, string>;
+        for (const script of Object.values(scripts)) {
+          const portMatch =
+            /--port[= ](\d+)/.exec(script) ??
+            /\bPORT=(\d+)/.exec(script) ??
+            /(?<!\w)-p[= ](\d+)/.exec(script);
+          if (portMatch) return parseInt(portMatch[1], 10);
+        }
+      }
+    } catch {
+      // Fall through to .env scan
+    }
+
+    // 2. Scan .env files
+    const envFiles = ['.env.local', '.env', '.env.development', '.env.example'];
+    for (const envFile of envFiles) {
+      try {
+        const envPath = path.join(localPath, envFile);
+        if (!fs.existsSync(envPath)) continue;
+        const content = fs.readFileSync(envPath, 'utf-8');
+        const portMatch = /^(?:APP_)?PORT=(\d+)/m.exec(content);
+        if (portMatch) return parseInt(portMatch[1], 10);
+      } catch {
+        // Skip unreadable files
+      }
+    }
+
+    return null;
+  }
+
+  private detectSwaggerPath(localPath: string): string {
+    try {
+      const pkgPath = path.join(localPath, 'package.json');
+      if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')) as Record<string, unknown>;
+        const deps = {
+          ...((pkg.dependencies ?? {}) as Record<string, string>),
+          ...((pkg.devDependencies ?? {}) as Record<string, string>),
+        };
+        if ('@nestjs/swagger' in deps) return '/api-docs';
+        if ('swagger-ui-express' in deps || 'swagger-jsdoc' in deps) return '/api-docs';
+        if ('fastify-swagger' in deps || '@fastify/swagger' in deps) return '/documentation';
+      }
+    } catch {
+      // Fall through to default
+    }
+    return '/api-docs';
   }
 
   /** Recursively scans a directory for files matching the predicate. */
