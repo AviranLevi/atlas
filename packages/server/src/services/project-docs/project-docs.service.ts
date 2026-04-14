@@ -11,6 +11,17 @@ import { logger } from '../../lib/logger.js';
 const FILE_PATH = 'services/project-docs/project-docs.service.ts';
 
 export class ProjectDocsService {
+  /** Lists all docs across all projects. */
+  async listAll(): Promise<ProjectDoc[]> {
+    const FUNCTION_NAME = 'listAll';
+    try {
+      return projectDocsRepository.findAll();
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to list all project docs', { cause: error });
+    }
+  }
+
   /** Lists all docs for a project. */
   async list(projectId: string): Promise<ProjectDoc[]> {
     const FUNCTION_NAME = 'list';

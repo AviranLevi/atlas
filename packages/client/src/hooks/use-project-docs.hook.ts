@@ -18,6 +18,15 @@ export function useProjectDocs(projectId: string | undefined) {
   });
 }
 
+/** Returns docs across all projects (only fires when enabled). */
+export function useAllProjectDocs(enabled = true) {
+  return useQuery({
+    queryKey: [...DOCS_KEY, 'all'],
+    queryFn: () => api.get<ProjectDoc[]>('/docs'),
+    enabled,
+  });
+}
+
 export function useCreateProjectDoc(projectId: string) {
   const qc = useQueryClient();
   return useMutation({

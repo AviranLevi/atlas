@@ -1,6 +1,6 @@
 // React / library
 import { PanelLeftClose } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
 // Components
@@ -17,25 +17,82 @@ import { useActiveProject } from '@/contexts/ProjectContext';
 // Lib
 import { cn } from '@/lib/utils';
 
+// Types
+import type { NavItem } from './layout.types';
+
 // Constants
-import { navItems, projectContextNavItem } from './layout.constants';
+import { navItems } from './layout.constants';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [expanded, setExpanded] = useState(true);
   const { activeProjectId } = useActiveProject();
 
-  // Build nav items list — include "Context" only when a project is selected
-  const allNavItems = activeProjectId
-    ? [
-        ...navItems.slice(0, 2), // Kanban, Workspaces
-        {
-          to: `${projectContextNavItem.basePath}/${activeProjectId}`,
-          icon: projectContextNavItem.icon,
-          label: projectContextNavItem.label,
-        },
-        ...navItems.slice(2), // Agents, Skills, Rules, Memory, Settings
-      ]
-    : navItems;
+  const resolvedItems = useMemo(() => {
+    return navItems.map((item) => {
+      if (item.label === 'Context') {
+        return activeProjectId
+          ? { ...item, to: `/projects/${activeProjectId}`, disabled: false }
+          : { ...item, disabled: true };
+      }
+      return item;
+    });
+  }, [activeProjectId]);
+
+  const projectItems = resolvedItems.filter((n) => n.section === 'project');
+  const globalItems = resolvedItems.filter((n) => n.section === 'global');
+
+  function renderNavItem(item: NavItem) {
+    const { to, icon: Icon, label, badge, disabled } = item;
+
+    if (disabled) {
+      return (
+        <Tooltip key={label} delayDuration={expanded ? 1000 : 0}>
+          <TooltipTrigger asChild>
+            <span
+              className={cn(
+                'flex h-9 flex-row items-center rounded-md text-[13px] font-medium opacity-40 cursor-default',
+                expanded ? 'gap-3 px-3' : 'w-9 justify-center',
+              )}
+            >
+              <span className="relative shrink-0">
+                <Icon className="h-[18px] w-[18px]" />
+              </span>
+              {expanded && <span>{label}</span>}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="right">Select a project to view its context</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return (
+      <Tooltip key={to} delayDuration={expanded ? 1000 : 0}>
+        <TooltipTrigger asChild>
+          <div>
+            <NavLink
+              to={to}
+              className={({ isActive }) =>
+                cn(
+                  'flex h-9 flex-row items-center rounded-md text-[13px] font-medium transition-colors',
+                  expanded ? 'gap-3 px-3' : 'w-9 justify-center',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-sidebar-foreground hover:bg-accent hover:text-accent-foreground',
+                )
+              }
+            >
+              <span className="relative shrink-0">
+                <Icon className="h-[18px] w-[18px]" />
+                {badge && <ActiveWorkspaceDot />}
+              </span>
+              {expanded && <span>{label}</span>}
+            </NavLink>
+          </div>
+        </TooltipTrigger>
+        {!expanded && <TooltipContent side="right">{label}</TooltipContent>}
+      </Tooltip>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -90,36 +147,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </div>
 
-        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
-          {allNavItems.map(({ to, icon: Icon, label, badge }) => {
-            return (
-              <Tooltip key={to} delayDuration={expanded ? 1000 : 0}>
-                <TooltipTrigger asChild>
-                  <div>
-                    <NavLink
-                      to={to}
-                      className={({ isActive }) =>
-                        cn(
-                          'flex h-9 flex-row items-center rounded-md text-[13px] font-medium transition-colors',
-                          expanded ? 'gap-3 px-3' : 'w-9 justify-center',
-                          isActive
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-sidebar-foreground hover:bg-accent hover:text-accent-foreground',
-                        )
-                      }
-                    >
-                      <span className="relative shrink-0">
-                        <Icon className="h-[18px] w-[18px]" />
-                        {badge && <ActiveWorkspaceDot />}
-                      </span>
-                      {expanded && <span>{label}</span>}
-                    </NavLink>
-                  </div>
-                </TooltipTrigger>
-                {!expanded && <TooltipContent side="right">{label}</TooltipContent>}
-              </Tooltip>
-            );
-          })}
+        <nav className="flex flex-1 flex-col overflow-y-auto p-2">
+          {expanded && (
+            <span className="mb-1 mt-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Project
+            </span>
+          )}
+          <div className="flex flex-col gap-0.5">
+            {projectItems.map(renderNavItem)}
+          </div>
+
+          {expanded ? (
+            <span className="mb-1 mt-4 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Global
+            </span>
+          ) : (
+            <div className="my-2 mx-2 h-px bg-border" />
+          )}
+          <div className="flex flex-col gap-0.5">
+            {globalItems.map(renderNavItem)}
+          </div>
         </nav>
 
         <AgentStatusPanel expanded={expanded} />

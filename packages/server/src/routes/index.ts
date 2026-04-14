@@ -15,6 +15,7 @@ import { marketplaceRoute } from './marketplace.route.js';
 import { packageRoute } from './package.route.js';
 import { phasesRoute } from './phases.route.js';
 import { preferencesRoute } from './preferences.route.js';
+import { docsRoute } from './docs.route.js';
 import { projectDocsRoute } from './project-docs.route.js';
 import { projectsRoute } from './projects.route.js';
 import { reviewsRoute } from './reviews.route.js';
@@ -35,6 +36,7 @@ export const apiRoutes = new Hono()
   .route('/tasks', tasksRoute)
   .route('/projects', projectsRoute)
   .route('/projects/:projectId/docs', projectDocsRoute)
+  .route('/docs', docsRoute)
   .route('/settings', settingsRoute)
   .route('/search', searchRoute)
   .route('/workspaces', workspacesRoute)

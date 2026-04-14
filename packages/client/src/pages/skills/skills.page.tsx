@@ -12,8 +12,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+// Context
+import { useActiveProject } from '@/contexts/ProjectContext';
+
 // Hooks
-import { useProjects } from '@/hooks/use-projects.hook';
 import { useSkills, useDeleteSkill } from '@/hooks/use-skills.hook';
 
 // Lib
@@ -23,16 +25,15 @@ import { timeAgo, contentPreview } from '@/lib/format';
 import type { Skill } from '@atlas/shared';
 
 // Constants
-import { SKILL_TYPE_OPTIONS, SKILL_TYPE_COLORS, PROJECT_SCOPE_ALL, PROJECT_SCOPE_GLOBAL } from './skills.constants';
+import { SKILL_TYPE_OPTIONS, SKILL_TYPE_COLORS } from './skills.constants';
 
 export function SkillsPage() {
   const navigate = useNavigate();
+  const { activeProjectId, projects } = useActiveProject();
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [projectFilter, setProjectFilter] = useState<string>(PROJECT_SCOPE_ALL);
   const [search, setSearch] = useState('');
 
   const { data: skills = [], isLoading } = useSkills();
-  const { data: projects = [] } = useProjects();
   const deleteSkill = useDeleteSkill();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -51,16 +52,13 @@ export function SkillsPage() {
       result = result.filter((s) => s.name.toLowerCase().includes(q));
     }
 
-    if (projectFilter === PROJECT_SCOPE_GLOBAL) {
-      result = result.filter((s) => !s.projectId);
-    } else if (projectFilter !== PROJECT_SCOPE_ALL) {
-      result = result.filter((s) => s.projectId === projectFilter);
+    if (activeProjectId) {
+      result = result.filter((s) => s.projectId === activeProjectId || !s.projectId);
     }
 
     return result;
-  }, [skills, typeFilter, search, projectFilter]);
+  }, [skills, typeFilter, search, activeProjectId]);
 
-  /** Group skills by type when showing all types. */
   const grouped = useMemo(() => {
     if (typeFilter !== 'all') return null;
     const map = new Map<string, Skill[]>();
@@ -167,20 +165,6 @@ export function SkillsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={projectFilter} onValueChange={setProjectFilter}>
-          <SelectTrigger className="h-8 w-[160px] text-xs">
-            <SelectValue placeholder="Project scope" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={PROJECT_SCOPE_ALL}>All Projects</SelectItem>
-            <SelectItem value={PROJECT_SCOPE_GLOBAL}>Global Only</SelectItem>
-            {projects.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {isLoading ? (
@@ -190,11 +174,9 @@ export function SkillsPage() {
           <Zap className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
           <h3 className="mb-1 text-base font-medium">No skills found</h3>
           <p className="text-muted-foreground mb-4 text-sm">
-            {search || projectFilter !== PROJECT_SCOPE_ALL
-              ? 'Try adjusting your filters.'
-              : 'Create your first skill template to get started.'}
+            {search ? 'Try adjusting your filters.' : 'Create your first skill template to get started.'}
           </p>
-          {!search && projectFilter === PROJECT_SCOPE_ALL && (
+          {!search && (
             <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm">
               <Plus className="mr-1.5 h-4 w-4" />
               Create Skill

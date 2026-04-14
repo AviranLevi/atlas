@@ -26,6 +26,17 @@ type InsertProjectDoc = {
 export class ProjectDocsRepository {
   constructor(private readonly db: DB) {}
 
+  /** Returns all docs across all projects. */
+  findAll(): ProjectDoc[] {
+    const FUNCTION_NAME = 'findAll';
+    try {
+      return this.db.select().from(projectDocs).all() as ProjectDoc[];
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query all project docs', { cause: error });
+    }
+  }
+
   /** Returns all docs for a project. */
   findByProjectId(projectId: string): ProjectDoc[] {
     const FUNCTION_NAME = 'findByProjectId';

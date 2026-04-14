@@ -2,6 +2,8 @@
 import {
   BookOpen,
   Brain,
+  ChevronDown,
+  ChevronRight,
   Code2,
   Database,
   FileText,
@@ -18,26 +20,23 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // Components
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { MarkdownContent } from '@/components/ui/markdown-content';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+
+// Context
+import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Hooks
 import {
+  useAllProjectDocs,
   useCreateProjectDoc,
   useDeleteProjectDoc,
   useGenerateProjectDoc,
   useProjectDocs,
   useUpdateProjectDoc,
 } from '@/hooks/use-project-docs.hook';
-import { useProjects } from '@/hooks/use-projects.hook';
 
 // Types
 import type { DocType, ProjectDoc } from '@atlas/shared';
@@ -53,8 +52,8 @@ const TYPE_CONFIG: Record<DocType, { label: string; icon: typeof FileText; group
 const AI_TYPES: DocType[] = ['api-diagram', 'db-schema', 'architecture'];
 
 export function DocumentsPage() {
-  const { data: projects = [] } = useProjects();
-  const [projectId, setProjectId] = useState<string>('');
+  const { activeProjectId, projects } = useActiveProject();
+
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -64,11 +63,17 @@ export function DocumentsPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
 
-  const { data: docs = [], isLoading } = useProjectDocs(projectId || undefined);
-  const generateDoc = useGenerateProjectDoc(projectId);
-  const createDoc = useCreateProjectDoc(projectId);
-  const updateDoc = useUpdateProjectDoc(projectId);
-  const deleteDoc = useDeleteProjectDoc(projectId);
+  const { data: projectDocs = [], isLoading: isLoadingProject } = useProjectDocs(activeProjectId ?? undefined);
+  const { data: allDocs = [], isLoading: isLoadingAll } = useAllProjectDocs(!activeProjectId);
+
+  const isProjectMode = !!activeProjectId;
+  const docs = isProjectMode ? projectDocs : allDocs;
+  const isLoading = isProjectMode ? isLoadingProject : isLoadingAll;
+
+  const generateDoc = useGenerateProjectDoc(activeProjectId ?? '');
+  const createDoc = useCreateProjectDoc(activeProjectId ?? '');
+  const updateDoc = useUpdateProjectDoc(activeProjectId ?? '');
+  const deleteDoc = useDeleteProjectDoc(activeProjectId ?? '');
 
   const selectedDoc = useMemo(
     () => docs.find((d) => d.id === selectedDocId) ?? null,
@@ -76,12 +81,17 @@ export function DocumentsPage() {
   );
 
   useEffect(() => {
-    if (docs.length > 0 && !selectedDoc) {
+    setSelectedDocId(null);
+    setEditing(false);
+    setCreating(false);
+  }, [activeProjectId]);
+
+  useEffect(() => {
+    if (isProjectMode && docs.length > 0 && !selectedDoc) {
       setSelectedDocId(docs[0].id);
     }
-  }, [docs, selectedDoc]);
+  }, [isProjectMode, docs, selectedDoc]);
 
-  // Debounced preview for edit mode
   useEffect(() => {
     if (!editing) return;
     const timer = setTimeout(() => setPreviewContent(editContent), 500);
@@ -98,6 +108,19 @@ export function DocumentsPage() {
     }
     return groups;
   }, [docs]);
+
+  const projectMap = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
+
+  const groupedByProject = useMemo(() => {
+    if (isProjectMode) return null;
+    const map = new Map<string, ProjectDoc[]>();
+    for (const doc of allDocs) {
+      const list = map.get(doc.projectId) ?? [];
+      list.push(doc);
+      map.set(doc.projectId, list);
+    }
+    return map;
+  }, [isProjectMode, allDocs]);
 
   const handleStartEdit = useCallback(() => {
     if (!selectedDoc) return;
@@ -144,9 +167,7 @@ export function DocumentsPage() {
     (type: DocType) => {
       generateDoc.mutate(
         { type: type as 'api-diagram' | 'db-schema' | 'architecture' },
-        {
-          onSuccess: (doc) => setSelectedDocId(doc.id),
-        },
+        { onSuccess: (doc) => setSelectedDocId(doc.id) },
       );
     },
     [generateDoc],
@@ -154,7 +175,6 @@ export function DocumentsPage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <BookOpen className="h-8 w-8 text-muted-foreground" />
         <div className="flex-1">
@@ -163,39 +183,28 @@ export function DocumentsPage() {
         </div>
       </div>
 
-      {/* Project selector */}
-      <div className="mb-6">
-        <Select value={projectId} onValueChange={(v) => { setProjectId(v); setSelectedDocId(null); setEditing(false); }}>
-          <SelectTrigger className="w-full max-w-sm">
-            <SelectValue placeholder="Select a project..." />
-          </SelectTrigger>
-          <SelectContent>
-            {projects.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {!projectId && (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-dashed">
-          <p className="text-sm text-muted-foreground">Select a project to view its documentation</p>
-        </div>
-      )}
-
-      {projectId && isLoading && (
+      {isLoading && (
         <div className="flex h-64 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {projectId && !isLoading && (
+      {/* ── All Projects browse view ── */}
+      {!isLoading && !isProjectMode && (
+        <AllProjectsView
+          groupedByProject={groupedByProject!}
+          projectMap={projectMap}
+          selectedDocId={selectedDocId}
+          selectedDoc={selectedDoc}
+          onSelectDoc={setSelectedDocId}
+        />
+      )}
+
+      {/* ── Single project view ── */}
+      {!isLoading && isProjectMode && (
         <div className="flex gap-6">
           {/* Sidebar */}
           <div className="w-64 shrink-0 space-y-4">
-            {/* AI generate buttons */}
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Auto-Generated</p>
               {AI_TYPES.map((type) => {
@@ -225,7 +234,6 @@ export function DocumentsPage() {
               })}
             </div>
 
-            {/* Plan docs */}
             {grouped.Plans.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Plans</p>
@@ -250,7 +258,6 @@ export function DocumentsPage() {
               </div>
             )}
 
-            {/* Custom docs */}
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Custom</p>
               {grouped.Custom.map((doc) => {
@@ -285,7 +292,6 @@ export function DocumentsPage() {
 
           {/* Main panel */}
           <div className="flex-1 min-w-0">
-            {/* Creating new doc */}
             {creating && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -317,7 +323,6 @@ export function DocumentsPage() {
               </div>
             )}
 
-            {/* No doc selected */}
             {!creating && !selectedDoc && docs.length === 0 && (
               <div className="flex h-64 items-center justify-center rounded-lg border border-dashed">
                 <div className="text-center space-y-2">
@@ -333,7 +338,6 @@ export function DocumentsPage() {
               </div>
             )}
 
-            {/* Viewing a doc */}
             {!creating && selectedDoc && !editing && (
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
@@ -384,7 +388,6 @@ export function DocumentsPage() {
               </div>
             )}
 
-            {/* Editing a doc */}
             {!creating && selectedDoc && editing && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -416,7 +419,6 @@ export function DocumentsPage() {
               </div>
             )}
 
-            {/* Generation in progress overlay */}
             {generateDoc.isPending && (
               <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -426,6 +428,134 @@ export function DocumentsPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── All Projects grouped browse view ──
+
+type AllProjectsViewProps = {
+  groupedByProject: Map<string, ProjectDoc[]>;
+  projectMap: Map<string, { id: string; name: string; color: string | null }>;
+  selectedDocId: string | null;
+  selectedDoc: ProjectDoc | null;
+  onSelectDoc: (id: string | null) => void;
+};
+
+function AllProjectsView({ groupedByProject, projectMap, selectedDocId, selectedDoc, onSelectDoc }: AllProjectsViewProps) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  const toggleCollapse = (projectId: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  };
+
+  if (groupedByProject.size === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center rounded-lg border border-dashed">
+        <div className="text-center space-y-2">
+          <p className="text-sm text-muted-foreground">No documentation across any project</p>
+          <p className="text-xs text-muted-foreground">Select a project to create or generate docs</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-6">
+      <div className="flex-1 space-y-4">
+        {!selectedDoc && (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Browsing docs across all projects. Select a project to create or generate docs.
+            </p>
+            {Array.from(groupedByProject.entries()).map(([projectId, projectDocs]) => {
+              const project = projectMap.get(projectId);
+              const isCollapsed = collapsed.has(projectId);
+              return (
+                <Card key={projectId} className="overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleCollapse(projectId)}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+                  >
+                    {isCollapsed ? (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
+                    {project?.color && (
+                      <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+                    )}
+                    <span className="text-sm font-medium">{project?.name ?? 'Unknown Project'}</span>
+                    <Badge variant="secondary" className="ml-auto text-[10px]">
+                      {projectDocs.length}
+                    </Badge>
+                  </button>
+                  {!isCollapsed && (
+                    <div className="border-t px-4 py-2 space-y-1">
+                      {projectDocs.map((doc) => {
+                        const cfg = TYPE_CONFIG[doc.type as DocType];
+                        const Icon = cfg?.icon ?? FileText;
+                        return (
+                          <button
+                            key={doc.id}
+                            type="button"
+                            onClick={() => onSelectDoc(doc.id)}
+                            className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                              selectedDocId === doc.id
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-foreground hover:bg-muted'
+                            }`}
+                          >
+                            <Icon className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{doc.title}</span>
+                            <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0">
+                              {cfg?.label ?? doc.type}
+                            </Badge>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </>
+        )}
+
+        {selectedDoc && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => onSelectDoc(null)}>
+                Back to all docs
+              </Button>
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold">{selectedDoc.title}</h2>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-[10px]">
+                  {TYPE_CONFIG[selectedDoc.type as DocType]?.label ?? selectedDoc.type}
+                </Badge>
+                <Badge variant="outline" className="text-[10px]">
+                  {selectedDoc.source === 'ai' ? 'AI Generated' : 'Manual'}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {projectMap.get(selectedDoc.projectId)?.name ?? 'Unknown'} · Updated{' '}
+                  {new Date(selectedDoc.updatedAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+            <div className="rounded-md border p-6 overflow-auto">
+              <MarkdownContent content={selectedDoc.content || '*No content yet.*'} />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

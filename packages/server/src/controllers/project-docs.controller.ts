@@ -10,6 +10,11 @@ import { docsGeneratorService, projectDocsService, projectsService } from '../se
 // Lib
 import { getValidatedBody } from '../lib/hono-helpers.js';
 
+/** Lists all docs across all projects. */
+export async function listAllProjectDocs(c: Context) {
+  return c.json(await projectDocsService.listAll());
+}
+
 /** Lists all docs for a project. */
 export async function listProjectDocs(c: Context) {
   const projectId = c.req.param('projectId')!;

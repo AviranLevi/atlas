@@ -13,8 +13,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+// Context
+import { useActiveProject } from '@/contexts/ProjectContext';
+
 // Hooks
-import { useProjects } from '@/hooks/use-projects.hook';
 import { useRules, useDeleteRule } from '@/hooks/use-rules.hook';
 
 // Lib
@@ -24,17 +26,16 @@ import { timeAgo, contentPreview } from '@/lib/format';
 import type { Rule } from '@atlas/shared';
 
 // Constants
-import { RULE_TYPE_OPTIONS, RULE_TYPE_COLORS, PROJECT_SCOPE_ALL, PROJECT_SCOPE_GLOBAL } from './rules.constants';
+import { RULE_TYPE_OPTIONS, RULE_TYPE_COLORS } from './rules.constants';
 
 export function RulesPage() {
   const navigate = useNavigate();
+  const { activeProjectId, projects } = useActiveProject();
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [projectFilter, setProjectFilter] = useState<string>(PROJECT_SCOPE_ALL);
   const [search, setSearch] = useState('');
 
   const filters = typeFilter && typeFilter !== 'all' ? { type: typeFilter } : undefined;
   const { data: rules = [], isLoading } = useRules(filters);
-  const { data: projects = [] } = useProjects();
   const deleteRule = useDeleteRule();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -50,16 +51,13 @@ export function RulesPage() {
       result = result.filter((r) => r.name.toLowerCase().includes(q));
     }
 
-    if (projectFilter === PROJECT_SCOPE_GLOBAL) {
-      result = result.filter((r) => !r.projectId);
-    } else if (projectFilter !== PROJECT_SCOPE_ALL) {
-      result = result.filter((r) => r.projectId === projectFilter);
+    if (activeProjectId) {
+      result = result.filter((r) => r.projectId === activeProjectId || !r.projectId);
     }
 
     return result;
-  }, [rules, search, projectFilter]);
+  }, [rules, search, activeProjectId]);
 
-  /** Group rules by type when showing all types. */
   const grouped = useMemo(() => {
     if (typeFilter !== 'all') return null;
     const map = new Map<string, Rule[]>();
@@ -179,20 +177,6 @@ export function RulesPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={projectFilter} onValueChange={setProjectFilter}>
-          <SelectTrigger className="h-8 w-[160px] text-xs">
-            <SelectValue placeholder="Project scope" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={PROJECT_SCOPE_ALL}>All Projects</SelectItem>
-            <SelectItem value={PROJECT_SCOPE_GLOBAL}>Global Only</SelectItem>
-            {projects.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {isLoading ? (
@@ -202,11 +186,9 @@ export function RulesPage() {
           <ScrollText className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
           <h3 className="mb-1 text-base font-medium">No rules found</h3>
           <p className="text-muted-foreground mb-4 text-sm">
-            {search || projectFilter !== PROJECT_SCOPE_ALL
-              ? 'Try adjusting your filters.'
-              : 'Create your first rule to get started.'}
+            {search ? 'Try adjusting your filters.' : 'Create your first rule to get started.'}
           </p>
-          {!search && projectFilter === PROJECT_SCOPE_ALL && (
+          {!search && (
             <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm">
               <Plus className="mr-1.5 h-4 w-4" />
               Create Rule

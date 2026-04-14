@@ -6,9 +6,6 @@ export const RULE_TYPE_OPTIONS = [
   { value: 'General', label: 'General' },
 ] as const;
 
-export const PROJECT_SCOPE_ALL = 'all';
-export const PROJECT_SCOPE_GLOBAL = 'global';
-
 export const RULE_TYPE_COLORS: Record<string, string> = {
   Backend: 'border-l-blue-500',
   Frontend: 'border-l-green-500',

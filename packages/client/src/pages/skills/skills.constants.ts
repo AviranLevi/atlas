@@ -10,9 +10,6 @@ export const SKILL_TYPE_OPTIONS = [
   { value: 'Design / Balancing', label: 'Design / Balancing' },
 ] as const;
 
-export const PROJECT_SCOPE_ALL = 'all';
-export const PROJECT_SCOPE_GLOBAL = 'global';
-
 export const SKILL_TYPE_COLORS: Record<string, string> = {
   Planning: 'border-l-amber-500',
   Coding: 'border-l-blue-500',

@@ -6,6 +6,9 @@ export type NavItem = {
   icon: React.ElementType;
   label: string;
   badge?: boolean;
+  section: 'project' | 'global';
+  /** When true, renders as a muted span instead of a NavLink */
+  disabled?: boolean;
 };
 
 export type PageHeaderProps = {
