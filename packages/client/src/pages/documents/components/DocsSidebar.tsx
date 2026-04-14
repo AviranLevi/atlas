@@ -2,7 +2,6 @@
 import { Plus } from 'lucide-react';
 
 // Components
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 // Types
@@ -53,11 +52,9 @@ export function DocsSidebar({
               }`}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{cfg.label}</span>
+              <span className="min-w-0 truncate">{cfg.label}</span>
               {!existing && (
-                <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0">
-                  Not generated
-                </Badge>
+                <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">New</span>
               )}
             </button>
           );

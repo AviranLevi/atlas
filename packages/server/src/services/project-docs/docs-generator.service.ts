@@ -21,8 +21,8 @@ const SKIP_DIRS = new Set(['node_modules', 'dist', '__pycache__', '.git', '.next
 
 const SYSTEM_PROMPT =
   'You are a technical documentation expert. Generate concise, accurate Mermaid diagrams from code. ' +
-  'Return ONLY valid Mermaid syntax wrapped in a ```mermaid code fence, preceded by a short markdown heading. ' +
-  'Do not include any explanatory prose outside the heading and diagram.';
+  'Return ONLY a single markdown heading followed by a SINGLE ```mermaid code fence containing the complete diagram. ' +
+  'Never split the diagram across multiple code fences. Never add prose, explanations, or extra code blocks.';
 
 export class DocsGeneratorService {
   /** Generates a Mermaid flowchart of API endpoints from route files. */
@@ -86,12 +86,13 @@ export class DocsGeneratorService {
         model,
         system: SYSTEM_PROMPT,
         prompt: [
-          'Given these database schema definitions, generate a Mermaid ER diagram showing all tables, their columns, and relationships.',
-          'Use `erDiagram` format. Rules for valid Mermaid erDiagram syntax:',
-          '- Each attribute line must be ONLY: `type attributeName` (e.g. `string firstName`)',
-          '- Do NOT add quoted comments or descriptions after attribute names',
-          '- Use camelCase for attribute names — no underscores, no quoted strings',
-          '- Relationship lines use: `||--o{`, `||--||`, `}o--o{` etc.',
+          'Given these database schema definitions, generate a Mermaid ER diagram showing all tables and their columns.',
+          'Use `erDiagram` format. Strict rules:',
+          '- Output ONE complete `erDiagram` block — never split into multiple blocks',
+          '- Each attribute line must be exactly: `type attributeName` with NO quoted strings after it',
+          '- Use camelCase for attribute names — no underscores',
+          '- Omit all relationship lines — show tables and columns only',
+          '- Do NOT use comments, quoted descriptions, or any text after the attribute name',
           '',
           content,
         ].join('\n'),
