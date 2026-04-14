@@ -65,11 +65,16 @@ export class DocsGeneratorService {
       const localPath = project.localPath!;
       const schemaPatterns = [
         /\.schema\.ts$/,
+        /\.entity\.ts$/,
+        /\.model\.ts$/,
         /schema\.prisma$/,
         /migrations\/.*\.sql$/,
         /models\.py$/,
       ];
-      const files = this.scanFiles(localPath, (name) => schemaPatterns.some((p) => p.test(name)));
+      const schemaFolderPatterns = /\/(schemas|models|entities)\//;
+      const files = this.scanFiles(localPath, (name) =>
+        schemaPatterns.some((p) => p.test(name)) || schemaFolderPatterns.test(name),
+      );
       const content = this.readFileContents(files);
 
       if (!content) {
@@ -82,7 +87,11 @@ export class DocsGeneratorService {
         system: SYSTEM_PROMPT,
         prompt: [
           'Given these database schema definitions, generate a Mermaid ER diagram showing all tables, their columns, and relationships.',
-          'Use `erDiagram` format.',
+          'Use `erDiagram` format. Rules for valid Mermaid erDiagram syntax:',
+          '- Each attribute line must be ONLY: `type attributeName` (e.g. `string firstName`)',
+          '- Do NOT add quoted comments or descriptions after attribute names',
+          '- Use camelCase for attribute names — no underscores, no quoted strings',
+          '- Relationship lines use: `||--o{`, `||--||`, `}o--o{` etc.',
           '',
           content,
         ].join('\n'),
@@ -164,8 +173,17 @@ export class DocsGeneratorService {
       }
     }
 
+    const allProviders = await agentProvidersService.list();
+    if (allProviders.length > 0) {
+      const provider = allProviders[0];
+      logger.info(
+        `${FILE_PATH} :: resolveModel - no project agent has a provider, falling back to "${provider.name}"`,
+      );
+      return buildAiModel(provider);
+    }
+
     throw new AppError(
-      'No agent with a configured AI provider is assigned to this project. Assign an agent with a provider to enable doc generation.',
+      'No AI provider configured. Add a provider in Settings → Providers to enable doc generation.',
       { status: 400 },
     );
   }
