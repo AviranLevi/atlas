@@ -15,6 +15,7 @@ export const executorClaudeCode: ExecutorConfig = {
   setup: { install: 'npm install -g @anthropic-ai/claude-code', auth: 'claude /login' },
   description: 'Anthropic Claude Code CLI agent with full MCP support',
   docsUrl: 'https://docs.anthropic.com/en/docs/claude-code',
+  registry: { type: 'npm', package: '@anthropic-ai/claude-code' },
   modelFlag: '--model',
   defaultModel: 'sonnet',
   modelPresets: [
@@ -36,6 +37,7 @@ export const executorAider: ExecutorConfig = {
   setup: { install: 'pip install aider-chat', auth: 'export OPENAI_API_KEY=sk-...' },
   description: 'AI pair programming in your terminal',
   docsUrl: 'https://aider.chat',
+  registry: { type: 'pypi', package: 'aider-chat' },
   modelFlag: '--model',
   modelPresets: [
     { value: 'anthropic/claude-sonnet-4-6', label: 'Claude Sonnet 4.6', provider: 'anthropic' },
@@ -72,6 +74,7 @@ export const executorCodex: ExecutorConfig = {
   setup: { install: 'npm install -g @openai/codex', auth: 'export OPENAI_API_KEY=sk-...' },
   description: 'OpenAI Codex CLI for code generation',
   docsUrl: 'https://github.com/openai/codex',
+  registry: { type: 'npm', package: '@openai/codex' },
   modelFlag: '--model',
   modelPresets: [
     { value: 'gpt-5.2-codex', label: 'GPT-5.2 Codex', provider: 'openai' },
@@ -95,6 +98,7 @@ export const executorGeminiCli: ExecutorConfig = {
   setup: { install: 'npm install -g @google/gemini-cli', auth: 'gemini' },
   description: 'Google Gemini CLI agent (uses ~/.gemini/settings.json for MCP config)',
   docsUrl: 'https://github.com/google-gemini/gemini-cli',
+  registry: { type: 'npm', package: '@google/gemini-cli' },
   modelFlag: '--model',
   defaultModel: 'gemini-2.5-flash',
   modelPresets: [
@@ -116,6 +120,7 @@ export const executorAmp: ExecutorConfig = {
   setup: { install: 'npm install -g @sourcegraph/amp' },
   description: 'Sourcegraph Amp coding agent',
   docsUrl: 'https://ampcode.com',
+  registry: { type: 'npm', package: '@sourcegraph/amp' },
   modelFlag: '--model',
   modelPresets: [{ value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' }],
 };
@@ -131,6 +136,7 @@ export const executorOpencode: ExecutorConfig = {
   setup: { install: 'go install github.com/opencode-ai/opencode@latest' },
   description: 'Open source AI coding agent',
   docsUrl: 'https://github.com/opencode-ai/opencode',
+  registry: { type: 'github', repo: 'opencode-ai/opencode' },
   modelFlag: '--model',
   modelPresets: [
     { value: 'anthropic/claude-sonnet-4-6', label: 'Claude Sonnet 4.6', provider: 'anthropic' },
@@ -163,6 +169,7 @@ export const executorOllama: ExecutorConfig = {
   },
   description: 'Run open-source AI models locally — no API key required',
   docsUrl: 'https://ollama.ai',
+  registry: { type: 'github', repo: 'ollama/ollama' },
   env: { OLLAMA_API_BASE: 'http://localhost:11434' },
   modelFlag: '--model',
   defaultModel: 'ollama_chat/qwen2.5-coder',
@@ -194,6 +201,7 @@ export const executorGoose: ExecutorConfig = {
   },
   description: 'Open source AI agent by Block with multi-provider and local model support',
   docsUrl: 'https://github.com/block/goose',
+  registry: { type: 'github', repo: 'block/goose' },
   modelFlag: '--model',
   modelPresets: [
     { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', provider: 'anthropic' },

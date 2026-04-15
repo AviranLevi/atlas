@@ -17,6 +17,11 @@ export interface ProviderMapping {
   envVars: Record<string, ProviderField>;
 }
 
+export type RegistryInfo =
+  | { type: 'npm'; package: string }
+  | { type: 'pypi'; package: string }
+  | { type: 'github'; repo: string };
+
 export interface ExecutorConfig {
   id: string;
   name: string;
@@ -60,6 +65,8 @@ export interface ExecutorConfig {
   supportsCustomModel?: boolean;
   /** Output format emitted by the executor. 'stream-json' enables incremental log parsing. */
   outputFormat?: 'text' | 'stream-json';
+  /** Package registry info for checking latest available version. */
+  registry?: RegistryInfo;
 }
 
 export interface DetectionResult {
@@ -78,6 +85,7 @@ export interface ExecutorStatus {
   authenticated: boolean;
   mcpConfigFormat: McpConfigFormat;
   version?: string;
+  latestVersion?: string;
   binaryPath?: string;
   authHint?: string;
   setup?: { install: string; auth?: string };

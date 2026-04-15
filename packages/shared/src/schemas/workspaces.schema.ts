@@ -93,6 +93,7 @@ export const ExecutorStatusSchema = z.object({
   authenticated: z.boolean(),
   mcpConfigFormat: McpConfigFormatEnum,
   version: z.string().optional(),
+  latestVersion: z.string().optional(),
   binaryPath: z.string().optional(),
   authHint: z.string().optional(),
   setup: z

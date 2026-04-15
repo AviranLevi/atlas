@@ -140,7 +140,7 @@ export class WorkspaceSpawnService {
       projectId: project.id,
       agentId: task.agentId ?? null,
       agentRuntime: agentRuntimeId,
-      model: resolvedModel,
+      model: resolvedProvider.modelName ?? null,
       branchName: 'n/a',
       worktreePath: 'n/a',
       status: 'running',
@@ -153,10 +153,13 @@ export class WorkspaceSpawnService {
     await tasksService.update(taskId, { status: TASK_STATUS.IN_PROGRESS });
 
     try {
+      // Use the provider's own model — resolvedModel is for the CLI executor, not the API provider
+      const providerModel = resolvedProvider.modelName ?? null;
+
       const stageResult =
         stage === 'brainstorm'
-          ? await workflowRunnerService.runBrainstorm(task, project.id, resolvedProvider, resolvedModel)
-          : await workflowRunnerService.runPlan(task, project.id, resolvedProvider, resolvedModel);
+          ? await workflowRunnerService.runBrainstorm(task, project.id, resolvedProvider, providerModel)
+          : await workflowRunnerService.runPlan(task, project.id, resolvedProvider, providerModel);
 
       const serialized = JSON.stringify({ stage, data: stageResult.output });
 

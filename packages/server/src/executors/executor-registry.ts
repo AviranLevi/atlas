@@ -1,24 +1,27 @@
 // Executors
 import type { DetectionResult, ExecutorConfig, ExecutorStatus } from './executor.types.js';
 import { detectExecutor } from './executor-detection.js';
+import { checkLatestVersion } from './version-checker.js';
 import { KNOWN_EXECUTORS } from './executor-definitions.js';
 
 // Lib
 import { logger } from '../lib/logger.js';
 
 const FILE_PATH = 'executors/executor-registry.ts';
+const DETECTION_CACHE_TTL = 120_000;
 
 class ExecutorRegistry {
   private cache: Map<string, DetectionResult> | null = null;
   private cacheTime = 0;
   private refreshPromise: Promise<void> | null = null;
-  private readonly CACHE_TTL = 120_000;
+
+  private latestVersionCache: Map<string, string> = new Map();
+  private latestVersionsFetched = false;
 
   private async refreshCache(): Promise<void> {
     const now = Date.now();
-    if (this.cache && now - this.cacheTime < this.CACHE_TTL) return;
+    if (this.cache && now - this.cacheTime < DETECTION_CACHE_TTL) return;
 
-    // Deduplicate concurrent refresh calls
     if (this.refreshPromise) {
       await this.refreshPromise;
       return;
@@ -33,16 +36,20 @@ class ExecutorRegistry {
   }
 
   private async doRefresh(now: number): Promise<void> {
-    const newCache = new Map<string, DetectionResult>();
-
-    const results = await Promise.all(
+    const detectionPromise = Promise.all(
       KNOWN_EXECUTORS.map(async (executor) => {
         const result = await detectExecutor(executor);
         return { executor, result };
       }),
     );
 
-    for (const { executor, result } of results) {
+    // Fetch latest versions once on first load, then only on explicit refresh()
+    const versionPromise = !this.latestVersionsFetched ? this.refreshLatestVersions() : Promise.resolve();
+
+    const [detections] = await Promise.all([detectionPromise, versionPromise]);
+
+    const newCache = new Map<string, DetectionResult>();
+    for (const { executor, result } of detections) {
       newCache.set(executor.id, result);
       if (result.installed) {
         logger.info(`${FILE_PATH} :: detected ${executor.name} v${result.version ?? '?'} at ${result.binaryPath}`);
@@ -51,6 +58,24 @@ class ExecutorRegistry {
 
     this.cache = newCache;
     this.cacheTime = now;
+  }
+
+  private async refreshLatestVersions(): Promise<void> {
+    const results = await Promise.all(
+      KNOWN_EXECUTORS.map(async (executor) => {
+        if (!executor.registry) return { id: executor.id, version: undefined };
+        const version = await checkLatestVersion(executor.registry);
+        return { id: executor.id, version };
+      }),
+    );
+
+    const newCache = new Map<string, string>();
+    for (const { id, version } of results) {
+      if (version) newCache.set(id, version);
+    }
+
+    this.latestVersionCache = newCache;
+    this.latestVersionsFetched = true;
   }
 
   getById(id: string): ExecutorConfig | undefined {
@@ -70,6 +95,7 @@ class ExecutorRegistry {
         authenticated: detection.authenticated,
         mcpConfigFormat: e.mcpConfigFormat,
         version: detection.version,
+        latestVersion: this.latestVersionCache.get(e.id),
         binaryPath: detection.binaryPath,
         authHint: !detection.authenticated ? e.authHint : undefined,
         setup: e.setup,
@@ -86,9 +112,10 @@ class ExecutorRegistry {
     return (await this.listAll()).filter((e) => e.installed);
   }
 
-  /** Force refresh the detection cache */
+  /** Force refresh detection and re-check latest versions from registries */
   async refresh(): Promise<void> {
     this.cache = null;
+    this.latestVersionsFetched = false;
     await this.refreshCache();
   }
 }

@@ -1,5 +1,5 @@
 // React / library
-import { Check, Copy, ExternalLink, RefreshCw, Terminal } from 'lucide-react';
+import { ArrowUpCircle, Check, Copy, ExternalLink, RefreshCw, Terminal } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
 // Components
@@ -64,7 +64,12 @@ export function ExecutorPopover({ executor, onRecheck, isRechecking }: ExecutorP
           />
           <span className="flex-1 truncate font-medium">{executor.name}</span>
           {executor.installed && executor.version && (
-            <span className="shrink-0 text-[10px] text-muted-foreground font-mono">{executor.version}</span>
+            <span className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+              {executor.version}
+              {executor.latestVersion && executor.latestVersion !== executor.version && (
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Update available" />
+              )}
+            </span>
           )}
         </button>
       </PopoverTrigger>
@@ -105,6 +110,26 @@ export function ExecutorPopover({ executor, onRecheck, isRechecking }: ExecutorP
               <span className="text-xs font-mono">{executor.version}</span>
             </div>
           )}
+          {executor.installed &&
+            executor.version &&
+            executor.latestVersion &&
+            executor.latestVersion !== executor.version && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Update</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300 gap-1"
+                  >
+                    <ArrowUpCircle className="h-2.5 w-2.5" />
+                    {executor.latestVersion} available
+                  </Badge>
+                </div>
+                {executor.setup && (
+                  <CopyCommand label="Update command" command={executor.setup.install} />
+                )}
+              </div>
+            )}
           {executor.binaryPath && (
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground shrink-0">Path</span>
