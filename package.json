@@ -15,7 +15,7 @@
     "url": "https://github.com/AviranLevi/atlas/issues"
   },
   "scripts": {
-    "dev": "pnpm --filter @atlas/shared build && concurrently -n shared,server,client -c yellow,blue,green \"pnpm --filter @atlas/shared dev\" \"pnpm --filter @atlas/server dev\" \"pnpm --filter @atlas/client dev\"",
+    "dev": "pnpm --filter @atlas/shared build && concurrently -n shared,server,client -c yellow,blue,green \"pnpm --filter @atlas/shared dev\" \"pnpm --filter @atlas/server dev\" \"wait-on tcp:3100 && pnpm --filter @atlas/client dev\"",
     "dev:server": "pnpm --filter @atlas/server dev",
     "dev:client": "pnpm --filter @atlas/client dev",
     "build": "pnpm --filter @atlas/shared build && pnpm --filter @atlas/server build && pnpm --filter @atlas/client build",
@@ -36,6 +36,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.9",
     "concurrently": "^9.2.1",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.1",
+    "wait-on": "^9.0.5"
   }
 }
