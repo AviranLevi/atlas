@@ -1,5 +1,6 @@
 // External
 import fs from 'node:fs';
+import path from 'node:path';
 
 // Shared
 import type { Workspace } from '@atlas/shared';
@@ -292,6 +293,17 @@ export class WorkspaceSpawnService {
         task.name,
         resolvedBaseBranch,
       );
+
+      // Copy plan artifact into the worktree so the execute agent has it
+      if (effectiveStage === 'execute') {
+        const srcPlan = path.join(project.localPath, 'specs', 'atlas-plan.md');
+        if (fs.existsSync(srcPlan)) {
+          const destDir = path.join(worktreePath, 'specs');
+          fs.mkdirSync(destDir, { recursive: true });
+          fs.copyFileSync(srcPlan, path.join(destDir, 'atlas-plan.md'));
+          logger.info(`${FILE_PATH} :: startWork - copied atlas-plan.md into worktree`);
+        }
+      }
 
       const workspace = workspacesRepository.insert({
         taskId,

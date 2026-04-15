@@ -21,6 +21,7 @@ import { useReview, useStartAiReview } from '@/hooks/use-reviews.hook';
 import {
   useWorkspaceStatus,
   useWorkspaceLineage,
+  useWorkspaceDiff,
   useStopWork,
   useCleanupWorkspace,
   useWorkspaceLogStream,
@@ -44,6 +45,7 @@ export function WorkspaceDetailPage() {
   const { data: project } = useProject(workspace?.projectId);
   const { data: review } = useReview(workspace?.taskId);
   const startAiReview = useStartAiReview();
+  const { data: diff } = useWorkspaceDiff(workspace?.id);
   const isActive = workspace?.status === 'running' || workspace?.status === 'pending';
   const streamedLog = useWorkspaceLogStream(workspace?.id, isActive);
 
@@ -140,7 +142,7 @@ export function WorkspaceDetailPage() {
                 </span>
               )}
             </div>
-            {review?.status === 'pending' && (
+            {review?.status === 'pending' && diff && diff.files.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"

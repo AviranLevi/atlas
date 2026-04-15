@@ -185,12 +185,26 @@ export function buildProjectContextSection(ctx: PromptContext): string | null {
 }
 
 export function buildTaskSection(ctx: PromptContext): string {
-  const { task } = ctx;
+  const { task, params } = ctx;
   const lines: string[] = [`## Task`, `\n**Name:** ${task.name}`, `**Status:** ${task.status}`];
   if (task.priority) lines.push(`**Priority:** ${task.priority}`);
   if (task.estimate) lines.push(`**Estimate:** ${task.estimate}`);
   if (task.definitionOfDone) lines.push(`\n**Definition of Done:**\n${task.definitionOfDone}`);
-  if (task.notes) lines.push(`\n**Notes:**\n${task.notes}`);
+
+  if (task.notes) {
+    if (params.workflowStage === 'execute') {
+      // For execute stage, only keep the selected approach lines — strip stale agent notes
+      const approachLines = task.notes
+        .split('\n')
+        .filter((l) => l.startsWith('**Selected Approach:**'));
+      if (approachLines.length > 0) {
+        lines.push(`\n**Notes:**\n${approachLines.join('\n')}`);
+      }
+    } else {
+      lines.push(`\n**Notes:**\n${task.notes}`);
+    }
+  }
+
   if (task.tags && task.tags.length > 0) lines.push(`**Tags:** ${task.tags.join(', ')}`);
   return lines.join('\n');
 }
@@ -242,14 +256,26 @@ export function buildInstructionsSection(ctx: PromptContext): string {
       'Your plan will be reviewed by a human before execution begins.',
     );
   } else {
-    lines.push('Complete the task described above. Follow the coding rules and project conventions.');
+    if (stage === 'execute') {
+      lines.push(
+        'You are in the **execute** stage of a structured workflow. A detailed implementation plan has already been created and approved.',
+        '',
+        'Your job is to **implement the plan exactly**.',
+        '',
+        '1. Start by reading `specs/atlas-plan.md` in the project root — it contains the full approved plan with steps, files, and test scenarios.',
+        '2. Follow each step in order. Do not skip steps or deviate from the plan unless you encounter an impossible situation.',
+        '3. If the plan references existing code that does not yet exist, you must create it from scratch — this is a greenfield implementation.',
+        '',
+      );
+    } else {
+      lines.push('Complete the task described above. Follow the coding rules and project conventions.');
+    }
     if (behavior.enforceNoStubs) {
       lines.push(
         'Your implementation must be fully functional — no TODO comments, no placeholder values, no stub implementations.',
       );
     }
     lines.push(
-      'The task description above contains all context you need. Do not reference other tasks or assume outside context.',
       'When you are finished, ensure all changes are committed to the current branch.',
     );
 
