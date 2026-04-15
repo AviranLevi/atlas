@@ -2,7 +2,7 @@
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Terminal } from '@xterm/xterm';
-import { Copy, Check, ArrowDownToLine } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Check, ArrowDownToLine } from 'lucide-react';
 import { useEffect, useRef, useCallback, useState, type ReactElement } from 'react';
 
 // Components
@@ -45,13 +45,14 @@ function buildTheme(dark: boolean) {
   };
 }
 
-export function TerminalOutput({ text, isLive, title = 'Agent Output' }: TerminalOutputProps): ReactElement {
+export function TerminalOutput({ text, isLive, title = 'Agent Output', defaultCollapsed = false }: TerminalOutputProps): ReactElement {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const prevLengthRef = useRef(0);
   const { resolvedTheme } = useTheme();
   const [copied, setCopied] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   const isDark = resolvedTheme === 'dark';
 
@@ -136,11 +137,28 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
     termRef.current?.scrollToBottom();
   }, []);
 
+  const handleToggle = useCallback(() => {
+    setCollapsed((prev) => {
+      if (prev) {
+        requestAnimationFrame(() => fitRef.current?.fit());
+      }
+      return !prev;
+    });
+  }, []);
+
   return (
     <div className="rounded-lg border border-border overflow-hidden bg-muted">
       {/* Header bar */}
-      <div className="flex items-center justify-between border-b border-border bg-muted/80 px-4 py-2 backdrop-blur-sm">
+      <div
+        className="flex items-center justify-between border-b border-border bg-muted/80 px-4 py-2 backdrop-blur-sm cursor-pointer select-none"
+        onClick={handleToggle}
+      >
         <div className="flex items-center gap-3">
+          {collapsed ? (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
           <div className="flex items-center gap-1.5">
             <div className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
             <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/70" />
@@ -157,8 +175,8 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          {isLive && (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          {isLive && !collapsed && (
             <Button
               variant="ghost"
               size="icon"
@@ -179,10 +197,11 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output' }: Termina
         </div>
       </div>
 
-      {/* Terminal body -- inner padding wrapper so FitAddon calculates columns from reduced width */}
-      <div className="px-3 pt-3 pb-1">
-        <div ref={wrapperRef} className="h-[500px] overflow-hidden [&_.xterm-viewport]:overflow-y-auto!" />
-      </div>
+      {!collapsed && (
+        <div className="px-3 pt-3 pb-1">
+          <div ref={wrapperRef} className="h-[500px] overflow-hidden [&_.xterm-viewport]:overflow-y-auto!" />
+        </div>
+      )}
     </div>
   );
 }

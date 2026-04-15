@@ -96,7 +96,10 @@ export function useOpenWorkspaceInEditor() {
 export function useAdvanceWorkflow() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/advance`, {}),
+    mutationFn: (params: { workspaceId: string; selectedApproach?: string }) =>
+      api.post<Workspace>(`/workspaces/${params.workspaceId}/advance`, {
+        selectedApproach: params.selectedApproach,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });

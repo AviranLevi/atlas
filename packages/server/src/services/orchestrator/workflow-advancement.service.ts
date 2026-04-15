@@ -56,7 +56,7 @@ export class WorkflowAdvancementService {
         prevWorkspace.agentRuntime,
         undefined,
         prevWorkspace.model ?? undefined,
-        undefined,
+        task.workflowProviderId ?? undefined,
         nextStage,
       );
     } catch (error: unknown) {
@@ -67,7 +67,7 @@ export class WorkflowAdvancementService {
   }
 
   /** Advances a workflow from a specific workspace ID to the next stage. */
-  async advanceWorkflowFromWorkspace(workspaceId: string): Promise<Workspace> {
+  async advanceWorkflowFromWorkspace(workspaceId: string, selectedApproach?: string): Promise<Workspace> {
     const FUNCTION_NAME = 'advanceWorkflowFromWorkspace';
     try {
       const prevWorkspace = workspacesRepository.findByIdOrThrow(workspaceId);
@@ -87,6 +87,15 @@ export class WorkflowAdvancementService {
       }
 
       await tasksService.update(prevWorkspace.taskId, { workflowStage: nextStage, status: TASK_STATUS.TODO });
+
+      // When advancing brainstorm → plan, inject the selected approach so the plan stage uses it
+      if (nextStage === 'plan' && selectedApproach) {
+        const existingNotes = task.notes ?? '';
+        const approachNote = `\n\n**Selected Approach:** ${selectedApproach}`;
+        await tasksService.update(prevWorkspace.taskId, {
+          notes: existingNotes + approachNote,
+        });
+      }
 
       if (nextStage === 'execute' && prevWorkspace.output) {
         try {
@@ -117,7 +126,7 @@ export class WorkflowAdvancementService {
         prevWorkspace.agentRuntime,
         undefined,
         prevWorkspace.model ?? undefined,
-        undefined,
+        task.workflowProviderId ?? undefined,
         nextStage,
         workspaceId,
       );

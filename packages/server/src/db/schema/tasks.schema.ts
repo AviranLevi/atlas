@@ -22,6 +22,7 @@ export const tasks = sqliteTable('tasks', {
   tags: text('tags'),
   workflowEnabled: integer('workflow_enabled', { mode: 'boolean' }).notNull().default(false),
   workflowStage: text('workflow_stage'),
+  workflowProviderId: text('workflow_provider_id'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

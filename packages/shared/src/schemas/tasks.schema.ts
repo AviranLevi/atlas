@@ -33,6 +33,7 @@ export const TaskSchema = z.object({
   source: TaskSourceEnum.nullable(),
   workflowEnabled: z.boolean().default(false),
   workflowStage: WorkflowStageEnum.nullable(),
+  workflowProviderId: z.string().uuid().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -51,6 +52,7 @@ export const CreateTaskSchema = z.object({
   source: TaskSourceEnum.optional(),
   workflowEnabled: z.boolean().optional(),
   workflowStage: WorkflowStageEnum.nullable().optional(),
+  workflowProviderId: z.string().uuid().nullable().optional(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial();

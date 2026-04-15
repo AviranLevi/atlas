@@ -38,8 +38,8 @@ export class OrchestratorService {
   }
 
   /** Advances a workflow from a specific workspace ID to the next stage. */
-  advanceWorkflowFromWorkspace(workspaceId: string): Promise<Workspace> {
-    return workflowAdvancementService.advanceWorkflowFromWorkspace(workspaceId);
+  advanceWorkflowFromWorkspace(workspaceId: string, selectedApproach?: string): Promise<Workspace> {
+    return workflowAdvancementService.advanceWorkflowFromWorkspace(workspaceId, selectedApproach);
   }
 
   // ─── Control ──────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 // React / library
 import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
@@ -43,13 +44,22 @@ export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps)
 
   const structuredOutput = tryParseWorkflowOutput(workspace.output);
 
+  // Pre-select the recommended idea for brainstorm stage
+  const defaultIdea = useMemo(() => {
+    if (structuredOutput?.stage !== 'brainstorm') return undefined;
+    return structuredOutput.data.ideas.find((i) => i.recommended)?.title;
+  }, [structuredOutput]);
+
+  const [selectedIdea, setSelectedIdea] = useState<string | undefined>(defaultIdea);
+
   const currentLabel = STAGE_LABELS[stage] ?? stage;
   const nextLabel = NEXT_STAGE_LABELS[stage];
 
   const handleApprove = () => {
-    advance.mutate(workspace.id, {
-      onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`),
-    });
+    advance.mutate(
+      { workspaceId: workspace.id, selectedApproach: selectedIdea },
+      { onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`) },
+    );
   };
 
   const handleReject = () => {
@@ -61,14 +71,22 @@ export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps)
   return (
     <div className="space-y-4">
       {structuredOutput?.stage === 'plan' && <PlanOutputView plan={structuredOutput.data} />}
-      {structuredOutput?.stage === 'brainstorm' && <BrainstormOutputView brainstorm={structuredOutput.data} />}
+      {structuredOutput?.stage === 'brainstorm' && (
+        <BrainstormOutputView
+          brainstorm={structuredOutput.data}
+          selectedIdea={selectedIdea}
+          onSelectIdea={setSelectedIdea}
+        />
+      )}
       <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
         <CardContent className="flex items-center justify-between gap-4 py-4">
           <div>
             <p className="text-sm font-semibold">{currentLabel} stage complete — awaiting your approval</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Review the agent's output above, then approve to continue to the <strong>{nextLabel}</strong> stage, or
-              reject to send the task back to To Do.
+              {stage === 'brainstorm'
+                ? <>Select an approach above, then approve to continue to the <strong>{nextLabel}</strong> stage.</>
+                : <>Review the plan above, then approve to continue to the <strong>{nextLabel}</strong> stage, or reject to send the task back to To Do.</>
+              }
             </p>
             {(advance.isError || updateTask.isError) && (
               <p className="mt-1 text-xs text-destructive">{((advance.error ?? updateTask.error) as Error).message}</p>

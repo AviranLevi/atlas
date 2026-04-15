@@ -70,9 +70,13 @@ export async function createWorkspace(c: Context) {
   {
     const { tasksService } = await import('../services/index.js');
     if (workflowEnabled) {
-      await tasksService.update(taskId, { workflowEnabled: true, workflowStage: 'brainstorm' });
+      await tasksService.update(taskId, {
+        workflowEnabled: true,
+        workflowStage: 'brainstorm',
+        workflowProviderId: providerId ?? null,
+      });
     } else {
-      await tasksService.update(taskId, { workflowEnabled: false, workflowStage: null });
+      await tasksService.update(taskId, { workflowEnabled: false, workflowStage: null, workflowProviderId: null });
     }
   }
 
@@ -234,12 +238,20 @@ export async function streamWorkspaceLogs(c: Context) {
 /** Returns the workspace lineage chain (root → current). */
 export async function getWorkspaceLineage(c: Context) {
   const { workspacesRepository } = await import('../db/repositories/index.js');
-  const lineage = workspacesRepository.findLineage(c.req.param('id')!);
-  return c.json(lineage);
+  try {
+    const lineage = workspacesRepository.findLineage(c.req.param('id')!);
+    return c.json(lineage);
+  } catch {
+    return c.json([]);
+  }
 }
 
 /** Advances the workflow from a specific workspace to the next stage. */
 export async function advanceWorkspaceWorkflow(c: Context) {
-  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(c.req.param('id')!);
+  const body = await c.req.json().catch(() => ({})) as { selectedApproach?: string };
+  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(
+    c.req.param('id')!,
+    body.selectedApproach,
+  );
   return c.json(workspace);
 }

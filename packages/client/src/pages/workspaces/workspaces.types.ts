@@ -37,4 +37,5 @@ export type TerminalOutputProps = {
   text: string;
   isLive?: boolean;
   title?: string;
+  defaultCollapsed?: boolean;
 };

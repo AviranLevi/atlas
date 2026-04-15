@@ -166,15 +166,16 @@ export function WorkspaceDetailPage() {
         </div>
       )}
 
+      {isWorkflowAwaitingApproval && (
+        <WorkflowApprovalPanel workspace={workspace} />
+      )}
+
       {(isActive || workspace.fullOutput || workspace.output) && (
         <TerminalOutput
           text={isActive ? (streamedLog ?? '') : (workspace.fullOutput ?? workspace.output ?? '')}
           isLive={isActive}
+          defaultCollapsed={isWorkflowAwaitingApproval}
         />
-      )}
-
-      {isWorkflowAwaitingApproval && (
-        <WorkflowApprovalPanel workspace={workspace} />
       )}
 
       {review && (
