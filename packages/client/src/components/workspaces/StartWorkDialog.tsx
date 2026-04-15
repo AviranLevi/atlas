@@ -1,11 +1,12 @@
 // React / library
-import { GitBranch, Lightbulb, Play } from 'lucide-react';
+import { AlertTriangle, GitBranch, Info, Lightbulb, Play } from 'lucide-react';
 import { type ReactElement, useEffect, useMemo, useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { BranchSelect } from './BranchSelect';
 import { ModelSection } from './ModelSection';
@@ -13,7 +14,7 @@ import { RuntimeSelect } from './RuntimeSelect';
 import { TaskSummary } from './TaskSummary';
 
 // Hooks
-import { useProviderModels } from '@/hooks/use-agent-providers.hook';
+import { useAgentProviders, useProviderModels } from '@/hooks/use-agent-providers.hook';
 import { useAgent } from '@/hooks/use-agents.hook';
 import { useCreateBranch, useProject, useProjectBranches } from '@/hooks/use-projects.hook';
 import { useAgentRuntimes, useStartWork } from '@/hooks/use-workspaces.hook';
@@ -45,6 +46,7 @@ export function StartWorkDialog({
   const { data: branches = [], isLoading: branchesLoading } = useProjectBranches(projectId);
   const { data: project } = useProject(projectId);
   const { data: agent } = useAgent(task?.agentId ?? undefined);
+  const { data: providers = [] } = useAgentProviders();
   const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(
     agent?.providerId ?? undefined,
   );
@@ -56,12 +58,21 @@ export function StartWorkDialog({
   const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL_VALUE);
   const [customModelText, setCustomModelText] = useState<string>('');
   const [newBranchName, setNewBranchName] = useState<string>('');
-  const [workflowEnabled, setWorkflowEnabled] = useState(false);
-
-  // Pre-fill workflow toggle from project's agent behavior setting
   const projectWorkflowMode = project?.agentBehavior?.workflowMode ?? 'off';
+  const [workflowEnabled, setWorkflowEnabled] = useState(projectWorkflowMode !== 'off');
+  const [workflowProviderId, setWorkflowProviderId] = useState<string>('');
 
   const currentRuntime = useMemo(() => runtimes.find((r) => r.id === selectedRuntime), [runtimes, selectedRuntime]);
+
+  useEffect(() => {
+    if (agent?.providerId && providers.some((p) => p.id === agent.providerId)) {
+      setWorkflowProviderId(agent.providerId);
+    } else if (providers.length > 0) {
+      setWorkflowProviderId(providers[0].id);
+    } else {
+      setWorkflowProviderId('');
+    }
+  }, [agent?.providerId, providers]);
 
   useEffect(() => {
     if (runtimes.length === 0 || selectedRuntime) return;
@@ -137,8 +148,8 @@ export function StartWorkDialog({
         agentRuntimeId: selectedRuntime,
         baseBranch,
         model,
-        providerId: agent?.providerId ?? undefined,
-        workflowEnabled: workflowEnabled || projectWorkflowMode !== 'off',
+        providerId: (workflowEnabled && workflowProviderId) ? workflowProviderId : (agent?.providerId ?? undefined),
+        workflowEnabled,
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -160,7 +171,7 @@ export function StartWorkDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="sm:max-w-[420px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Play className="h-4 w-4" />
@@ -212,19 +223,55 @@ export function StartWorkDialog({
               createError={createBranch.isError ? (createBranch.error as Error).message : undefined}
             />
 
-            <div className="flex items-center justify-between rounded-md border px-3 py-2">
-              <div className="flex items-center gap-2">
-                <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
-                <div>
-                  <Label className="text-sm">Workflow Mode</Label>
-                  <p className="text-xs text-muted-foreground">Brainstorm → Plan → Execute with approval gates</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div>
+                    <Label className="text-sm">Workflow Mode</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Brainstorm → Plan → Execute with approval gates
+                      {projectWorkflowMode !== 'off' && !workflowEnabled && ' (project default: on)'}
+                    </p>
+                  </div>
                 </div>
+                <Switch
+                  checked={workflowEnabled}
+                  onCheckedChange={setWorkflowEnabled}
+                />
               </div>
-              <Switch
-                checked={workflowEnabled || projectWorkflowMode !== 'off'}
-                onCheckedChange={setWorkflowEnabled}
-                disabled={projectWorkflowMode !== 'off'}
-              />
+
+              {workflowEnabled && (
+                <div className="space-y-1.5 pl-1">
+                  {providers.length > 0 ? (
+                    <>
+                      <Label className="text-xs">Workflow Provider</Label>
+                      <Select value={workflowProviderId} onValueChange={setWorkflowProviderId}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Select provider" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {providers.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name} — {p.modelName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Info className="h-3 w-3 shrink-0" />
+                        Brainstorm & Plan use the API provider. Execute uses the CLI runtime.
+                      </p>
+                    </>
+                  ) : (
+                    <p className="flex items-center gap-1.5 text-xs text-amber-500">
+                      <AlertTriangle className="h-3 w-3 shrink-0" />
+                      No API provider configured. Without one, the CLI will handle all stages.
+                      Add a provider in Settings → Providers for structured brainstorm & plan output.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {startWork.isError && <p className="text-destructive text-sm">{(startWork.error as Error).message}</p>}

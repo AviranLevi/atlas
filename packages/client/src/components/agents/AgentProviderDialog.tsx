@@ -1,6 +1,6 @@
 // React / library
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -10,27 +10,49 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // Hooks
-import { useCreateAgentProvider, useTestAgentProvider, useUpdateAgentProvider } from '@/hooks/use-agent-providers.hook';
+import {
+  useCreateAgentProvider,
+  useProviderModels,
+  useTestAgentProvider,
+  useUpdateAgentProvider,
+} from '@/hooks/use-agent-providers.hook';
 
 // Types
-import type { CreateAgentProvider, ProviderType } from '@atlas/shared';
+import type { CreateAgentProvider, ProviderModel, ProviderType } from '@atlas/shared';
 import type { AgentProviderDialogProps } from './agents.types';
 
 // Constants
-import { PROVIDER_LABELS, PROVIDER_MODEL_PLACEHOLDERS } from './agents.constants';
+import { CUSTOM_MODEL, PROVIDER_LABELS, PROVIDER_MODEL_PLACEHOLDERS, PROVIDER_MODEL_PRESETS } from './agents.constants';
 
 export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProviderDialogProps) {
   const createProvider = useCreateAgentProvider();
   const updateProvider = useUpdateAgentProvider();
   const testProvider = useTestAgentProvider();
   const isEditing = !!provider;
+  const { data: fetchedModels = [] } = useProviderModels(provider?.id);
 
   const [name, setName] = useState('');
   const [type, setType] = useState<ProviderType>('anthropic');
   const [apiKey, setApiKey] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [modelName, setModelName] = useState('');
+  const [modelSelectValue, setModelSelectValue] = useState('');
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
+
+  const modelOptions = useMemo(() => {
+    const presets = PROVIDER_MODEL_PRESETS[type] ?? [];
+    const seen = new Set(presets.map((p) => p.value));
+    const merged: ProviderModel[] = [...presets];
+    for (const m of fetchedModels) {
+      if (!seen.has(m.value)) {
+        merged.push(m);
+        seen.add(m.value);
+      }
+    }
+    return merged;
+  }, [type, fetchedModels]);
+
+  const hasPresets = modelOptions.length > 0;
 
   useEffect(() => {
     if (provider) {
@@ -39,15 +61,40 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
       setApiKey(provider.apiKey ?? '');
       setBaseUrl(provider.baseUrl ?? '');
       setModelName(provider.modelName);
+      const inOptions = modelOptions.some((m) => m.value === provider.modelName);
+      setModelSelectValue(inOptions ? provider.modelName : CUSTOM_MODEL);
     } else {
       setName('');
       setType('anthropic');
       setApiKey('');
       setBaseUrl('');
       setModelName('');
+      const presets = PROVIDER_MODEL_PRESETS.anthropic;
+      setModelSelectValue(presets.length > 0 ? presets[0].value : '');
     }
     setTestResult(null);
-  }, [provider]);
+  }, [provider, modelOptions]);
+
+  const handleTypeChange = (newType: ProviderType) => {
+    setType(newType);
+    const presets = PROVIDER_MODEL_PRESETS[newType];
+    if (presets.length > 0) {
+      setModelSelectValue(presets[0].value);
+      setModelName(presets[0].value);
+    } else {
+      setModelSelectValue('');
+      setModelName('');
+    }
+  };
+
+  const handleModelSelect = (value: string) => {
+    setModelSelectValue(value);
+    if (value !== CUSTOM_MODEL) {
+      setModelName(value);
+    } else {
+      setModelName('');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +144,7 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
           </div>
           <div className="space-y-2">
             <Label>Provider Type</Label>
-            <Select value={type} onValueChange={(v) => setType(v as ProviderType)}>
+            <Select value={type} onValueChange={(v) => handleTypeChange(v as ProviderType)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -134,14 +181,39 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="model-name">Model Name</Label>
-            <Input
-              id="model-name"
-              value={modelName}
-              onChange={(e) => setModelName(e.target.value)}
-              placeholder={PROVIDER_MODEL_PLACEHOLDERS[type]}
-              required
-            />
+            <Label>Model</Label>
+            {hasPresets ? (
+              <>
+                <Select value={modelSelectValue} onValueChange={handleModelSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {modelOptions.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={CUSTOM_MODEL}>Custom model...</SelectItem>
+                  </SelectContent>
+                </Select>
+                {modelSelectValue === CUSTOM_MODEL && (
+                  <Input
+                    value={modelName}
+                    onChange={(e) => setModelName(e.target.value)}
+                    placeholder={PROVIDER_MODEL_PLACEHOLDERS[type]}
+                    required
+                  />
+                )}
+              </>
+            ) : (
+              <Input
+                value={modelName}
+                onChange={(e) => setModelName(e.target.value)}
+                placeholder={PROVIDER_MODEL_PLACEHOLDERS[type]}
+                required
+              />
+            )}
           </div>
 
           {isEditing && (

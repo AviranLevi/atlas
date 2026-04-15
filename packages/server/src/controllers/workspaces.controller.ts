@@ -66,10 +66,14 @@ export async function createWorkspace(c: Context) {
   const { taskId, agentRuntimeId, baseBranch, model, providerId, workflowEnabled } =
     getValidatedBody<CreateWorkspace>(c);
 
-  // If the caller enabled workflow mode, persist it on the task first
-  if (workflowEnabled) {
+  // Persist workflow mode on the task — always sync with the dialog value
+  {
     const { tasksService } = await import('../services/index.js');
-    await tasksService.update(taskId, { workflowEnabled: true, workflowStage: 'brainstorm' });
+    if (workflowEnabled) {
+      await tasksService.update(taskId, { workflowEnabled: true, workflowStage: 'brainstorm' });
+    } else {
+      await tasksService.update(taskId, { workflowEnabled: false, workflowStage: null });
+    }
   }
 
   const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model, providerId);

@@ -116,13 +116,21 @@ export class WorkspaceSpawnService {
     resolvedModel: string | null,
     providerId?: string,
     parentWorkspaceId?: string,
-  ): Promise<Workspace> {
+  ): Promise<Workspace | null> {
     const providerIdToLoad = providerId ?? (task.agentId ? (await agentsService.getById(task.agentId)).providerId : null);
     if (!providerIdToLoad) {
-      throw new AppError(
-        'Structured workflow stages require a configured agent provider. Assign a provider to this agent.',
-        { status: 400 },
+      logger.info(
+        `${FILE_PATH} :: runStructuredStage - no API provider configured, falling back to CLI for ${stage}`,
       );
+      activityLogService.log({
+        projectId: project.id,
+        taskId,
+        agentId: task.agentId,
+        eventType: 'agent_started',
+        description: `No API provider configured — falling back to CLI for ${stage}`,
+        metadata: { stage, fallback: 'cli' },
+      });
+      return null;
     }
 
     const resolvedProvider = await agentProvidersService.getById(providerIdToLoad);
@@ -190,7 +198,11 @@ export class WorkspaceSpawnService {
         completedAt: new Date().toISOString(),
       });
 
-      await tasksService.update(taskId, { status: TASK_STATUS.TODO });
+      await tasksService.update(taskId, {
+        status: TASK_STATUS.TODO,
+        workflowEnabled: false,
+        workflowStage: null,
+      });
 
       activityLogService.log({
         projectId: project.id,
@@ -251,7 +263,7 @@ export class WorkspaceSpawnService {
       const isStructuredStage = effectiveStage === 'brainstorm' || effectiveStage === 'plan';
 
       if (isStructuredStage) {
-        return await this.runStructuredStage(
+        const structuredResult = await this.runStructuredStage(
           effectiveStage as 'brainstorm' | 'plan',
           task,
           project,
@@ -261,6 +273,8 @@ export class WorkspaceSpawnService {
           providerId,
           parentWorkspaceId,
         );
+        if (structuredResult) return structuredResult;
+        // Provider unavailable — fall through to CLI execution
       }
 
       // Resolve which branch to base the worktree on:

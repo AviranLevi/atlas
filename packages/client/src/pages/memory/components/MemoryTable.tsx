@@ -100,7 +100,7 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
 
   return (
     <div className="rounded-md border">
-      <div className="grid grid-cols-[24px_1fr_auto_auto_auto_auto_auto_auto_auto] gap-3 border-b bg-muted/50 px-4 py-3 text-xs font-medium text-muted-foreground">
+      <div className="grid grid-cols-[24px_1fr_90px_70px_90px_120px_100px_80px_64px] gap-3 border-b bg-muted/50 px-4 py-3 text-xs font-medium text-muted-foreground">
         <div />
         <SortHeader label="Name" sortKey="name" {...headerProps} />
         <SortHeader label="Type" sortKey="type" {...headerProps} />
@@ -126,7 +126,7 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
             <button
               type="button"
               className={cn(
-                'grid w-full grid-cols-[24px_1fr_auto_auto_auto_auto_auto_auto_auto] items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors text-left',
+                'grid w-full grid-cols-[24px_1fr_90px_70px_90px_120px_100px_80px_64px] items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors text-left',
                 isInactive && 'opacity-60',
               )}
               onClick={() => toggleExpand(mem.id)}
@@ -157,10 +157,10 @@ export function MemoryTable({ memories, projectMap, agentMap, onDelete }: Memory
                   <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Archived</span>
                 )}
               </span>
-              <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+              <span className="text-xs text-muted-foreground truncate">
                 {mem.projectId ? (projectMap.get(mem.projectId) ?? '—') : '—'}
               </span>
-              <span className="text-xs text-muted-foreground truncate max-w-[100px]">{agentName}</span>
+              <span className="text-xs text-muted-foreground truncate">{agentName}</span>
               <span className="text-xs text-muted-foreground whitespace-nowrap">{formatLastUsed(mem.lastUsed)}</span>
               <div className="flex gap-1">
                 <Button

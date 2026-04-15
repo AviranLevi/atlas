@@ -1,3 +1,19 @@
+-- Add missing columns (were added via drizzle push, never migrated)
+ALTER TABLE `skills` ADD `project_id` text REFERENCES `projects`(`id`);
+--> statement-breakpoint
+ALTER TABLE `resources` ADD `project_id` text REFERENCES `projects`(`id`);
+--> statement-breakpoint
+ALTER TABLE `agents` ADD `default_model` text;
+--> statement-breakpoint
+ALTER TABLE `projects` ADD `default_branch` text;
+--> statement-breakpoint
+ALTER TABLE `projects` ADD `scan_data` text;
+--> statement-breakpoint
+ALTER TABLE `projects` ADD `project_brief` text;
+--> statement-breakpoint
+ALTER TABLE `projects` ADD `design_context` text;
+--> statement-breakpoint
+
 -- Secondary indexes on FK/filter columns for query performance
 CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);
 --> statement-breakpoint
@@ -25,7 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_project_id ON activity_log(project_i
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_skills_project_id ON skills(project_id);
 --> statement-breakpoint
-CREATE INDEX IF NOT EXISTS idx_rules_project_id ON rules(project_id);
+CREATE INDEX IF NOT EXISTS idx_rules_project_id ON resources(project_id);
 --> statement-breakpoint
 
 -- Unique constraints on junction table logical pairs to prevent duplicates
