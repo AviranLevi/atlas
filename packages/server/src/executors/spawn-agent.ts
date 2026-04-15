@@ -109,6 +109,7 @@ export async function spawnAgent(
     cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env,
+    detached: true,
   });
 
   let streamJsonBuffer = '';

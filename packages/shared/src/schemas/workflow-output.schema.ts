@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const PlanStepSchema = z.object({
   order: z.number().int(),
   title: z.string(),
-  file: z.string().optional(),
+  file: z.string().nullable(),
   description: z.string(),
   risk: z.enum(['low', 'medium', 'high']),
 });

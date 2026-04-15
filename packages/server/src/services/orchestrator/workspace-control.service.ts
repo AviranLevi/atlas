@@ -38,10 +38,20 @@ export class WorkspaceControlService {
       }
 
       const proc = activeProcesses.get(workspaceId);
-      if (proc && !proc.killed) {
-        proc.kill('SIGTERM');
+      if (proc && !proc.killed && proc.pid) {
+        try {
+          process.kill(-proc.pid, 'SIGTERM');
+        } catch {
+          proc.kill('SIGTERM');
+        }
         setTimeout(() => {
-          if (!proc.killed) proc.kill('SIGKILL');
+          if (!proc.killed && proc.pid) {
+            try {
+              process.kill(-proc.pid, 'SIGKILL');
+            } catch {
+              proc.kill('SIGKILL');
+            }
+          }
         }, 5000);
       }
 
@@ -52,10 +62,16 @@ export class WorkspaceControlService {
         completedAt: new Date().toISOString(),
       });
 
-      // Keep the task status in sync: reset to "To Do" so the user
-      // doesn't see "In Progress" for a task whose agent was stopped.
+      // Reset task status only if this workspace is the one currently driving
+      // the task. If the user stops an old execute workspace while a new
+      // brainstorm result is awaiting approval, we must not clobber that status.
       if (resetTaskStatus) {
-        await tasksService.update(workspace.taskId, { status: TASK_STATUS.TODO });
+        const task = await tasksService.getById(workspace.taskId);
+        const taskIsOwnedByThisWorkspace =
+          task.status === TASK_STATUS.IN_PROGRESS || task.workflowStage === workspace.workflowStage;
+        if (taskIsOwnedByThisWorkspace) {
+          await tasksService.update(workspace.taskId, { status: TASK_STATUS.TODO });
+        }
       }
 
       activityLogService.log({

@@ -73,7 +73,9 @@ export class WorkflowAdvancementService {
       const prevWorkspace = workspacesRepository.findByIdOrThrow(workspaceId);
       const task = await tasksService.getById(prevWorkspace.taskId);
 
-      if (task.status !== TASK_STATUS.AWAITING_APPROVAL && task.status !== TASK_STATUS.IN_PROGRESS) {
+      const workspaceCompleted = prevWorkspace.status === 'completed';
+      const taskReady = task.status === TASK_STATUS.AWAITING_APPROVAL || task.status === TASK_STATUS.IN_PROGRESS;
+      if (!workspaceCompleted && !taskReady) {
         throw new AppError('Task is not in a state that can advance', { status: 400 });
       }
 
