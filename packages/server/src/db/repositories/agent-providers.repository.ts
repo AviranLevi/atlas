@@ -6,7 +6,7 @@ import type { AgentProvider, CreateAgentProvider, UpdateAgentProvider } from '@a
 
 // DB
 import type { DB } from '../index.js';
-import { agentProviders } from '../schema/index.js';
+import { agentProviders, agents, chatConversations } from '../schema/index.js';
 
 // Lib
 import { AppError, NotFoundError } from '../../lib/errors.js';
@@ -78,10 +78,12 @@ export class AgentProvidersRepository {
     }
   }
 
-  /** Deletes an agent provider by ID. */
+  /** Deletes an agent provider by ID, nullifying all foreign key references first. */
   remove(id: string): void {
     const FUNCTION_NAME = 'remove';
     try {
+      this.db.update(agents).set({ providerId: null }).where(eq(agents.providerId, id)).run();
+      this.db.update(chatConversations).set({ providerId: null }).where(eq(chatConversations.providerId, id)).run();
       this.db.delete(agentProviders).where(eq(agentProviders.id, id)).run();
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
