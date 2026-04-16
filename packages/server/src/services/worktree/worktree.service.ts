@@ -240,6 +240,45 @@ export class WorktreeService {
   }
 
   /**
+   * Safety net: commits any uncommitted changes left behind by the agent.
+   * Returns true if a commit was created, false if the tree was already clean.
+   */
+  ensureChangesCommitted(worktreePath: string): boolean {
+    const FUNCTION_NAME = 'ensureChangesCommitted';
+    try {
+      if (!fs.existsSync(worktreePath)) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree path does not exist: ${worktreePath}`);
+        return false;
+      }
+
+      const status = execSync('git status --porcelain', {
+        cwd: worktreePath,
+        encoding: 'utf-8',
+      }).trim();
+
+      if (!status) {
+        return false;
+      }
+
+      logger.warn(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - agent left uncommitted changes (${status.split('\n').length} files), auto-committing`,
+      );
+
+      execSync('git add -A', { cwd: worktreePath, stdio: 'pipe' });
+      execSync('git commit -m "chore: auto-commit uncommitted agent changes"', {
+        cwd: worktreePath,
+        stdio: 'pipe',
+      });
+
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - auto-committed changes in ${worktreePath}`);
+      return true;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to auto-commit`, error);
+      return false;
+    }
+  }
+
+  /**
    * Prunes stale worktree references.
    */
   cleanup(projectLocalPath: string): void {

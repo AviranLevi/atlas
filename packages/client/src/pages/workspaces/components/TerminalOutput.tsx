@@ -140,7 +140,9 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output', defaultCo
   const handleToggle = useCallback(() => {
     setCollapsed((prev) => {
       if (prev) {
-        requestAnimationFrame(() => fitRef.current?.fit());
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => fitRef.current?.fit());
+        });
       }
       return !prev;
     });
@@ -197,11 +199,9 @@ export function TerminalOutput({ text, isLive, title = 'Agent Output', defaultCo
         </div>
       </div>
 
-      {!collapsed && (
-        <div className="px-3 pt-3 pb-1">
-          <div ref={wrapperRef} className="h-[500px] overflow-hidden [&_.xterm-viewport]:overflow-y-auto!" />
-        </div>
-      )}
+      <div className={collapsed ? 'hidden' : 'px-3 pt-3 pb-1'}>
+        <div ref={wrapperRef} className="h-[500px] overflow-hidden [&_.xterm-viewport]:overflow-y-auto!" />
+      </div>
     </div>
   );
 }

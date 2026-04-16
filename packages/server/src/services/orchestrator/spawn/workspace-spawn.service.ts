@@ -146,6 +146,10 @@ export class WorkspaceSpawnService {
         {
           onCompleted: (output) => {
             activeProcesses.delete(workspace.id);
+
+            // Safety net: commit any changes the agent left uncommitted
+            this.worktreeService.ensureChangesCommitted(worktreePath);
+
             const ws = workspacesRepository.update(workspace.id, {
               status: 'completed',
               output,
