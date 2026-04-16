@@ -100,7 +100,11 @@ export class WorkspaceSpawnService {
     return this.promptBuilder.build(opts);
   }
 
-  /** Runs a structured brainstorm or plan stage via the AI SDK without creating a worktree. */
+  /**
+   * Kicks off a structured brainstorm or plan stage via the AI SDK.
+   * Creates the workspace and returns it immediately — the actual AI call
+   * runs in the background so the HTTP response is instant.
+   */
   private async runStructuredStage(
     stage: 'brainstorm' | 'plan',
     task: {
@@ -153,8 +157,30 @@ export class WorkspaceSpawnService {
 
     await tasksService.update(taskId, { status: TASK_STATUS.IN_PROGRESS });
 
-    try {
-      // Use the provider's own model — resolvedModel is for the CLI executor, not the API provider
+    // Fire-and-forget: run the AI call in the background so the HTTP response is instant.
+    // The client polls workspace status via refetchInterval and will pick up completion/failure.
+    this.executeStructuredStageInBackground(stage, task, project, taskId, workspace.id, resolvedProvider);
+
+    return workspacesRepository.findByIdOrThrow(workspace.id);
+  }
+
+  /** Background execution of a structured stage — called fire-and-forget from runStructuredStage. */
+  private executeStructuredStageInBackground(
+    stage: 'brainstorm' | 'plan',
+    task: {
+      name: string;
+      description?: string | null;
+      notes?: string | null;
+      definitionOfDone?: string | null;
+      agentId?: string | null;
+      projectId?: string | null;
+    },
+    project: { id: string },
+    taskId: string,
+    workspaceId: string,
+    resolvedProvider: import('@atlas/shared').AgentProvider,
+  ): void {
+    const run = async () => {
       const providerModel = resolvedProvider.modelName ?? null;
 
       const stageResult =
@@ -164,7 +190,7 @@ export class WorkspaceSpawnService {
 
       const serialized = JSON.stringify({ stage, data: stageResult.output });
 
-      workspacesRepository.update(workspace.id, {
+      workspacesRepository.update(workspaceId, {
         status: 'completed',
         output: serialized,
         inputTokens: stageResult.inputTokens ?? null,
@@ -179,24 +205,25 @@ export class WorkspaceSpawnService {
       if (gateEnabled) {
         await tasksService.update(taskId, { status: TASK_STATUS.AWAITING_APPROVAL });
       } else {
-        // Lazy import to break circular dependency: spawn → advancement → spawn
         const { workflowAdvancementService } = await import('./workflow-advancement.service.js');
-        return workflowAdvancementService.advanceWorkflowFromWorkspace(workspace.id);
+        await workflowAdvancementService.advanceWorkflowFromWorkspace(workspaceId);
       }
 
       activityLogService.log({
         projectId: project.id,
         taskId,
-        workspaceId: workspace.id,
+        workspaceId,
         agentId: task.agentId,
         eventType: 'agent_completed',
         description: `Structured ${stage} completed successfully`,
         metadata: { stage },
       });
 
-      return workspacesRepository.findByIdOrThrow(workspace.id);
-    } catch (error: unknown) {
-      workspacesRepository.update(workspace.id, {
+      logger.info(`${FILE_PATH} :: executeStructuredStageInBackground - ${stage} completed for workspace ${workspaceId}`);
+    };
+
+    run().catch(async (error: unknown) => {
+      workspacesRepository.update(workspaceId, {
         status: 'failed',
         output: error instanceof Error ? error.message : 'Unknown error',
         completedAt: new Date().toISOString(),
@@ -206,20 +233,20 @@ export class WorkspaceSpawnService {
         status: TASK_STATUS.TODO,
         workflowEnabled: false,
         workflowStage: null,
-      });
+      }).catch((e) => logger.warn(`${FILE_PATH} :: executeStructuredStageInBackground - failed to reset task`, e));
 
       activityLogService.log({
         projectId: project.id,
         taskId,
-        workspaceId: workspace.id,
+        workspaceId,
         agentId: task.agentId,
         eventType: 'agent_failed',
         description: `Structured ${stage} failed: ${error instanceof Error ? error.message : 'unknown error'}`,
         metadata: { stage, error: error instanceof Error ? error.message : 'unknown' },
       });
 
-      throw new AppError(`Failed to run structured ${stage}`, { cause: error });
-    }
+      logger.error(`${FILE_PATH} :: executeStructuredStageInBackground - ${stage} failed for workspace ${workspaceId}`, error);
+    });
   }
 
   /** Creates a worktree, spawns the agent process, and opens a workspace. */
