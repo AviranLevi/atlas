@@ -10,6 +10,7 @@ export type StatusIconProps = {
 
 export type WorkspaceRowProps = {
   workspace: Workspace;
+  isApproved?: boolean;
 };
 
 export type WorkspaceDetailHeaderProps = {

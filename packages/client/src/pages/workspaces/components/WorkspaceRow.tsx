@@ -1,5 +1,5 @@
 // React / library
-import { GitBranch, Clock, Square, Trash2, ChevronRight, FileCode, CheckCircle2 } from 'lucide-react';
+import { GitBranch, Clock, Square, Trash2, ChevronRight, FileCode, CheckCircle2, Sparkles, ListChecks, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Components
@@ -21,17 +21,37 @@ import type { WorkspaceRowProps } from '../workspaces.types';
 // Constants
 import { statusMeta } from '../workspaces.constants';
 
-export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
+const STAGE_META: Record<string, { label: string; icon: typeof Sparkles; className: string }> = {
+  brainstorm: {
+    label: 'Brainstorm',
+    icon: Sparkles,
+    className: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300',
+  },
+  plan: {
+    label: 'Plan',
+    icon: ListChecks,
+    className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
+  },
+  execute: {
+    label: 'Execute',
+    icon: Play,
+    className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+  },
+};
+
+export function WorkspaceRow({ workspace, isApproved }: WorkspaceRowProps) {
   const stopWork = useStopWork();
   const cleanup = useCleanupWorkspace();
 
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
+  const isStructuredStage =
+    workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
   const isWorkflowAwaitingApproval =
-    workspace.status === 'completed' &&
-    (workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan');
+    workspace.status === 'completed' && isStructuredStage && !isApproved;
   const canReview = workspace.status === 'completed' && !isWorkflowAwaitingApproval;
   const canCleanup = !isActive && workspace.status !== 'merged';
+  const stageMeta = workspace.workflowStage ? STAGE_META[workspace.workflowStage] : null;
 
   return (
     <Card className="border-l-[3px] transition-shadow hover:shadow-md" style={{ borderLeftColor: meta.leftColor }}>
@@ -43,6 +63,12 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate text-sm font-semibold">{workspace.taskName ?? 'Unknown task'}</h3>
+            {stageMeta && (
+              <Badge variant="outline" className={`shrink-0 text-[10px] ${stageMeta.className}`}>
+                <stageMeta.icon className="mr-1 h-2.5 w-2.5" />
+                {stageMeta.label}
+              </Badge>
+            )}
             {isWorkflowAwaitingApproval && (
               <Badge
                 variant="outline"
@@ -52,7 +78,16 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
                 Awaiting Approval
               </Badge>
             )}
-            {canReview && (
+            {isApproved && isStructuredStage && workspace.status === 'completed' && (
+              <Badge
+                variant="outline"
+                className="shrink-0 text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
+              >
+                <CheckCircle2 className="mr-1 h-2.5 w-2.5" />
+                Approved
+              </Badge>
+            )}
+            {canReview && (!isStructuredStage || !isApproved) && (
               <Badge
                 variant="outline"
                 className="shrink-0 text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"

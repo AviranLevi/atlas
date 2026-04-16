@@ -1,6 +1,6 @@
 // React / library
 import { Terminal, Activity } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 // Components
 import { Card } from '@/components/ui/card';
@@ -39,6 +39,12 @@ export function WorkspacesPage() {
     if (filter === 'active') return w.status === 'running' || w.status === 'pending';
     return w.status === filter;
   });
+
+  // Workspace IDs that have been approved (a child workspace exists with parentWorkspaceId pointing to them)
+  const approvedIds = useMemo(
+    () => new Set(workspaces.map((w) => w.parentWorkspaceId).filter(Boolean) as string[]),
+    [workspaces],
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -105,7 +111,7 @@ export function WorkspacesPage() {
       ) : (
         <div className="flex flex-col gap-2">
           {visible.map((ws) => (
-            <WorkspaceRow key={ws.id} workspace={ws} />
+            <WorkspaceRow key={ws.id} workspace={ws} isApproved={approvedIds.has(ws.id)} />
           ))}
         </div>
       )}
