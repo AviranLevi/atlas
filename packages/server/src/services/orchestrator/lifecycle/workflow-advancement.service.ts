@@ -7,15 +7,15 @@ import type { Workspace } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
 
 // Repositories
-import { workspacesRepository } from '../../db/repositories/index.js';
+import { workspacesRepository } from '../../../db/repositories/index.js';
 
 // Services
-import { projectDocsService, projectsService, tasksService } from '../index.js';
+import { projectDocsService, projectsService, tasksService } from '../../index.js';
 
 // Lib
-import { workspaceSpawnService } from './workspace-spawn.service.js';
-import { AppError } from '../../lib/errors.js';
-import { logger } from '../../lib/logger.js';
+import { workspaceSpawnService } from '../spawn/workspace-spawn.service.js';
+import { AppError } from '../../../lib/errors.js';
+import { logger } from '../../../lib/logger.js';
 
 const FILE_PATH = 'services/orchestrator/workflow-advancement.service.ts';
 
@@ -103,7 +103,7 @@ export class WorkflowAdvancementService {
         try {
           const parsed = JSON.parse(prevWorkspace.output);
           if (parsed.stage === 'plan' && parsed.data) {
-            const { formatPlanAsMarkdown } = await import('../../lib/plan-formatter.js');
+            const { formatPlanAsMarkdown } = await import('../../../lib/plan-formatter.js');
             const fullProject = await projectsService.getById(task.projectId!);
             if (fullProject.localPath) {
               const specsDir = path.join(fullProject.localPath, 'specs');

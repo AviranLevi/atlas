@@ -7,13 +7,13 @@ import type { Workspace } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
 
 // Repositories
-import { workspacesRepository } from '../../db/repositories/index.js';
+import { workspacesRepository } from '../../../db/repositories/index.js';
 
 // Services
-import { tasksService } from '../index.js';
+import { tasksService } from '../../index.js';
 
 // Lib
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../../lib/logger.js';
 
 const FILE_PATH = 'services/orchestrator/workspace-query.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');

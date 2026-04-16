@@ -7,19 +7,19 @@ import path from 'node:path';
 import type { Workspace } from '@atlas/shared';
 
 // Repositories
-import { workspacesRepository } from '../../db/repositories/index.js';
+import { workspacesRepository } from '../../../db/repositories/index.js';
 
 // Services
-import { activityLogService, projectsService, tasksService } from '../index.js';
+import { activityLogService, projectsService, tasksService } from '../../index.js';
 import { TASK_STATUS } from '@atlas/shared';
 
 // Executors
-import { executorRegistry, removeMcpConfig } from '../../executors/index.js';
+import { executorRegistry, removeMcpConfig } from '../../../executors/index.js';
 
 // Lib
-import { AppError } from '../../lib/errors.js';
-import { logger } from '../../lib/logger.js';
-import { WorktreeService } from '../worktree/worktree.service.js';
+import { AppError } from '../../../lib/errors.js';
+import { logger } from '../../../lib/logger.js';
+import { WorktreeService } from '../../worktree/worktree.service.js';
 
 const FILE_PATH = 'services/orchestrator/workspace-completion.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');

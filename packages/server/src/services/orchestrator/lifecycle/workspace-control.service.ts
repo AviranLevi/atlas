@@ -7,19 +7,19 @@ import type { Workspace } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
 
 // Repositories
-import { workspacesRepository } from '../../db/repositories/index.js';
+import { workspacesRepository } from '../../../db/repositories/index.js';
 
 // Services
-import { activityLogService, projectsService, tasksService } from '../index.js';
+import { activityLogService, projectsService, tasksService } from '../../index.js';
 
 // Executors
-import { executorRegistry, removeMcpConfig } from '../../executors/index.js';
+import { executorRegistry, removeMcpConfig } from '../../../executors/index.js';
 
 // Lib
-import { activeProcesses } from './active-processes.js';
-import { AppError } from '../../lib/errors.js';
-import { logger } from '../../lib/logger.js';
-import { WorktreeService } from '../worktree/worktree.service.js';
+import { activeProcesses } from '../shared/active-processes.js';
+import { AppError } from '../../../lib/errors.js';
+import { logger } from '../../../lib/logger.js';
+import { WorktreeService } from '../../worktree/worktree.service.js';
 
 const FILE_PATH = 'services/orchestrator/workspace-control.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
@@ -150,7 +150,7 @@ export class WorkspaceControlService {
       await tasksService.update(taskId, { status: TASK_STATUS.TODO });
 
       // Lazy import to avoid circular dependency (spawn → advancement → spawn)
-      const { workspaceSpawnService } = await import('./workspace-spawn.service.js');
+      const { workspaceSpawnService } = await import('../spawn/workspace-spawn.service.js');
       return workspaceSpawnService.startWork(taskId, agentRuntimeId, undefined, resolvedModel);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

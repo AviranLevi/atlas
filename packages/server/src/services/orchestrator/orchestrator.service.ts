@@ -1,14 +1,14 @@
 // Shared
 import type { Workspace } from '@atlas/shared';
 
-// Lib
-import type { DiffResult } from './orchestrator.types.js';
-import { workspaceSpawnService } from './workspace-spawn.service.js';
-import { workflowAdvancementService } from './workflow-advancement.service.js';
-import { workspaceControlService } from './workspace-control.service.js';
-import { codeReviewService } from './code-review.service.js';
-import { workspaceCompletionService } from './workspace-completion.service.js';
-import { workspaceQueryService } from './workspace-query.service.js';
+// Orchestrator sub-services
+import type { DiffResult } from './shared/orchestrator.types.js';
+import { workspaceSpawnService } from './spawn/workspace-spawn.service.js';
+import { workflowAdvancementService } from './lifecycle/workflow-advancement.service.js';
+import { workspaceControlService } from './lifecycle/workspace-control.service.js';
+import { workspaceCompletionService } from './lifecycle/workspace-completion.service.js';
+import { workspaceQueryService } from './lifecycle/workspace-query.service.js';
+import { codeReviewService } from './review/code-review.service.js';
 
 /**
  * Facade that delegates all orchestration operations to focused sub-services.

@@ -6,28 +6,27 @@ import type { ChecklistItem, Workspace } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
 
 // Repositories
-import { workspacesRepository } from '../../db/repositories/index.js';
+import { workspacesRepository } from '../../../db/repositories/index.js';
 
 // Services
-import { activityLogService, projectsService, tasksService } from '../index.js';
+import { activityLogService, projectsService, tasksService } from '../../index.js';
 
 // Executors
-import { executorRegistry } from '../../executors/index.js';
-import { spawnAgent } from '../../executors/spawn-agent.js';
+import { executorRegistry } from '../../../executors/index.js';
+import { spawnAgent } from '../../../executors/spawn-agent.js';
 
 // Lib
-import type { DiffResult } from './orchestrator.types.js';
-import { activeProcesses } from './active-processes.js';
-import { AppError } from '../../lib/errors.js';
-import { logger } from '../../lib/logger.js';
-import { WorktreeService } from '../worktree/worktree.service.js';
-import { WorkspaceSpawnService } from './workspace-spawn.service.js';
+import type { DiffResult } from '../shared/orchestrator.types.js';
+import { activeProcesses } from '../shared/active-processes.js';
+import { AppError } from '../../../lib/errors.js';
+import { logger } from '../../../lib/logger.js';
+import { WorktreeService } from '../../worktree/worktree.service.js';
+import { buildPrompt, resolveSpawnOptions } from '../spawn/spawn-options.js';
 
 const FILE_PATH = 'services/orchestrator/code-review.service.ts';
 
 export class CodeReviewService {
   private worktreeService = new WorktreeService();
-  private spawnService = new WorkspaceSpawnService();
 
   /** Returns the git diff for a workspace (empty if worktree is gone). */
   async getDiff(workspaceId: string): Promise<DiffResult> {
@@ -96,7 +95,7 @@ export class CodeReviewService {
       }
 
       // Build a review prompt with the original context + comments
-      const basePrompt = await this.spawnService.buildPrompt({
+      const basePrompt = await buildPrompt({
         taskId: workspace.taskId,
         projectId: project.id,
         agentId: workspace.agentId,
@@ -124,7 +123,7 @@ export class CodeReviewService {
       const fullPrompt = basePrompt + reviewSection;
 
       // Resolve model/provider from workspace's recorded model + agent's provider
-      const { spawnOpts } = await this.spawnService.resolveSpawnOptions(
+      const { spawnOpts } = await resolveSpawnOptions(
         executor,
         workspace.agentId,
         workspace.model ?? undefined,
@@ -250,7 +249,7 @@ export class CodeReviewService {
       const task = await tasksService.getById(workspace.taskId);
 
       // Lazy import to avoid circular dependency
-      const { reviewsService } = await import('../index.js');
+      const { reviewsService } = await import('../../index.js');
       const review = await reviewsService.getByTask(workspace.taskId);
 
       const diff = await this.getDiff(workspaceId);
@@ -298,7 +297,7 @@ export class CodeReviewService {
         .filter(Boolean)
         .join('\n');
 
-      const { resolvedModel: _resolvedModel, spawnOpts } = await this.spawnService.resolveSpawnOptions(
+      const { spawnOpts } = await resolveSpawnOptions(
         executor,
         task.agentId,
         undefined,
