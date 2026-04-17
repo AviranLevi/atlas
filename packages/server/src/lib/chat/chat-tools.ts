@@ -43,6 +43,10 @@ export const CHAT_TOOLS: ToolDefinition[] = [
         estimate: { type: 'string', enum: ['S', 'M', 'L'] },
         notes: { type: 'string', description: 'Additional notes' },
         definitionOfDone: { type: 'string', description: 'Acceptance criteria' },
+        agentId: {
+          type: 'string',
+          description: 'UUID of the agent to assign. Use the ID from a tagged @mention or from list_agents.',
+        },
       },
       required: ['name'],
     },

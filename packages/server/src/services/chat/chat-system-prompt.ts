@@ -7,8 +7,11 @@ import { logger } from '../../lib/logger.js';
 const FILE_PATH = 'services/chat/chat-system-prompt.ts';
 const MAX_RECENT_MEMORIES = 5;
 
-/** Assembles the API/CLI system prompt: base instructions, global settings, project scan, memories. */
-export async function buildChatSystemPrompt(projectId: string | null): Promise<string> {
+/** Assembles the API/CLI system prompt: base instructions, global settings, project scan, memories, tagged agent. */
+export async function buildChatSystemPrompt(
+  projectId: string | null,
+  mentionedAgent?: { id: string; name: string } | null,
+): Promise<string> {
   const sections: string[] = [];
 
   sections.push(
@@ -67,6 +70,15 @@ export async function buildChatSystemPrompt(projectId: string | null): Promise<s
     } catch (error: unknown) {
       logger.warn(`${FILE_PATH} :: buildChatSystemPrompt project context unavailable`, error);
     }
+  }
+
+  if (mentionedAgent) {
+    sections.push(
+      `## Tagged Agent\n\n` +
+        `The user has tagged **@${mentionedAgent.name}** in this message.\n` +
+        `Agent ID: \`${mentionedAgent.id}\`\n\n` +
+        `When creating tasks in response to this message, use \`agentId: "${mentionedAgent.id}"\`.`,
+    );
   }
 
   return sections.join('\n\n---\n\n');

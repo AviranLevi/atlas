@@ -44,7 +44,7 @@ export type AgentThinkingProps = {
 };
 
 export type ChatInputProps = {
-  onSend: (content: string, attachments?: ChatAttachment[]) => void;
+  onSend: (content: string, attachments?: ChatAttachment[], mentionedAgentId?: string) => void;
   disabled?: boolean;
   isStreaming?: boolean;
   onAbort?: () => void;

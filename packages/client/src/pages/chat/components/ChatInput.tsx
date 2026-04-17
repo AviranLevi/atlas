@@ -1,10 +1,14 @@
 // React / library
-import { Paperclip, Send, Square } from 'lucide-react';
+import { Bot, Paperclip, Send, Square } from 'lucide-react';
 import { useState, useRef, useCallback, type KeyboardEvent, type ChangeEvent } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandItem, CommandList } from '@/components/ui/command';
 import { FileChip } from './FileChip';
+
+// Hooks
+import { useAgents } from '@/hooks/use-agents.hook';
 
 // Lib
 import { toApiAttachment } from '@/lib/file-utils';
@@ -41,8 +45,12 @@ const ACCEPTED_FILE_TYPES = [
 export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputProps) {
   const [value, setValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionedAgent, setMentionedAgent] = useState<{ id: string; name: string } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: agents = [] } = useAgents();
 
   const handleFileChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -62,7 +70,6 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
         }));
 
       setAttachedFiles((prev) => [...prev, ...staged]);
-      // Reset so the same file can be re-selected after removal
       e.target.value = '';
     },
     [attachedFiles.length],
@@ -76,6 +83,36 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
     });
   }, []);
 
+  const handleTextChange = useCallback((newValue: string) => {
+    setValue(newValue);
+
+    const lastAtIndex = newValue.lastIndexOf('@');
+    if (lastAtIndex !== -1) {
+      const beforeAt = newValue[lastAtIndex - 1];
+      // Only trigger if @ is at start or preceded by whitespace
+      if (lastAtIndex === 0 || !beforeAt || /\s/.test(beforeAt)) {
+        const afterAt = newValue.slice(lastAtIndex + 1);
+        if (!afterAt.includes(' ') && !afterAt.includes('\n')) {
+          setMentionQuery(afterAt);
+          return;
+        }
+      }
+    }
+    setMentionQuery(null);
+  }, []);
+
+  const handleMentionSelect = useCallback(
+    (agent: { id: string; name: string }) => {
+      const lastAtIndex = value.lastIndexOf('@');
+      const newValue = value.slice(0, lastAtIndex) + `@${agent.name} `;
+      setValue(newValue);
+      setMentionedAgent(agent);
+      setMentionQuery(null);
+      textareaRef.current?.focus();
+    },
+    [value],
+  );
+
   const handleSend = useCallback(async () => {
     const trimmed = value.trim();
     const hasContent = trimmed.length > 0;
@@ -86,20 +123,26 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
     let apiAttachments: ChatAttachment[] | undefined;
     if (hasFiles) {
       apiAttachments = await Promise.all(attachedFiles.map(toApiAttachment));
-      // Revoke image preview URLs now that we're done with them
       for (const f of attachedFiles) {
         if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
       }
     }
 
-    onSend(trimmed, apiAttachments);
+    onSend(trimmed, apiAttachments, mentionedAgent?.id);
     setValue('');
     setAttachedFiles([]);
+    setMentionedAgent(null);
+    setMentionQuery(null);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
-  }, [value, disabled, onSend, attachedFiles]);
+  }, [value, disabled, onSend, attachedFiles, mentionedAgent]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Escape' && mentionQuery !== null) {
+      e.preventDefault();
+      setMentionQuery(null);
+      return;
+    }
+    if (e.key === 'Enter' && !e.shiftKey && mentionQuery === null) {
       e.preventDefault();
       handleSend();
     }
@@ -112,12 +155,16 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   };
 
+  const filteredAgents =
+    mentionQuery !== null
+      ? agents.filter((a) => a.name.toLowerCase().includes(mentionQuery.toLowerCase()))
+      : [];
+
   const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !disabled;
 
   return (
     <div className="border-t border-border bg-background p-4">
       <div className="mx-auto flex max-w-3xl flex-col gap-2">
-        {/* Staged file chips */}
         {attachedFiles.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {attachedFiles.map((f) => (
@@ -126,8 +173,24 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
           </div>
         )}
 
-        <div className="flex items-end gap-2">
-          {/* Hidden file input */}
+        {mentionedAgent && (
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-md border bg-muted px-2 py-0.5 text-xs font-medium">
+              <Bot className="h-3 w-3" />
+              @{mentionedAgent.name}
+              <button
+                type="button"
+                onClick={() => setMentionedAgent(null)}
+                className="ml-0.5 text-muted-foreground hover:text-foreground"
+                aria-label="Remove mentioned agent"
+              >
+                &times;
+              </button>
+            </span>
+          </div>
+        )}
+
+        <div className="relative flex items-end gap-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -138,7 +201,6 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
             aria-hidden
           />
 
-          {/* Attach button */}
           <Button
             size="icon"
             variant="ghost"
@@ -155,17 +217,43 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
             <Paperclip className="h-4 w-4" />
           </Button>
 
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onInput={handleInput}
-            placeholder="Ask anything about your project..."
-            disabled={disabled || isStreaming}
-            rows={1}
-            className="flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-          />
+          <div className="relative flex-1">
+            {mentionQuery !== null && (
+              <div className="absolute bottom-full mb-1 w-64 rounded-md border bg-popover shadow-md z-50">
+                <Command shouldFilter={false}>
+                  <CommandList>
+                    {filteredAgents.length === 0 ? (
+                      <CommandEmpty>No agents found</CommandEmpty>
+                    ) : (
+                      filteredAgents.map((agent) => (
+                        <CommandItem key={agent.id} onSelect={() => handleMentionSelect(agent)}>
+                          <Bot className="mr-2 h-4 w-4 shrink-0" />
+                          <span className="truncate">{agent.name}</span>
+                          {agent.description && (
+                            <span className="ml-auto truncate max-w-[120px] text-xs text-muted-foreground">
+                              {agent.description}
+                            </span>
+                          )}
+                        </CommandItem>
+                      ))
+                    )}
+                  </CommandList>
+                </Command>
+              </div>
+            )}
+
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => handleTextChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onInput={handleInput}
+              placeholder="Ask anything about your project... (type @ to mention an agent)"
+              disabled={disabled || isStreaming}
+              rows={1}
+              className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+            />
+          </div>
 
           {isStreaming ? (
             <Button

@@ -8,7 +8,7 @@
 import type { AgentProvider, ChatAttachment, ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
 
 // Services
-import { agentProvidersService, projectsService, usageService } from '../index.js';
+import { agentProvidersService, agentsService, projectsService, usageService } from '../index.js';
 
 // Executors
 import { executorRegistry } from '../../executors/index.js';
@@ -19,6 +19,7 @@ import { chatRepository } from '../../db/repositories/index.js';
 // Lib
 import {
   type InternalMessage,
+  type ToolContext,
   CHAT_TOOLS,
   executeTool,
   formatCliPrompt,
@@ -74,6 +75,7 @@ export class ChatService {
     content: string,
     emit: StreamCallback,
     attachments?: ChatAttachment[],
+    mentionedAgentId?: string | null,
   ): Promise<void> {
     const conversation = this.repo.findConversationByIdOrThrow(conversationId);
     this.repo.insertMessage({
@@ -83,11 +85,20 @@ export class ChatService {
       attachments: attachments ?? null,
     });
 
+    let mentionedAgent: { id: string; name: string } | null = null;
+    if (mentionedAgentId) {
+      try {
+        const agent = await agentsService.getById(mentionedAgentId);
+        mentionedAgent = { id: agent.id, name: agent.name };
+      } catch {
+        /* agent not found — ignore */
+      }
+    }
+
     if (conversation.backendType === 'cli') {
-      // CLI agents receive the text prompt only; file attachments are not supported
-      await this.sendMessageCli(conversation, content, emit);
+      await this.sendMessageCli(conversation, content, emit, mentionedAgent);
     } else {
-      await this.sendMessageApi(conversation, emit);
+      await this.sendMessageApi(conversation, emit, mentionedAgent);
     }
   }
 
@@ -106,7 +117,11 @@ export class ChatService {
     this.repo.insertMessage({ conversationId, role: 'assistant', content: '(response cancelled)' });
   }
 
-  private async sendMessageApi(conversation: ChatConversation, emit: StreamCallback): Promise<void> {
+  private async sendMessageApi(
+    conversation: ChatConversation,
+    emit: StreamCallback,
+    mentionedAgent: { id: string; name: string } | null,
+  ): Promise<void> {
     const FUNCTION_NAME = 'sendMessageApi';
     const conversationId = conversation.id;
 
@@ -124,7 +139,7 @@ export class ChatService {
     try {
       const startMs = Date.now();
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}]`);
-      const systemPrompt = await buildChatSystemPrompt(conversation.projectId);
+      const systemPrompt = await buildChatSystemPrompt(conversation.projectId, mentionedAgent);
       let messages = this.toInternalMessages(this.repo.findMessagesByConversation(conversationId));
 
       let toolRound = 0;
@@ -155,6 +170,7 @@ export class ChatService {
             assistantText,
             pendingToolCalls,
             emit,
+            mentionedAgent?.id,
           );
           toolRound++;
         } else {
@@ -262,6 +278,7 @@ export class ChatService {
     assistantText: string,
     pendingToolCalls: PendingToolCall[],
     emit: StreamCallback,
+    mentionedAgentId?: string | null,
   ): Promise<InternalMessage[]> {
     this.repo.insertMessage({
       conversationId,
@@ -270,7 +287,7 @@ export class ChatService {
       toolCalls: pendingToolCalls,
     });
 
-    const projectContext = await this.getProjectContext(conversation.projectId);
+    const projectContext = await this.getProjectContext(conversation.projectId, mentionedAgentId);
 
     for (const tc of pendingToolCalls) {
       const result = await executeTool(tc.name, tc.args, projectContext);
@@ -287,7 +304,12 @@ export class ChatService {
     return this.toInternalMessages(this.repo.findMessagesByConversation(conversationId));
   }
 
-  private async sendMessageCli(conversation: ChatConversation, content: string, emit: StreamCallback): Promise<void> {
+  private async sendMessageCli(
+    conversation: ChatConversation,
+    content: string,
+    emit: StreamCallback,
+    mentionedAgent: { id: string; name: string } | null,
+  ): Promise<void> {
     const FUNCTION_NAME = 'sendMessageCli';
     const conversationId = conversation.id;
 
@@ -309,7 +331,7 @@ export class ChatService {
       logger.info(
         `${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}, executor=${conversation.executorId}]`,
       );
-      const systemPrompt = await buildChatSystemPrompt(conversation.projectId);
+      const systemPrompt = await buildChatSystemPrompt(conversation.projectId, mentionedAgent);
       const history = this.repo.findMessagesByConversation(conversationId);
       const previousMessages = history
         .filter((m) => m.role !== 'tool')
@@ -389,14 +411,15 @@ export class ChatService {
 
   private async getProjectContext(
     projectId: string | null,
-  ): Promise<{ projectId?: string | null; projectLocalPath?: string | null }> {
-    if (!projectId) return {};
+    mentionedAgentId?: string | null,
+  ): Promise<ToolContext> {
+    if (!projectId) return { mentionedAgentId };
     try {
       const { project } = await projectsService.getContext(projectId);
-      return { projectId, projectLocalPath: project.localPath ?? null };
+      return { projectId, projectLocalPath: project.localPath ?? null, mentionedAgentId };
     } catch (error: unknown) {
       logger.warn(`${FILE_PATH} :: getProjectContext failed`, error);
-      return { projectId };
+      return { projectId, mentionedAgentId };
     }
   }
 

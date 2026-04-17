@@ -49,7 +49,7 @@ export function ChatPage() {
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedExecutorId, setSelectedExecutorId] = useState('');
   const [creatingChat, setCreatingChat] = useState(false);
-  const pendingMessageRef = useRef<{ content: string; attachments?: ChatAttachment[] } | null>(null);
+  const pendingMessageRef = useRef<{ content: string; attachments?: ChatAttachment[]; mentionedAgentId?: string } | null>(null);
 
   const { data: providerModels = [], isLoading: modelsLoading } = useProviderModels(
     backendType === 'api' ? selectedProviderId || undefined : undefined,
@@ -107,10 +107,10 @@ export function ChatPage() {
   // Fire queued message after conversation creation + navigation
   useEffect(() => {
     if (conversationId && pendingMessageRef.current && state === 'idle') {
-      const { content, attachments } = pendingMessageRef.current;
+      const { content, attachments, mentionedAgentId } = pendingMessageRef.current;
       pendingMessageRef.current = null;
       setCreatingChat(false);
-      send(content, attachments);
+      send(content, attachments, mentionedAgentId);
     }
   }, [conversationId, state, send]);
 
@@ -147,16 +147,16 @@ export function ChatPage() {
   );
 
   const handleSend = useCallback(
-    async (content: string, attachments?: ChatAttachment[]) => {
+    async (content: string, attachments?: ChatAttachment[], mentionedAgentId?: string) => {
       if (conversationId) {
-        send(content, attachments);
+        send(content, attachments, mentionedAgentId);
         return;
       }
 
       if (backendType === 'api') {
         if (!selectedProviderId || !selectedModel) return;
         setCreatingChat(true);
-        pendingMessageRef.current = { content, attachments };
+        pendingMessageRef.current = { content, attachments, mentionedAgentId };
         const result = await createConversation.mutateAsync({
           projectId: activeProjectId ?? null,
           backendType: 'api',
@@ -167,7 +167,7 @@ export function ChatPage() {
       } else {
         if (!selectedExecutorId) return;
         setCreatingChat(true);
-        pendingMessageRef.current = { content, attachments };
+        pendingMessageRef.current = { content, attachments, mentionedAgentId };
         const result = await createConversation.mutateAsync({
           projectId: activeProjectId ?? null,
           backendType: 'cli',

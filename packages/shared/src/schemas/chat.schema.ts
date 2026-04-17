@@ -85,6 +85,7 @@ export const SendMessageSchema = z
     // content may be empty when attachments are present
     content: z.string(),
     attachments: z.array(ChatAttachmentSchema).max(ATTACHMENT_MAX_COUNT).optional(),
+    mentionedAgentId: z.string().uuid().nullable().optional(),
   })
   .refine((data) => data.content.trim().length > 0 || (data.attachments?.length ?? 0) > 0, {
     message: 'Message must have content or at least one attachment',

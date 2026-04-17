@@ -55,6 +55,7 @@ export async function sendMessage(c: Context) {
         await stream.writeSSE({ event, data: JSON.stringify(payload) });
       },
       data.attachments,
+      data.mentionedAgentId,
     );
   });
 }

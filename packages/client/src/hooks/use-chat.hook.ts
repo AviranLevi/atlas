@@ -86,7 +86,7 @@ export function useChatStream(conversationId: string | undefined) {
   }, [conversationId]);
 
   const send = useCallback(
-    async (content: string, attachments?: ChatAttachment[]) => {
+    async (content: string, attachments?: ChatAttachment[], mentionedAgentId?: string) => {
       if (!conversationId || state === 'streaming') return;
 
       setPendingUserMessage(content);
@@ -99,7 +99,9 @@ export function useChatStream(conversationId: string | undefined) {
       abortRef.current = controller;
 
       try {
-        const body = attachments?.length ? { content, attachments } : { content };
+        const body: Record<string, unknown> = { content };
+        if (attachments?.length) body.attachments = attachments;
+        if (mentionedAgentId) body.mentionedAgentId = mentionedAgentId;
         const resp = await api.stream(`/chat/conversations/${conversationId}/messages`, body, controller.signal);
 
         if (!resp.ok) {

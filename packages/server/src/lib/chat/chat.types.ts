@@ -22,6 +22,7 @@ export type ToolDefinition = {
 export type ToolContext = {
   projectId?: string | null;
   projectLocalPath?: string | null;
+  mentionedAgentId?: string | null;
 };
 
 export interface CliChatOptions {
