@@ -75,6 +75,16 @@ export class WorkflowRunnerService {
           task.definitionOfDone ? `\n**Definition of Done:** ${task.definitionOfDone}` : '',
           '',
           'For each step, specify the file to modify, what to do, and the risk level.',
+          '',
+          '## Commit Plan Requirements',
+          'Also produce a `commitSteps` array — an ordered list of atomic git commits the executor should make.',
+          'Each commit must:',
+          '- Leave the codebase in a working, non-broken state (no dangling imports, no failing existing tests)',
+          '- Represent one logical concern (e.g. "add DB migration", "implement service layer", "add API route")',
+          '- Have an imperative title ≤72 chars (like a good git commit message)',
+          '- List the files expected to be created or modified',
+          '',
+          'Aim for 3–8 commits total. Fewer is better than more. Never split a single logical change across commits.',
         ].join('\n'),
       });
 

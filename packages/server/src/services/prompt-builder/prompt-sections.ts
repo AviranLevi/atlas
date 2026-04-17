@@ -1,3 +1,5 @@
+import type { CommitStep } from '@atlas/shared';
+
 import type { PromptContext } from './prompt-builder.types.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -223,6 +225,21 @@ export function buildVerificationSection(ctx: PromptContext): string | null {
   return lines.length > 2 ? lines.join('\n') : null;
 }
 
+function buildCommitPlanBlock(commitSteps: CommitStep[]): string {
+  const lines = [
+    '### Commit Plan (follow in order)',
+    '',
+    ...commitSteps.map((s) =>
+      [
+        `**Step ${s.step}: ${s.title}**`,
+        s.description,
+        `Files: ${s.files.map((f) => `\`${f}\``).join(', ')}`,
+      ].join('\n'),
+    ),
+  ];
+  return lines.join('\n\n');
+}
+
 /** Stage-aware instructions including MCP tools and memory management. */
 export function buildInstructionsSection(ctx: PromptContext): string {
   const { behavior, scripts, params } = ctx;
@@ -262,13 +279,46 @@ export function buildInstructionsSection(ctx: PromptContext): string {
         '',
         'Your job is to **implement the plan exactly**.',
         '',
-        '1. Start by reading `specs/atlas-plan.md` in the project root — it contains the full approved plan with steps, files, and test scenarios.',
-        '2. Follow each step in order. Do not skip steps or deviate from the plan unless you encounter an impossible situation.',
-        '3. If the plan references existing code that does not yet exist, you must create it from scratch — this is a greenfield implementation.',
+        '1. Read `specs/atlas-plan.md` for the full implementation plan with steps, files, and test scenarios.',
+        '2. Follow the **Commit Plan** below — implement each step completely, then `git add` + `git commit` before moving to the next.',
+        '3. Each commit must leave the repo in a working state (no broken imports, no failing existing tests).',
+        '4. Write a clear commit message matching the step title.',
+        '5. Do not batch everything into one commit at the end.',
+        '6. If the plan references existing code that does not yet exist, create it from scratch — this is a greenfield implementation.',
         '',
       );
+      if (ctx.commitPlan && ctx.commitPlan.length > 0) {
+        lines.push(buildCommitPlanBlock(ctx.commitPlan), '');
+      } else {
+        lines.push(
+          '> **Note:** No structured commit plan is available for this task.',
+          '> Before writing any code, produce your own commit plan as your first output:',
+          '> List numbered steps with title, files, and rationale. Then follow it.',
+          '',
+        );
+      }
     } else {
-      lines.push('Complete the task described above. Follow the coding rules and project conventions.');
+      lines.push(
+        'Complete the task described above. Follow the coding rules and project conventions.',
+        '',
+        '### Commit Discipline (required)',
+        '',
+        'Before writing any code, output a commit plan as your very first response:',
+        '',
+        '```',
+        'COMMIT PLAN',
+        '1. <imperative title> — <files> — <one-line rationale>',
+        '2. ...',
+        '```',
+        '',
+        'Then implement each step in order. After completing each step:',
+        '- `git add` the relevant files',
+        '- `git commit -m "<step title>"` with a clear message',
+        '- Only then move to the next step',
+        '',
+        'Each commit must leave the codebase in a working state.',
+        'Aim for 3–8 commits. Never batch everything into one final commit.',
+      );
     }
     if (behavior.enforceNoStubs) {
       lines.push(

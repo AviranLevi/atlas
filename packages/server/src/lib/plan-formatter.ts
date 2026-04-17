@@ -34,5 +34,20 @@ export function formatPlanAsMarkdown(plan: PlanOutput): string {
     lines.push('');
   }
 
+  if (plan.commitSteps && plan.commitSteps.length > 0) {
+    lines.push('## Commit Plan');
+    lines.push('');
+    lines.push('Follow these atomic commits in order. Each commit must leave the repo in a working state.');
+    lines.push('');
+    for (const cs of plan.commitSteps) {
+      lines.push(`### Commit ${cs.step}: ${cs.title}`);
+      lines.push('');
+      lines.push(cs.description);
+      lines.push('');
+      lines.push(`**Files:** ${cs.files.map((f) => `\`${f}\``).join(', ')}`);
+      lines.push('');
+    }
+  }
+
   return lines.join('\n');
 }

@@ -8,10 +8,18 @@ export const PlanStepSchema = z.object({
   risk: z.enum(['low', 'medium', 'high']),
 });
 
+export const CommitStepSchema = z.object({
+  step: z.number().int(),
+  title: z.string(),
+  description: z.string(),
+  files: z.array(z.string()),
+});
+
 export const PlanOutputSchema = z.object({
   summary: z.string(),
   estimatedComplexity: z.enum(['low', 'medium', 'high']),
   steps: z.array(PlanStepSchema),
+  commitSteps: z.array(CommitStepSchema).optional().default([]),
   concerns: z.array(z.string()),
 });
 
@@ -34,6 +42,7 @@ export const WorkflowOutputSchema = z.discriminatedUnion('stage', [
 ]);
 
 export type PlanStep = z.infer<typeof PlanStepSchema>;
+export type CommitStep = z.infer<typeof CommitStepSchema>;
 export type PlanOutput = z.infer<typeof PlanOutputSchema>;
 export type BrainstormIdea = z.infer<typeof BrainstormIdeaSchema>;
 export type BrainstormOutput = z.infer<typeof BrainstormOutputSchema>;

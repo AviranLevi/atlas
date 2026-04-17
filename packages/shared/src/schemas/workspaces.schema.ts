@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const WorkspaceStatusEnum = z.enum(['pending', 'running', 'completed', 'failed', 'stopped', 'merged']);
+export const WorkspaceStatusEnum = z.enum(['pending', 'running', 'completed', 'approved', 'failed', 'stopped', 'merged']);
 
 export const DiffCommentSchema = z.object({
   id: z.string(),

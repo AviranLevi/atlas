@@ -1,5 +1,5 @@
 // React / library
-import { AlertTriangle, FileCode } from 'lucide-react';
+import { AlertTriangle, FileCode, GitCommit } from 'lucide-react';
 
 // Components
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +74,38 @@ export function PlanOutputView({ plan }: PlanOutputViewProps) {
             </ul>
           </CardContent>
         </Card>
+      )}
+
+      {plan.commitSteps && plan.commitSteps.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <GitCommit className="h-4 w-4 text-muted-foreground" />
+            Commit Plan
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            The execute agent will follow these atomic commits in order.
+          </p>
+          <div className="space-y-2">
+            {plan.commitSteps.map((step) => (
+              <div key={step.step} className="flex gap-3 rounded-md border px-3 py-2 text-sm">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                  {step.step}
+                </span>
+                <div className="min-w-0 space-y-0.5">
+                  <p className="font-medium">{step.title}</p>
+                  <p className="text-xs text-muted-foreground">{step.description}</p>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {step.files.map((f) => (
+                      <code key={f} className="rounded bg-muted px-1 py-0.5 text-[10px]">
+                        {f}
+                      </code>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

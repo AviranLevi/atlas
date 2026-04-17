@@ -1,5 +1,5 @@
 // External
-import { desc, eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 
 // Shared
 import type { Workspace } from '@atlas/shared';
@@ -97,6 +97,23 @@ export class WorkspacesRepository {
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspaces by status', { cause: error });
+    }
+  }
+
+  /** Returns all workspaces for a task, ordered by createdAt ascending. */
+  findAllByTaskId(taskId: string): Workspace[] {
+    const FUNCTION_NAME = 'findAllByTaskId';
+    try {
+      const rows = this.db
+        .select()
+        .from(workspaces)
+        .where(eq(workspaces.taskId, taskId))
+        .orderBy(asc(workspaces.createdAt))
+        .all();
+      return rows.map((r) => ({ ...r, diffComments: this.parseComments(r.diffComments) }) as Workspace);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query workspaces by task', { cause: error });
     }
   }
 

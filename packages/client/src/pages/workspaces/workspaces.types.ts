@@ -1,7 +1,7 @@
 // Types
 import type { Workspace } from '@atlas/shared';
 
-export type StatusFilter = 'all' | 'active' | 'completed' | 'failed' | 'stopped' | 'merged';
+export type StatusFilter = 'all' | 'active' | 'completed' | 'approved' | 'failed' | 'stopped' | 'merged';
 
 export type StatusIconProps = {
   status: string;
@@ -10,7 +10,6 @@ export type StatusIconProps = {
 
 export type WorkspaceRowProps = {
   workspace: Workspace;
-  isApproved?: boolean;
 };
 
 export type WorkspaceDetailHeaderProps = {

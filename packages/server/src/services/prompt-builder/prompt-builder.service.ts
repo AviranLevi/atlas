@@ -1,8 +1,9 @@
 // Shared
-import type { Memory } from '@atlas/shared';
+import type { CommitStep, Memory } from '@atlas/shared';
+import { WorkflowOutputSchema } from '@atlas/shared';
 
 // Repositories
-import { projectDocsRepository } from '../../db/repositories/index.js';
+import { projectDocsRepository, workspacesRepository } from '../../db/repositories/index.js';
 
 // Services
 import {
@@ -128,6 +129,10 @@ export class PromptBuilderService {
       ? []
       : await this.getLegacyUniqueMemories(allProjectMemories, params.agentId, pinnedIds);
 
+    const commitPlan = params.workflowStage === 'execute'
+      ? this.loadCommitPlanForTask(params.taskId)
+      : null;
+
     return {
       task,
       project,
@@ -143,6 +148,7 @@ export class PromptBuilderService {
       behavior,
       recentMemories,
       legacyUniqueMemories,
+      commitPlan,
       params,
     };
   }
@@ -182,5 +188,25 @@ export class PromptBuilderService {
     if (!agentId) return new Set();
     const agentContext = await agentsService.getContext(agentId);
     return new Set(agentContext.memories.map((m) => m.id as string));
+  }
+
+  /** Extracts commitSteps from the completed plan workspace for a task. */
+  private loadCommitPlanForTask(taskId: string): CommitStep[] | null {
+    try {
+      const allWorkspaces = workspacesRepository.findAllByTaskId(taskId);
+      const planWorkspace = allWorkspaces.find(
+        (w) => w.workflowStage === 'plan' && (w.status === 'completed' || w.status === 'approved'),
+      );
+      if (!planWorkspace?.output) return null;
+
+      const parsed = WorkflowOutputSchema.parse(JSON.parse(planWorkspace.output));
+      if (parsed.stage !== 'plan') return null;
+
+      const { commitSteps } = parsed.data;
+      return commitSteps && commitSteps.length > 0 ? commitSteps : null;
+    } catch (e) {
+      logger.warn(`${FILE_PATH} :: loadCommitPlanForTask - could not load commit plan`, e);
+      return null;
+    }
   }
 }

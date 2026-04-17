@@ -1,6 +1,6 @@
 // React / library
 import { Terminal, Activity } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 // Components
 import { Card } from '@/components/ui/card';
@@ -28,7 +28,8 @@ export function WorkspacesPage() {
   const counts: Record<StatusFilter, number> = {
     all: workspaces.length,
     active: workspaces.filter((w) => w.status === 'running' || w.status === 'pending').length,
-    completed: workspaces.filter((w) => w.status === 'completed').length,
+    completed: workspaces.filter((w) => w.status === 'completed' || w.status === 'approved').length,
+    approved: workspaces.filter((w) => w.status === 'approved').length,
     merged: workspaces.filter((w) => w.status === 'merged').length,
     failed: workspaces.filter((w) => w.status === 'failed').length,
     stopped: workspaces.filter((w) => w.status === 'stopped').length,
@@ -37,14 +38,9 @@ export function WorkspacesPage() {
   const visible = workspaces.filter((w) => {
     if (filter === 'all') return true;
     if (filter === 'active') return w.status === 'running' || w.status === 'pending';
+    if (filter === 'completed') return w.status === 'completed' || w.status === 'approved';
     return w.status === filter;
   });
-
-  // Workspace IDs that have been approved (a child workspace exists with parentWorkspaceId pointing to them)
-  const approvedIds = useMemo(
-    () => new Set(workspaces.map((w) => w.parentWorkspaceId).filter(Boolean) as string[]),
-    [workspaces],
-  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,7 +107,7 @@ export function WorkspacesPage() {
       ) : (
         <div className="flex flex-col gap-2">
           {visible.map((ws) => (
-            <WorkspaceRow key={ws.id} workspace={ws} isApproved={approvedIds.has(ws.id)} />
+            <WorkspaceRow key={ws.id} workspace={ws} />
           ))}
         </div>
       )}

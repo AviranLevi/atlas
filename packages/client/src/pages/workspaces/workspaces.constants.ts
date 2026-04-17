@@ -19,6 +19,12 @@ export const statusMeta: Record<string, { label: string; leftColor: string; badg
     badgeClass:
       'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
   },
+  approved: {
+    label: 'Approved',
+    leftColor: '#10b981',
+    badgeClass:
+      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+  },
   failed: {
     label: 'Failed',
     leftColor: '#ef4444',

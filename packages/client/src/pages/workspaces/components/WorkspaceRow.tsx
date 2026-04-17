@@ -39,7 +39,7 @@ const STAGE_META: Record<string, { label: string; icon: typeof Sparkles; classNa
   },
 };
 
-export function WorkspaceRow({ workspace, isApproved }: WorkspaceRowProps) {
+export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
   const stopWork = useStopWork();
   const cleanup = useCleanupWorkspace();
 
@@ -48,9 +48,10 @@ export function WorkspaceRow({ workspace, isApproved }: WorkspaceRowProps) {
   const isStructuredStage =
     workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
   const isWorkflowAwaitingApproval =
-    workspace.status === 'completed' && isStructuredStage && !isApproved;
+    workspace.status === 'completed' && isStructuredStage;
+  const isApproved = workspace.status === 'approved';
   const canReview = workspace.status === 'completed' && !isWorkflowAwaitingApproval;
-  const canCleanup = !isActive && workspace.status !== 'merged';
+  const canCleanup = !isActive && workspace.status !== 'merged' && workspace.status !== 'approved';
   const stageMeta = workspace.workflowStage ? STAGE_META[workspace.workflowStage] : null;
 
   return (
@@ -78,16 +79,16 @@ export function WorkspaceRow({ workspace, isApproved }: WorkspaceRowProps) {
                 Awaiting Approval
               </Badge>
             )}
-            {isApproved && isStructuredStage && workspace.status === 'completed' && (
+            {isApproved && (
               <Badge
                 variant="outline"
-                className="shrink-0 text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
+                className="shrink-0 text-[10px] border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
               >
                 <CheckCircle2 className="mr-1 h-2.5 w-2.5" />
                 Approved
               </Badge>
             )}
-            {canReview && (!isStructuredStage || !isApproved) && (
+            {canReview && !isApproved && (
               <Badge
                 variant="outline"
                 className="shrink-0 text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"

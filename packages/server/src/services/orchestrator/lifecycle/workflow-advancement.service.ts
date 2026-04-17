@@ -48,7 +48,8 @@ export class WorkflowAdvancementService {
         throw new AppError('No previous workspace found for this task', { status: 404 });
       }
 
-      // Update task to the next stage before spawning
+      // Mark the previous workspace as approved and advance the task
+      workspacesRepository.update(prevWorkspace.id, { status: 'approved' });
       await tasksService.update(taskId, { workflowStage: nextStage, status: TASK_STATUS.TODO });
 
       return workspaceSpawnService.startWork(
@@ -58,6 +59,7 @@ export class WorkflowAdvancementService {
         prevWorkspace.model ?? undefined,
         task.workflowProviderId ?? undefined,
         nextStage,
+        prevWorkspace.id,
       );
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -88,6 +90,7 @@ export class WorkflowAdvancementService {
         throw new AppError('No next workflow stage — workspace is at the final stage', { status: 400 });
       }
 
+      workspacesRepository.update(prevWorkspace.id, { status: 'approved' });
       await tasksService.update(prevWorkspace.taskId, { workflowStage: nextStage, status: TASK_STATUS.TODO });
 
       // When advancing brainstorm → plan, inject the selected approach so the plan stage uses it
