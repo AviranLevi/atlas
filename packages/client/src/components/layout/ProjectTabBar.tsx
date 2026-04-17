@@ -22,6 +22,10 @@ export function ProjectTabBar() {
     const projectDetailMatch = location.pathname.match(/^\/projects\/([^/]+)$/);
     if (projectDetailMatch && id) {
       navigate(`/projects/${id}`);
+      return;
+    }
+    if (location.pathname.match(/^\/workspaces\/[^/]+$/)) {
+      navigate('/workspaces');
     }
   };
 
