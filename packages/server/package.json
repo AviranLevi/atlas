@@ -15,30 +15,30 @@
     "db:validate": "tsx scripts/validate-migrations.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.69",
-    "@ai-sdk/google": "^3.0.63",
+    "@ai-sdk/anthropic": "^3.0.71",
+    "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/openai": "^3.0.53",
-    "@anthropic-ai/sdk": "^0.80.0",
+    "@anthropic-ai/sdk": "^0.90.0",
     "@atlas/shared": "workspace:*",
-    "@hono/node-server": "^1.13",
-    "@hono/zod-validator": "^0.4",
+    "@hono/node-server": "^1.19",
+    "@hono/zod-validator": "^0.7",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "ai": "^6.0.161",
-    "better-sqlite3": "^11.7",
-    "drizzle-orm": "^0.38",
-    "hono": "^4.7",
+    "ai": "^6.0.168",
+    "better-sqlite3": "^12.9",
+    "drizzle-orm": "^0.45",
+    "hono": "^4.12",
     "minimatch": "^10.2.4",
     "node-cron": "^4.2.1",
-    "openai": "^6.32.0",
+    "openai": "^6.34.0",
     "pdf-parse": "^2.4.5",
-    "zod": "^3.24"
+    "zod": "^4.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6",
     "@types/node-cron": "^3.0.11",
     "@types/pdf-parse": "^1.1.5",
-    "drizzle-kit": "^0.30",
+    "drizzle-kit": "^0.31",
     "tsx": "^4.19",
-    "typescript": "^5.7"
+    "typescript": "^6.0"
   }
 }
