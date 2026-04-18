@@ -7,15 +7,11 @@ import path from 'node:path';
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 
-const FILE_PATH = 'services/worktree/worktree.service.ts';
-const WORKSPACES_DIR = '.agent-workspaces';
+// Local
+import { WORKSPACES_DIR, DIFF_EXCLUDE_PATTERNS, DIFF_MAX_BUFFER } from './worktree.constants.js';
+import type { DiffFile, WorktreeDiffResult, WorktreeCreateResult } from './worktree.types.js';
 
-export interface DiffFile {
-  filename: string;
-  additions: number;
-  deletions: number;
-  patch?: string;
-}
+const FILE_PATH = 'services/worktree/worktree.service.ts';
 
 function slugify(text: string): string {
   return text
@@ -26,15 +22,13 @@ function slugify(text: string): string {
 }
 
 export class WorktreeService {
-  /**
-   * Creates a git worktree for a task. Returns the absolute worktree path.
-   */
+  /** Creates a git worktree for a task. */
   create(
     projectLocalPath: string,
     taskId: string,
     taskName: string,
     baseBranch?: string,
-  ): { worktreePath: string; branchName: string } {
+  ): WorktreeCreateResult {
     const FUNCTION_NAME = 'create';
     try {
       const shortId = taskId.slice(0, 8);
@@ -53,15 +47,12 @@ export class WorktreeService {
             stdio: 'pipe',
           });
         } catch {
-          // Directory exists but isn't a worktree — remove manually
           fs.rmSync(worktreePath, { recursive: true, force: true });
         }
       }
 
-      // Prune stale worktree refs so git doesn't complain
       execSync('git worktree prune', { cwd: projectLocalPath, stdio: 'pipe' });
 
-      // Delete the branch if it already exists (leftover from previous attempt)
       try {
         execSync(`git branch -D "${branchName}"`, {
           cwd: projectLocalPath,
@@ -71,7 +62,6 @@ export class WorktreeService {
         // Branch doesn't exist — that's fine
       }
 
-      // Resolve the base: explicit baseBranch, or auto-detect default
       const base = baseBranch || this.getDefaultBranch(projectLocalPath);
 
       execSync(`git worktree add -b "${branchName}" "${worktreePath}" "${base}"`, {
@@ -87,9 +77,7 @@ export class WorktreeService {
     }
   }
 
-  /**
-   * Removes a git worktree by path.
-   */
+  /** Removes a git worktree by path. */
   remove(worktreePath: string, projectLocalPath: string): void {
     const FUNCTION_NAME = 'remove';
     try {
@@ -104,9 +92,7 @@ export class WorktreeService {
     }
   }
 
-  /**
-   * Lists all git worktrees for a project.
-   */
+  /** Lists all git worktrees for a project. */
   list(projectLocalPath: string): string[] {
     const FUNCTION_NAME = 'list';
     try {
@@ -124,29 +110,23 @@ export class WorktreeService {
     }
   }
 
-  /**
-   * Returns the git diff for a worktree branch vs its base (main/master).
-   */
-  getDiff(
-    worktreePath: string,
-    projectLocalPath: string,
-  ): { files: DiffFile[]; summary: { additions: number; deletions: number; filesChanged: number } } {
+  /** Returns the git diff for a worktree branch vs its base (main/master). */
+  getDiff(worktreePath: string, projectLocalPath: string): WorktreeDiffResult {
     const FUNCTION_NAME = 'getDiff';
     try {
       const baseBranch = this.getDefaultBranch(projectLocalPath);
+      const exclude = DIFF_EXCLUDE_PATTERNS.map((p) => `':!${p}'`).join(' ');
 
-      // Get list of changed files with stats
-      const diffStat = execSync(`git diff ${baseBranch}...HEAD --numstat`, {
+      const diffStat = execSync(`git diff ${baseBranch}...HEAD --numstat -- . ${exclude}`, {
         cwd: worktreePath,
         encoding: 'utf-8',
-        maxBuffer: 10 * 1024 * 1024,
+        maxBuffer: DIFF_MAX_BUFFER,
       }).trim();
 
-      // Get the actual diff
-      const diffOutput = execSync(`git diff ${baseBranch}...HEAD`, {
+      const diffOutput = execSync(`git diff ${baseBranch}...HEAD -- . ${exclude}`, {
         cwd: worktreePath,
         encoding: 'utf-8',
-        maxBuffer: 10 * 1024 * 1024,
+        maxBuffer: DIFF_MAX_BUFFER,
       }).trim();
 
       const files: DiffFile[] = [];
@@ -164,7 +144,6 @@ export class WorktreeService {
         }
       }
 
-      // Parse per-file patches from the diff output
       const filePatchMap = this.parseDiffPatches(diffOutput);
       for (const file of files) {
         file.patch = filePatchMap.get(file.filename);
@@ -180,15 +159,12 @@ export class WorktreeService {
     }
   }
 
-  /**
-   * Merges a worktree branch back into the base branch (main/master).
-   */
+  /** Merges a worktree branch back into the base branch (main/master). */
   merge(_worktreePath: string, projectLocalPath: string, branchName: string): void {
     const FUNCTION_NAME = 'merge';
     try {
       const baseBranch = this.getDefaultBranch(projectLocalPath);
 
-      // Merge from the project root (not the worktree) to avoid worktree lock issues
       execSync(`git merge "${branchName}" --no-ff -m "Merge agent branch: ${branchName}"`, {
         cwd: projectLocalPath,
         stdio: 'pipe',
@@ -199,44 +175,6 @@ export class WorktreeService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to merge branch', { cause: error });
     }
-  }
-
-  private getDefaultBranch(projectLocalPath: string): string {
-    try {
-      // Try to find the default branch
-      const head = execSync('git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || echo ""', {
-        cwd: projectLocalPath,
-        encoding: 'utf-8',
-      }).trim();
-      if (head) {
-        return head.replace('refs/remotes/origin/', '');
-      }
-    } catch {
-      // Fall through
-    }
-
-    // Fallback: check if main or master exists
-    try {
-      execSync('git rev-parse --verify main', { cwd: projectLocalPath, stdio: 'pipe' });
-      return 'main';
-    } catch {
-      return 'master';
-    }
-  }
-
-  private parseDiffPatches(diffOutput: string): Map<string, string> {
-    const patches = new Map<string, string>();
-    if (!diffOutput) return patches;
-
-    const fileSections = diffOutput.split(/^diff --git /m).slice(1);
-    for (const section of fileSections) {
-      // Extract filename from "a/path b/path"
-      const headerMatch = section.match(/^a\/(.+?) b\//);
-      if (headerMatch) {
-        patches.set(headerMatch[1], `diff --git ${section}`);
-      }
-    }
-    return patches;
   }
 
   /**
@@ -278,9 +216,7 @@ export class WorktreeService {
     }
   }
 
-  /**
-   * Prunes stale worktree references.
-   */
+  /** Prunes stale worktree references. */
   cleanup(projectLocalPath: string): void {
     const FUNCTION_NAME = 'cleanup';
     try {
@@ -293,5 +229,41 @@ export class WorktreeService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to cleanup git worktrees', { cause: error });
     }
+  }
+
+  /** Detects the default branch (main/master) for a project. */
+  getDefaultBranch(projectLocalPath: string): string {
+    try {
+      const head = execSync('git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || echo ""', {
+        cwd: projectLocalPath,
+        encoding: 'utf-8',
+      }).trim();
+      if (head) {
+        return head.replace('refs/remotes/origin/', '');
+      }
+    } catch {
+      // Fall through
+    }
+
+    try {
+      execSync('git rev-parse --verify main', { cwd: projectLocalPath, stdio: 'pipe' });
+      return 'main';
+    } catch {
+      return 'master';
+    }
+  }
+
+  private parseDiffPatches(diffOutput: string): Map<string, string> {
+    const patches = new Map<string, string>();
+    if (!diffOutput) return patches;
+
+    const fileSections = diffOutput.split(/^diff --git /m).slice(1);
+    for (const section of fileSections) {
+      const headerMatch = section.match(/^a\/(.+?) b\//);
+      if (headerMatch) {
+        patches.set(headerMatch[1], `diff --git ${section}`);
+      }
+    }
+    return patches;
   }
 }

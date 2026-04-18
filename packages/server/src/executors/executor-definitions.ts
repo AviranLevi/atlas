@@ -44,6 +44,7 @@ export const executorAider: ExecutorConfig = {
     { value: 'anthropic/claude-opus-4-6', label: 'Claude Opus 4.6', provider: 'anthropic' },
     { value: 'gpt-4.1', label: 'GPT-4.1', provider: 'openai' },
     { value: 'o3', label: 'o3', provider: 'openai' },
+    { value: 'gemini/gemini-3.1-pro', label: 'Gemini 3.1 Pro', provider: 'google' },
     { value: 'gemini/gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
     { value: 'gemini/gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
     { value: 'ollama_chat/qwen2.5-coder', label: 'Qwen 2.5 Coder (Ollama)', provider: 'ollama' },
@@ -102,6 +103,7 @@ export const executorGeminiCli: ExecutorConfig = {
   modelFlag: '--model',
   defaultModel: 'gemini-2.5-flash',
   modelPresets: [
+    { value: 'gemini-3.1-pro', label: 'Gemini 3.1 Pro', provider: 'google' },
     { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
     { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite (fastest)', provider: 'google' },
     { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
@@ -141,6 +143,7 @@ export const executorOpencode: ExecutorConfig = {
   modelPresets: [
     { value: 'anthropic/claude-sonnet-4-6', label: 'Claude Sonnet 4.6', provider: 'anthropic' },
     { value: 'openai/gpt-4.1', label: 'GPT-4.1', provider: 'openai' },
+    { value: 'google/gemini-3.1-pro', label: 'Gemini 3.1 Pro', provider: 'google' },
     { value: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
     { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
   ],
@@ -207,6 +210,7 @@ export const executorGoose: ExecutorConfig = {
     { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', provider: 'anthropic' },
     { value: 'claude-opus-4-6', label: 'Claude Opus 4.6', provider: 'anthropic' },
     { value: 'gpt-4.1', label: 'GPT-4.1', provider: 'openai' },
+    { value: 'gemini-3.1-pro', label: 'Gemini 3.1 Pro', provider: 'google' },
     { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
     { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
     { value: 'qwen2.5-coder', label: 'Qwen 2.5 Coder (Ollama)', provider: 'ollama' },

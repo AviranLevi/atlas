@@ -32,7 +32,7 @@ import { SkillsService } from './skills/skills.service.js';
 import { SystemService } from './system/system.service.js';
 import { TasksService } from './tasks/tasks.service.js';
 import { UsageService } from './usage/usage.service.js';
-import { WorktreeService } from './worktree/worktree.service.js';
+import { WorktreeService } from './worktree/index.js';
 
 export const activityLogService = new ActivityLogService();
 export const agentsService = new AgentsService();
@@ -77,4 +77,4 @@ export type { SearchResult } from './search/search.types.js';
 export type { SkillDetail } from './skills/skills.types.js';
 export type { ObsidianSyncResult } from './integrations/obsidian.service.js';
 export type { SystemInfo, UpdateCheckResult } from './system/system.service.js';
-export type { DiffFile } from './worktree/worktree.service.js';
+export type { DiffFile } from './worktree/index.js';

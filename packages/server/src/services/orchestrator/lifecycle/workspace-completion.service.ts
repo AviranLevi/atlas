@@ -19,7 +19,7 @@ import { executorRegistry, removeMcpConfig } from '../../../executors/index.js';
 // Lib
 import { AppError } from '../../../lib/errors.js';
 import { logger } from '../../../lib/logger.js';
-import { WorktreeService } from '../../worktree/worktree.service.js';
+import { WorktreeService } from '../../worktree/index.js';
 
 const FILE_PATH = 'services/orchestrator/workspace-completion.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');

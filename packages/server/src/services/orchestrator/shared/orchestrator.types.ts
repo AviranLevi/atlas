@@ -1,5 +1,5 @@
 // Services
-import type { DiffFile } from '../../worktree/worktree.service.js';
+import type { DiffFile } from '../../worktree/index.js';
 
 export type DiffResult = {
   files: DiffFile[];

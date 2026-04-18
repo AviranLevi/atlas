@@ -20,7 +20,7 @@ import type { DiffResult } from '../shared/orchestrator.types.js';
 import { activeProcesses } from '../shared/active-processes.js';
 import { AppError } from '../../../lib/errors.js';
 import { logger } from '../../../lib/logger.js';
-import { WorktreeService } from '../../worktree/worktree.service.js';
+import { WorktreeService } from '../../worktree/index.js';
 import { buildPrompt, resolveSpawnOptions } from '../spawn/spawn-options.js';
 
 const FILE_PATH = 'services/orchestrator/code-review.service.ts';
