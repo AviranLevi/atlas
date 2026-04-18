@@ -33,7 +33,7 @@ export type WorkspaceInfoCardsProps = {
   workspace: Workspace;
 };
 
-export type TerminalOutputProps = {
+export type AgentOutputProps = {
   text: string;
   isLive?: boolean;
   title?: string;

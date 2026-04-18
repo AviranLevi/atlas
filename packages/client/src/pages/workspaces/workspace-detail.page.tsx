@@ -10,7 +10,7 @@ import { RerunDialog } from '@/components/workspaces/RerunDialog';
 import { WorkspaceLineage } from '@/components/workspaces/WorkspaceLineage';
 import { WorkflowApprovalPanel } from '@/components/workspaces/WorkflowApprovalPanel';
 import { AiReviewDialog } from './components/AiReviewDialog';
-import { TerminalOutput } from './components/TerminalOutput';
+import { AgentOutput } from './components/AgentOutput';
 import { WorkspaceDetailHeader } from './components/WorkspaceDetailHeader';
 import { WorkspaceInfoCards } from './components/WorkspaceInfoCards';
 import { DiffSection } from './diff';
@@ -174,7 +174,7 @@ export function WorkspaceDetailPage() {
       )}
 
       {(isActive || workspace.fullOutput || workspace.output) && (
-        <TerminalOutput
+        <AgentOutput
           text={isActive ? (streamedLog ?? '') : (workspace.fullOutput ?? workspace.output ?? '')}
           isLive={isActive}
           defaultCollapsed={isWorkflowAwaitingApproval}
