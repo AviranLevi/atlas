@@ -30,7 +30,7 @@ import { useSkills } from '@/hooks/use-skills.hook';
 export function AgentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: detail, isLoading } = useAgentDetail(id);
+  const { data: detail, isLoading, isError } = useAgentDetail(id);
   const { data: allSkills = [] } = useSkills();
   const { data: allRules = [] } = useRules();
   const { data: providers = [] } = useAgentProviders();
@@ -53,7 +53,7 @@ export function AgentDetailPage() {
     );
   }
 
-  if (!detail) {
+  if (isError || !detail) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-2">
         <p className="text-muted-foreground text-sm">Agent not found</p>
