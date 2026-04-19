@@ -277,14 +277,14 @@ export function McpServersTab() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-start justify-between space-y-0">
-          <div>
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div className="min-w-0">
             <CardTitle>MCP Servers</CardTitle>
             <CardDescription>
               Configure additional MCP servers that are injected into CLI agents when they are spawned.
             </CardDescription>
           </div>
-          <Button onClick={handleAdd} disabled={editingId === 'new'}>
+          <Button className="shrink-0" onClick={handleAdd} disabled={editingId === 'new'}>
             <Plus className="mr-2 h-4 w-4" />
             Add Server
           </Button>
