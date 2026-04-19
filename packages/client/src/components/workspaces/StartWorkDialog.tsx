@@ -47,9 +47,6 @@ export function StartWorkDialog({
   const { data: project } = useProject(projectId);
   const { data: agent } = useAgent(task?.agentId ?? undefined);
   const { data: providers = [] } = useAgentProviders();
-  const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(
-    agent?.providerId ?? undefined,
-  );
   const startWork = useStartWork();
   const createBranch = useCreateBranch(projectId);
 
@@ -63,6 +60,26 @@ export function StartWorkDialog({
   const [workflowProviderId, setWorkflowProviderId] = useState<string>('');
 
   const currentRuntime = useMemo(() => runtimes.find((r) => r.id === selectedRuntime), [runtimes, selectedRuntime]);
+
+  // Resolve which provider to use for fetching dynamic model lists.
+  // Prefer the agent's own provider if it matches the runtime's expected type;
+  // otherwise fall back to any available provider of the right type.
+  const providerIdForModels = useMemo(() => {
+    const runtimeTypes = currentRuntime?.providerMapping?.map((m) => m.providerType) ?? [];
+    if (agent?.providerId) {
+      const agentProvider = providers.find((p) => p.id === agent.providerId);
+      if (agentProvider && (runtimeTypes.length === 0 || runtimeTypes.includes(agentProvider.type))) {
+        return agent.providerId;
+      }
+    }
+    if (runtimeTypes.length > 0) {
+      const match = providers.find((p) => runtimeTypes.includes(p.type));
+      if (match) return match.id;
+    }
+    return agent?.providerId ?? undefined;
+  }, [agent?.providerId, providers, currentRuntime]);
+
+  const { data: providerModels = [], isLoading: providerModelsLoading } = useProviderModels(providerIdForModels);
 
   useEffect(() => {
     if (agent?.providerId && providers.some((p) => p.id === agent.providerId)) {

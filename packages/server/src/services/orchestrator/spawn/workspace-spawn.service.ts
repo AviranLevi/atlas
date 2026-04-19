@@ -29,7 +29,9 @@ import { logger } from '../../../lib/logger.js';
 const FILE_PATH = 'services/orchestrator/workspace-spawn.service.ts';
 
 const GITIGNORE_ESSENTIALS = `node_modules/
+**/node_modules/
 dist/
+**/dist/
 build/
 .next/
 .nuxt/
