@@ -10,6 +10,7 @@ import { GlobalPage } from '@/pages/global/global.page';
 import { KanbanPage } from '@/pages/kanban/kanban.page';
 import { MarketplacePage } from '@/pages/marketplace/marketplace.page';
 import { MemoryPage } from '@/pages/memory/memory.page';
+import { NotFoundPage } from '@/pages/not-found/not-found.page';
 import { ProjectDetailPage } from '@/pages/project-detail/project-detail.page';
 import { ProjectsPage } from '@/pages/projects/projects.page';
 import { RuleDetailPage } from '@/pages/rule-detail/rule-detail.page';
@@ -46,6 +47,7 @@ export function AppRoutes() {
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/chat" element={<ChatPage />} />
       <Route path="/chat/:id" element={<ChatPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
