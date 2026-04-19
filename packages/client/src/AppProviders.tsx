@@ -11,11 +11,17 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth.context';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 
+// Lib
+import { ApiError } from '@/lib/api';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 30,
-      retry: 1,
+      retry: (failureCount, error) => {
+        if (error instanceof ApiError && error.status === 404) return false;
+        return failureCount < 1;
+      },
     },
   },
 });
