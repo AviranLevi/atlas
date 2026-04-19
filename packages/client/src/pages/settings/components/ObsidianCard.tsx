@@ -126,7 +126,10 @@ export function ObsidianCard() {
 
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <Label htmlFor="obs-vault-path" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <Label
+            htmlFor="obs-vault-path"
+            className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+          >
             Vault Path
           </Label>
           <Input
@@ -141,7 +144,10 @@ export function ObsidianCard() {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="obs-sync-folder" className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <Label
+            htmlFor="obs-sync-folder"
+            className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+          >
             Sync Folder <span className="normal-case font-normal">(inside vault)</span>
           </Label>
           <Input
@@ -184,7 +190,9 @@ export function ObsidianCard() {
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           Last sync: {sync.data.imported} imported, {sync.data.exported} exported
           {sync.data.errors.length > 0 && (
-            <span className="text-yellow-500 ml-1">({sync.data.errors.length} error{sync.data.errors.length > 1 ? 's' : ''})</span>
+            <span className="text-yellow-500 ml-1">
+              ({sync.data.errors.length} error{sync.data.errors.length > 1 ? 's' : ''})
+            </span>
           )}
         </div>
       )}
@@ -200,8 +208,18 @@ export function ObsidianCard() {
           variant="outline"
           size="sm"
           onClick={handleSync}
-          disabled={sync.isPending || !enabled || !vaultPath.trim()}
-          title={!enabled ? 'Enable the integration first' : !vaultPath.trim() ? 'Set a vault path first' : undefined}
+          disabled={sync.isPending || !integration?.enabled || !enabled || !vaultPath.trim() || isDirty}
+          title={
+            !enabled
+              ? 'Enable the integration first'
+              : !integration?.enabled
+                ? 'Save settings to enable syncing'
+                : isDirty
+                  ? 'Save settings before syncing'
+                  : !vaultPath.trim()
+                    ? 'Set a vault path first'
+                    : undefined
+          }
         >
           {sync.isPending ? (
             <>
