@@ -2,6 +2,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const _require = createRequire(import.meta.url);
+const _pkg = _require('../../../package.json') as { version: string };
 
 // DB
 import { db } from '../../db/index.js';
@@ -59,7 +63,7 @@ export class SystemService {
   getInfo(): SystemInfo {
     const dbStat = fs.statSync(dbPath);
     return {
-      version: '0.0.1',
+      version: _pkg.version,
       apiUrl: 'http://localhost:3100',
       dbPath,
       dbSizeBytes: dbStat.size,
