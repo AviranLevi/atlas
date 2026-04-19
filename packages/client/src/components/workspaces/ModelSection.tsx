@@ -31,6 +31,7 @@ export function ModelSection({
   providerModelsLoading,
   onModelChange,
   onCustomTextChange,
+  showAgentDefault = true,
 }: ModelSectionProps) {
   const presets = runtime.modelPresets ?? [];
   const supportsCustom = runtime.supportsCustomModel !== false;
@@ -61,7 +62,9 @@ export function ModelSection({
             <Loader2 className="h-3 w-3 animate-spin" /> Loading models from provider...
           </p>
         )}
-        {agentDefaultModel && <p className="text-muted-foreground text-xs">Agent default: {agentDefaultModel}</p>}
+        {agentDefaultModel && showAgentDefault && (
+          <p className="text-muted-foreground text-xs">Agent default: {agentDefaultModel}</p>
+        )}
       </div>
     );
   }
@@ -118,7 +121,9 @@ export function ModelSection({
           <Loader2 className="h-3 w-3 animate-spin" /> Loading models from provider...
         </p>
       )}
-      {agentDefaultModel && <p className="text-muted-foreground text-xs">Agent default: {agentDefaultModel}</p>}
+      {agentDefaultModel && showAgentDefault && (
+        <p className="text-muted-foreground text-xs">Agent default: {agentDefaultModel}</p>
+      )}
     </div>
   );
 }

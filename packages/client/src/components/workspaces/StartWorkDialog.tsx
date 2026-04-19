@@ -165,7 +165,7 @@ export function StartWorkDialog({
         agentRuntimeId: selectedRuntime,
         baseBranch,
         model,
-        providerId: (workflowEnabled && workflowProviderId) ? workflowProviderId : (agent?.providerId ?? undefined),
+        providerId: workflowEnabled && workflowProviderId ? workflowProviderId : (agent?.providerId ?? undefined),
         workflowEnabled,
       },
       { onSuccess: () => onOpenChange(false) },
@@ -218,6 +218,7 @@ export function StartWorkDialog({
                 providerModelsLoading={providerModelsLoading}
                 onModelChange={handleModelChange}
                 onCustomTextChange={setCustomModelText}
+                showAgentDefault={providerIdForModels === agent?.providerId}
               />
             )}
 
@@ -252,10 +253,7 @@ export function StartWorkDialog({
                     </p>
                   </div>
                 </div>
-                <Switch
-                  checked={workflowEnabled}
-                  onCheckedChange={setWorkflowEnabled}
-                />
+                <Switch checked={workflowEnabled} onCheckedChange={setWorkflowEnabled} />
               </div>
 
               {workflowEnabled && (
@@ -283,8 +281,8 @@ export function StartWorkDialog({
                   ) : (
                     <p className="flex items-center gap-1.5 text-xs text-amber-500">
                       <AlertTriangle className="h-3 w-3 shrink-0" />
-                      No API provider configured. Without one, the CLI will handle all stages.
-                      Add a provider in Settings → Providers for structured brainstorm & plan output.
+                      No API provider configured. Without one, the CLI will handle all stages. Add a provider in
+                      Settings → Providers for structured brainstorm & plan output.
                     </p>
                   )}
                 </div>

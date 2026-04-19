@@ -26,6 +26,7 @@ export type ModelSectionProps = {
   providerModelsLoading: boolean;
   onModelChange: (value: string) => void;
   onCustomTextChange: (value: string) => void;
+  showAgentDefault?: boolean;
 };
 
 export type WorkspaceCardProps = {
