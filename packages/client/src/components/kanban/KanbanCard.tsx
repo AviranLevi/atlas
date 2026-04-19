@@ -97,7 +97,16 @@ export function KanbanCard({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={cn('cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md', isDragging && 'opacity-30')}
+      role="button"
+      tabIndex={0}
+      onClick={() => onEdit(task)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onEdit(task);
+        }
+      }}
+      className={cn('cursor-pointer transition-shadow hover:shadow-md', isDragging && 'opacity-30')}
     >
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
         <h4 className="font-medium leading-tight line-clamp-2">{task.name}</h4>
