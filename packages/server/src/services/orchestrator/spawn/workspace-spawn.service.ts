@@ -16,7 +16,9 @@ import { WorktreeService } from '../../worktree/index.js';
 // Orchestrator
 import { resolveSpawnOptions, buildPrompt } from './spawn-options.js';
 import { structuredStageService } from './structured-stage.service.js';
-import { activeProcesses } from '../shared/active-processes.js';
+import { activeProcesses, clearEntryTimers, isShuttingDown } from '../shared/active-processes.js';
+import type { ActiveProcessEntry } from '../shared/active-processes.js';
+import { getMaxRuntimeMs, type RuntimeStage } from '../../../lib/runtime-limits.js';
 
 // Executors
 import { executorRegistry } from '../../../executors/index.js';
@@ -92,6 +94,10 @@ export class WorkspaceSpawnService {
   ): Promise<Workspace> {
     const FUNCTION_NAME = 'startWork';
     try {
+      if (isShuttingDown()) {
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
       const task = await tasksService.getById(taskId);
 
       if (!task.projectId) {
@@ -197,6 +203,37 @@ export class WorkspaceSpawnService {
       });
 
       const cwd = executor.usesProjectRoot ? project.localPath : worktreePath;
+
+      // Guard against double-fire: the watchdog can call onFailed directly, then
+      // proc.on('close') would call it again when the kill signal takes effect.
+      let terminalCallbackFired = false;
+
+      const onFailedCallback = (output: string, error?: string) => {
+        if (terminalCallbackFired) return;
+        terminalCallbackFired = true;
+        const entry = activeProcesses.get(workspace.id);
+        if (entry) clearEntryTimers(entry);
+        activeProcesses.delete(workspace.id);
+        const ws = workspacesRepository.update(workspace.id, {
+          status: 'failed',
+          output,
+          completedAt: new Date().toISOString(),
+        });
+        tasksService.update(ws.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
+          logger.warn(`${FILE_PATH} :: spawnAgent - failed to reset task status`, e);
+        });
+        activityLogService.log({
+          projectId: ws.projectId,
+          taskId: ws.taskId,
+          workspaceId: workspace.id,
+          agentId: ws.agentId,
+          eventType: 'agent_failed',
+          description: `Agent failed: ${error ?? 'unknown error'}`,
+          metadata: { error },
+        });
+        logger.error(`${FILE_PATH} :: spawnAgent - process failed for workspace ${workspace.id}: ${error}`);
+      };
+
       const result = await spawnAgent(
         workspace.id,
         executor,
@@ -204,6 +241,10 @@ export class WorkspaceSpawnService {
         prompt,
         {
           onCompleted: (output) => {
+            if (terminalCallbackFired) return;
+            terminalCallbackFired = true;
+            const entry = activeProcesses.get(workspace.id);
+            if (entry) clearEntryTimers(entry);
             activeProcesses.delete(workspace.id);
 
             // Safety net: commit any changes the agent left uncommitted.
@@ -238,32 +279,109 @@ export class WorkspaceSpawnService {
             });
             logger.info(`${FILE_PATH} :: spawnAgent - process completed for workspace ${workspace.id}`);
           },
-          onFailed: (output, error) => {
-            activeProcesses.delete(workspace.id);
-            const ws = workspacesRepository.update(workspace.id, {
-              status: 'failed',
-              output,
-              completedAt: new Date().toISOString(),
-            });
-            tasksService.update(ws.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
-              logger.warn(`${FILE_PATH} :: spawnAgent - failed to reset task status`, e);
-            });
-            activityLogService.log({
-              projectId: ws.projectId,
-              taskId: ws.taskId,
-              workspaceId: workspace.id,
-              agentId: ws.agentId,
-              eventType: 'agent_failed',
-              description: `Agent failed: ${error ?? 'unknown error'}`,
-              metadata: { error },
-            });
-            logger.error(`${FILE_PATH} :: spawnAgent - process failed for workspace ${workspace.id}: ${error}`);
-          },
+          onFailed: onFailedCallback,
         },
         spawnOpts,
       );
 
-      activeProcesses.set(workspace.id, result.process);
+      // Race mitigation: isShuttingDown() was false at the top of startWork,
+      // but spawnAgent + buildPrompt + DB writes above can take non-trivial
+      // time. If a SIGINT arrived during that window, the shutdown handler
+      // snapshotted activeProcesses BEFORE we could insert our new child.
+      // Kill it now to prevent an orphan that survives process.exit.
+      if (isShuttingDown()) {
+        const proc = result.process;
+        if (proc.pid) {
+          try {
+            process.kill(-proc.pid, 'SIGKILL');
+          } catch {
+            try {
+              proc.kill('SIGKILL');
+            } catch {
+              /* already dead */
+            }
+          }
+        }
+        workspacesRepository.update(workspace.id, {
+          status: 'stopped',
+          pid: proc.pid ?? null,
+          completedAt: new Date().toISOString(),
+        });
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
+      const runtimeStage: RuntimeStage = (effectiveStage as RuntimeStage | undefined) ?? 'execute';
+      const maxRuntimeMs = getMaxRuntimeMs(runtimeStage);
+
+      const entry: ActiveProcessEntry = {
+        process: result.process,
+        onFailed: onFailedCallback,
+        startedAt: Date.now(),
+        stage: runtimeStage,
+      };
+
+      // Soft warning at 90% of the limit — gives the user a heads-up in the
+      // activity log so they can intervene before the hard kill.
+      entry.softWarnTimer = setTimeout(() => {
+        const remainingMs = maxRuntimeMs * 0.1;
+        activityLogService.log({
+          projectId: project.id,
+          taskId,
+          workspaceId: workspace.id,
+          agentId: task.agentId,
+          eventType: 'agent_warning',
+          description: `Workspace approaching runtime limit. Will terminate at ${new Date(Date.now() + remainingMs).toISOString()}.`,
+          metadata: { maxRuntimeMs, stage: runtimeStage },
+        });
+        logger.warn(
+          `${FILE_PATH} :: watchdog - workspace ${workspace.id} at 90% of ${maxRuntimeMs}ms budget`,
+        );
+      }, maxRuntimeMs * 0.9);
+      entry.softWarnTimer.unref();
+
+      // Hard kill at 100% — terminate process group and mark workspace failed.
+      entry.watchdogTimer = setTimeout(() => {
+        logger.warn(
+          `${FILE_PATH} :: watchdog - workspace ${workspace.id} exceeded ${maxRuntimeMs}ms, terminating`,
+        );
+        const current = activeProcesses.get(workspace.id);
+        if (!current) return;
+        const proc = current.process;
+        if (proc.pid) {
+          try {
+            process.kill(-proc.pid, 'SIGTERM');
+          } catch {
+            try {
+              proc.kill('SIGTERM');
+            } catch {
+              /* already dead */
+            }
+          }
+          // Escalate to SIGKILL if the agent ignores SIGTERM.
+          setTimeout(() => {
+            if (!proc.killed && proc.pid) {
+              try {
+                process.kill(-proc.pid, 'SIGKILL');
+              } catch {
+                try {
+                  proc.kill('SIGKILL');
+                } catch {
+                  /* already dead */
+                }
+              }
+            }
+          }, 5000).unref();
+        }
+        // Fire the failure path synchronously with a timeout marker so the
+        // workspace output reflects WHY it ended, not just the exit code.
+        onFailedCallback(
+          `[watchdog] timeout: workspace exceeded ${Math.round(maxRuntimeMs / 60_000)} minute limit`,
+          'timeout',
+        );
+      }, maxRuntimeMs);
+      entry.watchdogTimer.unref();
+
+      activeProcesses.set(workspace.id, entry);
       workspacesRepository.update(workspace.id, {
         status: 'running',
         pid: result.process.pid ?? null,

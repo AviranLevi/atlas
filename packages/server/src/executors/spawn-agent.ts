@@ -6,7 +6,7 @@ import path from 'node:path';
 
 // Executors
 import type { ExecutorConfig, ProviderField } from './executor.types.js';
-import { generateMcpConfig } from './mcp-config-generator.js';
+import { generateMcpConfig, removeMcpConfig } from './mcp-config-generator.js';
 
 // Lib
 import { parseCliStreamJsonLine } from '../lib/chat/cli-chat.js';
@@ -167,13 +167,34 @@ export async function spawnAgent(
   proc.on('close', (code) => {
     logStream.end();
     rawLogStream?.end();
+
+    // Remove the per-workspace MCP JSON on natural exit. Skip 'gemini' —
+    // it mutates the shared ~/.gemini/settings.json and removing the
+    // 'atlas' entry here would break any concurrent gemini workspace.
+    // Gemini settings get cleaned up on workspace cleanup() or server
+    // shutdown, not on every natural agent exit.
+    if (executor.mcpConfigFormat !== 'none' && executor.mcpConfigFormat !== 'gemini') {
+      try {
+        removeMcpConfig(workspaceId, executor.mcpConfigFormat);
+      } catch (err) {
+        logger.warn(`${FILE_PATH} :: spawnAgent - removeMcpConfig failed (non-fatal)`, err);
+      }
+    }
+
+    // Always delete the raw stream-json debug log on exit, regardless of
+    // success/failure. startup-cleanup.service prunes any that survive a
+    // crash (>7 days); we don't need a per-failure retention policy on top.
+    if (rawLogFile && fs.existsSync(rawLogFile)) {
+      try {
+        fs.unlinkSync(rawLogFile);
+      } catch (err) {
+        logger.warn(`${FILE_PATH} :: spawnAgent - failed to unlink raw log (non-fatal)`, err);
+      }
+    }
+
     const finalOutput =
       executor.outputFormat === 'stream-json' ? finalResult || outputLines.join('\n') : outputLines.join('\n');
     if (code === 0) {
-      // Clean up raw debug log on success
-      if (rawLogFile && fs.existsSync(rawLogFile)) {
-        fs.unlinkSync(rawLogFile);
-      }
       callbacks.onCompleted(finalOutput);
     } else {
       callbacks.onFailed(finalOutput, `Exit code: ${code}`);

@@ -54,6 +54,9 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
 
   const hasPresets = modelOptions.length > 0;
 
+  // Seed / reset form fields when the provider prop changes (open dialog or switch record).
+  // Must NOT depend on modelOptions — it changes whenever `type` changes, which would
+  // reset the form every time the user picks a different provider type.
   useEffect(() => {
     if (provider) {
       setName(provider.name);
@@ -61,8 +64,6 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
       setApiKey(provider.apiKey ?? '');
       setBaseUrl(provider.baseUrl ?? '');
       setModelName(provider.modelName);
-      const inOptions = modelOptions.some((m) => m.value === provider.modelName);
-      setModelSelectValue(inOptions ? provider.modelName : CUSTOM_MODEL);
     } else {
       setName('');
       setType('anthropic');
@@ -73,6 +74,14 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
       setModelSelectValue(presets.length > 0 ? presets[0].value : '');
     }
     setTestResult(null);
+  }, [provider]);
+
+  // When editing an existing provider, keep modelSelectValue in sync as remote
+  // models load (so a fetched model ID is preferred over "Custom model...").
+  useEffect(() => {
+    if (!provider) return;
+    const inOptions = modelOptions.some((m) => m.value === provider.modelName);
+    setModelSelectValue(inOptions ? provider.modelName : CUSTOM_MODEL);
   }, [provider, modelOptions]);
 
   const handleTypeChange = (newType: ProviderType) => {

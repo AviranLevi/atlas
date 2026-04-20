@@ -17,8 +17,10 @@ import { spawnAgent } from '../../../executors/spawn-agent.js';
 
 // Lib
 import type { DiffResult } from '../shared/orchestrator.types.js';
-import { activeProcesses } from '../shared/active-processes.js';
+import { activeProcesses, clearEntryTimers, isShuttingDown } from '../shared/active-processes.js';
+import type { ActiveProcessEntry } from '../shared/active-processes.js';
 import { AppError } from '../../../lib/errors.js';
+import { getMaxRuntimeMs } from '../../../lib/runtime-limits.js';
 import { logger } from '../../../lib/logger.js';
 import { WorktreeService } from '../../worktree/index.js';
 import { buildPrompt, resolveSpawnOptions } from '../spawn/spawn-options.js';
@@ -27,6 +29,75 @@ const FILE_PATH = 'services/orchestrator/code-review.service.ts';
 
 export class CodeReviewService {
   private worktreeService = new WorktreeService();
+
+  /**
+   * Attaches watchdog + soft-warn timers to a live review/auto-fix workspace.
+   * Review-stage timeout (default 15 min) is shorter than execute because
+   * reviewers aren't writing code — they shouldn't run long.
+   */
+  private attachWatchdog(
+    entry: ActiveProcessEntry,
+    workspaceId: string,
+    projectId: string,
+    taskId: string,
+    agentId: string | null,
+    onFailed: (output: string, error?: string) => void,
+  ): void {
+    const maxRuntimeMs = getMaxRuntimeMs('review');
+
+    entry.softWarnTimer = setTimeout(() => {
+      const remainingMs = maxRuntimeMs * 0.1;
+      activityLogService.log({
+        projectId,
+        taskId,
+        workspaceId,
+        agentId,
+        eventType: 'agent_warning',
+        description: `Review approaching runtime limit. Will terminate at ${new Date(Date.now() + remainingMs).toISOString()}.`,
+        metadata: { maxRuntimeMs, stage: 'review' },
+      });
+      logger.warn(`${FILE_PATH} :: watchdog - review workspace ${workspaceId} at 90% of ${maxRuntimeMs}ms budget`);
+    }, maxRuntimeMs * 0.9);
+    entry.softWarnTimer.unref();
+
+    entry.watchdogTimer = setTimeout(() => {
+      logger.warn(
+        `${FILE_PATH} :: watchdog - review workspace ${workspaceId} exceeded ${maxRuntimeMs}ms, terminating`,
+      );
+      const current = activeProcesses.get(workspaceId);
+      if (!current) return;
+      const proc = current.process;
+      if (proc.pid) {
+        try {
+          process.kill(-proc.pid, 'SIGTERM');
+        } catch {
+          try {
+            proc.kill('SIGTERM');
+          } catch {
+            /* already dead */
+          }
+        }
+        setTimeout(() => {
+          if (!proc.killed && proc.pid) {
+            try {
+              process.kill(-proc.pid, 'SIGKILL');
+            } catch {
+              try {
+                proc.kill('SIGKILL');
+              } catch {
+                /* already dead */
+              }
+            }
+          }
+        }, 5000).unref();
+      }
+      onFailed(
+        `[watchdog] timeout: review exceeded ${Math.round(maxRuntimeMs / 60_000)} minute limit`,
+        'timeout',
+      );
+    }, maxRuntimeMs);
+    entry.watchdogTimer.unref();
+  }
 
   /** Returns the git diff for a workspace (empty if worktree is gone). */
   async getDiff(workspaceId: string): Promise<DiffResult> {
@@ -69,6 +140,10 @@ export class CodeReviewService {
   async requestChanges(workspaceId: string): Promise<Workspace> {
     const FUNCTION_NAME = 'requestChanges';
     try {
+      if (isShuttingDown()) {
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
       const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
 
       if (workspace.status !== 'completed') {
@@ -129,6 +204,38 @@ export class CodeReviewService {
         workspace.model ?? undefined,
       );
 
+      let requestChangesFired = false;
+      const onFailedCallback = (output: string, error?: string) => {
+        if (requestChangesFired) return;
+        requestChangesFired = true;
+        const entry = activeProcesses.get(workspace.id);
+        if (entry) clearEntryTimers(entry);
+        activeProcesses.delete(workspace.id);
+        // Deliberate retry semantics: requestChanges runs on top of an already-
+        // completed workspace. If the review agent's re-run fails, we roll the
+        // workspace status back to 'completed' (its prior state) and put the
+        // task back in In Review so the user can click "Request Changes" again
+        // without losing the prior diff. The activity_log below records the
+        // real failure so history isn't a lie.
+        workspacesRepository.update(workspace.id, {
+          status: 'completed',
+          output,
+          completedAt: new Date().toISOString(),
+        });
+        tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
+          logger.warn(`${FILE_PATH} :: requestChanges - failed to reset task to In Review`, e);
+        });
+        activityLogService.log({
+          projectId: workspace.projectId,
+          taskId: workspace.taskId,
+          workspaceId,
+          agentId: workspace.agentId,
+          eventType: 'agent_failed',
+          description: `Agent failed during review changes: ${error ?? 'unknown error'}`,
+          metadata: { error },
+        });
+      };
+
       // Re-spawn the agent on the SAME worktree (not a new one)
       const cwd = executor.usesProjectRoot ? project.localPath : workspace.worktreePath;
       const result = await spawnAgent(
@@ -138,8 +245,11 @@ export class CodeReviewService {
         fullPrompt,
         {
           onCompleted: (output) => {
+            if (requestChangesFired) return;
+            requestChangesFired = true;
+            const entry = activeProcesses.get(workspace.id);
+            if (entry) clearEntryTimers(entry);
             activeProcesses.delete(workspace.id);
-            // Clear comments on success — the agent addressed them
             workspacesRepository.update(workspace.id, {
               status: 'completed',
               output,
@@ -160,32 +270,38 @@ export class CodeReviewService {
               metadata: {},
             });
           },
-          onFailed: (output, error) => {
-            activeProcesses.delete(workspace.id);
-            // On failure, go back to completed + In Review so user can retry
-            workspacesRepository.update(workspace.id, {
-              status: 'completed',
-              output,
-              completedAt: new Date().toISOString(),
-            });
-            tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
-              logger.warn(`${FILE_PATH} :: requestChanges - failed to reset task to In Review`, e);
-            });
-            activityLogService.log({
-              projectId: workspace.projectId,
-              taskId: workspace.taskId,
-              workspaceId,
-              agentId: workspace.agentId,
-              eventType: 'agent_failed',
-              description: `Agent failed during review changes: ${error ?? 'unknown error'}`,
-              metadata: { error },
-            });
-          },
+          onFailed: onFailedCallback,
         },
         spawnOpts,
       );
 
-      activeProcesses.set(workspace.id, result.process);
+      // Race mitigation: shutdown signal may have arrived between the gate
+      // check at the top and now. Kill any child we just spawned to prevent
+      // an orphan that the shutdown handler already missed in its snapshot.
+      if (isShuttingDown()) {
+        const proc = result.process;
+        if (proc.pid) {
+          try {
+            process.kill(-proc.pid, 'SIGKILL');
+          } catch {
+            try {
+              proc.kill('SIGKILL');
+            } catch {
+              /* already dead */
+            }
+          }
+        }
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
+      const entry: ActiveProcessEntry = {
+        process: result.process,
+        onFailed: onFailedCallback,
+        startedAt: Date.now(),
+        stage: 'review',
+      };
+      this.attachWatchdog(entry, workspace.id, workspace.projectId, workspace.taskId, workspace.agentId, onFailedCallback);
+      activeProcesses.set(workspace.id, entry);
 
       // Mark as running (don't clear comments yet — cleared on success only)
       workspacesRepository.update(workspace.id, {
@@ -235,6 +351,10 @@ export class CodeReviewService {
   async startAiReview(workspaceId: string, agentRuntimeId: string, autoFix = false): Promise<Workspace> {
     const FUNCTION_NAME = 'startAiReview';
     try {
+      if (isShuttingDown()) {
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
       const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
 
       if (workspace.status !== 'completed') {
@@ -308,8 +428,23 @@ export class CodeReviewService {
         ? ((await projectsService.getById(workspace.projectId)).localPath ?? workspace.worktreePath)
         : workspace.worktreePath;
 
+      let reviewFired = false;
+      const onFailedReview = (output: string, error?: string) => {
+        if (reviewFired) return;
+        reviewFired = true;
+        const entry = activeProcesses.get(workspaceId);
+        if (entry) clearEntryTimers(entry);
+        activeProcesses.delete(workspaceId);
+        workspacesRepository.update(workspaceId, { status: 'failed', output, completedAt: new Date().toISOString() });
+        logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - reviewer agent failed`, error);
+      };
+
       const result = await spawnAgent(workspaceId, executor, cwd, reviewPrompt, {
         onCompleted: (output) => {
+          if (reviewFired) return;
+          reviewFired = true;
+          const entry = activeProcesses.get(workspaceId);
+          if (entry) clearEntryTimers(entry);
           activeProcesses.delete(workspaceId);
           workspacesRepository.update(workspaceId, {
             status: 'completed',
@@ -325,15 +460,44 @@ export class CodeReviewService {
             metadata: {},
           });
         },
-        onFailed: (output, error) => {
-          activeProcesses.delete(workspaceId);
-          workspacesRepository.update(workspaceId, { status: 'failed', output, completedAt: new Date().toISOString() });
-          logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - reviewer agent failed`, error);
-        },
+        onFailed: onFailedReview,
         ...spawnOpts,
       });
 
-      activeProcesses.set(workspaceId, result.process);
+      // Race mitigation: shutdown signal may have arrived between the gate
+      // check at the top and now. Kill any child we just spawned to prevent
+      // an orphan that the shutdown handler already missed in its snapshot.
+      if (isShuttingDown()) {
+        const proc = result.process;
+        if (proc.pid) {
+          try {
+            process.kill(-proc.pid, 'SIGKILL');
+          } catch {
+            try {
+              proc.kill('SIGKILL');
+            } catch {
+              /* already dead */
+            }
+          }
+        }
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
+      const reviewEntry: ActiveProcessEntry = {
+        process: result.process,
+        onFailed: onFailedReview,
+        startedAt: Date.now(),
+        stage: 'review',
+      };
+      this.attachWatchdog(
+        reviewEntry,
+        workspaceId,
+        workspace.projectId,
+        workspace.taskId,
+        workspace.agentId,
+        onFailedReview,
+      );
+      activeProcesses.set(workspaceId, reviewEntry);
       workspacesRepository.update(workspaceId, { pid: result.process.pid ?? null, status: 'running' });
 
       activityLogService.log({

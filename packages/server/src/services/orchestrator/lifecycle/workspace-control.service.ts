@@ -16,7 +16,7 @@ import { activityLogService, projectsService, tasksService } from '../../index.j
 import { executorRegistry, removeMcpConfig } from '../../../executors/index.js';
 
 // Lib
-import { activeProcesses } from '../shared/active-processes.js';
+import { activeProcesses, clearEntryTimers } from '../shared/active-processes.js';
 import { AppError } from '../../../lib/errors.js';
 import { logger } from '../../../lib/logger.js';
 import { WorktreeService } from '../../worktree/index.js';
@@ -37,22 +37,26 @@ export class WorkspaceControlService {
         throw new AppError('Workspace is not active', { status: 400 });
       }
 
-      const proc = activeProcesses.get(workspaceId);
-      if (proc && !proc.killed && proc.pid) {
-        try {
-          process.kill(-proc.pid, 'SIGTERM');
-        } catch {
-          proc.kill('SIGTERM');
-        }
-        setTimeout(() => {
-          if (!proc.killed && proc.pid) {
-            try {
-              process.kill(-proc.pid, 'SIGKILL');
-            } catch {
-              proc.kill('SIGKILL');
-            }
+      const entry = activeProcesses.get(workspaceId);
+      if (entry) {
+        clearEntryTimers(entry);
+        const proc = entry.process;
+        if (!proc.killed && proc.pid) {
+          try {
+            process.kill(-proc.pid, 'SIGTERM');
+          } catch {
+            proc.kill('SIGTERM');
           }
-        }, 5000);
+          setTimeout(() => {
+            if (!proc.killed && proc.pid) {
+              try {
+                process.kill(-proc.pid, 'SIGKILL');
+              } catch {
+                proc.kill('SIGKILL');
+              }
+            }
+          }, 5000);
+        }
       }
 
       activeProcesses.delete(workspaceId);
