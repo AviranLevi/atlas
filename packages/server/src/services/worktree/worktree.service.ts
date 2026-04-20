@@ -9,7 +9,23 @@ import { logger } from '../../lib/logger.js';
 
 // Local
 import { WORKSPACES_DIR, DIFF_EXCLUDE_PATTERNS, DIFF_MAX_BUFFER } from './worktree.constants.js';
-import type { DiffFile, WorktreeDiffResult, WorktreeCreateResult } from './worktree.types.js';
+import type {
+  DiffFile,
+  WorktreeDiffResult,
+  WorktreeCreateResult,
+  WorktreeCommit,
+  EnsureChangesCommittedContext,
+} from './worktree.types.js';
+
+// Identity used for any commit Atlas creates on behalf of an agent.
+// Agent step commits MUST also use these flags (enforced via prompt).
+// Applied via -c flags so the user's global git config is never mutated.
+const ATLAS_GIT_IDENTITY = '-c user.name="Atlas Agent" -c user.email="atlas@local"';
+
+// A commit subject shaped like `step 3/7: add revert endpoint`. Captures:
+//   1 = step index, 2 = step total, 3 = title.
+// Tolerant of extra whitespace but requires both numbers and the colon.
+const STEP_COMMIT_REGEX = /^step\s+(\d+)\s*\/\s*(\d+)\s*:\s*(.+)$/i;
 
 const FILE_PATH = 'services/worktree/worktree.service.ts';
 
@@ -23,12 +39,7 @@ function slugify(text: string): string {
 
 export class WorktreeService {
   /** Creates a git worktree for a task. */
-  create(
-    projectLocalPath: string,
-    taskId: string,
-    taskName: string,
-    baseBranch?: string,
-  ): WorktreeCreateResult {
+  create(projectLocalPath: string, taskId: string, taskName: string, baseBranch?: string): WorktreeCreateResult {
     const FUNCTION_NAME = 'create';
     try {
       const shortId = taskId.slice(0, 8);
@@ -179,9 +190,17 @@ export class WorktreeService {
 
   /**
    * Safety net: commits any uncommitted changes left behind by the agent.
+   *
+   * For execute-stage workspaces, uses a deliberately loud commit subject
+   * (`execute: <task> (steps not tracked)`) so that a silent prompt-compliance
+   * regression — an agent ignoring the "step N/M" protocol — shows up as a
+   * visible anomaly in the Commits panel rather than being masked by a generic
+   * "chore: auto-commit" entry. For all other stages, keeps the neutral
+   * chore message.
+   *
    * Returns true if a commit was created, false if the tree was already clean.
    */
-  ensureChangesCommitted(worktreePath: string): boolean {
+  ensureChangesCommitted(worktreePath: string, context?: EnsureChangesCommittedContext): boolean {
     const FUNCTION_NAME = 'ensureChangesCommitted';
     try {
       if (!fs.existsSync(worktreePath)) {
@@ -198,21 +217,192 @@ export class WorktreeService {
         return false;
       }
 
+      const fileCount = status.split('\n').length;
       logger.warn(
-        `${FILE_PATH} :: ${FUNCTION_NAME} - agent left uncommitted changes (${status.split('\n').length} files), auto-committing`,
+        `${FILE_PATH} :: ${FUNCTION_NAME} - agent left uncommitted changes (${fileCount} files), auto-committing`,
       );
 
+      const message =
+        context?.stage === 'execute'
+          ? `execute: ${context.taskName ?? 'task'} (steps not tracked)`
+          : 'chore: auto-commit uncommitted agent changes';
+
       execSync('git add -A', { cwd: worktreePath, stdio: 'pipe' });
-      execSync('git commit -m "chore: auto-commit uncommitted agent changes"', {
+      // shellEscape: message goes through a string-interpolated execSync, so
+      // double-quotes in the task name would break the commit. Strip them.
+      const safeMessage = message.replace(/"/g, "'");
+      execSync(`git ${ATLAS_GIT_IDENTITY} commit -m "${safeMessage}"`, {
         cwd: worktreePath,
         stdio: 'pipe',
       });
 
-      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - auto-committed changes in ${worktreePath}`);
+      logger.info(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - auto-committed changes in ${worktreePath} (stage=${context?.stage ?? 'none'})`,
+      );
       return true;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to auto-commit`, error);
       return false;
+    }
+  }
+
+  /**
+   * Lists commits on the worktree branch that are ahead of `baseRef`.
+   * Returns newest-first; each row is enriched with numstat totals so the
+   * UI can render "+X / -Y" without a second round-trip.
+   *
+   * Uses a NUL-separated record format (-z) so commit messages containing
+   * newlines or tabs can't corrupt parsing.
+   */
+  listCommits(worktreePath: string, baseRef: string): WorktreeCommit[] {
+    const FUNCTION_NAME = 'listCommits';
+    try {
+      if (!fs.existsSync(worktreePath)) {
+        return [];
+      }
+
+      // Format fields: sha|shortSha|authorName|authorDate|subject
+      // Separator chosen to be extremely unlikely in commit metadata.
+      // %x00 terminates the record (matches -z), and the numstat block for
+      // each commit follows the subject until the next NUL.
+      const FIELD_SEP = '\u001f';
+      const format = ['%H', '%h', '%an', '%aI', '%s'].join(FIELD_SEP);
+
+      let raw: string;
+      try {
+        raw = execSync(`git log ${baseRef}..HEAD --format="${format}%x00" --numstat`, {
+          cwd: worktreePath,
+          encoding: 'utf-8',
+          maxBuffer: DIFF_MAX_BUFFER,
+        });
+      } catch (err) {
+        // baseRef may not exist inside the worktree (shallow clones, missing
+        // upstream). Fall back to HEAD's entire history as a best-effort.
+        logger.warn(
+          `${FILE_PATH} :: ${FUNCTION_NAME} - ${baseRef}..HEAD failed, falling back to full HEAD history`,
+          err,
+        );
+        raw = execSync(`git log HEAD --format="${format}%x00" --numstat`, {
+          cwd: worktreePath,
+          encoding: 'utf-8',
+          maxBuffer: DIFF_MAX_BUFFER,
+        });
+      }
+
+      const commits: WorktreeCommit[] = [];
+      const records = raw
+        .split('\u0000')
+        .map((r) => r.trim())
+        .filter(Boolean);
+
+      for (const record of records) {
+        // The record starts with the formatted header line, followed by
+        // optional numstat lines (one per file changed, tab-separated).
+        const lines = record.split('\n');
+        const header = lines[0];
+        if (!header) continue;
+        const [sha, shortSha, author, timestamp, ...subjectParts] = header.split(FIELD_SEP);
+        if (!sha || !shortSha) continue;
+        const message = subjectParts.join(FIELD_SEP);
+
+        let insertions = 0;
+        let deletions = 0;
+        let filesChanged = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const [add, del] = line.split('\t');
+          // Binary files show '-' — count the file but not the lines.
+          const adds = add === '-' ? 0 : parseInt(add, 10) || 0;
+          const dels = del === '-' ? 0 : parseInt(del, 10) || 0;
+          insertions += adds;
+          deletions += dels;
+          filesChanged += 1;
+        }
+
+        const match = message.match(STEP_COMMIT_REGEX);
+        const stepIndex = match ? parseInt(match[1], 10) : null;
+        const stepTotal = match ? parseInt(match[2], 10) : null;
+
+        commits.push({
+          sha,
+          shortSha,
+          message,
+          author: author ?? '',
+          timestamp: timestamp ?? '',
+          stepIndex,
+          stepTotal,
+          filesChanged,
+          insertions,
+          deletions,
+        });
+      }
+
+      return commits;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to list commits', { cause: error });
+    }
+  }
+
+  /**
+   * Hard-resets the worktree branch to `sha`.
+   *
+   * Safety guards:
+   *   1. Rejects unknown SHAs (git rev-parse fails).
+   *   2. Rejects commits that are NOT ancestors of HEAD — we only allow
+   *      "undo forward" on this branch. Users who want to cherry-pick from
+   *      elsewhere should do it manually.
+   *   3. Caller (git-history.service) rejects reverts on running workspaces.
+   *
+   * Uses `reset --hard` — uncommitted changes in the worktree are discarded.
+   * For execute-stage workspaces that's acceptable because the agent is
+   * always expected to commit before yielding control.
+   */
+  revertToCommit(worktreePath: string, sha: string): void {
+    const FUNCTION_NAME = 'revertToCommit';
+    try {
+      if (!fs.existsSync(worktreePath)) {
+        throw new AppError('Worktree path does not exist', { status: 400 });
+      }
+      if (!/^[0-9a-f]{4,64}$/i.test(sha)) {
+        throw new AppError('Invalid commit SHA', { status: 400 });
+      }
+
+      // Resolve short SHAs + verify the object exists at all.
+      let resolvedSha: string;
+      try {
+        resolvedSha = execSync(`git rev-parse --verify "${sha}^{commit}"`, {
+          cwd: worktreePath,
+          encoding: 'utf-8',
+        }).trim();
+      } catch {
+        throw new AppError('Commit not found in this worktree', { status: 404 });
+      }
+
+      // Ancestry check: `git merge-base --is-ancestor A B` exits 0 iff A is
+      // reachable from B. We require sha to be an ancestor of HEAD.
+      try {
+        execSync(`git merge-base --is-ancestor ${resolvedSha} HEAD`, {
+          cwd: worktreePath,
+          stdio: 'pipe',
+        });
+      } catch {
+        throw new AppError('Commit is not an ancestor of HEAD; cannot revert', {
+          status: 400,
+        });
+      }
+
+      execSync(`git reset --hard ${resolvedSha}`, {
+        cwd: worktreePath,
+        stdio: 'pipe',
+      });
+
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - reset worktree at ${worktreePath} to ${resolvedSha}`);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to revert worktree', { cause: error });
     }
   }
 

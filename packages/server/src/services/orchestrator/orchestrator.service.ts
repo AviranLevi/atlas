@@ -1,5 +1,5 @@
 // Shared
-import type { Workspace } from '@atlas/shared';
+import type { Workspace, WorktreeCommit } from '@atlas/shared';
 
 // Orchestrator sub-services
 import type { DiffResult } from './shared/orchestrator.types.js';
@@ -9,6 +9,7 @@ import { workspaceControlService } from './lifecycle/workspace-control.service.j
 import { workspaceCompletionService } from './lifecycle/workspace-completion.service.js';
 import { workspaceQueryService } from './lifecycle/workspace-query.service.js';
 import { codeReviewService } from './review/code-review.service.js';
+import { gitHistoryService } from './git-history/index.js';
 
 /**
  * Facade that delegates all orchestration operations to focused sub-services.
@@ -27,7 +28,15 @@ export class OrchestratorService {
     workflowStage?: 'brainstorm' | 'plan' | 'execute' | null,
     parentWorkspaceId?: string,
   ): Promise<Workspace> {
-    return workspaceSpawnService.startWork(taskId, agentRuntimeId, baseBranch, model, providerId, workflowStage, parentWorkspaceId);
+    return workspaceSpawnService.startWork(
+      taskId,
+      agentRuntimeId,
+      baseBranch,
+      model,
+      providerId,
+      workflowStage,
+      parentWorkspaceId,
+    );
   }
 
   // ─── Workflow advancement ──────────────────────────────────────────────────
@@ -149,5 +158,17 @@ export class OrchestratorService {
   /** Returns the content of an archived log file. Prevents path traversal. */
   getArchivedLog(filename: string): string | null {
     return workspaceQueryService.getArchivedLog(filename);
+  }
+
+  // ─── Git history ──────────────────────────────────────────────────────────
+
+  /** Returns per-step commits for a workspace (empty for brainstorm/plan). */
+  getWorkspaceCommits(workspaceId: string): Promise<WorktreeCommit[]> {
+    return gitHistoryService.getWorkspaceCommits(workspaceId);
+  }
+
+  /** Resets the workspace branch to a previous commit. Forbidden while running. */
+  revertWorkspaceToCommit(workspaceId: string, commitSha: string): Promise<void> {
+    return gitHistoryService.revertWorkspaceToCommit(workspaceId, commitSha);
   }
 }

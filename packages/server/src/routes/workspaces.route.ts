@@ -8,6 +8,7 @@ import {
   CreateWorkspaceSchema,
   EditDiffCommentSchema,
   RerunWorkspaceSchema,
+  RevertWorkspaceSchema,
 } from '@atlas/shared';
 import { zValidator } from '@hono/zod-validator';
 
@@ -21,6 +22,7 @@ import {
   editWorkspaceComment,
   getArchivedLog,
   getWorkspace,
+  getWorkspaceCommits,
   getWorkspaceDiff,
   listAgentRuntimes,
   listArchivedLogs,
@@ -31,6 +33,7 @@ import {
   removeWorkspaceComment,
   requestWorkspaceChanges,
   rerunWorkspace,
+  revertWorkspace,
   stopWorkspace,
   advanceWorkspaceWorkflow,
   getWorkspaceLineage,
@@ -47,6 +50,8 @@ export const workspacesRoute = new Hono()
   .post('/', zValidator('json', CreateWorkspaceSchema), createWorkspace)
   .get('/:id/logs/stream', streamWorkspaceLogs)
   .get('/:id/diff', getWorkspaceDiff)
+  .get('/:id/commits', getWorkspaceCommits)
+  .post('/:id/revert', zValidator('json', RevertWorkspaceSchema), revertWorkspace)
   .post('/:id/request-changes', requestWorkspaceChanges)
   .post('/:id/merge', mergeWorkspace)
   .post('/:id/complete', completeWorkspace)

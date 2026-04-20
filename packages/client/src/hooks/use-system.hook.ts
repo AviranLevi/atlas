@@ -38,6 +38,6 @@ export function useUpdateCheck() {
 
 export function useResetAllData() {
   return useMutation({
-    mutationFn: () => api.post<unknown>('/system/reset', {}),
+    mutationFn: () => api.post<unknown>('/system/reset', { confirm: true }),
   });
 }

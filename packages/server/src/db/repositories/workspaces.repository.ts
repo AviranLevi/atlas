@@ -21,6 +21,7 @@ type InsertWorkspace = {
   agentRuntime: string;
   model?: string | null;
   branchName: string;
+  baseBranch?: string | null;
   worktreePath: string;
   pid?: number | null;
   status?: string;

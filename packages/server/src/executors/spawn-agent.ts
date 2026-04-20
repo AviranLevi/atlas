@@ -90,7 +90,17 @@ export async function spawnAgent(
   const args = buildArgs(executor, prompt, mcpConfigPath, options.model);
 
   // Build env: process env → executor static env → provider credential env
-  const env: Record<string, string> = { ...(process.env as Record<string, string>), ...executor.env };
+  // Git identity env vars ensure all commits made inside the agent process
+  // are attributed to "Atlas Agent" regardless of whether the CLI agent
+  // honours the `-c user.name/email` flags in the prompt protocol.
+  const env: Record<string, string> = {
+    ...(process.env as Record<string, string>),
+    ...executor.env,
+    GIT_AUTHOR_NAME: 'Atlas Agent',
+    GIT_AUTHOR_EMAIL: 'atlas@local',
+    GIT_COMMITTER_NAME: 'Atlas Agent',
+    GIT_COMMITTER_EMAIL: 'atlas@local',
+  };
 
   if (options.provider && executor.providerMapping) {
     const mapping = executor.providerMapping.find((m) => m.providerType === options.provider!.type);

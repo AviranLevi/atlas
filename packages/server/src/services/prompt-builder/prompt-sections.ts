@@ -14,16 +14,17 @@ function formatSkillList(skills: Record<string, unknown>[]): string {
 }
 
 function formatRuleList(rules: Record<string, unknown>[]): string {
-  return rules
-    .map((r) => `- **${r.name}**: ${r.content ?? ''}`)
-    .join('\n');
+  return rules.map((r) => `- **${r.name}**: ${r.content ?? ''}`).join('\n');
 }
 
 function formatMemoryList(
   memories: { type: string | null; scope?: string | null; name: string | null; content: string }[],
 ): string {
   return memories
-    .map((m) => `- [${m.type ?? 'unknown'}]${m.scope === 'global' ? ' (global)' : ''} **${m.name ?? 'Untitled'}**: ${m.content}`)
+    .map(
+      (m) =>
+        `- [${m.type ?? 'unknown'}]${m.scope === 'global' ? ' (global)' : ''} **${m.name ?? 'Untitled'}**: ${m.content}`,
+    )
     .join('\n');
 }
 
@@ -60,8 +61,14 @@ export function buildAgentIdentitySection(ctx: PromptContext): string | null {
   const { agentContext } = ctx;
   if (!agentContext) return null;
 
-  const { agent, skills: agentSkills, rules: agentRules, projectSkills, projectRules, memories: agentMemories } =
-    agentContext;
+  const {
+    agent,
+    skills: agentSkills,
+    rules: agentRules,
+    projectSkills,
+    projectRules,
+    memories: agentMemories,
+  } = agentContext;
 
   const parts: string[] = [];
 
@@ -196,9 +203,7 @@ export function buildTaskSection(ctx: PromptContext): string {
   if (task.notes) {
     if (params.workflowStage === 'execute') {
       // For execute stage, only keep the selected approach lines — strip stale agent notes
-      const approachLines = task.notes
-        .split('\n')
-        .filter((l) => l.startsWith('**Selected Approach:**'));
+      const approachLines = task.notes.split('\n').filter((l) => l.startsWith('**Selected Approach:**'));
       if (approachLines.length > 0) {
         lines.push(`\n**Notes:**\n${approachLines.join('\n')}`);
       }
@@ -230,11 +235,9 @@ function buildCommitPlanBlock(commitSteps: CommitStep[]): string {
     '### Commit Plan (follow in order)',
     '',
     ...commitSteps.map((s) =>
-      [
-        `**Step ${s.step}: ${s.title}**`,
-        s.description,
-        `Files: ${s.files.map((f) => `\`${f}\``).join(', ')}`,
-      ].join('\n'),
+      [`**Step ${s.step}: ${s.title}**`, s.description, `Files: ${s.files.map((f) => `\`${f}\``).join(', ')}`].join(
+        '\n',
+      ),
     ),
   ];
   return lines.join('\n\n');
@@ -297,6 +300,26 @@ export function buildInstructionsSection(ctx: PromptContext): string {
           '',
         );
       }
+      // Strict commit protocol — Atlas parses git log for `step N/M: …` commits
+      // to render per-step history in the UI. Deviations trigger the
+      // `execute: <task> (steps not tracked)` safety-net commit which surfaces
+      // as a visible regression signal in the Commits panel.
+      lines.push(
+        '### Commit Protocol (REQUIRED)',
+        '',
+        'After completing each step above, run BEFORE moving to the next step:',
+        '',
+        '```',
+        'git add -A',
+        'git -c user.name="Atlas Agent" -c user.email="atlas@local" commit -m "step N/M: <exact step title>"',
+        '```',
+        '',
+        'Where `N` is the step number (1-based) and `M` is the total step count.',
+        "The `-c user.name/email` flags are REQUIRED so commits are attributable to Atlas rather than the developer's global git identity.",
+        'Do NOT batch multiple steps into one commit.',
+        'If a step produces no file changes, skip the commit for that step (do not create an empty commit).',
+        '',
+      );
     } else {
       lines.push(
         'Complete the task described above. Follow the coding rules and project conventions.',
@@ -325,9 +348,7 @@ export function buildInstructionsSection(ctx: PromptContext): string {
         'Your implementation must be fully functional — no TODO comments, no placeholder values, no stub implementations.',
       );
     }
-    lines.push(
-      'When you are finished, ensure all changes are committed to the current branch.',
-    );
+    lines.push('When you are finished, ensure all changes are committed to the current branch.');
 
     if (behavior.requireVerification) {
       lines.push(

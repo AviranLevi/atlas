@@ -32,7 +32,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new ApiError(body.error || `HTTP ${res.status}`, res.status);
+    const errorMsg =
+      typeof body.error === 'string'
+        ? body.error
+        : typeof body.message === 'string'
+          ? body.message
+          : `HTTP ${res.status}`;
+    throw new ApiError(errorMsg, res.status);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;

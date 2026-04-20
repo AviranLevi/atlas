@@ -19,6 +19,10 @@ export const workspaces = sqliteTable('workspaces', {
   agentRuntime: text('agent_runtime').notNull(),
   model: text('model'),
   branchName: text('branch_name').notNull(),
+  // Branch the worktree was based on (e.g. 'main', 'master', 'develop').
+  // Nullable for rows created before this column existed; runtime falls back
+  // to getDefaultBranch(project.localPath) when null.
+  baseBranch: text('base_branch'),
   worktreePath: text('worktree_path').notNull(),
   pid: integer('pid'),
   status: text('status').notNull().default('pending'),

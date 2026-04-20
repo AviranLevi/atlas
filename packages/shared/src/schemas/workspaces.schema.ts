@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
-export const WorkspaceStatusEnum = z.enum(['pending', 'running', 'completed', 'approved', 'failed', 'stopped', 'merged']);
+export const WorkspaceStatusEnum = z.enum([
+  'pending',
+  'running',
+  'completed',
+  'approved',
+  'failed',
+  'stopped',
+  'merged',
+]);
 
 export const DiffCommentSchema = z.object({
   id: z.string(),
@@ -29,6 +37,7 @@ export const WorkspaceSchema = z.object({
   agentRuntime: z.string().min(1),
   model: z.string().nullable(),
   branchName: z.string().min(1),
+  baseBranch: z.string().nullable().optional(),
   worktreePath: z.string().min(1),
   pid: z.number().int().nullable(),
   status: WorkspaceStatusEnum,
@@ -69,6 +78,24 @@ export const CreatePullRequestSchema = z.object({
 
 export const EditDiffCommentSchema = z.object({
   body: z.string().min(1),
+});
+
+/** Shape of a per-step commit the server parses out of `git log`. */
+export const WorktreeCommitSchema = z.object({
+  sha: z.string(),
+  shortSha: z.string(),
+  message: z.string(),
+  author: z.string(),
+  timestamp: z.string(),
+  stepIndex: z.number().int().nullable(),
+  stepTotal: z.number().int().nullable(),
+  filesChanged: z.number().int(),
+  insertions: z.number().int(),
+  deletions: z.number().int(),
+});
+
+export const RevertWorkspaceSchema = z.object({
+  commitSha: z.string().regex(/^[0-9a-f]{4,64}$/i, 'Invalid commit SHA'),
 });
 
 export const McpConfigFormatEnum = z.enum(['claude', 'cursor', 'generic-json', 'none']);
@@ -121,3 +148,5 @@ export type AddDiffComment = z.infer<typeof AddDiffCommentSchema>;
 export type RerunWorkspace = z.infer<typeof RerunWorkspaceSchema>;
 export type CreatePullRequest = z.infer<typeof CreatePullRequestSchema>;
 export type EditDiffComment = z.infer<typeof EditDiffCommentSchema>;
+export type WorktreeCommit = z.infer<typeof WorktreeCommitSchema>;
+export type RevertWorkspace = z.infer<typeof RevertWorkspaceSchema>;

@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { ApiError, api } from '@/lib/api';
 
 // Types
-import type { ExecutorStatus, Workspace } from '@atlas/shared';
+import type { ExecutorStatus, Workspace, WorktreeCommit } from '@atlas/shared';
 import type { DiffResult } from '@/components/workspaces/workspaces.types';
 
 export type { DiffFile, DiffResult } from '@/components/workspaces/workspaces.types';
@@ -233,6 +233,46 @@ export function useRemoveDiffComment() {
       api.delete(`/workspaces/${workspaceId}/comments/${commentId}`),
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, workspaceId] });
+    },
+  });
+}
+
+/** Returns per-step commits for a workspace, polling while the agent is running. */
+export function useWorkspaceCommits(id: string | undefined, isRunning: boolean) {
+  // Keep polling for 10s after the status flips away from 'running'
+  // to catch the final commit (either a real step commit racing with the
+  // status update, or the 'execute: … (steps not tracked)' safety-net commit).
+  const [graceActive, setGraceActive] = useState(false);
+  const wasRunningRef = useRef(isRunning);
+  useEffect(() => {
+    if (wasRunningRef.current && !isRunning) {
+      setGraceActive(true);
+      const t = setTimeout(() => setGraceActive(false), 10_000);
+      return () => clearTimeout(t);
+    }
+    wasRunningRef.current = isRunning;
+  }, [isRunning]);
+
+  const shouldPoll = isRunning || graceActive;
+
+  return useQuery({
+    queryKey: [...WORKSPACES_KEY, id, 'commits'],
+    queryFn: () => api.get<WorktreeCommit[]>(`/workspaces/${id}/commits`),
+    enabled: !!id,
+    refetchInterval: shouldPoll ? 3000 : false,
+    staleTime: shouldPoll ? 0 : 1000 * 30,
+  });
+}
+
+/** Reverts a workspace branch to a previous commit by SHA. */
+export function useRevertWorkspaceCommit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, commitSha }: { id: string; commitSha: string }) =>
+      api.post(`/workspaces/${id}/revert`, { commitSha }),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, id, 'commits'] });
+      queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, id, 'diff'] });
     },
   });
 }

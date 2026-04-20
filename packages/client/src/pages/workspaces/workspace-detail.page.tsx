@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { RerunDialog } from '@/components/workspaces/RerunDialog';
 import { WorkspaceLineage } from '@/components/workspaces/WorkspaceLineage';
 import { WorkflowApprovalPanel } from '@/components/workspaces/WorkflowApprovalPanel';
+import { CommitsPanel } from '@/components/workspaces/CommitsPanel';
 import { AiReviewDialog } from './components/AiReviewDialog';
 import { AgentOutput } from './components/AgentOutput';
 import { WorkspaceDetailHeader } from './components/WorkspaceDetailHeader';
@@ -109,14 +110,16 @@ export function WorkspaceDetailPage() {
 
       <WorkspaceInfoCards workspace={workspace} />
 
-      {(workspace.inputTokens != null ||
-        workspace.outputTokens != null ||
-        workspace.costUsd != null) && (
+      {(workspace.inputTokens != null || workspace.outputTokens != null || workspace.costUsd != null) && (
         <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
           {workspace.inputTokens != null && <span>Input: {workspace.inputTokens.toLocaleString()} tokens</span>}
           {workspace.outputTokens != null && <span>Output: {workspace.outputTokens.toLocaleString()} tokens</span>}
           {workspace.costUsd != null && <span>Cost: ${workspace.costUsd.toFixed(4)}</span>}
         </div>
+      )}
+
+      {workspace.workflowStage !== 'brainstorm' && workspace.workflowStage !== 'plan' && (
+        <CommitsPanel workspace={workspace} isRunning={workspace.status === 'running'} />
       )}
 
       {canReview && (
@@ -169,9 +172,7 @@ export function WorkspaceDetailPage() {
         </div>
       )}
 
-      {isWorkflowAwaitingApproval && (
-        <WorkflowApprovalPanel workspace={workspace} />
-      )}
+      {isWorkflowAwaitingApproval && <WorkflowApprovalPanel workspace={workspace} />}
 
       {(isActive || workspace.fullOutput || workspace.output) && (
         <AgentOutput

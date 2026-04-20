@@ -11,6 +11,7 @@ import type {
   CreateWorkspace,
   EditDiffComment,
   RerunWorkspace,
+  RevertWorkspace,
 } from '@atlas/shared';
 
 // Executors
@@ -246,12 +247,22 @@ export async function getWorkspaceLineage(c: Context) {
   }
 }
 
+/** Returns per-step commits on the workspace branch. */
+export async function getWorkspaceCommits(c: Context) {
+  const commits = await orchestratorService.getWorkspaceCommits(c.req.param('id')!);
+  return c.json(commits);
+}
+
+/** Hard-resets the workspace branch to a previous commit. */
+export async function revertWorkspace(c: Context) {
+  const { commitSha } = getValidatedBody<RevertWorkspace>(c);
+  await orchestratorService.revertWorkspaceToCommit(c.req.param('id')!, commitSha);
+  return c.body(null, 204);
+}
+
 /** Advances the workflow from a specific workspace to the next stage. */
 export async function advanceWorkspaceWorkflow(c: Context) {
-  const body = await c.req.json().catch(() => ({})) as { selectedApproach?: string };
-  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(
-    c.req.param('id')!,
-    body.selectedApproach,
-  );
+  const body = (await c.req.json().catch(() => ({}))) as { selectedApproach?: string };
+  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(c.req.param('id')!, body.selectedApproach);
   return c.json(workspace);
 }
