@@ -1,14 +1,15 @@
 // External
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { minimatch } from 'minimatch';
 
 // Lib
 import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 
 // Local
-import { WORKSPACES_DIR, DIFF_EXCLUDE_PATTERNS, DIFF_MAX_BUFFER } from './worktree.constants.js';
+import { WORKSPACES_DIR, DIFF_EXCLUDE_PATTERNS, DIFF_MAX_BUFFER, PER_FILE_LINE_CAP } from './worktree.constants.js';
 import type {
   DiffFile,
   WorktreeDiffResult,
@@ -121,43 +122,90 @@ export class WorktreeService {
     }
   }
 
-  /** Returns the git diff for a worktree branch vs its base (main/master). */
+  /**
+   * Returns the git diff for a worktree branch vs its base (main/master).
+   *
+   * Three-pass approach:
+   *  1. `--name-only -z` to get a NUL-separated file list (safe for any filename).
+   *  2. JS `minimatch` filter (authoritative — git pathspec excluded entirely
+   *     because `**` prefix in negative pathspecs silently fails on top-level dirs).
+   *  3. `--numstat` + full diff with filtered files as positional args after `--`.
+   *     Uses `execFileSync` (no shell) so filenames are safe without quoting.
+   *
+   * Files exceeding PER_FILE_LINE_CAP are returned with `truncated: true` and
+   * no patch, so the UI can render a placeholder instead of OOMing the buffer.
+   */
   getDiff(worktreePath: string, projectLocalPath: string): WorktreeDiffResult {
     const FUNCTION_NAME = 'getDiff';
+    const emptyResult: WorktreeDiffResult = {
+      files: [],
+      summary: { additions: 0, deletions: 0, filesChanged: 0 },
+    };
     try {
       const baseBranch = this.getDefaultBranch(projectLocalPath);
-      const exclude = DIFF_EXCLUDE_PATTERNS.map((p) => `':!${p}'`).join(' ');
+      const diffRef = `${baseBranch}...HEAD`;
 
-      const diffStat = execSync(`git diff ${baseBranch}...HEAD --numstat -- . ${exclude}`, {
+      // Pass 1: NUL-separated file list (handles filenames with newlines)
+      const nameRaw = execFileSync('git', ['diff', diffRef, '--name-only', '-z'], {
         cwd: worktreePath,
         encoding: 'utf-8',
-        maxBuffer: DIFF_MAX_BUFFER,
-      }).trim();
+        maxBuffer: 1 * 1024 * 1024,
+      });
+      const allFiles = nameRaw.split('\0').filter(Boolean);
+      if (allFiles.length === 0) return emptyResult;
 
-      const diffOutput = execSync(`git diff ${baseBranch}...HEAD -- . ${exclude}`, {
-        cwd: worktreePath,
-        encoding: 'utf-8',
-        maxBuffer: DIFF_MAX_BUFFER,
-      }).trim();
+      // Pass 2: JS filter — single source of truth for exclusions
+      const keep = allFiles.filter(
+        (f) => !DIFF_EXCLUDE_PATTERNS.some((p) => minimatch(f, p, { dot: true })),
+      );
+      if (keep.length === 0) return emptyResult;
+
+      // numstat with file list as positional args after '--'.
+      // execFileSync bypasses the shell so filenames with quotes/spaces are safe.
+      // git diff does not support --pathspec-from-file.
+      const numstatRaw = execFileSync(
+        'git',
+        ['diff', diffRef, '--numstat', '--', ...keep],
+        { cwd: worktreePath, encoding: 'utf-8', maxBuffer: 1 * 1024 * 1024 },
+      ).trim();
 
       const files: DiffFile[] = [];
+      const diffKeep: string[] = [];
       let totalAdditions = 0;
       let totalDeletions = 0;
 
-      if (diffStat) {
-        for (const line of diffStat.split('\n')) {
-          const [add, del, file] = line.split('\t');
+      if (numstatRaw) {
+        for (const line of numstatRaw.split('\n')) {
+          if (!line) continue;
+          const [add, del, filename] = line.split('\t');
           const additions = add === '-' ? 0 : parseInt(add, 10);
           const deletions = del === '-' ? 0 : parseInt(del, 10);
           totalAdditions += additions;
           totalDeletions += deletions;
-          files.push({ filename: file, additions, deletions });
+
+          if (additions + deletions > PER_FILE_LINE_CAP) {
+            files.push({ filename, additions, deletions, truncated: true });
+          } else {
+            files.push({ filename, additions, deletions });
+            diffKeep.push(filename);
+          }
         }
       }
 
-      const filePatchMap = this.parseDiffPatches(diffOutput);
-      for (const file of files) {
-        file.patch = filePatchMap.get(file.filename);
+      // Pass 3: full diff only for non-capped files
+      if (diffKeep.length > 0) {
+        const diffOutput = execFileSync(
+          'git',
+          ['diff', diffRef, '--', ...diffKeep],
+          { cwd: worktreePath, encoding: 'utf-8', maxBuffer: DIFF_MAX_BUFFER },
+        ).trim();
+
+        const filePatchMap = this.parseDiffPatches(diffOutput);
+        for (const file of files) {
+          if (!file.truncated) {
+            file.patch = filePatchMap.get(file.filename);
+          }
+        }
       }
 
       return {
@@ -165,7 +213,14 @@ export class WorktreeService {
         summary: { additions: totalAdditions, deletions: totalDeletions, filesChanged: files.length },
       };
     } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, { err: error, worktreePath });
+      if (error instanceof AppError) throw error;
+      const isBufferOverflow =
+        error instanceof Error &&
+        (error.message.includes('maxBuffer') || (error as NodeJS.ErrnoException).code === 'ENOBUFS');
+      if (isBufferOverflow) {
+        throw new AppError('Diff too large to render', { status: 413 });
+      }
       throw new AppError('Failed to get diff', { cause: error });
     }
   }

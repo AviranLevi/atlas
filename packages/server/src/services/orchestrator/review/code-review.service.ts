@@ -130,8 +130,14 @@ export class CodeReviewService {
 
       return this.worktreeService.getDiff(workspace.worktreePath, project.localPath);
     } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, { err: error, workspaceId });
       if (error instanceof AppError) throw error;
+      const isBufferOverflow =
+        error instanceof Error &&
+        (error.message.includes('maxBuffer') || (error as NodeJS.ErrnoException).code === 'ENOBUFS');
+      if (isBufferOverflow) {
+        throw new AppError('Diff too large to render', { status: 413 });
+      }
       throw new AppError('Failed to get diff', { cause: error });
     }
   }

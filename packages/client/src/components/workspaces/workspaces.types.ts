@@ -64,6 +64,7 @@ export type DiffFile = {
   additions: number;
   deletions: number;
   patch?: string;
+  truncated?: boolean;
 };
 
 export type DiffResult = {
