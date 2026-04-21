@@ -1,6 +1,6 @@
 // React / library
-import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { AlertCircle, CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 // Hooks
 import {
   useCreateAgentProvider,
+  useInlineProviderModels,
   useProviderModels,
   useTestAgentProvider,
   useUpdateAgentProvider,
@@ -28,6 +29,7 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
   const createProvider = useCreateAgentProvider();
   const updateProvider = useUpdateAgentProvider();
   const testProvider = useTestAgentProvider();
+  const inlineModels = useInlineProviderModels();
   const isEditing = !!provider;
   const { data: fetchedModels = [] } = useProviderModels(provider?.id);
 
@@ -39,18 +41,37 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
   const [modelSelectValue, setModelSelectValue] = useState('');
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
 
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    if (isEditing) return;
+    const needsKey = type !== 'ollama';
+    if (needsKey && !apiKey.trim()) {
+      inlineModels.reset();
+      return;
+    }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      inlineModels.mutate({ type, apiKey: apiKey || null, baseUrl: baseUrl || null });
+    }, 500);
+    return () => clearTimeout(debounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing, type, apiKey, baseUrl]);
+
+  const liveModels = isEditing ? fetchedModels : (inlineModels.data ?? []);
+
   const modelOptions = useMemo(() => {
     const presets = PROVIDER_MODEL_PRESETS[type] ?? [];
     const seen = new Set(presets.map((p) => p.value));
     const merged: ProviderModel[] = [...presets];
-    for (const m of fetchedModels) {
+    for (const m of liveModels) {
       if (!seen.has(m.value)) {
         merged.push(m);
         seen.add(m.value);
       }
     }
     return merged;
-  }, [type, fetchedModels]);
+  }, [type, liveModels]);
 
   const hasPresets = modelOptions.length > 0;
 
@@ -74,6 +95,8 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
       setModelSelectValue(presets.length > 0 ? presets[0].value : '');
     }
     setTestResult(null);
+    inlineModels.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider]);
 
   // When editing an existing provider, keep modelSelectValue in sync as remote
@@ -193,19 +216,24 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
             <Label>Model</Label>
             {hasPresets ? (
               <>
-                <Select value={modelSelectValue} onValueChange={handleModelSelect}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {modelOptions.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value={CUSTOM_MODEL}>Custom model...</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <Select value={modelSelectValue} onValueChange={handleModelSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {modelOptions.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={CUSTOM_MODEL}>Custom model...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {!isEditing && inlineModels.isPending && (
+                    <Loader2 className="absolute right-8 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+                  )}
+                </div>
                 {modelSelectValue === CUSTOM_MODEL && (
                   <Input
                     value={modelName}
@@ -222,6 +250,12 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
                 placeholder={PROVIDER_MODEL_PLACEHOLDERS[type]}
                 required
               />
+            )}
+            {!isEditing && inlineModels.isError && (
+              <p className="flex items-center gap-1.5 text-sm text-destructive">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                {(inlineModels.error as Error).message}
+              </p>
             )}
           </div>
 

@@ -5,7 +5,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 // Types
-import type { AgentProvider, CreateAgentProvider, ProviderModel, UpdateAgentProvider } from '@atlas/shared';
+import type {
+  AgentProvider,
+  CreateAgentProvider,
+  ProviderModel,
+  ProviderType,
+  UpdateAgentProvider,
+} from '@atlas/shared';
 
 const PROVIDERS_KEY = ['agent-providers'] as const;
 const PROVIDER_MODELS_KEY = ['agent-provider-models'] as const;
@@ -55,5 +61,13 @@ export function useProviderModels(providerId: string | undefined) {
     queryFn: () => api.get<ProviderModel[]>(`/agent-providers/${providerId}/models`),
     enabled: !!providerId,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** Fetches models using ephemeral credentials (no saved provider required). */
+export function useInlineProviderModels() {
+  return useMutation({
+    mutationFn: (data: { type: ProviderType; apiKey?: string | null; baseUrl?: string | null }) =>
+      api.post<ProviderModel[]>('/agent-providers/models', data),
   });
 }

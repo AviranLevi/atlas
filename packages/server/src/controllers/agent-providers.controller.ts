@@ -2,7 +2,7 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { CreateAgentProvider, UpdateAgentProvider } from '@atlas/shared';
+import type { CreateAgentProvider, ListModelsInline, UpdateAgentProvider } from '@atlas/shared';
 
 // Services
 import { agentProvidersService } from '../services/index.js';
@@ -50,5 +50,12 @@ export async function testAgentProviderConnection(c: Context) {
 /** Lists models available from the provider's API. */
 export async function listAgentProviderModels(c: Context) {
   const models = await agentProvidersService.listModels(c.req.param('id')!);
+  return c.json(models);
+}
+
+/** Lists models using ephemeral credentials (no saved provider required). */
+export async function listModelsInline(c: Context) {
+  const body = getValidatedBody<ListModelsInline>(c);
+  const models = await agentProvidersService.listModelsInline(body);
   return c.json(models);
 }

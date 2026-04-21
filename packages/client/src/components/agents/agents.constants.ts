@@ -27,10 +27,17 @@ export const PROVIDER_MODEL_PRESETS: Record<ProviderType, ProviderModel[]> = {
     { value: 'claude-haiku-4-20250514', label: 'Claude Haiku 4' },
   ],
   openai: [
+    { value: 'gpt-4.1', label: 'GPT-4.1' },
+    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini' },
+    { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano' },
     { value: 'gpt-4o', label: 'GPT-4o' },
     { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
     { value: 'o3', label: 'o3' },
+    { value: 'o3-mini', label: 'o3 Mini' },
     { value: 'o4-mini', label: 'o4 Mini' },
+    { value: 'o1', label: 'o1' },
+    { value: 'o1-mini', label: 'o1 Mini' },
+    { value: 'o1-pro', label: 'o1 Pro' },
   ],
   google: [
     { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },

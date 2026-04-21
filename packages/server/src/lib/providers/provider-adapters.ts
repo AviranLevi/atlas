@@ -55,7 +55,7 @@ const DATED_SNAPSHOT_RE = /(-\d{4}(-\d{2}){0,2})$/;
 function isOpenAIChatAlias(id: string): boolean {
   if (!OPENAI_CHAT_PREFIXES.some((p) => id.startsWith(p))) return false;
   if (DATED_SNAPSHOT_RE.test(id)) return false;
-  if (/image|audio|preview/.test(id)) return false;
+  if (/-(image|audio|realtime|transcription|embedding|moderation|search)/.test(id)) return false;
   return true;
 }
 

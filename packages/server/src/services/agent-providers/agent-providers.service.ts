@@ -1,5 +1,11 @@
 // Shared
-import type { AgentProvider, CreateAgentProvider, ProviderModel, UpdateAgentProvider } from '@atlas/shared';
+import type {
+  AgentProvider,
+  CreateAgentProvider,
+  ListModelsInline,
+  ProviderModel,
+  UpdateAgentProvider,
+} from '@atlas/shared';
 
 // Repositories
 import { agentProvidersRepository } from '../../db/repositories/index.js';
@@ -78,6 +84,27 @@ export class AgentProvidersService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       return [];
     }
+  }
+
+  /**
+   * Lists models using ephemeral credentials (no saved provider required).
+   * Throws on failure so the client can surface the real error message.
+   */
+  async listModelsInline(opts: ListModelsInline): Promise<ProviderModel[]> {
+    const fn = LIST_MODEL_FNS[opts.type];
+    if (!fn) return [];
+    const transient = {
+      id: '',
+      name: '',
+      type: opts.type,
+      apiKey: opts.apiKey ?? null,
+      baseUrl: opts.baseUrl ?? null,
+      modelName: '',
+      createdAt: '',
+      updatedAt: '',
+    } as AgentProvider;
+    const models = await withTimeout(fn(transient), 15_000, 'Model listing');
+    return models.sort((a, b) => a.label.localeCompare(b.label));
   }
 
   /** Tests connectivity to an agent provider. */

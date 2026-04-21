@@ -28,8 +28,15 @@ export const ProviderModelSchema = z.object({
   label: z.string(),
 });
 
+export const ListModelsInlineSchema = z.object({
+  type: ProviderTypeEnum,
+  apiKey: z.string().nullable().optional(),
+  baseUrl: z.string().nullable().optional(),
+});
+
 export type ProviderType = z.infer<typeof ProviderTypeEnum>;
 export type AgentProvider = z.infer<typeof AgentProviderSchema>;
 export type CreateAgentProvider = z.infer<typeof CreateAgentProviderSchema>;
 export type UpdateAgentProvider = z.infer<typeof UpdateAgentProviderSchema>;
 export type ProviderModel = z.infer<typeof ProviderModelSchema>;
+export type ListModelsInline = z.infer<typeof ListModelsInlineSchema>;
