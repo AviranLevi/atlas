@@ -1,5 +1,5 @@
 // React / library
-import { RotateCcw } from 'lucide-react';
+import { Info, RotateCcw } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 // Components
@@ -36,6 +36,8 @@ export function RerunDialog({ open, onOpenChange, workspace, onSuccess }: RerunD
     agent?.providerId ?? undefined,
   );
 
+  const isStructuredStage = workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
+
   // Sync model selection: prioritize workspace values on open, fall back to localStorage on runtime change
   const prevRuntimeRef = useRef(selectedRuntime);
   useEffect(() => {
@@ -45,11 +47,9 @@ export function RerunDialog({ open, onOpenChange, workspace, onSuccess }: RerunD
     prevRuntimeRef.current = selectedRuntime;
 
     if (!runtimeChanged) {
-      // Dialog just opened -- use workspace's saved model
       setSelectedRuntime(workspace.agentRuntime);
       setSelectedModel(workspace.model ?? DEFAULT_MODEL_VALUE);
     } else {
-      // User manually changed runtime -- fall back to localStorage
       const saved = localStorage.getItem(getModelStorageKey(selectedRuntime));
       setSelectedModel(saved ?? DEFAULT_MODEL_VALUE);
     }
@@ -103,6 +103,15 @@ export function RerunDialog({ open, onOpenChange, workspace, onSuccess }: RerunD
         </DialogHeader>
 
         <div className="space-y-4">
+          {isStructuredStage && workspace.model && (
+            <div className="flex gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <span className="text-muted-foreground">
+                The {workspace.workflowStage} stage used <span className="font-medium text-foreground">{workspace.model}</span> from the agent&apos;s API provider, not the runtime.
+              </span>
+            </div>
+          )}
+
           <RuntimeSelect
             runtimes={runtimes}
             isLoading={runtimesLoading}
@@ -120,6 +129,7 @@ export function RerunDialog({ open, onOpenChange, workspace, onSuccess }: RerunD
               providerModelsLoading={providerModelsLoading}
               onModelChange={handleModelChange}
               onCustomTextChange={setCustomModelText}
+              previousModel={workspace.model}
             />
           )}
 

@@ -144,18 +144,31 @@ export class WorkspaceControlService {
       }
 
       const taskId = workspace.taskId;
-      // Use the explicitly provided model, or fall back to the previous run's model
       const resolvedModel = model ?? workspace.model ?? undefined;
 
-      // Clean up the old workspace
+      // Capture workflow stage before cleanup destroys the workspace row.
+      // On failure the error handler disables the workflow on the task, so we
+      // need to re-enable it and restore the stage for retry.
+      const prevStage = workspace.workflowStage as 'brainstorm' | 'plan' | 'execute' | null | undefined;
+
       await this.cleanup(workspaceId);
 
-      // Reset task status so startWork can pick it up
-      await tasksService.update(taskId, { status: TASK_STATUS.TODO });
+      // Reset task status and restore workflow state so startWork routes to
+      // the correct stage (structured brainstorm/plan vs CLI execution).
+      await tasksService.update(taskId, {
+        status: TASK_STATUS.TODO,
+        ...(prevStage ? { workflowEnabled: true, workflowStage: prevStage } : {}),
+      });
 
-      // Lazy import to avoid circular dependency (spawn → advancement → spawn)
       const { workspaceSpawnService } = await import('../spawn/workspace-spawn.service.js');
-      return workspaceSpawnService.startWork(taskId, agentRuntimeId, undefined, resolvedModel);
+      return workspaceSpawnService.startWork(
+        taskId,
+        agentRuntimeId,
+        undefined,
+        resolvedModel,
+        undefined,
+        prevStage,
+      );
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;

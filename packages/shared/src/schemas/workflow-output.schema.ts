@@ -19,7 +19,7 @@ export const PlanOutputSchema = z.object({
   summary: z.string(),
   estimatedComplexity: z.enum(['low', 'medium', 'high']),
   steps: z.array(PlanStepSchema),
-  commitSteps: z.array(CommitStepSchema).optional().default([]),
+  commitSteps: z.array(CommitStepSchema).default([]),
   concerns: z.array(z.string()),
 });
 

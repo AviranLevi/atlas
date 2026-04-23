@@ -27,6 +27,8 @@ export type ModelSectionProps = {
   onModelChange: (value: string) => void;
   onCustomTextChange: (value: string) => void;
   showAgentDefault?: boolean;
+  /** When re-running, the model from the previous run — always shown as a selectable option. */
+  previousModel?: string | null;
 };
 
 export type WorkspaceCardProps = {
