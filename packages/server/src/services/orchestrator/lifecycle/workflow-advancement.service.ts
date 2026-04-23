@@ -141,6 +141,29 @@ export class WorkflowAdvancementService {
       throw new AppError('Failed to advance workflow from workspace', { cause: error });
     }
   }
+
+  /**
+   * Rejects the workflow output from a specific workspace. Terminates the
+   * workspace (status = 'stopped') and sends the task back to To Do, so the
+   * state machine no longer maps this workspace to `awaitingApproval` next
+   * time the user opens it.
+   */
+  async rejectWorkflowFromWorkspace(workspaceId: string): Promise<Workspace> {
+    const FUNCTION_NAME = 'rejectWorkflowFromWorkspace';
+    try {
+      const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+      workspacesRepository.update(workspace.id, {
+        status: 'stopped',
+        completedAt: workspace.completedAt ?? new Date().toISOString(),
+      });
+      await tasksService.update(workspace.taskId, { status: TASK_STATUS.TODO });
+      return workspacesRepository.findByIdOrThrow(workspace.id);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to reject workflow from workspace', { cause: error });
+    }
+  }
 }
 
 export const workflowAdvancementService = new WorkflowAdvancementService();

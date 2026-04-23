@@ -2,6 +2,7 @@
 import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -11,8 +12,7 @@ import { BrainstormOutputView } from './BrainstormOutputView';
 import { PlanOutputView } from './PlanOutputView';
 
 // Hooks
-import { useUpdateTask } from '@/hooks/use-tasks.hook';
-import { useAdvanceWorkflow } from '@/hooks/use-workspaces.hook';
+import { useAdvanceWorkflow, useRejectWorkflow } from '@/hooks/use-workspaces.hook';
 
 // Lib
 import { tryParseWorkflowOutput } from '@/lib/workflow-output';
@@ -38,14 +38,13 @@ type WorkflowApprovalPanelProps = {
 export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps) {
   const navigate = useNavigate();
   const advance = useAdvanceWorkflow();
-  const updateTask = useUpdateTask();
+  const reject = useRejectWorkflow();
 
   const stage = workspace.workflowStage;
-  if (!stage || stage === 'execute') return null;
-
   const structuredOutput = tryParseWorkflowOutput(workspace.output);
 
-  // Pre-select the recommended idea for brainstorm stage
+  // Pre-select the recommended idea for brainstorm stage.
+  // Hooks must run unconditionally — early return is AFTER all hook calls.
   const defaultIdea = useMemo(() => {
     if (structuredOutput?.stage !== 'brainstorm') return undefined;
     return structuredOutput.data.ideas.find((i) => i.recommended)?.title;
@@ -53,21 +52,33 @@ export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps)
 
   const [selectedIdea, setSelectedIdea] = useState<string | undefined>(defaultIdea);
 
+  // Guard goes here, after every hook, so the hook call order is always the same.
+  if (!stage || stage === 'execute') return null;
+
   const currentLabel = STAGE_LABELS[stage] ?? stage;
   const nextLabel = NEXT_STAGE_LABELS[stage];
 
   const handleApprove = () => {
     advance.mutate(
       { workspaceId: workspace.id, selectedApproach: selectedIdea },
-      { onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`) },
+      {
+        onSuccess: (newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`),
+        onError: (err) => toast.error(`Failed to advance: ${(err as Error).message}`),
+      },
     );
   };
 
   const handleReject = () => {
-    updateTask.mutate({ id: workspace.taskId, data: { status: 'To Do' } });
+    reject.mutate(workspace.id, {
+      onSuccess: () => {
+        toast.success('Rejected — task sent back to To Do');
+        navigate('/workspaces');
+      },
+      onError: (err) => toast.error(`Reject failed: ${(err as Error).message}`),
+    });
   };
 
-  const isPending = advance.isPending || updateTask.isPending;
+  const isPending = advance.isPending || reject.isPending;
 
   return (
     <div className="space-y-4">
@@ -100,9 +111,6 @@ export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps)
                 </>
               )}
             </p>
-            {(advance.isError || updateTask.isError) && (
-              <p className="mt-1 text-xs text-destructive">{((advance.error ?? updateTask.error) as Error).message}</p>
-            )}
           </div>
           <div className="flex shrink-0 gap-2">
             <Button variant="outline" size="sm" onClick={handleReject} disabled={isPending}>

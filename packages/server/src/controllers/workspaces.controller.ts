@@ -278,3 +278,9 @@ export async function advanceWorkspaceWorkflow(c: Context) {
   const workspace = await orchestratorService.advanceWorkflowFromWorkspace(c.req.param('id')!, body.selectedApproach);
   return c.json(workspace);
 }
+
+/** Rejects the workflow output from a specific workspace (stops the workspace and sends the task back to To Do). */
+export async function rejectWorkspaceWorkflow(c: Context) {
+  const workspace = await orchestratorService.rejectWorkflowFromWorkspace(c.req.param('id')!);
+  return c.json(workspace);
+}

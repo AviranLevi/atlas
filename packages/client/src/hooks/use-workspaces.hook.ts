@@ -107,6 +107,22 @@ export function useAdvanceWorkflow() {
   });
 }
 
+/**
+ * Rejects the workflow output from a specific workspace. Server marks the
+ * workspace as `stopped` and sends the task back to To Do atomically, so the
+ * view state machine stops mapping this workspace to `awaitingApproval`.
+ */
+export function useRejectWorkflow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/reject`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
 export function useStopWork() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -48,6 +48,11 @@ export class OrchestratorService {
     return workflowAdvancementService.advanceWorkflowFromWorkspace(workspaceId, selectedApproach);
   }
 
+  /** Rejects the workflow output from a specific workspace (stops workspace, sends task back to To Do). */
+  rejectWorkflowFromWorkspace(workspaceId: string): Promise<Workspace> {
+    return workflowAdvancementService.rejectWorkflowFromWorkspace(workspaceId);
+  }
+
   // ─── Control ──────────────────────────────────────────────────────────────
 
   /** Kills the agent process and optionally resets the task status. */
