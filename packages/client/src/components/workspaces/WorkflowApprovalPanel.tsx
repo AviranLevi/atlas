@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 // Components
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { MarkdownContent } from '@/components/ui/markdown-content';
 import { BrainstormOutputView } from './BrainstormOutputView';
 import { PlanOutputView } from './PlanOutputView';
 
@@ -77,6 +78,11 @@ export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps)
           selectedIdea={selectedIdea}
           onSelectIdea={setSelectedIdea}
         />
+      )}
+      {!structuredOutput && workspace.output && (
+        <div className="rounded-md border border-border bg-muted/30 p-4">
+          <MarkdownContent content={workspace.output} />
+        </div>
       )}
       <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
         <CardContent className="flex items-center justify-between gap-4 py-4">

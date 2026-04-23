@@ -316,14 +316,20 @@ export class WorktreeService {
 
       // Format fields: sha|shortSha|authorName|authorDate|subject
       // Separator chosen to be extremely unlikely in commit metadata.
-      // %x00 terminates the record (matches -z), and the numstat block for
-      // each commit follows the subject until the next NUL.
+      // %x00 is placed at the START of the format so it acts as a record
+      // separator between commits. Git emits:
+      //   <format>\n<numstat-lines>\n<format>\n<numstat-lines>...
+      // With the NUL as a terminator, the first record would hold only the
+      // header (no numstat), and every subsequent record would start with the
+      // previous commit's numstat followed by the next commit's header —
+      // misaligning the parser. Leading NUL yields clean [''/header+numstat]
+      // pairs after splitting.
       const FIELD_SEP = '\u001f';
-      const format = ['%H', '%h', '%an', '%aI', '%s'].join(FIELD_SEP);
+      const format = `%x00${['%H', '%h', '%an', '%aI', '%s'].join(FIELD_SEP)}`;
 
       let raw: string;
       try {
-        raw = execSync(`git log ${baseRef}..HEAD --format="${format}%x00" --numstat`, {
+        raw = execSync(`git log ${baseRef}..HEAD --format="${format}" --numstat`, {
           cwd: worktreePath,
           encoding: 'utf-8',
           maxBuffer: DIFF_MAX_BUFFER,
@@ -335,7 +341,7 @@ export class WorktreeService {
           `${FILE_PATH} :: ${FUNCTION_NAME} - ${baseRef}..HEAD failed, falling back to full HEAD history`,
           err,
         );
-        raw = execSync(`git log HEAD --format="${format}%x00" --numstat`, {
+        raw = execSync(`git log HEAD --format="${format}" --numstat`, {
           cwd: worktreePath,
           encoding: 'utf-8',
           maxBuffer: DIFF_MAX_BUFFER,

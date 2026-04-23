@@ -30,6 +30,9 @@ import {
   useOpenWorkspaceInEditor,
 } from '@/hooks/use-workspaces.hook';
 
+// Lib
+import { tryParseWorkflowOutput } from '@/lib/workflow-output';
+
 // Types
 import type { DiffComment } from '@atlas/shared';
 
@@ -76,6 +79,9 @@ export function WorkspaceDetailPage() {
   const isWorkflowAwaitingApproval =
     workspace.status === 'completed' &&
     (workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan');
+  // Structured stages store JSON in workspace.output; AgentOutput would show it as a raw blob.
+  // Hide it when structured output is parsed and displayed by WorkflowApprovalPanel already.
+  const hasStructuredOutput = isWorkflowAwaitingApproval && !!tryParseWorkflowOutput(workspace.output);
   const canReview = workspace.status === 'completed' && !isWorkflowAwaitingApproval;
   const canRerun = workspace.status === 'failed' || workspace.status === 'stopped' || workspace.status === 'completed';
   const canCleanup = !isActive && !isMerged && !isApproved;
@@ -177,7 +183,7 @@ export function WorkspaceDetailPage() {
 
       {isWorkflowAwaitingApproval && <WorkflowApprovalPanel workspace={workspace} />}
 
-      {(isActive || workspace.fullOutput || workspace.output) && (
+      {(isActive || workspace.fullOutput || workspace.output) && !hasStructuredOutput && (
         <AgentOutput
           text={isActive ? (streamedLog ?? '') : (workspace.fullOutput ?? workspace.output ?? '')}
           isLive={isActive}
