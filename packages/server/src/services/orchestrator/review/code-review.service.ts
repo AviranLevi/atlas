@@ -684,20 +684,24 @@ export class CodeReviewService {
               completedAt: new Date().toISOString(),
               currentStage: null,
             });
-            // Keep the task flow symmetric with requestChanges: once the
-            // implementer finishes, the task is ready for a fresh review,
-            // so it returns to In Review.
-            tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
-              logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to move task to In Review`, e);
-            });
             activityLogService.log({
               projectId: workspace.projectId,
               taskId: workspace.taskId,
               workspaceId,
               agentId: workspace.agentId,
               eventType: 'agent_completed',
-              description: 'Agent completed applying reviewer fixes',
+              description: 'Agent completed applying reviewer fixes — triggering AI re-review',
               metadata: {},
+            });
+            // Auto-trigger the AI reviewer so the user doesn't have to click
+            // "Run AI Review" manually after the implementer finishes. The
+            // prompt already told the agent "we will re-run the review
+            // afterward" — this fulfils that promise.
+            this.startAiReview(workspace.id, agentRuntimeId).catch((e) => {
+              logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to auto-trigger re-review`, e);
+              // Non-fatal: workspace is completed, review is pending, user
+              // can still click "Run AI Review" themselves.
+              tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch(() => {});
             });
           },
           onFailed,
