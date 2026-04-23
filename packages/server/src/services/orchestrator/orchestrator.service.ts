@@ -94,6 +94,14 @@ export class OrchestratorService {
     return codeReviewService.startAiReview(workspaceId, agentRuntimeId, autoFix);
   }
 
+  /**
+   * Spawns an implementer to apply the reviewer's requested fixes on a
+   * completed workspace whose review is `changes_requested`.
+   */
+  applyReviewFix(workspaceId: string, agentRuntimeId: string): Promise<Workspace> {
+    return codeReviewService.applyReviewFix(workspaceId, agentRuntimeId);
+  }
+
   /** Adds a review comment (or reply) to a workspace diff. */
   addDiffComment(
     workspaceId: string,

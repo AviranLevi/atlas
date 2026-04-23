@@ -7,6 +7,7 @@ import { streamSSE } from 'hono/streaming';
 // Shared
 import type {
   AddDiffComment,
+  ApplyReviewFix,
   CreatePullRequest,
   CreateWorkspace,
   EditDiffComment,
@@ -295,5 +296,17 @@ export async function rejectWorkspaceWorkflow(c: Context) {
 export async function startAiReviewForWorkspace(c: Context) {
   const { agentRuntimeId, autoFix } = getValidatedBody<StartAiReview>(c);
   const workspace = await orchestratorService.startAiReview(c.req.param('id')!, agentRuntimeId, autoFix ?? false);
+  return c.json(workspace);
+}
+
+/**
+ * Spawns an implementer on a completed workspace whose review is
+ * `changes_requested`, feeding the reviewer's notes + unchecked checklist
+ * items as prompt context. Resets the review to `pending` so the next
+ * reviewer cycle starts clean.
+ */
+export async function applyReviewFixForWorkspace(c: Context) {
+  const { agentRuntimeId } = getValidatedBody<ApplyReviewFix>(c);
+  const workspace = await orchestratorService.applyReviewFix(c.req.param('id')!, agentRuntimeId);
   return c.json(workspace);
 }

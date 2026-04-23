@@ -72,7 +72,7 @@ export function WorkspaceDetailPage() {
     );
   }
 
-  const view = deriveWorkspaceView(workspace);
+  const view = deriveWorkspaceView(workspace, review);
   const comments: DiffComment[] = Array.isArray(workspace.diffComments) ? workspace.diffComments : [];
 
   return (
@@ -121,6 +121,7 @@ export function WorkspaceDetailPage() {
         comments={comments}
         startAiReview={startAiReview}
         onOpenAiReview={() => setAiReviewOpen(true)}
+        onOpenFollowUp={() => setFollowUpOpen(true)}
       />
 
       <WorkspaceAgentOutput view={view} workspace={workspace} streamedLog={streamedLog} />

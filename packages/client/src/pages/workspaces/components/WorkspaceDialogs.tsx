@@ -66,6 +66,10 @@ export function WorkspaceDialogs({
           originalTaskName: workspace.taskName ?? 'Unknown task',
           workspaceId: workspace.id,
           output: workspace.output ?? undefined,
+          // Pipe reviewer notes through when the follow-up originates from a
+          // "changes_requested" verdict — the notes are the whole point of
+          // the follow-up in that flow, so losing them here is a bug.
+          reviewNotes: review?.status === 'changes_requested' ? review.notes : null,
         }}
       />
     </>

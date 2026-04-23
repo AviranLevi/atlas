@@ -1,5 +1,5 @@
 // React / library
-import { FolderOpen, Square, Trash2, RotateCcw, ListPlus } from 'lucide-react';
+import { Bot, FolderOpen, Square, Trash2, RotateCcw, ListPlus } from 'lucide-react';
 
 // Components
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,11 @@ export function WorkspaceDetailHeader({
 }: WorkspaceDetailHeaderProps) {
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const { canStop, canRerun, canFollowUp, canCleanup, canOpenInEditor } = view.caps;
+  // Single source of truth: the dedicated `aiReviewing` arm is the only
+  // state in which the header chip should flip from "Running" to
+  // "AI Reviewing". Inspecting workspace.status + review.status here
+  // would duplicate the decision.
+  const isReviewerRunning = view.kind === 'aiReviewing';
 
   return (
     <div className="flex items-start justify-between gap-4">
@@ -35,9 +40,24 @@ export function WorkspaceDetailHeader({
         <div className="space-y-1">
           <h1 className="text-xl font-bold tracking-tight">{workspace.taskName ?? 'Unknown task'}</h1>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className={meta.badgeClass}>
-              {meta.label}
-            </Badge>
+            {isReviewerRunning ? (
+              // Override the generic "Running" chip: the workspace row is
+              // `running`, but the reviewer — not the implementer — is what's
+              // live. `workspace.status` alone can't tell us that because the
+              // server reuses the row; `view.kind === 'aiReviewing'` is the
+              // single client-side signal that encodes it.
+              <Badge
+                variant="outline"
+                className="flex items-center gap-1.5 border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+              >
+                <Bot className="h-3.5 w-3.5" />
+                AI Reviewing
+              </Badge>
+            ) : (
+              <Badge variant="outline" className={meta.badgeClass}>
+                {meta.label}
+              </Badge>
+            )}
             {workspace.projectName && <span className="text-sm text-muted-foreground">{workspace.projectName}</span>}
             <span className="text-sm text-muted-foreground">{workspace.agentRuntime}</span>
           </div>

@@ -1,5 +1,5 @@
 // Shared
-import type { Workspace, WorkflowOutput, WorkflowStage } from '@atlas/shared';
+import type { Review, Workspace, WorkflowOutput, WorkflowStage } from '@atlas/shared';
 
 // Lib
 import { tryParseWorkflowOutput } from '@/lib/workflow-output';
@@ -49,6 +49,7 @@ export type Caps = {
  */
 export type WorkspaceView =
   | { kind: 'active'; stageCategory: StageCategory; caps: Caps }
+  | { kind: 'aiReviewing'; stageCategory: 'flow'; caps: Caps }
   | {
       kind: 'awaitingApproval';
       stageCategory: 'structured';
@@ -99,10 +100,43 @@ function stageCategoryOf(stage: WorkflowStage | null | undefined): StageCategory
  * plan doc; the tests in `packages/client/tests/workspace-view.test.ts`
  * mirror those tables row-for-row.
  */
-export function deriveWorkspaceView(workspace: Workspace): WorkspaceView {
+export function deriveWorkspaceView(workspace: Workspace, review?: Review | null): WorkspaceView {
   const status = workspace.status;
   const stage = workspace.workflowStage ?? null;
   const stageCategory = stageCategoryOf(stage);
+
+  // --- aiReviewing: reviewer agent is running on top of a completed flow ----
+  //
+  // Today the server mutates the same workspace row to `running` when it
+  // spawns a reviewer. The only client-visible signal that distinguishes
+  // reviewer-run from implementer-run is `review.status === 'pending'` with
+  // `reviewerType === 'agent'` while the workspace is live. The
+  // reviewerType guard matters: a human review can also be `pending` while
+  // an unrelated implementer run (e.g. a follow-up) is live, and without
+  // it the UI would lie and claim "AI Review in Progress" for a human
+  // review. `kind: 'aiReviewing'` is the single source of truth the header
+  // and diff section read off.
+  if (
+    status === 'running' &&
+    stageCategory === 'flow' &&
+    review?.status === 'pending' &&
+    review.reviewerType === 'agent'
+  ) {
+    return {
+      kind: 'aiReviewing',
+      stageCategory: 'flow',
+      caps: {
+        canStop: true,
+        canRerun: false,
+        canFollowUp: false,
+        canCleanup: false,
+        canOpenInEditor: true,
+        showCommits: true,
+        showDiff: true,
+        agentOutput: 'stream',
+      },
+    };
+  }
 
   // --- active: running or pending, any stage --------------------------------
   if (status === 'running' || status === 'pending') {

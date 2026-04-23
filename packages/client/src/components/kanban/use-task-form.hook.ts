@@ -68,7 +68,13 @@ export function useTaskForm({
       setPriority('Medium');
       setEstimate('M');
       setDefinitionOfDone('');
-      setNotes(followUpContext ? `Follow-up from: ${followUpContext.originalTaskName}` : '');
+      setNotes(
+        followUpContext
+          ? followUpContext.reviewNotes?.trim()
+            ? `Follow-up from: ${followUpContext.originalTaskName}\n\nReviewer notes:\n${followUpContext.reviewNotes}`
+            : `Follow-up from: ${followUpContext.originalTaskName}`
+          : '',
+      );
       setAgentId(NONE_VALUE);
       const autoProject = defaultProjectId ?? (projects.length === 1 ? projects[0].id : undefined);
       setProjectId(autoProject ?? NONE_VALUE);

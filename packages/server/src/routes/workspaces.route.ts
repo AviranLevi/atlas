@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 // Shared
 import {
   AddDiffCommentSchema,
+  ApplyReviewFixSchema,
   CreatePullRequestSchema,
   CreateWorkspaceSchema,
   EditDiffCommentSchema,
@@ -15,6 +16,7 @@ import { zValidator } from '@hono/zod-validator';
 // Controllers
 import {
   addWorkspaceComment,
+  applyReviewFixForWorkspace,
   completeWorkspace,
   createWorkspace,
   createWorkspacePullRequest,
@@ -68,4 +70,5 @@ export const workspacesRoute = new Hono()
   .post('/:id/advance', advanceWorkspaceWorkflow)
   .post('/:id/reject', rejectWorkspaceWorkflow)
   .post('/:id/start-ai-review', zValidator('json', StartAiReviewSchema), startAiReviewForWorkspace)
+  .post('/:id/apply-review-fix', zValidator('json', ApplyReviewFixSchema), applyReviewFixForWorkspace)
   .delete('/:id', deleteWorkspace);

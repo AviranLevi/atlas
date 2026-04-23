@@ -40,6 +40,12 @@ export type FollowUpContext = {
   originalTaskName: string;
   workspaceId: string;
   output?: string;
+  /**
+   * Optional reviewer notes to pre-fill into the follow-up task's `notes`
+   * field. Used when a user creates a follow-up from a `changes_requested`
+   * review verdict so the context isn't lost on the next task.
+   */
+  reviewNotes?: string | null;
 };
 
 export type TaskDialogProps = {

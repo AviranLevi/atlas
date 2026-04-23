@@ -36,6 +36,10 @@ export function WorkspaceBody(props: WorkspaceBodyProps) {
       ) : (
         <PlanOutputView plan={view.structured.data} />
       );
+    // aiReviewing reuses CodeReviewSection so the diff stays mounted while
+    // the reviewer agent is live. The banner inside CodeReviewSection picks
+    // up the "AI Review in Progress" chip off `review.status === 'pending'`.
+    case 'aiReviewing':
     case 'codeReview':
       return <CodeReviewSection {...props} />;
     default:
