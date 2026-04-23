@@ -8,7 +8,11 @@ import { workflowAdvancementService } from './lifecycle/workflow-advancement.ser
 import { workspaceControlService } from './lifecycle/workspace-control.service.js';
 import { workspaceCompletionService } from './lifecycle/workspace-completion.service.js';
 import { workspaceQueryService } from './lifecycle/workspace-query.service.js';
-import { codeReviewService } from './review/code-review.service.js';
+import { diffService } from './review/diff.service.js';
+import { diffCommentsService } from './review/diff-comments.service.js';
+import { requestChangesService } from './review/request-changes.service.js';
+import { aiReviewerService } from './review/ai-reviewer.service.js';
+import { applyReviewFixService } from './review/apply-review-fix.service.js';
 import { gitHistoryService } from './git-history/index.js';
 
 /**
@@ -81,17 +85,17 @@ export class OrchestratorService {
 
   /** Returns the git diff for a workspace (empty if worktree is gone). */
   getDiff(workspaceId: string): Promise<DiffResult> {
-    return codeReviewService.getDiff(workspaceId);
+    return diffService.getDiff(workspaceId);
   }
 
   /** Re-runs the agent on a completed workspace with review comments as context. */
   requestChanges(workspaceId: string): Promise<Workspace> {
-    return codeReviewService.requestChanges(workspaceId);
+    return requestChangesService.requestChanges(workspaceId);
   }
 
   /** Spawns a reviewer agent on an existing completed workspace. */
   startAiReview(workspaceId: string, agentRuntimeId: string, autoFix?: boolean): Promise<Workspace> {
-    return codeReviewService.startAiReview(workspaceId, agentRuntimeId, autoFix);
+    return aiReviewerService.startAiReview(workspaceId, agentRuntimeId, autoFix);
   }
 
   /**
@@ -99,7 +103,7 @@ export class OrchestratorService {
    * completed workspace whose review is `changes_requested`.
    */
   applyReviewFix(workspaceId: string, agentRuntimeId: string): Promise<Workspace> {
-    return codeReviewService.applyReviewFix(workspaceId, agentRuntimeId);
+    return applyReviewFixService.applyReviewFix(workspaceId, agentRuntimeId);
   }
 
   /** Adds a review comment (or reply) to a workspace diff. */
@@ -107,17 +111,17 @@ export class OrchestratorService {
     workspaceId: string,
     comment: { filename: string; lineNumber: number; lineContent: string; body: string; parentId?: string },
   ): Workspace {
-    return codeReviewService.addDiffComment(workspaceId, comment);
+    return diffCommentsService.addDiffComment(workspaceId, comment);
   }
 
   /** Edits an existing diff comment in a workspace. */
   editDiffComment(workspaceId: string, commentId: string, body: string): Workspace {
-    return codeReviewService.editDiffComment(workspaceId, commentId, body);
+    return diffCommentsService.editDiffComment(workspaceId, commentId, body);
   }
 
   /** Removes a diff comment from a workspace. */
   removeDiffComment(workspaceId: string, commentId: string): Workspace {
-    return codeReviewService.removeDiffComment(workspaceId, commentId);
+    return diffCommentsService.removeDiffComment(workspaceId, commentId);
   }
 
   // ─── Completion ───────────────────────────────────────────────────────────
