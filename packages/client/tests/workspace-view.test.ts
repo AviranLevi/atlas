@@ -8,84 +8,27 @@
  * The test data literally mirrors the tables in the plan doc; reviewing a
  * diff to either table means reviewing a diff to this file.
  */
-import { describe, it, expect } from 'vitest';
+// External
+import { describe, expect, it } from 'vitest';
 
-import type { Workspace, WorkspaceStatus, WorkflowStage } from '@atlas/shared';
-import {
-  deriveWorkspaceView,
-  assertNever,
-  type Caps,
-  type WorkspaceView,
-} from '../src/pages/workspaces/workspace-view';
+// Shared
+import type { WorkflowStage } from '@atlas/shared';
 
-// ---------- fixtures ---------------------------------------------------------
+// Under test
+import { assertNever, type Caps, deriveWorkspaceView } from '../src/pages/workspaces/workspace-view';
 
-const VALID_BRAINSTORM = JSON.stringify({
-  stage: 'brainstorm',
-  data: {
-    overview: 'overview',
-    ideas: [{ title: 'a', description: 'd', tradeoffs: [], recommended: true }],
-    recommendation: 'r',
-  },
-});
+// Test fixtures
+import { mkReview } from './mocks/review';
+import { mkWorkspace } from './mocks/workspace';
+import { MALFORMED_JSON, VALID_BRAINSTORM, WRONG_SHAPE_JSON, validFor } from './mocks/workflow-output';
+import type { FlowRow, StructuredRow } from './types/workspace-view.types';
 
-const VALID_PLAN = JSON.stringify({
-  stage: 'plan',
-  data: {
-    summary: 's',
-    estimatedComplexity: 'low',
-    steps: [{ order: 1, title: 't', file: null, description: 'd', risk: 'low' }],
-    commitSteps: [],
-    concerns: [],
-  },
-});
-
-const MALFORMED_JSON = '{ not json';
-const WRONG_SHAPE_JSON = JSON.stringify({ stage: 'nope', data: {} });
-
-function validFor(stage: 'brainstorm' | 'plan'): string {
-  return stage === 'brainstorm' ? VALID_BRAINSTORM : VALID_PLAN;
-}
-
-function mkWorkspace(
-  status: WorkspaceStatus,
-  workflowStage: WorkflowStage | null | undefined,
-  output: string | null = null,
-): Workspace {
-  return {
-    id: '00000000-0000-0000-0000-000000000001',
-    taskId: '00000000-0000-0000-0000-000000000002',
-    projectId: '00000000-0000-0000-0000-000000000003',
-    agentId: null,
-    agentRuntime: 'test',
-    model: null,
-    branchName: 'test',
-    baseBranch: null,
-    worktreePath: '/tmp/x',
-    pid: null,
-    status,
-    output,
-    workflowStage,
-    parentWorkspaceId: null,
-    providerFallbackReason: null,
-    diffComments: null,
-    startedAt: null,
-    completedAt: null,
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
-  };
-}
+// ---------- stage axes -------------------------------------------------------
 
 const FLOW_STAGES: (WorkflowStage | null | undefined)[] = ['execute', null, undefined];
 const STRUCTURED_STAGES: ('brainstorm' | 'plan')[] = ['brainstorm', 'plan'];
 
 // ---------- flow rows (7 × 3 = 21 cases) -------------------------------------
-
-type FlowRow = {
-  status: WorkspaceStatus;
-  expectedKind: WorkspaceView['kind'];
-  caps: Caps;
-};
 
 const FLOW_ROWS: FlowRow[] = [
   {
@@ -189,15 +132,6 @@ const FLOW_ROWS: FlowRow[] = [
 ];
 
 // ---------- structured rows (12 × 2 = 24 cases) ------------------------------
-
-type StructuredRow = {
-  label: string;
-  status: WorkspaceStatus;
-  /** null = validity is n/a (pending/running don't read output). */
-  validity: 'valid' | 'invalid' | null;
-  expectedKind: WorkspaceView['kind'];
-  caps: Caps;
-};
 
 const STRUCTURED_ROWS: StructuredRow[] = [
   {
@@ -413,8 +347,7 @@ describe('deriveWorkspaceView — structured rows', () => {
   for (const row of STRUCTURED_ROWS) {
     for (const stage of STRUCTURED_STAGES) {
       it(`${row.label} (stage=${stage}) → ${row.expectedKind}`, () => {
-        const output =
-          row.validity === 'valid' ? validFor(stage) : row.validity === 'invalid' ? MALFORMED_JSON : null;
+        const output = row.validity === 'valid' ? validFor(stage) : row.validity === 'invalid' ? MALFORMED_JSON : null;
         const view = deriveWorkspaceView(mkWorkspace(row.status, stage, output));
         expect(view.kind).toBe(row.expectedKind);
         expect(view.stageCategory).toBe('structured');
@@ -479,6 +412,80 @@ describe('deriveWorkspaceView — stage normalization', () => {
     expect(vNull).toEqual(vUndefined);
     expect(vExecute.stageCategory).toBe('flow');
     expect(vExecute.kind).toBe('codeReview');
+  });
+});
+
+// ---------- aiReviewing (review param) --------------------------------------
+
+describe('deriveWorkspaceView — aiReviewing arm', () => {
+  it('running + flow + review.pending (agent) → aiReviewing with review caps', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('pending'));
+    expect(view.kind).toBe('aiReviewing');
+    expect(view.stageCategory).toBe('flow');
+    expect(view.caps).toEqual<Caps>({
+      canStop: true,
+      canRerun: false,
+      canFollowUp: false,
+      canCleanup: false,
+      canOpenInEditor: true,
+      showCommits: true,
+      showDiff: true,
+      agentOutput: 'stream',
+    });
+  });
+
+  it('running + null stage + review.pending (agent) → aiReviewing (null workflowStage normalised to flow)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', null), mkReview('pending'));
+    expect(view.kind).toBe('aiReviewing');
+  });
+
+  it('running + flow + review undefined → active (fresh implementer run, no reviewer signal)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'));
+    expect(view.kind).toBe('active');
+  });
+
+  it('running + flow + review null → active (no review record at all)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), null);
+    expect(view.kind).toBe('active');
+  });
+
+  it('running + flow + review.changes_requested → active (user re-ran implementer after a verdict)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('changes_requested'));
+    expect(view.kind).toBe('active');
+  });
+
+  it('running + flow + review.approved → active (review already decided)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('approved'));
+    expect(view.kind).toBe('active');
+  });
+
+  it('running + structured + review.pending → active (reviewer only runs on flow)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'brainstorm'), mkReview('pending'));
+    expect(view.kind).toBe('active');
+    expect(view.stageCategory).toBe('structured');
+  });
+
+  it('pending + flow + review.pending → active (pending is implementer startup, not reviewer)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('pending', 'execute'), mkReview('pending'));
+    expect(view.kind).toBe('active');
+  });
+
+  it('completed + flow + review.pending → codeReview (not aiReviewing — reviewer has already exited)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('completed', 'execute'), mkReview('pending'));
+    expect(view.kind).toBe('codeReview');
+  });
+
+  // reviewerType gating: a pending human review + a live implementer
+  // (e.g. follow-up task running alongside an un-decided prior review)
+  // must NOT be mistaken for AI reviewing. The UI would otherwise lie.
+  it('running + flow + review.pending (human) → active (human reviewer, not AI)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('pending', 'human'));
+    expect(view.kind).toBe('active');
+  });
+
+  it('running + flow + review.pending (agent) → aiReviewing (explicit reviewerType check)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('pending', 'agent'));
+    expect(view.kind).toBe('aiReviewing');
   });
 });
 

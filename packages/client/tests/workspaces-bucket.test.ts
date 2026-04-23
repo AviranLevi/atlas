@@ -4,49 +4,22 @@
  * 7 status × 4 stages (brainstorm | plan | execute | null) = 28 cases.
  * Every workspace lands in exactly one bucket; the sum of counts equals total.
  */
-import { describe, it, expect } from 'vitest';
+// External
+import { describe, expect, it } from 'vitest';
 
-import type { Workspace, WorkspaceStatus, WorkflowStage } from '@atlas/shared';
-import {
-  bucketOfWorkspace,
-  type WorkspaceBucket,
-} from '../src/pages/workspaces/workspaces.constants';
+// Shared
+import type { WorkflowStage } from '@atlas/shared';
 
-function mkWorkspace(status: WorkspaceStatus, workflowStage: WorkflowStage | null): Workspace {
-  return {
-    id: '00000000-0000-0000-0000-000000000001',
-    taskId: '00000000-0000-0000-0000-000000000002',
-    projectId: '00000000-0000-0000-0000-000000000003',
-    agentId: null,
-    agentRuntime: 'test',
-    model: null,
-    branchName: 'test',
-    baseBranch: null,
-    worktreePath: '/tmp/x',
-    pid: null,
-    status,
-    output: null,
-    workflowStage,
-    parentWorkspaceId: null,
-    providerFallbackReason: null,
-    diffComments: null,
-    startedAt: null,
-    completedAt: null,
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
-  };
-}
+// Under test
+import { bucketOfWorkspace, type WorkspaceBucket } from '../src/pages/workspaces/workspaces.constants';
+
+// Test fixtures
+import { mkWorkspace } from './mocks/workspace';
+import type { BucketRow } from './types/workspaces-bucket.types';
 
 const STAGES: (WorkflowStage | null)[] = ['brainstorm', 'plan', 'execute', null];
 
-type Row = {
-  status: WorkspaceStatus;
-  // Per-stage expected bucket. `completed` differs by stage; all other statuses
-  // collapse to the same bucket regardless of stage.
-  byStage: Record<'brainstorm' | 'plan' | 'execute' | 'null', WorkspaceBucket>;
-};
-
-const ROWS: Row[] = [
+const ROWS: BucketRow[] = [
   {
     status: 'pending',
     byStage: { brainstorm: 'active', plan: 'active', execute: 'active', null: 'active' },
