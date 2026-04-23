@@ -156,9 +156,7 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
   };
 
   const filteredAgents =
-    mentionQuery !== null
-      ? agents.filter((a) => a.name.toLowerCase().includes(mentionQuery.toLowerCase()))
-      : [];
+    mentionQuery !== null ? agents.filter((a) => a.name.toLowerCase().includes(mentionQuery.toLowerCase())) : [];
 
   const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !disabled;
 
@@ -176,8 +174,7 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
         {mentionedAgent && (
           <div className="flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-md border bg-muted px-2 py-0.5 text-xs font-medium">
-              <Bot className="h-3 w-3" />
-              @{mentionedAgent.name}
+              <Bot className="h-3 w-3" />@{mentionedAgent.name}
               <button
                 type="button"
                 onClick={() => setMentionedAgent(null)}

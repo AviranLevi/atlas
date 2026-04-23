@@ -44,10 +44,7 @@ export function ModelSection({
 
   const showPreviousModel = useMemo(() => {
     if (!previousModel || previousModel === DEFAULT_MODEL_VALUE) return null;
-    const allValues = new Set([
-      ...presets.map((p: ModelPreset) => p.value),
-      ...extraModels.map((m) => m.value),
-    ]);
+    const allValues = new Set([...presets.map((p: ModelPreset) => p.value), ...extraModels.map((m) => m.value)]);
     return allValues.has(previousModel) ? null : previousModel;
   }, [previousModel, presets, extraModels]);
 
@@ -95,9 +92,7 @@ export function ModelSection({
               Default{runtime.defaultModel ? ` (${runtime.defaultModel})` : ''}
             </span>
           </SelectItem>
-          {showPreviousModel && (
-            <SelectItem value={showPreviousModel}>{showPreviousModel} (previous run)</SelectItem>
-          )}
+          {showPreviousModel && <SelectItem value={showPreviousModel}>{showPreviousModel} (previous run)</SelectItem>}
           {presets.length > 0 && (
             <SelectGroup>
               <SelectLabel className="text-xs text-muted-foreground">Presets</SelectLabel>

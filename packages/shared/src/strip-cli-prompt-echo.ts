@@ -6,8 +6,7 @@ const LEADING_USER = /^<user>[\s\S]*?<\/user>\s*/i;
  * Some models output it at the very start of their reply (no leading newline) or in the middle,
  * so we match it at position 0 OR after a newline, and do NOT require end-of-string.
  */
-const TRAILING_INSTRUCTION =
-  /(?:^|\n)Respond to the user's latest message\.[\s\S]*?only your answer to the user\.\s*/i;
+const TRAILING_INSTRUCTION = /(?:^|\n)Respond to the user's latest message\.[\s\S]*?only your answer to the user\.\s*/i;
 
 /**
  * Removes leading prompt-echo blocks (`<system>`, `<conversation_history>`, `<user>`) and

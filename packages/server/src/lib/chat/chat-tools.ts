@@ -340,7 +340,9 @@ export async function executeTool(name: string, args: Record<string, unknown>, c
         const MAX_BYTES = 100_000; // 100 KB cap — avoids sending huge build artifacts
         const stat = fs.statSync(fullPath);
         if (stat.size > MAX_BYTES) {
-          return { error: `File is too large to read (${Math.round(stat.size / 1024)} KB). Read a specific range instead.` };
+          return {
+            error: `File is too large to read (${Math.round(stat.size / 1024)} KB). Read a specific range instead.`,
+          };
         }
         const content = fs.readFileSync(fullPath, 'utf-8');
         return { relativePath, content };

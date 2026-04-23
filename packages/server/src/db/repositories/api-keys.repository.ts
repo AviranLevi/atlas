@@ -63,11 +63,7 @@ export class ApiKeysRepository {
   updateLastUsed(id: string): void {
     const FUNCTION_NAME = 'updateLastUsed';
     try {
-      this.db
-        .update(apiKeys)
-        .set({ lastUsedAt: new Date().toISOString() })
-        .where(eq(apiKeys.id, id))
-        .run();
+      this.db.update(apiKeys).set({ lastUsedAt: new Date().toISOString() }).where(eq(apiKeys.id, id)).run();
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to update API key last used', { cause: error });

@@ -46,16 +46,12 @@ export function DocsSidebar({
               type="button"
               onClick={() => onSelectAiItem(type)}
               className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-                active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-foreground hover:bg-muted'
+                active ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
               }`}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />
               <span className="min-w-0 truncate">{cfg.label}</span>
-              {!existing && (
-                <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">New</span>
-              )}
+              {!existing && <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">New</span>}
             </button>
           );
         })}
@@ -72,9 +68,7 @@ export function DocsSidebar({
                 type="button"
                 onClick={() => onSelectDoc(doc.id)}
                 className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-                  selectedDocId === doc.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted'
+                  selectedDocId === doc.id ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
                 }`}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -95,9 +89,7 @@ export function DocsSidebar({
               type="button"
               onClick={() => onSelectDoc(doc.id)}
               className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-                selectedDocId === doc.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-foreground hover:bg-muted'
+                selectedDocId === doc.id ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
               }`}
             >
               <Icon className="h-3.5 w-3.5 shrink-0" />

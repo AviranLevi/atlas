@@ -3,7 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
 // Services
-import { orchestratorService } from '../services/index.js';
+import { orchestratorService, tasksService } from '../services/index.js';
 
 // Executors
 import { executorRegistry } from '../executors/index.js';
@@ -40,7 +40,12 @@ export function registerWorkspaceTools(server: McpServer) {
       }),
     },
     async ({ taskId, agentRuntimeId, baseBranch, model, providerId }) => {
-      const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model, providerId);
+      // Persist the chosen provider on the task — downstream services read
+      // from `task.workflowProviderId`, not from a passthrough parameter.
+      if (providerId) {
+        await tasksService.update(taskId, { workflowProviderId: providerId });
+      }
+      const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model);
       return { content: [{ type: 'text' as const, text: JSON.stringify(workspace, null, 2) }] };
     },
   );

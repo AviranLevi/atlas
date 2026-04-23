@@ -133,8 +133,16 @@ export class WorkspaceControlService {
     }
   }
 
-  /** Re-run a failed or completed workspace: clean up old one, start fresh. */
-  async rerun(workspaceId: string, agentRuntimeId: string, model?: string): Promise<Workspace> {
+  /**
+   * Re-run a failed, stopped, or completed workspace.
+   *
+   * Always reuses the prior workspace's runtime and model, and relies on the
+   * task record (`task.workflowProviderId`, preserved across cleanup) to
+   * reconstruct the same provider the original run used. This makes rerun
+   * deterministic: API-provider runs stay on the API provider, CLI runs stay
+   * on CLI, no silent surprises.
+   */
+  async rerun(workspaceId: string): Promise<Workspace> {
     const FUNCTION_NAME = 'rerun';
     try {
       const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
@@ -144,7 +152,8 @@ export class WorkspaceControlService {
       }
 
       const taskId = workspace.taskId;
-      const resolvedModel = model ?? workspace.model ?? undefined;
+      const agentRuntimeId = workspace.agentRuntime;
+      const resolvedModel = workspace.model ?? undefined;
 
       // Capture workflow stage before cleanup destroys the workspace row.
       // On failure the error handler disables the workflow on the task, so we
@@ -161,14 +170,7 @@ export class WorkspaceControlService {
       });
 
       const { workspaceSpawnService } = await import('../spawn/workspace-spawn.service.js');
-      return workspaceSpawnService.startWork(
-        taskId,
-        agentRuntimeId,
-        undefined,
-        resolvedModel,
-        undefined,
-        prevStage,
-      );
+      return workspaceSpawnService.startWork(taskId, agentRuntimeId, undefined, resolvedModel, prevStage);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;

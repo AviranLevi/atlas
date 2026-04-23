@@ -1,5 +1,14 @@
 // Shared
-import type { AgentBehavior, CommitStep, GlobalInstructions, Memory, Phase, Project, ProjectDoc, Task } from '@atlas/shared';
+import type {
+  AgentBehavior,
+  CommitStep,
+  GlobalInstructions,
+  Memory,
+  Phase,
+  Project,
+  ProjectDoc,
+  Task,
+} from '@atlas/shared';
 
 // Services
 import type { AgentContext } from '../agents/agents.types.js';

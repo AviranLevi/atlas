@@ -129,9 +129,7 @@ export class PromptBuilderService {
       ? []
       : await this.getLegacyUniqueMemories(allProjectMemories, params.agentId, pinnedIds);
 
-    const commitPlan = params.workflowStage === 'execute'
-      ? this.loadCommitPlanForTask(params.taskId)
-      : null;
+    const commitPlan = params.workflowStage === 'execute' ? this.loadCommitPlanForTask(params.taskId) : null;
 
     return {
       task,

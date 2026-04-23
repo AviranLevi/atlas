@@ -1,5 +1,5 @@
 // React / library
-import { Clock, GitBranch, Square, Terminal, Trash2 } from 'lucide-react';
+import { AlertTriangle, Clock, GitBranch, Square, Terminal, Trash2 } from 'lucide-react';
 
 // Components
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,21 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
               <Badge variant="outline" className={`${config.className} text-[10px] px-1.5 py-0`}>
                 {config.label}
               </Badge>
+              {workspace.providerFallbackReason &&
+                (workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan') && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                      >
+                        <AlertTriangle className="mr-1 h-2.5 w-2.5" />
+                        CLI fallback
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>{workspace.providerFallbackReason}</TooltipContent>
+                  </Tooltip>
+                )}
               {workspace.projectName && (
                 <span className="text-muted-foreground text-[11px] truncate">{workspace.projectName}</span>
               )}

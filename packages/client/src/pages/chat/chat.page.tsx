@@ -49,7 +49,11 @@ export function ChatPage() {
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedExecutorId, setSelectedExecutorId] = useState('');
   const [creatingChat, setCreatingChat] = useState(false);
-  const pendingMessageRef = useRef<{ content: string; attachments?: ChatAttachment[]; mentionedAgentId?: string } | null>(null);
+  const pendingMessageRef = useRef<{
+    content: string;
+    attachments?: ChatAttachment[];
+    mentionedAgentId?: string;
+  } | null>(null);
 
   const { data: providerModels = [], isLoading: modelsLoading } = useProviderModels(
     backendType === 'api' ? selectedProviderId || undefined : undefined,

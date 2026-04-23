@@ -22,7 +22,13 @@ type AllProjectsViewProps = {
   onSelectDoc: (id: string | null) => void;
 };
 
-export function AllProjectsView({ groupedByProject, projectMap, selectedDocId, selectedDoc, onSelectDoc }: AllProjectsViewProps) {
+export function AllProjectsView({
+  groupedByProject,
+  projectMap,
+  selectedDocId,
+  selectedDoc,
+  onSelectDoc,
+}: AllProjectsViewProps) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const toggleCollapse = (projectId: string) => {

@@ -24,9 +24,7 @@ export function AiTypePrompt({ type, onGenerate, isGenerating }: AiTypePromptPro
       <h2 className="text-lg font-semibold">{cfg.label}</h2>
       <div className="flex h-64 items-center justify-center rounded-lg border border-dashed">
         <div className="text-center space-y-3">
-          <p className="text-sm text-muted-foreground">
-            This diagram hasn't been generated yet.
-          </p>
+          <p className="text-sm text-muted-foreground">This diagram hasn't been generated yet.</p>
           <Button onClick={onGenerate} disabled={isGenerating}>
             {isGenerating ? (
               <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />

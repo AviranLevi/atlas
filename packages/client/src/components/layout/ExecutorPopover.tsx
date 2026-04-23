@@ -125,9 +125,7 @@ export function ExecutorPopover({ executor, onRecheck, isRechecking }: ExecutorP
                     {executor.latestVersion} available
                   </Badge>
                 </div>
-                {executor.setup && (
-                  <CopyCommand label="Update command" command={executor.setup.install} />
-                )}
+                {executor.setup && <CopyCommand label="Update command" command={executor.setup.install} />}
               </div>
             )}
           {executor.binaryPath && (

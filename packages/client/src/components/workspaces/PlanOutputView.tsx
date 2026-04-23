@@ -29,9 +29,7 @@ export function PlanOutputView({ plan }: PlanOutputViewProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-semibold">Implementation Plan</h3>
-        <Badge className={COMPLEXITY_COLORS[plan.estimatedComplexity]}>
-          {plan.estimatedComplexity} complexity
-        </Badge>
+        <Badge className={COMPLEXITY_COLORS[plan.estimatedComplexity]}>{plan.estimatedComplexity} complexity</Badge>
       </div>
 
       <p className="text-sm text-muted-foreground">{plan.summary}</p>
@@ -69,7 +67,9 @@ export function PlanOutputView({ plan }: PlanOutputViewProps) {
           <CardContent>
             <ul className="list-disc pl-4 space-y-1">
               {plan.concerns.map((concern, i) => (
-                <li key={i} className="text-sm text-muted-foreground">{concern}</li>
+                <li key={i} className="text-sm text-muted-foreground">
+                  {concern}
+                </li>
               ))}
             </ul>
           </CardContent>
@@ -82,9 +82,7 @@ export function PlanOutputView({ plan }: PlanOutputViewProps) {
             <GitCommit className="h-4 w-4 text-muted-foreground" />
             Commit Plan
           </h3>
-          <p className="text-xs text-muted-foreground">
-            The execute agent will follow these atomic commits in order.
-          </p>
+          <p className="text-xs text-muted-foreground">The execute agent will follow these atomic commits in order.</p>
           <div className="space-y-2">
             {plan.commitSteps.map((step) => (
               <div key={step.step} className="flex gap-3 rounded-md border px-3 py-2 text-sm">

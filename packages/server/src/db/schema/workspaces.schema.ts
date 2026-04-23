@@ -29,6 +29,10 @@ export const workspaces = sqliteTable('workspaces', {
   output: text('output'),
   workflowStage: text('workflow_stage'),
   parentWorkspaceId: text('parent_workspace_id'), // FK enforced via migration, not ORM (self-ref causes TS circular type)
+  // Set when a structured brainstorm/plan stage couldn't resolve an API
+  // provider and silently fell back to CLI execution. Surfaced in the UI so
+  // users understand why they got prose output instead of structured JSON.
+  providerFallbackReason: text('provider_fallback_reason'),
   diffComments: text('diff_comments'), // JSON: [{id, filename, lineNumber, lineContent, body, createdAt}]
   inputTokens: integer('input_tokens'),
   outputTokens: integer('output_tokens'),

@@ -1,5 +1,10 @@
 // Shared
-import type { ImportSummary, MarketplaceListing, MarketplaceSearchParams, MarketplaceSearchResult } from '@atlas/shared';
+import type {
+  ImportSummary,
+  MarketplaceListing,
+  MarketplaceSearchParams,
+  MarketplaceSearchResult,
+} from '@atlas/shared';
 import { AtlasPackageSchema, MarketplaceSearchResultSchema } from '@atlas/shared';
 
 // Services

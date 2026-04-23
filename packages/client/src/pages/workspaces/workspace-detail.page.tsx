@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 // Components
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { Button } from '@/components/ui/button';
+import { CliFallbackBanner } from '@/components/workspaces/CliFallbackBanner';
 import { RerunDialog } from '@/components/workspaces/RerunDialog';
 import { WorkspaceLineage } from '@/components/workspaces/WorkspaceLineage';
 import { WorkflowApprovalPanel } from '@/components/workspaces/WorkflowApprovalPanel';
@@ -107,6 +108,8 @@ export function WorkspaceDetailPage() {
       />
 
       {lineage.length > 1 && <WorkspaceLineage lineage={lineage} currentId={workspace.id} />}
+
+      <CliFallbackBanner workspace={workspace} />
 
       <WorkspaceInfoCards workspace={workspace} />
 

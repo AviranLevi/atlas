@@ -93,18 +93,12 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
               <table className="w-full text-sm border-collapse">{children}</table>
             </div>
           ),
-          thead: ({ children }) => (
-            <thead className="border-b border-border bg-muted/30">{children}</thead>
-          ),
+          thead: ({ children }) => <thead className="border-b border-border bg-muted/30">{children}</thead>,
           th: ({ children }) => (
-            <th className="px-3 py-1.5 text-left text-xs font-semibold text-muted-foreground">
-              {children}
-            </th>
+            <th className="px-3 py-1.5 text-left text-xs font-semibold text-muted-foreground">{children}</th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-1.5 text-sm text-foreground border-b border-border/50">
-              {children}
-            </td>
+            <td className="px-3 py-1.5 text-sm text-foreground border-b border-border/50">{children}</td>
           ),
           pre: ({ children }) => <div className="my-2">{children}</div>,
         }}

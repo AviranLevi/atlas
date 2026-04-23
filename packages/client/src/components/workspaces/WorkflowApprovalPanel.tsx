@@ -83,10 +83,16 @@ export function WorkflowApprovalPanel({ workspace }: WorkflowApprovalPanelProps)
           <div>
             <p className="text-sm font-semibold">{currentLabel} stage complete — awaiting your approval</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {stage === 'brainstorm'
-                ? <>Select an approach above, then approve to continue to the <strong>{nextLabel}</strong> stage.</>
-                : <>Review the plan above, then approve to continue to the <strong>{nextLabel}</strong> stage, or reject to send the task back to To Do.</>
-              }
+              {stage === 'brainstorm' ? (
+                <>
+                  Select an approach above, then approve to continue to the <strong>{nextLabel}</strong> stage.
+                </>
+              ) : (
+                <>
+                  Review the plan above, then approve to continue to the <strong>{nextLabel}</strong> stage, or reject
+                  to send the task back to To Do.
+                </>
+              )}
             </p>
             {(advance.isError || updateTask.isError) && (
               <p className="mt-1 text-xs text-destructive">{((advance.error ?? updateTask.error) as Error).message}</p>

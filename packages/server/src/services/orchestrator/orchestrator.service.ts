@@ -18,25 +18,22 @@ import { gitHistoryService } from './git-history/index.js';
 export class OrchestratorService {
   // ─── Spawn ────────────────────────────────────────────────────────────────
 
-  /** Creates a worktree, spawns the agent process, and opens a workspace. */
+  /**
+   * Creates a worktree, spawns the agent process, and opens a workspace.
+   *
+   * Provider is resolved from the task itself (`task.workflowProviderId`,
+   * then `task.agentId.providerId`). Callers who want a specific provider
+   * must persist it to `task.workflowProviderId` before calling this.
+   */
   startWork(
     taskId: string,
     agentRuntimeId: string,
     baseBranch?: string,
     model?: string,
-    providerId?: string,
     workflowStage?: 'brainstorm' | 'plan' | 'execute' | null,
     parentWorkspaceId?: string,
   ): Promise<Workspace> {
-    return workspaceSpawnService.startWork(
-      taskId,
-      agentRuntimeId,
-      baseBranch,
-      model,
-      providerId,
-      workflowStage,
-      parentWorkspaceId,
-    );
+    return workspaceSpawnService.startWork(taskId, agentRuntimeId, baseBranch, model, workflowStage, parentWorkspaceId);
   }
 
   // ─── Workflow advancement ──────────────────────────────────────────────────
@@ -63,9 +60,16 @@ export class OrchestratorService {
     return workspaceControlService.cleanup(workspaceId);
   }
 
-  /** Re-runs a failed or completed workspace: clean up old one, start fresh. */
-  rerun(workspaceId: string, agentRuntimeId: string, model?: string): Promise<Workspace> {
-    return workspaceControlService.rerun(workspaceId, agentRuntimeId, model);
+  /**
+   * Re-runs a failed, stopped, or completed workspace.
+   *
+   * The new workspace inherits runtime, model, and provider from the original
+   * run verbatim — there are no overrides. Provider is resolved via
+   * `task.workflowProviderId` (preserved by cleanup), so API-provider runs
+   * stay on the API provider and CLI runs stay on CLI.
+   */
+  rerun(workspaceId: string): Promise<Workspace> {
+    return workspaceControlService.rerun(workspaceId);
   }
 
   // ─── Code review ──────────────────────────────────────────────────────────

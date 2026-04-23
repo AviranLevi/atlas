@@ -47,7 +47,13 @@ export function ApiKeysTab() {
               <CardTitle className="text-lg">API Keys</CardTitle>
               <CardDescription>Manage keys for remote access to your Atlas instance</CardDescription>
             </div>
-            <Button size="sm" onClick={() => { setShowCreate(true); setNewRawKey(null); }}>
+            <Button
+              size="sm"
+              onClick={() => {
+                setShowCreate(true);
+                setNewRawKey(null);
+              }}
+            >
               <Plus className="mr-1.5 h-4 w-4" />
               New Key
             </Button>
@@ -58,15 +64,13 @@ export function ApiKeysTab() {
             <div className="rounded-lg border p-4 space-y-3">
               {!newRawKey ? (
                 <div className="flex gap-2">
-                  <Input
-                    placeholder="Key name..."
-                    value={newKeyName}
-                    onChange={(e) => setNewKeyName(e.target.value)}
-                  />
+                  <Input placeholder="Key name..." value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} />
                   <Button onClick={handleCreate} disabled={createKey.isPending || !newKeyName.trim()}>
                     {createKey.isPending ? 'Creating...' : 'Create'}
                   </Button>
-                  <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
+                  <Button variant="ghost" onClick={() => setShowCreate(false)}>
+                    Cancel
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -79,7 +83,14 @@ export function ApiKeysTab() {
                   <p className="text-xs text-amber-600 dark:text-amber-400">
                     Save this key now — it will not be shown again.
                   </p>
-                  <Button variant="outline" size="sm" onClick={() => { setShowCreate(false); setNewRawKey(null); }}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowCreate(false);
+                      setNewRawKey(null);
+                    }}
+                  >
                     Done
                   </Button>
                 </div>
@@ -89,9 +100,7 @@ export function ApiKeysTab() {
 
           {isLoading && <p className="text-sm text-muted-foreground">Loading keys...</p>}
 
-          {keys.length === 0 && !isLoading && (
-            <p className="text-sm text-muted-foreground">No API keys yet.</p>
-          )}
+          {keys.length === 0 && !isLoading && <p className="text-sm text-muted-foreground">No API keys yet.</p>}
 
           {keys.map((key) => (
             <div key={key.id} className="flex items-center justify-between rounded-lg border p-3">

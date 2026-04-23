@@ -113,8 +113,8 @@ export function AgentOutput({
         </div>
       </div>
 
-      {!collapsed && (
-        rawMode ? (
+      {!collapsed &&
+        (rawMode ? (
           <pre className="max-h-[600px] overflow-auto px-4 py-3 text-xs font-mono text-foreground/80 whitespace-pre-wrap wrap-break-word leading-relaxed">
             {stripAnsi(stripCliPromptEchoStreaming(text))}
           </pre>
@@ -135,8 +135,7 @@ export function AgentOutput({
             })}
             <div ref={bottomRef} />
           </div>
-        )
-      )}
+        ))}
     </div>
   );
 }

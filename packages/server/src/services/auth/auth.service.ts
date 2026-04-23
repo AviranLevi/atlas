@@ -45,7 +45,13 @@ export class AuthService {
       const row = apiKeysRepository.findByHash(keyHash);
       if (!row) return null;
       apiKeysRepository.updateLastUsed(row.id);
-      return { id: row.id, name: row.name, keyPrefix: row.keyPrefix, createdAt: row.createdAt, lastUsedAt: new Date().toISOString() };
+      return {
+        id: row.id,
+        name: row.name,
+        keyPrefix: row.keyPrefix,
+        createdAt: row.createdAt,
+        lastUsedAt: new Date().toISOString(),
+      };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       return null;

@@ -7,7 +7,6 @@ import {
   CreatePullRequestSchema,
   CreateWorkspaceSchema,
   EditDiffCommentSchema,
-  RerunWorkspaceSchema,
   RevertWorkspaceSchema,
 } from '@atlas/shared';
 import { zValidator } from '@hono/zod-validator';
@@ -55,7 +54,7 @@ export const workspacesRoute = new Hono()
   .post('/:id/request-changes', requestWorkspaceChanges)
   .post('/:id/merge', mergeWorkspace)
   .post('/:id/complete', completeWorkspace)
-  .post('/:id/rerun', zValidator('json', RerunWorkspaceSchema), rerunWorkspace)
+  .post('/:id/rerun', rerunWorkspace)
   .post('/:id/create-pr', zValidator('json', CreatePullRequestSchema), createWorkspacePullRequest)
   .post('/:id/comments', zValidator('json', AddDiffCommentSchema), addWorkspaceComment)
   .post('/:id/comments/:commentId', zValidator('json', EditDiffCommentSchema), editWorkspaceComment)

@@ -155,19 +155,17 @@ export class WorktreeService {
       if (allFiles.length === 0) return emptyResult;
 
       // Pass 2: JS filter — single source of truth for exclusions
-      const keep = allFiles.filter(
-        (f) => !DIFF_EXCLUDE_PATTERNS.some((p) => minimatch(f, p, { dot: true })),
-      );
+      const keep = allFiles.filter((f) => !DIFF_EXCLUDE_PATTERNS.some((p) => minimatch(f, p, { dot: true })));
       if (keep.length === 0) return emptyResult;
 
       // numstat with file list as positional args after '--'.
       // execFileSync bypasses the shell so filenames with quotes/spaces are safe.
       // git diff does not support --pathspec-from-file.
-      const numstatRaw = execFileSync(
-        'git',
-        ['diff', diffRef, '--numstat', '--', ...keep],
-        { cwd: worktreePath, encoding: 'utf-8', maxBuffer: 1 * 1024 * 1024 },
-      ).trim();
+      const numstatRaw = execFileSync('git', ['diff', diffRef, '--numstat', '--', ...keep], {
+        cwd: worktreePath,
+        encoding: 'utf-8',
+        maxBuffer: 1 * 1024 * 1024,
+      }).trim();
 
       const files: DiffFile[] = [];
       const diffKeep: string[] = [];
@@ -194,11 +192,11 @@ export class WorktreeService {
 
       // Pass 3: full diff only for non-capped files
       if (diffKeep.length > 0) {
-        const diffOutput = execFileSync(
-          'git',
-          ['diff', diffRef, '--', ...diffKeep],
-          { cwd: worktreePath, encoding: 'utf-8', maxBuffer: DIFF_MAX_BUFFER },
-        ).trim();
+        const diffOutput = execFileSync('git', ['diff', diffRef, '--', ...diffKeep], {
+          cwd: worktreePath,
+          encoding: 'utf-8',
+          maxBuffer: DIFF_MAX_BUFFER,
+        }).trim();
 
         const filePatchMap = this.parseDiffPatches(diffOutput);
         for (const file of files) {

@@ -44,6 +44,7 @@ export const WorkspaceSchema = z.object({
   output: z.string().nullable(),
   workflowStage: z.enum(['brainstorm', 'plan', 'execute']).nullable().optional(),
   parentWorkspaceId: z.string().uuid().nullable().optional(),
+  providerFallbackReason: z.string().nullable().optional(),
   diffComments: z.array(DiffCommentSchema).nullable().optional(),
   startedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
@@ -66,10 +67,11 @@ export const CreateWorkspaceSchema = z.object({
   workflowEnabled: z.boolean().optional(),
 });
 
-export const RerunWorkspaceSchema = z.object({
-  agentRuntimeId: z.string().min(1),
-  model: z.string().min(1).optional(),
-});
+// Rerun takes no body: the server reuses the prior workspace's runtime and
+// model, and the provider is read from `task.workflowProviderId`. Keeping an
+// empty object schema means the validator accepts `{}` (or any superset we
+// ignore at the controller).
+export const RerunWorkspaceSchema = z.object({}).passthrough();
 
 export const CreatePullRequestSchema = z.object({
   title: z.string().optional(),

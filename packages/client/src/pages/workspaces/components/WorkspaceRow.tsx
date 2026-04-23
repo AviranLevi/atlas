@@ -1,5 +1,16 @@
 // React / library
-import { GitBranch, Clock, Square, Trash2, ChevronRight, FileCode, CheckCircle2, Sparkles, ListChecks, Play } from 'lucide-react';
+import {
+  GitBranch,
+  Clock,
+  Square,
+  Trash2,
+  ChevronRight,
+  FileCode,
+  CheckCircle2,
+  Sparkles,
+  ListChecks,
+  Play,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Components
@@ -25,7 +36,8 @@ const STAGE_META: Record<string, { label: string; icon: typeof Sparkles; classNa
   brainstorm: {
     label: 'Brainstorm',
     icon: Sparkles,
-    className: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300',
+    className:
+      'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300',
   },
   plan: {
     label: 'Plan',
@@ -35,7 +47,8 @@ const STAGE_META: Record<string, { label: string; icon: typeof Sparkles; classNa
   execute: {
     label: 'Execute',
     icon: Play,
-    className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+    className:
+      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
   },
 };
 
@@ -45,10 +58,8 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
 
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
-  const isStructuredStage =
-    workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
-  const isWorkflowAwaitingApproval =
-    workspace.status === 'completed' && isStructuredStage;
+  const isStructuredStage = workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
+  const isWorkflowAwaitingApproval = workspace.status === 'completed' && isStructuredStage;
   const isApproved = workspace.status === 'approved';
   const canReview = workspace.status === 'completed' && !isWorkflowAwaitingApproval;
   const canCleanup = !isActive && workspace.status !== 'merged' && workspace.status !== 'approved';

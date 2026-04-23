@@ -54,7 +54,12 @@ function inferType(meta: Record<string, string>, name: string): NonNullable<Crea
 
 /** Converts a memory name to a safe filename. */
 function toFilename(name: string): string {
-  return name.replace(/[/\\?%*:|"<>]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.md';
+  return (
+    name
+      .replace(/[/\\?%*:|"<>]/g, '-')
+      .replace(/\s+/g, '-')
+      .toLowerCase() + '.md'
+  );
 }
 
 export class ObsidianService {
@@ -131,9 +136,7 @@ export class ObsidianService {
 
       // --- Import: vault notes → Atlas memories ---
       const notes = this.readNotes(vaultPath, syncFolder);
-      const existingMemories = projectId
-        ? memoryRepository.findByProject(projectId)
-        : memoryRepository.findAll();
+      const existingMemories = projectId ? memoryRepository.findByProject(projectId) : memoryRepository.findAll();
       const existingNames = new Set(existingMemories.map((m) => m.name?.toLowerCase()));
 
       for (const note of notes) {
@@ -162,7 +165,9 @@ export class ObsidianService {
           this.writeMemoryToVault(memory, vaultPath, syncFolder);
           result.exported++;
         } catch (err) {
-          result.errors.push(`Export failed for "${memory.name ?? memory.id}": ${err instanceof Error ? err.message : String(err)}`);
+          result.errors.push(
+            `Export failed for "${memory.name ?? memory.id}": ${err instanceof Error ? err.message : String(err)}`,
+          );
         }
       }
 

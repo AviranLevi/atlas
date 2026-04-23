@@ -34,11 +34,7 @@ export function DocCreator({
           <X className="h-4 w-4" />
         </Button>
       </div>
-      <Input
-        placeholder="Document title..."
-        value={title}
-        onChange={(e) => onTitleChange(e.target.value)}
-      />
+      <Input placeholder="Document title..." value={title} onChange={(e) => onTitleChange(e.target.value)} />
       <div className="grid grid-cols-2 gap-4">
         <Textarea
           placeholder="Write markdown here..."

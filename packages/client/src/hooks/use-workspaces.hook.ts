@@ -158,18 +158,15 @@ export function useCompleteWorkspace() {
   });
 }
 
+/**
+ * Re-runs a workspace using the exact same runtime, model, and provider as
+ * the original. The backend reads everything it needs from the prior
+ * workspace row and the task record, so there is no body to send.
+ */
 export function useRerunWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      workspaceId,
-      agentRuntimeId,
-      model,
-    }: {
-      workspaceId: string;
-      agentRuntimeId: string;
-      model?: string;
-    }) => api.post<Workspace>(`/workspaces/${workspaceId}/rerun`, { agentRuntimeId, model }),
+    mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/rerun`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });

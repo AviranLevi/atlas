@@ -41,12 +41,7 @@ export function DocViewer({ doc, onRegenerate, onEdit, onDelete, isRegenerating,
         </div>
         <div className="flex items-center gap-1.5">
           {AI_TYPES.includes(doc.type as DocType) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRegenerate}
-              disabled={isRegenerating}
-            >
+            <Button variant="outline" size="sm" onClick={onRegenerate} disabled={isRegenerating}>
               {isRegenerating ? (
                 <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
               ) : (

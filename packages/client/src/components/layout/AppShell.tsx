@@ -153,9 +153,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               Project
             </span>
           )}
-          <div className="flex flex-col gap-0.5">
-            {projectItems.map(renderNavItem)}
-          </div>
+          <div className="flex flex-col gap-0.5">{projectItems.map(renderNavItem)}</div>
 
           {expanded ? (
             <span className="mb-1 mt-4 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
@@ -164,9 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ) : (
             <div className="my-2 mx-2 h-px bg-border" />
           )}
-          <div className="flex flex-col gap-0.5">
-            {globalItems.map(renderNavItem)}
-          </div>
+          <div className="flex flex-col gap-0.5">{globalItems.map(renderNavItem)}</div>
         </nav>
 
         <AgentStatusPanel expanded={expanded} />

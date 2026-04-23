@@ -27,7 +27,17 @@ type TaskInput = {
   definitionOfDone?: string | null;
   agentId?: string | null;
   projectId?: string | null;
+  workflowProviderId?: string | null;
 };
+
+/**
+ * Result of attempting to start a structured stage:
+ *   - `structured`: the AI-SDK path owns the workspace (returned as `workspace`).
+ *   - `fallback`: no API provider resolved; caller must fall back to CLI and
+ *     persist the short `reason` onto the resulting workspace row so the UI
+ *     can explain what happened.
+ */
+export type StructuredStageResult = { kind: 'structured'; workspace: Workspace } | { kind: 'fallback'; reason: string };
 
 export class StructuredStageService {
   /**
@@ -35,7 +45,14 @@ export class StructuredStageService {
    * Creates the workspace and returns it immediately — the actual AI call
    * runs in the background so the HTTP response is instant.
    *
-   * Returns `null` when no API provider is configured (caller falls back to CLI).
+   * Provider resolution is driven entirely by the task record (single source
+   * of truth) so every entry point — initial start, workflow advance, rerun
+   * — picks up the same provider without explicit parameter threading:
+   *   task.workflowProviderId → task.agentId.providerId → CLI fallback
+   *
+   * Returns `{ kind: 'fallback', reason }` when no API provider can be
+   * resolved (caller falls back to CLI and persists `reason` on the
+   * workspace row).
    */
   async run(
     stage: 'brainstorm' | 'plan',
@@ -43,24 +60,25 @@ export class StructuredStageService {
     project: { id: string },
     taskId: string,
     agentRuntimeId: string,
-    resolvedModel: string | null,
-    providerId?: string,
     parentWorkspaceId?: string,
-  ): Promise<Workspace | null> {
-    const providerIdToLoad = providerId ?? (task.agentId ? (await agentsService.getById(task.agentId)).providerId : null);
+  ): Promise<StructuredStageResult> {
+    const providerIdToLoad =
+      task.workflowProviderId ?? (task.agentId ? (await agentsService.getById(task.agentId)).providerId : null);
+
     if (!providerIdToLoad) {
-      logger.info(
-        `${FILE_PATH} :: run - no API provider configured, falling back to CLI for ${stage}`,
-      );
+      const reason = task.agentId
+        ? 'No API provider on the agent — used CLI for this stage'
+        : 'No agent or provider assigned — used CLI for this stage';
+      logger.info(`${FILE_PATH} :: run - ${reason} (stage=${stage})`);
       activityLogService.log({
         projectId: project.id,
         taskId,
         agentId: task.agentId,
         eventType: 'agent_started',
-        description: `No API provider configured — falling back to CLI for ${stage}`,
-        metadata: { stage, fallback: 'cli' },
+        description: `No API provider resolved — falling back to CLI for ${stage} (${reason})`,
+        metadata: { stage, fallback: 'cli', reason },
       });
-      return null;
+      return { kind: 'fallback', reason };
     }
 
     const resolvedProvider = await agentProvidersService.getById(providerIdToLoad);
@@ -84,7 +102,7 @@ export class StructuredStageService {
 
     this.executeInBackground(stage, task, project, taskId, workspace.id, resolvedProvider);
 
-    return workspacesRepository.findByIdOrThrow(workspace.id);
+    return { kind: 'structured', workspace: workspacesRepository.findByIdOrThrow(workspace.id) };
   }
 
   /** Fire-and-forget background execution of a brainstorm or plan AI call. */
@@ -115,7 +133,8 @@ export class StructuredStageService {
       });
 
       const fullProject = await projectsService.getById(project.id);
-      const gates = (fullProject.agentBehavior as { approvalGates?: { brainstorm?: boolean; plan?: boolean } } | null)?.approvalGates;
+      const gates = (fullProject.agentBehavior as { approvalGates?: { brainstorm?: boolean; plan?: boolean } } | null)
+        ?.approvalGates;
       const gateEnabled = stage === 'brainstorm' ? (gates?.brainstorm ?? true) : (gates?.plan ?? true);
 
       if (gateEnabled) {
@@ -145,11 +164,13 @@ export class StructuredStageService {
         completedAt: new Date().toISOString(),
       });
 
-      await tasksService.update(taskId, {
-        status: TASK_STATUS.TODO,
-        workflowEnabled: false,
-        workflowStage: null,
-      }).catch((e) => logger.warn(`${FILE_PATH} :: executeInBackground - failed to reset task`, e));
+      await tasksService
+        .update(taskId, {
+          status: TASK_STATUS.TODO,
+          workflowEnabled: false,
+          workflowStage: null,
+        })
+        .catch((e) => logger.warn(`${FILE_PATH} :: executeInBackground - failed to reset task`, e));
 
       activityLogService.log({
         projectId: project.id,

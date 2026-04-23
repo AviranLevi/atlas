@@ -3,7 +3,7 @@ import { agentProvidersService, agentsService } from '../../index.js';
 import { PromptBuilderService } from '../../prompt-builder/prompt-builder.service.js';
 
 // Executors
-import { executorRegistry } from '../../../executors/index.js';
+import type { executorRegistry } from '../../../executors/index.js';
 import type { SpawnOptions } from '../../../executors/spawn-agent.js';
 
 // Lib

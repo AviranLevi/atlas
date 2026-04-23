@@ -55,7 +55,11 @@ export function DocumentsPage() {
   const selectedAiType = selected?.kind === 'ai-type' ? selected.type : null;
   const selectedDoc = useMemo(() => docs.find((d) => d.id === selectedDocId) ?? null, [docs, selectedDocId]);
 
-  useEffect(() => { setSelected(null); setEditing(false); setCreating(false); }, [activeProjectId]);
+  useEffect(() => {
+    setSelected(null);
+    setEditing(false);
+    setCreating(false);
+  }, [activeProjectId]);
 
   useEffect(() => {
     if (!editing) return;
@@ -85,12 +89,15 @@ export function DocumentsPage() {
     return map;
   }, [isProjectMode, allDocs]);
 
-  const handleGenerate = useCallback((type: DocType) => {
-    generateDoc.mutate(
-      { type: type as 'api-diagram' | 'db-schema' | 'architecture' },
-      { onSuccess: (doc) => setSelected({ kind: 'doc', id: doc.id }) },
-    );
-  }, [generateDoc]);
+  const handleGenerate = useCallback(
+    (type: DocType) => {
+      generateDoc.mutate(
+        { type: type as 'api-diagram' | 'db-schema' | 'architecture' },
+        { onSuccess: (doc) => setSelected({ kind: 'doc', id: doc.id }) },
+      );
+    },
+    [generateDoc],
+  );
 
   const handleCreate = useCallback(() => {
     if (!newTitle.trim()) return;
@@ -117,7 +124,12 @@ export function DocumentsPage() {
 
   const handleDelete = useCallback(() => {
     if (!selectedDoc) return;
-    deleteDoc.mutate(selectedDoc.id, { onSuccess: () => { setSelected(null); setEditing(false); } });
+    deleteDoc.mutate(selectedDoc.id, {
+      onSuccess: () => {
+        setSelected(null);
+        setEditing(false);
+      },
+    });
   }, [selectedDoc, deleteDoc]);
 
   const handleStartEdit = useCallback(() => {
@@ -128,17 +140,23 @@ export function DocumentsPage() {
     setEditing(true);
   }, [selectedDoc]);
 
-  const selectAiItem = useCallback((type: DocType) => {
-    const existing = docs.find((d) => d.type === type && d.source === 'ai');
-    setSelected(existing ? { kind: 'doc', id: existing.id } : { kind: 'ai-type', type });
-    setEditing(false);
-    setCreating(false);
-  }, [docs]);
+  const selectAiItem = useCallback(
+    (type: DocType) => {
+      const existing = docs.find((d) => d.type === type && d.source === 'ai');
+      setSelected(existing ? { kind: 'doc', id: existing.id } : { kind: 'ai-type', type });
+      setEditing(false);
+      setCreating(false);
+    },
+    [docs],
+  );
 
-  const isAiItemActive = useCallback((type: DocType) => {
-    const existing = docs.find((d) => d.type === type && d.source === 'ai');
-    return (existing && selectedDocId === existing.id) || selectedAiType === type;
-  }, [docs, selectedDocId, selectedAiType]);
+  const isAiItemActive = useCallback(
+    (type: DocType) => {
+      const existing = docs.find((d) => d.type === type && d.source === 'ai');
+      return (existing && selectedDocId === existing.id) || selectedAiType === type;
+    },
+    [docs, selectedDocId, selectedAiType],
+  );
 
   return (
     <div>
@@ -174,8 +192,16 @@ export function DocumentsPage() {
             selectedDocId={selectedDocId}
             selectedAiType={selectedAiType}
             onSelectAiItem={selectAiItem}
-            onSelectDoc={(id) => { setSelected({ kind: 'doc', id }); setEditing(false); setCreating(false); }}
-            onStartCreate={() => { setCreating(true); setEditing(false); setSelected(null); }}
+            onSelectDoc={(id) => {
+              setSelected({ kind: 'doc', id });
+              setEditing(false);
+              setCreating(false);
+            }}
+            onStartCreate={() => {
+              setCreating(true);
+              setEditing(false);
+              setSelected(null);
+            }}
             isAiItemActive={isAiItemActive}
           />
 

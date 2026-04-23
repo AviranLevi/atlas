@@ -10,7 +10,6 @@ import type {
   CreatePullRequest,
   CreateWorkspace,
   EditDiffComment,
-  RerunWorkspace,
   RevertWorkspace,
 } from '@atlas/shared';
 
@@ -67,7 +66,10 @@ export async function createWorkspace(c: Context) {
   const { taskId, agentRuntimeId, baseBranch, model, providerId, workflowEnabled } =
     getValidatedBody<CreateWorkspace>(c);
 
-  // Persist workflow mode on the task — always sync with the dialog value
+  // Persist the chosen provider on the task — this is the single source of
+  // truth downstream services read from (workflow advance, rerun, structured
+  // stage AI SDK calls, CLI credential injection). Do NOT also pass it as a
+  // parameter to startWork.
   {
     const { tasksService } = await import('../services/index.js');
     if (workflowEnabled) {
@@ -77,11 +79,17 @@ export async function createWorkspace(c: Context) {
         workflowProviderId: providerId ?? null,
       });
     } else {
-      await tasksService.update(taskId, { workflowEnabled: false, workflowStage: null, workflowProviderId: null });
+      await tasksService.update(taskId, {
+        workflowEnabled: false,
+        workflowStage: null,
+        // Even for non-workflow tasks, remember which provider the user picked
+        // so CLI credential injection and potential future reruns stay stable.
+        workflowProviderId: providerId ?? null,
+      });
     }
   }
 
-  const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model, providerId);
+  const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model);
   return c.json(workspace, 201);
 }
 
@@ -109,10 +117,14 @@ export async function completeWorkspace(c: Context) {
   return c.json(workspace);
 }
 
-/** Re-runs a workspace with a (possibly different) agent runtime and model. */
+/**
+ * Re-runs a workspace using the exact same runtime, model, and provider that
+ * were chosen at initial start. No body is accepted — the server reads the
+ * prior workspace row for runtime/model and resolves the provider from
+ * `task.workflowProviderId`.
+ */
 export async function rerunWorkspace(c: Context) {
-  const { agentRuntimeId, model } = getValidatedBody<RerunWorkspace>(c);
-  const workspace = await orchestratorService.rerun(c.req.param('id')!, agentRuntimeId, model);
+  const workspace = await orchestratorService.rerun(c.req.param('id')!);
   return c.json(workspace, 201);
 }
 

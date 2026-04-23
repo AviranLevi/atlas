@@ -21,9 +21,7 @@ interface MessageListProps {
   pendingUserMessage?: string | null;
 }
 
-type MessageGroup =
-  | { kind: 'message'; message: ChatMessage }
-  | { kind: 'tools'; steps: ThinkingStep[]; key: string };
+type MessageGroup = { kind: 'message'; message: ChatMessage } | { kind: 'tools'; steps: ThinkingStep[]; key: string };
 
 /** Returns true if an assistant message has tool steps but no readable response text. */
 function isToolOnly(msg: ChatMessage): boolean {

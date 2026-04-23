@@ -26,6 +26,7 @@ export function applySchemaPatches(sqlite: Database.Database): void {
     'ALTER TABLE projects ADD COLUMN design_context TEXT',
     'ALTER TABLE tasks ADD COLUMN workflow_provider_id TEXT',
     'ALTER TABLE workspaces ADD COLUMN base_branch TEXT',
+    'ALTER TABLE workspaces ADD COLUMN provider_fallback_reason TEXT',
   ];
 
   for (const sql of patches) {

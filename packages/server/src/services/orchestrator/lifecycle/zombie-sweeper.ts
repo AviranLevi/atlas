@@ -27,9 +27,7 @@ export function startZombieSweeper(): NodeJS.Timeout {
       } catch {
         // PID gone — the process died without firing proc.on('close').
       }
-      logger.warn(
-        `${FILE_PATH} :: zombie-sweep - workspace ${workspaceId} PID ${pid} is dead; firing onFailed`,
-      );
+      logger.warn(`${FILE_PATH} :: zombie-sweep - workspace ${workspaceId} PID ${pid} is dead; firing onFailed`);
       try {
         entry.onFailed('[zombie-sweep] process vanished without emitting close event', 'process not found');
       } catch (e) {

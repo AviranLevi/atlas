@@ -409,10 +409,7 @@ export class ChatService {
     });
   }
 
-  private async getProjectContext(
-    projectId: string | null,
-    mentionedAgentId?: string | null,
-  ): Promise<ToolContext> {
+  private async getProjectContext(projectId: string | null, mentionedAgentId?: string | null): Promise<ToolContext> {
     if (!projectId) return { mentionedAgentId };
     try {
       const { project } = await projectsService.getContext(projectId);

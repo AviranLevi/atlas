@@ -61,9 +61,7 @@ export class CodeReviewService {
     entry.softWarnTimer.unref();
 
     entry.watchdogTimer = setTimeout(() => {
-      logger.warn(
-        `${FILE_PATH} :: watchdog - review workspace ${workspaceId} exceeded ${maxRuntimeMs}ms, terminating`,
-      );
+      logger.warn(`${FILE_PATH} :: watchdog - review workspace ${workspaceId} exceeded ${maxRuntimeMs}ms, terminating`);
       const current = activeProcesses.get(workspaceId);
       if (!current) return;
       const proc = current.process;
@@ -91,10 +89,7 @@ export class CodeReviewService {
           }
         }, 5000).unref();
       }
-      onFailed(
-        `[watchdog] timeout: review exceeded ${Math.round(maxRuntimeMs / 60_000)} minute limit`,
-        'timeout',
-      );
+      onFailed(`[watchdog] timeout: review exceeded ${Math.round(maxRuntimeMs / 60_000)} minute limit`, 'timeout');
     }, maxRuntimeMs);
     entry.watchdogTimer.unref();
   }
@@ -204,11 +199,7 @@ export class CodeReviewService {
       const fullPrompt = basePrompt + reviewSection;
 
       // Resolve model/provider from workspace's recorded model + agent's provider
-      const { spawnOpts } = await resolveSpawnOptions(
-        executor,
-        workspace.agentId,
-        workspace.model ?? undefined,
-      );
+      const { spawnOpts } = await resolveSpawnOptions(executor, workspace.agentId, workspace.model ?? undefined);
 
       let requestChangesFired = false;
       const onFailedCallback = (output: string, error?: string) => {
@@ -306,7 +297,14 @@ export class CodeReviewService {
         startedAt: Date.now(),
         stage: 'review',
       };
-      this.attachWatchdog(entry, workspace.id, workspace.projectId, workspace.taskId, workspace.agentId, onFailedCallback);
+      this.attachWatchdog(
+        entry,
+        workspace.id,
+        workspace.projectId,
+        workspace.taskId,
+        workspace.agentId,
+        onFailedCallback,
+      );
       activeProcesses.set(workspace.id, entry);
 
       // Mark as running (don't clear comments yet — cleared on success only)
@@ -423,12 +421,7 @@ export class CodeReviewService {
         .filter(Boolean)
         .join('\n');
 
-      const { spawnOpts } = await resolveSpawnOptions(
-        executor,
-        task.agentId,
-        undefined,
-        undefined,
-      );
+      const { spawnOpts } = await resolveSpawnOptions(executor, task.agentId, undefined, undefined);
 
       const cwd = executor.usesProjectRoot
         ? ((await projectsService.getById(workspace.projectId)).localPath ?? workspace.worktreePath)

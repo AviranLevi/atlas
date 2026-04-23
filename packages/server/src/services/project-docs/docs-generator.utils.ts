@@ -104,9 +104,7 @@ function detectPort(localPath: string): number | null {
       const scripts = (pkg.scripts ?? {}) as Record<string, string>;
       for (const script of Object.values(scripts)) {
         const portMatch =
-          /--port[= ](\d+)/.exec(script) ??
-          /\bPORT=(\d+)/.exec(script) ??
-          /(?<!\w)-p[= ](\d+)/.exec(script);
+          /--port[= ](\d+)/.exec(script) ?? /\bPORT=(\d+)/.exec(script) ?? /(?<!\w)-p[= ](\d+)/.exec(script);
         if (portMatch) return parseInt(portMatch[1], 10);
       }
     }

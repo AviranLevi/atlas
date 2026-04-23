@@ -52,12 +52,12 @@ export class WorkflowAdvancementService {
       workspacesRepository.update(prevWorkspace.id, { status: 'approved' });
       await tasksService.update(taskId, { workflowStage: nextStage, status: TASK_STATUS.TODO });
 
+      // Provider is read from the task inside startWork — don't pass it here.
       return workspaceSpawnService.startWork(
         taskId,
         prevWorkspace.agentRuntime,
         undefined,
         prevWorkspace.model ?? undefined,
-        task.workflowProviderId ?? undefined,
         nextStage,
         prevWorkspace.id,
       );
@@ -126,12 +126,12 @@ export class WorkflowAdvancementService {
         }
       }
 
+      // Provider is read from the task inside startWork — don't pass it here.
       return workspaceSpawnService.startWork(
         prevWorkspace.taskId,
         prevWorkspace.agentRuntime,
         undefined,
         prevWorkspace.model ?? undefined,
-        task.workflowProviderId ?? undefined,
         nextStage,
         workspaceId,
       );

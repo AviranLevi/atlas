@@ -190,9 +190,7 @@ export function DiffSection({
     const msg = error instanceof Error ? error.message : 'Unknown error';
     return (
       <Card>
-        <CardContent className="p-6 text-sm text-red-500">
-          Failed to load diff. {msg}
-        </CardContent>
+        <CardContent className="p-6 text-sm text-red-500">Failed to load diff. {msg}</CardContent>
       </Card>
     );
   }

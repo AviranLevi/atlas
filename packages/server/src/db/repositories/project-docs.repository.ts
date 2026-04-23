@@ -41,11 +41,7 @@ export class ProjectDocsRepository {
   findByProjectId(projectId: string): ProjectDoc[] {
     const FUNCTION_NAME = 'findByProjectId';
     try {
-      return this.db
-        .select()
-        .from(projectDocs)
-        .where(eq(projectDocs.projectId, projectId))
-        .all() as ProjectDoc[];
+      return this.db.select().from(projectDocs).where(eq(projectDocs.projectId, projectId)).all() as ProjectDoc[];
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query project docs', { cause: error });
@@ -131,13 +127,7 @@ export class ProjectDocsRepository {
       const existing = this.db
         .select()
         .from(projectDocs)
-        .where(
-          and(
-            eq(projectDocs.projectId, projectId),
-            eq(projectDocs.type, type),
-            eq(projectDocs.source, 'ai'),
-          ),
-        )
+        .where(and(eq(projectDocs.projectId, projectId), eq(projectDocs.type, type), eq(projectDocs.source, 'ai')))
         .get();
 
       const now = new Date().toISOString();

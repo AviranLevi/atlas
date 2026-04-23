@@ -62,7 +62,9 @@ export function BrainstormOutputView({ brainstorm, selectedIdea, onSelectIdea }:
                 {idea.tradeoffs.length > 0 && (
                   <ul className="list-disc pl-4 space-y-0.5">
                     {idea.tradeoffs.map((t, i) => (
-                      <li key={i} className="text-xs text-muted-foreground">{t}</li>
+                      <li key={i} className="text-xs text-muted-foreground">
+                        {t}
+                      </li>
                     ))}
                   </ul>
                 )}

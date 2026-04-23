@@ -137,8 +137,7 @@ function gracefulShutdown(signal: string): void {
       // that raced the shutdown signal. If the child exited in the same tick we
       // sent SIGTERM, its close handler may have already written 'completed' or
       // 'failed' — forcing 'stopped' over that would lie about why it ended.
-      const alreadyTerminal =
-        ws && (ws.status === 'completed' || ws.status === 'failed' || ws.status === 'stopped');
+      const alreadyTerminal = ws && (ws.status === 'completed' || ws.status === 'failed' || ws.status === 'stopped');
       if (!alreadyTerminal) {
         workspacesRepository.update(workspaceId, {
           status: 'stopped',

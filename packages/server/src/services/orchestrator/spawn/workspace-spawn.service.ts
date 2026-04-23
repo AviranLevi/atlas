@@ -82,13 +82,20 @@ export class WorkspaceSpawnService {
     }
   }
 
-  /** Creates a worktree, spawns the agent process, and opens a workspace. */
+  /**
+   * Creates a worktree, spawns the agent process, and opens a workspace.
+   *
+   * Provider selection is read from the task record (`task.workflowProviderId`,
+   * then `task.agentId.providerId`). Callers that want to override the provider
+   * must persist it to the task first — do not re-introduce a `providerId`
+   * parameter here. This keeps every entry point (initial start, workflow
+   * advance, rerun, MCP) on a single resolution path.
+   */
   async startWork(
     taskId: string,
     agentRuntimeId: string,
     baseBranch?: string,
     model?: string,
-    providerId?: string,
     workflowStage?: 'brainstorm' | 'plan' | 'execute' | null,
     parentWorkspaceId?: string,
   ): Promise<Workspace> {
@@ -124,11 +131,25 @@ export class WorkspaceSpawnService {
         throw new AppError('A workspace is already active for this task', { status: 409 });
       }
 
-      const { resolvedModel, spawnOpts } = await resolveSpawnOptions(executor, task.agentId, model, providerId);
+      // Resolve provider once, from the single source of truth (the task),
+      // and reuse for both structured-stage AI SDK calls and CLI credential
+      // injection.
+      const effectiveProviderId = task.workflowProviderId ?? undefined;
+      const { resolvedModel, spawnOpts } = await resolveSpawnOptions(
+        executor,
+        task.agentId,
+        model,
+        effectiveProviderId,
+      );
 
       // Determine the effective workflow stage for this run.
       const effectiveStage = workflowStage ?? (task.workflowEnabled ? (task.workflowStage ?? 'brainstorm') : null);
       const isStructuredStage = effectiveStage === 'brainstorm' || effectiveStage === 'plan';
+
+      // Tracks why the structured path bailed, if it did. Persisted on the
+      // CLI-fallback workspace row so the UI can explain "we wanted structured
+      // output but no API provider was available".
+      let providerFallbackReason: string | null = null;
 
       if (isStructuredStage) {
         const structuredResult = await structuredStageService.run(
@@ -137,11 +158,10 @@ export class WorkspaceSpawnService {
           project,
           taskId,
           agentRuntimeId,
-          resolvedModel ?? null,
-          providerId,
           parentWorkspaceId,
         );
-        if (structuredResult) return structuredResult;
+        if (structuredResult.kind === 'structured') return structuredResult.workspace;
+        providerFallbackReason = structuredResult.reason;
         // Provider unavailable — fall through to CLI execution
       }
 
@@ -190,6 +210,7 @@ export class WorkspaceSpawnService {
         status: 'pending',
         workflowStage: effectiveStage ?? null,
         parentWorkspaceId: parentWorkspaceId ?? null,
+        providerFallbackReason,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -333,17 +354,13 @@ export class WorkspaceSpawnService {
           description: `Workspace approaching runtime limit. Will terminate at ${new Date(Date.now() + remainingMs).toISOString()}.`,
           metadata: { maxRuntimeMs, stage: runtimeStage },
         });
-        logger.warn(
-          `${FILE_PATH} :: watchdog - workspace ${workspace.id} at 90% of ${maxRuntimeMs}ms budget`,
-        );
+        logger.warn(`${FILE_PATH} :: watchdog - workspace ${workspace.id} at 90% of ${maxRuntimeMs}ms budget`);
       }, maxRuntimeMs * 0.9);
       entry.softWarnTimer.unref();
 
       // Hard kill at 100% — terminate process group and mark workspace failed.
       entry.watchdogTimer = setTimeout(() => {
-        logger.warn(
-          `${FILE_PATH} :: watchdog - workspace ${workspace.id} exceeded ${maxRuntimeMs}ms, terminating`,
-        );
+        logger.warn(`${FILE_PATH} :: watchdog - workspace ${workspace.id} exceeded ${maxRuntimeMs}ms, terminating`);
         const current = activeProcesses.get(workspace.id);
         if (!current) return;
         const proc = current.process;

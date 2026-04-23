@@ -39,7 +39,8 @@ export class DocsGeneratorService {
 
       if (specContent) {
         content = specContent;
-        promptIntro = 'Given this OpenAPI/Swagger specification, generate API endpoint documentation grouped by resource/tag.';
+        promptIntro =
+          'Given this OpenAPI/Swagger specification, generate API endpoint documentation grouped by resource/tag.';
       } else {
         const files = scanFiles(localPath, (name) => ROUTE_PATTERNS.some((p) => p.test(name)));
         content = readFileContents(files);
@@ -75,8 +76,9 @@ export class DocsGeneratorService {
     const FUNCTION_NAME = 'generateDbSchema';
     try {
       const localPath = project.localPath!;
-      const files = scanFiles(localPath, (name) =>
-        SCHEMA_FILE_PATTERNS.some((p) => p.test(name)) || SCHEMA_FOLDER_PATTERN.test(name),
+      const files = scanFiles(
+        localPath,
+        (name) => SCHEMA_FILE_PATTERNS.some((p) => p.test(name)) || SCHEMA_FOLDER_PATTERN.test(name),
       );
       const content = readFileContents(files);
 
@@ -161,15 +163,12 @@ export class DocsGeneratorService {
     const allProviders = await agentProvidersService.list();
     if (allProviders.length > 0) {
       const provider = allProviders[0];
-      logger.info(
-        `${FILE_PATH} :: resolveModel - no project agent has a provider, falling back to "${provider.name}"`,
-      );
+      logger.info(`${FILE_PATH} :: resolveModel - no project agent has a provider, falling back to "${provider.name}"`);
       return buildAiModel(provider);
     }
 
-    throw new AppError(
-      'No AI provider configured. Add a provider in Settings → Providers to enable doc generation.',
-      { status: 400 },
-    );
+    throw new AppError('No AI provider configured. Add a provider in Settings → Providers to enable doc generation.', {
+      status: 400,
+    });
   }
 }
