@@ -89,11 +89,6 @@ export class OrchestratorService {
     return codeReviewService.requestChanges(workspaceId);
   }
 
-  /** Finds the most recent workspace for a task and starts an AI review on it. */
-  startAiReviewForTask(taskId: string, agentRuntimeId: string, autoFix?: boolean): Promise<Workspace> {
-    return codeReviewService.startAiReviewForTask(taskId, agentRuntimeId, autoFix);
-  }
-
   /** Spawns a reviewer agent on an existing completed workspace. */
   startAiReview(workspaceId: string, agentRuntimeId: string, autoFix?: boolean): Promise<Workspace> {
     return codeReviewService.startAiReview(workspaceId, agentRuntimeId, autoFix);

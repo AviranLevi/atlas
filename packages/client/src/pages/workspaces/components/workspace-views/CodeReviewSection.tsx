@@ -7,8 +7,8 @@ import { DiffSection } from '@/pages/workspaces/diff';
 
 // Hooks
 import type { useProject } from '@/hooks/use-projects.hook';
-import type { useReview, useStartAiReview } from '@/hooks/use-reviews.hook';
-import type { useWorkspaceDiff } from '@/hooks/use-workspaces.hook';
+import type { useReview } from '@/hooks/use-reviews.hook';
+import type { useStartAiReview, useWorkspaceDiff } from '@/hooks/use-workspaces.hook';
 
 // Types
 import type { DiffComment, Workspace } from '@atlas/shared';

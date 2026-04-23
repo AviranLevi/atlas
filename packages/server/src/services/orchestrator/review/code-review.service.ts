@@ -337,20 +337,13 @@ export class CodeReviewService {
   }
 
   /**
-   * Spawns a reviewer agent on an existing completed workspace.
-   * Finds the most recent workspace for a task and starts an AI review on it.
-   */
-  async startAiReviewForTask(taskId: string, agentRuntimeId: string, autoFix = false): Promise<Workspace> {
-    const workspace = workspacesRepository.findByTaskId(taskId);
-    if (!workspace) {
-      throw new AppError('No workspace found for this task', { status: 404 });
-    }
-    return this.startAiReview(workspace.id, agentRuntimeId, autoFix);
-  }
-
-  /**
-   * The agent receives the diff + task context + DoD checklist and is instructed
-   * to call the `submit_review` MCP tool with its decision.
+   * Spawns a reviewer agent on a specific completed workspace. The caller
+   * passes the workspace ID directly — do NOT derive it from a task ID,
+   * because a task has multiple workspaces across its brainstorm→plan→execute
+   * lineage and guessing picks the wrong one.
+   *
+   * The agent receives the diff + task context + DoD checklist and is
+   * instructed to call the `submit_review` MCP tool with its decision.
    */
   async startAiReview(workspaceId: string, agentRuntimeId: string, autoFix = false): Promise<Workspace> {
     const FUNCTION_NAME = 'startAiReview';

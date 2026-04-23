@@ -16,7 +16,7 @@ import { WorkspaceBody } from './components/workspace-views/WorkspaceBody';
 
 // Hooks
 import { useProject } from '@/hooks/use-projects.hook';
-import { useReview, useStartAiReview } from '@/hooks/use-reviews.hook';
+import { useReview } from '@/hooks/use-reviews.hook';
 import {
   useWorkspaceStatus,
   useWorkspaceLineage,
@@ -25,6 +25,7 @@ import {
   useCleanupWorkspace,
   useWorkspaceLogStream,
   useOpenWorkspaceInEditor,
+  useStartAiReview,
 } from '@/hooks/use-workspaces.hook';
 
 // Lib

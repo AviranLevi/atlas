@@ -1,3 +1,6 @@
+// Shared
+import type { Workspace } from '@atlas/shared';
+
 // Types
 import type { StatusFilter } from './workspaces.types';
 
@@ -14,16 +17,20 @@ export const statusMeta: Record<string, { label: string; leftColor: string; badg
     badgeClass: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300',
   },
   completed: {
+    // Demoted to neutral: the lifecycle chip above the row (Awaiting Approval /
+    // Needs Review) already communicates what the user must do. Keeping this
+    // badge green created three near-identical green chips on the same row.
     label: 'Completed',
-    leftColor: '#22c55e',
+    leftColor: '#64748b',
     badgeClass:
-      'border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300',
+      'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300',
   },
   approved: {
+    // Repainted from emerald to teal to disambiguate from the green `completed`
+    // badge and the green `Review` chip.
     label: 'Approved',
-    leftColor: '#10b981',
-    badgeClass:
-      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+    leftColor: '#14b8a6',
+    badgeClass: 'border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-300',
   },
   failed: {
     label: 'Failed',
@@ -46,8 +53,34 @@ export const statusMeta: Record<string, { label: string; leftColor: string; badg
 export const filterTabs: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'active', label: 'Active' },
-  { key: 'completed', label: 'Completed' },
+  { key: 'awaitingApproval', label: 'Awaiting Approval' },
+  { key: 'needsReview', label: 'Needs Review' },
+  { key: 'approved', label: 'Approved' },
   { key: 'merged', label: 'Merged' },
   { key: 'failed', label: 'Failed' },
   { key: 'stopped', label: 'Stopped' },
 ];
+
+/**
+ * Pure mapping from a workspace row to its lifecycle bucket. Every workspace
+ * lands in exactly one bucket; the sum of bucket counts equals the total. This
+ * is the single source of truth for both the tab filter and the summary tiles.
+ *
+ * Keep this aligned with `deriveWorkspaceView` in `workspace-view.ts` — both
+ * classify brainstorm/plan stages as "structured" and everything else as
+ * "flow", so `awaitingApproval` here matches the detail page's
+ * `awaitingApproval` view kind.
+ */
+export type WorkspaceBucket = Exclude<StatusFilter, 'all'>;
+
+export function bucketOfWorkspace(ws: Workspace): WorkspaceBucket {
+  if (ws.status === 'running' || ws.status === 'pending') return 'active';
+  if (ws.status === 'approved') return 'approved';
+  if (ws.status === 'merged') return 'merged';
+  if (ws.status === 'failed') return 'failed';
+  if (ws.status === 'stopped') return 'stopped';
+  // status === 'completed' — split by workflow stage category
+  const stage = ws.workflowStage;
+  const isStructured = stage === 'brainstorm' || stage === 'plan';
+  return isStructured ? 'awaitingApproval' : 'needsReview';
+}

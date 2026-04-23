@@ -8,6 +8,7 @@ import {
   CreateWorkspaceSchema,
   EditDiffCommentSchema,
   RevertWorkspaceSchema,
+  StartAiReviewSchema,
 } from '@atlas/shared';
 import { zValidator } from '@hono/zod-validator';
 
@@ -36,6 +37,7 @@ import {
   stopWorkspace,
   advanceWorkspaceWorkflow,
   rejectWorkspaceWorkflow,
+  startAiReviewForWorkspace,
   getWorkspaceLineage,
   streamWorkspaceLogs,
 } from '../controllers/workspaces.controller.js';
@@ -65,4 +67,5 @@ export const workspacesRoute = new Hono()
   .get('/:id/lineage', getWorkspaceLineage)
   .post('/:id/advance', advanceWorkspaceWorkflow)
   .post('/:id/reject', rejectWorkspaceWorkflow)
+  .post('/:id/start-ai-review', zValidator('json', StartAiReviewSchema), startAiReviewForWorkspace)
   .delete('/:id', deleteWorkspace);

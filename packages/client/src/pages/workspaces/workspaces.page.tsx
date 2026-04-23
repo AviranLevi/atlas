@@ -16,7 +16,7 @@ import { useActiveProject } from '@/contexts/ProjectContext';
 import type { StatusFilter } from './workspaces.types';
 
 // Constants
-import { filterTabs } from './workspaces.constants';
+import { bucketOfWorkspace, filterTabs } from './workspaces.constants';
 
 export function WorkspacesPage() {
   const { data: allWorkspaces = [], isLoading } = useWorkspaces();
@@ -27,20 +27,19 @@ export function WorkspacesPage() {
 
   const counts: Record<StatusFilter, number> = {
     all: workspaces.length,
-    active: workspaces.filter((w) => w.status === 'running' || w.status === 'pending').length,
-    completed: workspaces.filter((w) => w.status === 'completed' || w.status === 'approved').length,
-    approved: workspaces.filter((w) => w.status === 'approved').length,
-    merged: workspaces.filter((w) => w.status === 'merged').length,
-    failed: workspaces.filter((w) => w.status === 'failed').length,
-    stopped: workspaces.filter((w) => w.status === 'stopped').length,
+    active: 0,
+    awaitingApproval: 0,
+    needsReview: 0,
+    approved: 0,
+    merged: 0,
+    failed: 0,
+    stopped: 0,
   };
+  for (const w of workspaces) {
+    counts[bucketOfWorkspace(w)] += 1;
+  }
 
-  const visible = workspaces.filter((w) => {
-    if (filter === 'all') return true;
-    if (filter === 'active') return w.status === 'running' || w.status === 'pending';
-    if (filter === 'completed') return w.status === 'completed' || w.status === 'approved';
-    return w.status === filter;
-  });
+  const visible = workspaces.filter((w) => filter === 'all' || bucketOfWorkspace(w) === filter);
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,10 +51,11 @@ export function WorkspacesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
         {[
           { label: 'Active', count: counts.active, color: 'text-blue-600 dark:text-blue-400' },
-          { label: 'Completed', count: counts.completed, color: 'text-green-600 dark:text-green-400' },
+          { label: 'Awaiting Approval', count: counts.awaitingApproval, color: 'text-amber-600 dark:text-amber-400' },
+          { label: 'Needs Review', count: counts.needsReview, color: 'text-sky-600 dark:text-sky-400' },
           { label: 'Merged', count: counts.merged, color: 'text-violet-600 dark:text-violet-400' },
           { label: 'Failed', count: counts.failed, color: 'text-red-600 dark:text-red-400' },
           { label: 'Total', count: counts.all, color: 'text-muted-foreground' },

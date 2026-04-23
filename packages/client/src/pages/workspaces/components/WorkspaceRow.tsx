@@ -102,7 +102,7 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
             {canReview && !isApproved && (
               <Badge
                 variant="outline"
-                className="shrink-0 text-[10px] border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
+                className="shrink-0 text-[10px] border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300"
               >
                 <FileCode className="mr-1 h-2.5 w-2.5" />
                 Review

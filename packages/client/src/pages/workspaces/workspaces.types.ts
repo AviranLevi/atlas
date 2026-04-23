@@ -2,7 +2,15 @@
 import type { Workspace } from '@atlas/shared';
 import type { WorkspaceView } from './workspace-view';
 
-export type StatusFilter = 'all' | 'active' | 'completed' | 'approved' | 'failed' | 'stopped' | 'merged';
+export type StatusFilter =
+  | 'all'
+  | 'active'
+  | 'awaitingApproval'
+  | 'needsReview'
+  | 'approved'
+  | 'merged'
+  | 'failed'
+  | 'stopped';
 
 export type StatusIconProps = {
   status: string;

@@ -164,9 +164,11 @@ Standalone Node.js `http.createServer` (NOT Hono — `SSEServerTransport` requir
 - Changes requested → task status → "In Progress"
 
 ### AI reviews
-- `POST /api/v1/reviews/:id/ai-review` → spawns a reviewer agent via `orchestratorService.startAiReviewForTask()`
+- `POST /api/v1/workspaces/:id/start-ai-review` → spawns a reviewer agent via `orchestratorService.startAiReview(workspaceId, ...)`
+- `POST /api/v1/reviews/:id/ai-review` → the reviewer agent itself submits its decision through this endpoint (`submitAiReview`)
 - Reviewer receives diff + task context + DoD checklist, calls `submit_review` MCP tool
 - Optional `autoFix` flag lets the reviewer fix issues directly before submitting
+- The route is workspace-scoped (not task-scoped) because a workflow task has multiple workspaces in its brainstorm→plan→execute lineage and only the caller (the client) knows which one the user is viewing. Resolving from task ID picks an arbitrary workspace and trips the "only on completed workspaces" gate.
 
 ### Circular dependency fix
 - `reviews.service.ts` needs `tasksRepository`

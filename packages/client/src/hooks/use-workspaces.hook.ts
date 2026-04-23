@@ -123,6 +123,32 @@ export function useRejectWorkflow() {
   });
 }
 
+/**
+ * Spawns an AI reviewer on a specific workspace. The workspace ID is the
+ * address of truth — a task has multiple workspaces across its
+ * brainstorm→plan→execute lineage, and the old task-scoped endpoint picked
+ * the wrong one (the brainstorm, often `approved`) and tripped the
+ * "only on completed workspaces" gate.
+ */
+export function useStartAiReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      workspaceId,
+      agentRuntimeId,
+      autoFix,
+    }: {
+      workspaceId: string;
+      agentRuntimeId: string;
+      autoFix?: boolean;
+    }) => api.post<Workspace>(`/workspaces/${workspaceId}/start-ai-review`, { agentRuntimeId, autoFix }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    },
+  });
+}
+
 export function useStopWork() {
   const queryClient = useQueryClient();
   return useMutation({

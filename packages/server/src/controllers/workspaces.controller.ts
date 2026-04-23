@@ -11,6 +11,7 @@ import type {
   CreateWorkspace,
   EditDiffComment,
   RevertWorkspace,
+  StartAiReview,
 } from '@atlas/shared';
 
 // Executors
@@ -282,5 +283,17 @@ export async function advanceWorkspaceWorkflow(c: Context) {
 /** Rejects the workflow output from a specific workspace (stops the workspace and sends the task back to To Do). */
 export async function rejectWorkspaceWorkflow(c: Context) {
   const workspace = await orchestratorService.rejectWorkflowFromWorkspace(c.req.param('id')!);
+  return c.json(workspace);
+}
+
+/**
+ * Starts an AI reviewer on a specific workspace. The workspace ID is the
+ * address of truth — do NOT resolve from task ID, because a task has multiple
+ * workspaces in its brainstorm→plan→execute lineage and the client already
+ * knows which one the user is viewing.
+ */
+export async function startAiReviewForWorkspace(c: Context) {
+  const { agentRuntimeId, autoFix } = getValidatedBody<StartAiReview>(c);
+  const workspace = await orchestratorService.startAiReview(c.req.param('id')!, agentRuntimeId, autoFix ?? false);
   return c.json(workspace);
 }

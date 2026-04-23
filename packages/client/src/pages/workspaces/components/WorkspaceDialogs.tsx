@@ -4,7 +4,8 @@ import { RerunDialog } from '@/components/workspaces/RerunDialog';
 import { AiReviewDialog } from './AiReviewDialog';
 
 // Hooks
-import type { useStartAiReview, useReview } from '@/hooks/use-reviews.hook';
+import type { useReview } from '@/hooks/use-reviews.hook';
+import type { useStartAiReview } from '@/hooks/use-workspaces.hook';
 
 // Types
 import type { Workspace } from '@atlas/shared';
@@ -43,7 +44,7 @@ export function WorkspaceDialogs({
           isPending={startAiReview.isPending}
           onStart={(autoFix) => {
             startAiReview.mutate(
-              { id: review.id, agentRuntimeId: workspace.agentRuntime, autoFix },
+              { workspaceId: workspace.id, agentRuntimeId: workspace.agentRuntime, autoFix },
               { onSuccess: () => setAiReviewOpen(false) },
             );
           }}
