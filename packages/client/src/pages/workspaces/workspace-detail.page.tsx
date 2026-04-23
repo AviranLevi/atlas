@@ -1,23 +1,18 @@
 // React / library
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // Components
-import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { Button } from '@/components/ui/button';
 import { CliFallbackBanner } from '@/components/workspaces/CliFallbackBanner';
-import { RerunDialog } from '@/components/workspaces/RerunDialog';
-import { WorkspaceLineage } from '@/components/workspaces/WorkspaceLineage';
-import { WorkflowApprovalPanel } from '@/components/workspaces/WorkflowApprovalPanel';
-import { BrainstormOutputView } from '@/components/workspaces/BrainstormOutputView';
-import { PlanOutputView } from '@/components/workspaces/PlanOutputView';
 import { CommitsPanel } from '@/components/workspaces/CommitsPanel';
-import { AiReviewDialog } from './components/AiReviewDialog';
-import { AgentOutput } from './components/AgentOutput';
+import { WorkspaceLineage } from '@/components/workspaces/WorkspaceLineage';
 import { WorkspaceDetailHeader } from './components/WorkspaceDetailHeader';
+import { WorkspaceDialogs } from './components/WorkspaceDialogs';
 import { WorkspaceInfoCards } from './components/WorkspaceInfoCards';
-import { DiffSection } from './diff';
+import { WorkspaceAgentOutput } from './components/workspace-views/WorkspaceAgentOutput';
+import { WorkspaceBody } from './components/workspace-views/WorkspaceBody';
 
 // Hooks
 import { useProject } from '@/hooks/use-projects.hook';
@@ -33,7 +28,7 @@ import {
 } from '@/hooks/use-workspaces.hook';
 
 // Lib
-import { tryParseWorkflowOutput } from '@/lib/workflow-output';
+import { deriveWorkspaceView } from './workspace-view';
 
 // Types
 import type { DiffComment } from '@atlas/shared';
@@ -53,8 +48,8 @@ export function WorkspaceDetailPage() {
   const { data: review } = useReview(workspace?.taskId);
   const startAiReview = useStartAiReview();
   const { data: diff } = useWorkspaceDiff(workspace?.id);
-  const isActive = workspace?.status === 'running' || workspace?.status === 'pending';
-  const streamedLog = useWorkspaceLogStream(workspace?.id, isActive);
+  const isLive = workspace?.status === 'running' || workspace?.status === 'pending';
+  const streamedLog = useWorkspaceLogStream(workspace?.id, isLive);
 
   if (isLoading) {
     return (
@@ -76,17 +71,7 @@ export function WorkspaceDetailPage() {
     );
   }
 
-  const isMerged = workspace.status === 'merged';
-  const isApproved = workspace.status === 'approved';
-  const isStructuredStage = workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
-  const isWorkflowAwaitingApproval = workspace.status === 'completed' && isStructuredStage;
-  // Structured stages store JSON in workspace.output; AgentOutput would show it as a raw blob.
-  // Parse regardless of status so we can render a read-only view for approved/rejected runs too.
-  const structuredOutput = isStructuredStage ? tryParseWorkflowOutput(workspace.output) : null;
-  const hasStructuredOutput = !!structuredOutput;
-  const canReview = workspace.status === 'completed' && !isWorkflowAwaitingApproval;
-  const canRerun = workspace.status === 'failed' || workspace.status === 'stopped' || workspace.status === 'completed';
-  const canCleanup = !isActive && !isMerged && !isApproved;
+  const view = deriveWorkspaceView(workspace);
   const comments: DiffComment[] = Array.isArray(workspace.diffComments) ? workspace.diffComments : [];
 
   return (
@@ -100,10 +85,7 @@ export function WorkspaceDetailPage() {
 
       <WorkspaceDetailHeader
         workspace={workspace}
-        isActive={isActive}
-        canReview={canReview}
-        canRerun={canRerun}
-        canCleanup={canCleanup}
+        view={view}
         onStop={() => stopWork.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
         onRerun={() => setRerunOpen(true)}
         onFollowUp={() => setFollowUpOpen(true)}
@@ -116,9 +98,7 @@ export function WorkspaceDetailPage() {
       />
 
       {lineage.length > 1 && <WorkspaceLineage lineage={lineage} currentId={workspace.id} />}
-
       <CliFallbackBanner workspace={workspace} />
-
       <WorkspaceInfoCards workspace={workspace} />
 
       {(workspace.inputTokens != null || workspace.outputTokens != null || workspace.costUsd != null) && (
@@ -129,107 +109,32 @@ export function WorkspaceDetailPage() {
         </div>
       )}
 
-      {workspace.workflowStage !== 'brainstorm' && workspace.workflowStage !== 'plan' && (
-        <CommitsPanel workspace={workspace} isRunning={workspace.status === 'running'} />
-      )}
+      {view.caps.showCommits && <CommitsPanel workspace={workspace} isRunning={workspace.status === 'running'} />}
 
-      {canReview && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">Code Changes</h2>
-              {review?.status === 'approved' && (
-                <span className="flex items-center gap-1 text-xs font-medium text-green-500">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  AI Approved
-                </span>
-              )}
-              {review?.status === 'changes_requested' && (
-                <span className="flex items-center gap-1 text-xs font-medium text-destructive">
-                  <XCircle className="h-3.5 w-3.5" />
-                  Changes Requested
-                </span>
-              )}
-              {review?.status === 'pending' && review.reviewerType === 'agent' && (
-                <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  AI Review Pending
-                </span>
-              )}
-            </div>
-            {review?.status === 'pending' && diff && diff.files.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAiReviewOpen(true)}
-                disabled={startAiReview.isPending || workspace.status === 'running'}
-              >
-                {startAiReview.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                Run AI Review
-              </Button>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mb-3">
-            Hover over a line and click the comment icon to leave inline feedback.
-          </p>
-          {startAiReview.isError && (
-            <p className="text-sm text-destructive mb-3">AI review failed: {(startAiReview.error as Error).message}</p>
-          )}
-          <DiffSection
-            workspaceId={workspace.id}
-            comments={comments}
-            hasGitHub={!!project?.repositoryUrl?.includes('github.com')}
-          />
-        </div>
-      )}
-
-      {isWorkflowAwaitingApproval && <WorkflowApprovalPanel workspace={workspace} />}
-
-      {!isWorkflowAwaitingApproval && structuredOutput?.stage === 'brainstorm' && (
-        <BrainstormOutputView brainstorm={structuredOutput.data} />
-      )}
-      {!isWorkflowAwaitingApproval && structuredOutput?.stage === 'plan' && (
-        <PlanOutputView plan={structuredOutput.data} />
-      )}
-
-      {(isActive || workspace.fullOutput || workspace.output) && !hasStructuredOutput && (
-        <AgentOutput
-          text={isActive ? (streamedLog ?? '') : (workspace.fullOutput ?? workspace.output ?? '')}
-          isLive={isActive}
-          defaultCollapsed={isWorkflowAwaitingApproval}
-        />
-      )}
-
-      {review && (
-        <AiReviewDialog
-          open={aiReviewOpen}
-          onOpenChange={setAiReviewOpen}
-          isPending={startAiReview.isPending}
-          onStart={(autoFix) => {
-            startAiReview.mutate(
-              { id: review.id, agentRuntimeId: workspace.agentRuntime, autoFix },
-              { onSuccess: () => setAiReviewOpen(false) },
-            );
-          }}
-        />
-      )}
-
-      <RerunDialog
-        open={rerunOpen}
-        onOpenChange={setRerunOpen}
+      <WorkspaceBody
+        view={view}
         workspace={workspace}
-        onSuccess={(newWorkspace) => navigate(`/workspaces/${newWorkspace.id}`)}
+        review={review}
+        diff={diff}
+        project={project}
+        comments={comments}
+        startAiReview={startAiReview}
+        onOpenAiReview={() => setAiReviewOpen(true)}
       />
 
-      <TaskDialog
-        open={followUpOpen}
-        onOpenChange={setFollowUpOpen}
-        defaultProjectId={workspace.projectId}
-        followUpContext={{
-          originalTaskName: workspace.taskName ?? 'Unknown task',
-          workspaceId: workspace.id,
-          output: workspace.output ?? undefined,
-        }}
+      <WorkspaceAgentOutput view={view} workspace={workspace} streamedLog={streamedLog} />
+
+      <WorkspaceDialogs
+        workspace={workspace}
+        review={review}
+        startAiReview={startAiReview}
+        aiReviewOpen={aiReviewOpen}
+        setAiReviewOpen={setAiReviewOpen}
+        rerunOpen={rerunOpen}
+        setRerunOpen={setRerunOpen}
+        followUpOpen={followUpOpen}
+        setFollowUpOpen={setFollowUpOpen}
+        onNavigate={navigate}
       />
     </div>
   );

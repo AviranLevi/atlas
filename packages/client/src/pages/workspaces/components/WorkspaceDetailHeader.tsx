@@ -14,10 +14,7 @@ import { statusMeta } from '../workspaces.constants';
 
 export function WorkspaceDetailHeader({
   workspace,
-  isActive,
-  canReview,
-  canRerun,
-  canCleanup,
+  view,
   onStop,
   onRerun,
   onFollowUp,
@@ -29,6 +26,7 @@ export function WorkspaceDetailHeader({
   isOpeningInEditor,
 }: WorkspaceDetailHeaderProps) {
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
+  const { canStop, canRerun, canFollowUp, canCleanup, canOpenInEditor } = view.caps;
 
   return (
     <div className="flex items-start justify-between gap-4">
@@ -47,17 +45,19 @@ export function WorkspaceDetailHeader({
       </div>
 
       <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onOpenInEditor}
-          disabled={isOpeningInEditor}
-          title="Open worktree in Cursor / VS Code"
-        >
-          <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
-          {isOpeningInEditor ? 'Opening...' : 'Open in Editor'}
-        </Button>
-        {isActive && (
+        {canOpenInEditor && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenInEditor}
+            disabled={isOpeningInEditor}
+            title="Open worktree in Cursor / VS Code"
+          >
+            <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
+            {isOpeningInEditor ? 'Opening...' : 'Open in Editor'}
+          </Button>
+        )}
+        {canStop && (
           <Button
             variant="outline"
             size="sm"
@@ -75,7 +75,7 @@ export function WorkspaceDetailHeader({
             {isRerunning ? 'Re-running...' : 'Re-run'}
           </Button>
         )}
-        {canReview && (
+        {canFollowUp && (
           <Button variant="outline" size="sm" onClick={onFollowUp}>
             <ListPlus className="mr-1.5 h-3.5 w-3.5" />
             Follow-up Task

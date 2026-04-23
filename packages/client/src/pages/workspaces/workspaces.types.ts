@@ -1,5 +1,6 @@
 // Types
 import type { Workspace } from '@atlas/shared';
+import type { WorkspaceView } from './workspace-view';
 
 export type StatusFilter = 'all' | 'active' | 'completed' | 'approved' | 'failed' | 'stopped' | 'merged';
 
@@ -14,16 +15,16 @@ export type WorkspaceRowProps = {
 
 export type WorkspaceDetailHeaderProps = {
   workspace: Workspace;
-  isActive: boolean;
-  canReview: boolean;
-  canRerun: boolean;
-  canCleanup: boolean;
+  view: WorkspaceView;
   onStop: () => void;
   onRerun: () => void;
   onFollowUp: () => void;
   onCleanup: () => void;
   onOpenInEditor: () => void;
   isStopping: boolean;
+  // `isRerunning` is always false at the current call site; retained so the
+  // button can light up loading state when real rerun wiring is added in a
+  // follow-up PR. Do not hard-delete until that work lands.
   isRerunning: boolean;
   isCleaning: boolean;
   isOpeningInEditor: boolean;
