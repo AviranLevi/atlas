@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 // Types
 import type { ChecklistItem, DecideReview, Review, UpdateReview } from '@atlas/shared';
 
-const REVIEWS_KEY = ['reviews'] as const;
+export const REVIEWS_KEY = ['reviews'] as const;
 
 export function useReview(taskId: string | undefined) {
   return useQuery({

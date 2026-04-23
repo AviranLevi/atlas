@@ -3,6 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+// Hooks
+import { REVIEWS_KEY } from '@/hooks/use-reviews.hook';
+
 // Lib
 import { ApiError, api } from '@/lib/api';
 
@@ -144,7 +147,26 @@ export function useStartAiReview() {
     }) => api.post<Workspace>(`/workspaces/${workspaceId}/start-ai-review`, { agentRuntimeId, autoFix }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
-      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+      queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
+    },
+  });
+}
+
+/**
+ * Spawns an implementer on a `completed` workspace whose review is
+ * `changes_requested`, feeding the reviewer's notes + unchecked checklist
+ * items as prompt context. Server resets the review to `pending` so the next
+ * reviewer cycle starts clean.
+ */
+export function useApplyReviewFix() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ workspaceId, agentRuntimeId }: { workspaceId: string; agentRuntimeId: string }) =>
+      api.post<Workspace>(`/workspaces/${workspaceId}/apply-review-fix`, { agentRuntimeId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
+      queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }
