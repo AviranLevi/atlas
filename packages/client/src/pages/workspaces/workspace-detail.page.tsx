@@ -10,6 +10,8 @@ import { CliFallbackBanner } from '@/components/workspaces/CliFallbackBanner';
 import { RerunDialog } from '@/components/workspaces/RerunDialog';
 import { WorkspaceLineage } from '@/components/workspaces/WorkspaceLineage';
 import { WorkflowApprovalPanel } from '@/components/workspaces/WorkflowApprovalPanel';
+import { BrainstormOutputView } from '@/components/workspaces/BrainstormOutputView';
+import { PlanOutputView } from '@/components/workspaces/PlanOutputView';
 import { CommitsPanel } from '@/components/workspaces/CommitsPanel';
 import { AiReviewDialog } from './components/AiReviewDialog';
 import { AgentOutput } from './components/AgentOutput';
@@ -76,12 +78,12 @@ export function WorkspaceDetailPage() {
 
   const isMerged = workspace.status === 'merged';
   const isApproved = workspace.status === 'approved';
-  const isWorkflowAwaitingApproval =
-    workspace.status === 'completed' &&
-    (workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan');
+  const isStructuredStage = workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
+  const isWorkflowAwaitingApproval = workspace.status === 'completed' && isStructuredStage;
   // Structured stages store JSON in workspace.output; AgentOutput would show it as a raw blob.
-  // Hide it when structured output is parsed and displayed by WorkflowApprovalPanel already.
-  const hasStructuredOutput = isWorkflowAwaitingApproval && !!tryParseWorkflowOutput(workspace.output);
+  // Parse regardless of status so we can render a read-only view for approved/rejected runs too.
+  const structuredOutput = isStructuredStage ? tryParseWorkflowOutput(workspace.output) : null;
+  const hasStructuredOutput = !!structuredOutput;
   const canReview = workspace.status === 'completed' && !isWorkflowAwaitingApproval;
   const canRerun = workspace.status === 'failed' || workspace.status === 'stopped' || workspace.status === 'completed';
   const canCleanup = !isActive && !isMerged && !isApproved;
@@ -182,6 +184,13 @@ export function WorkspaceDetailPage() {
       )}
 
       {isWorkflowAwaitingApproval && <WorkflowApprovalPanel workspace={workspace} />}
+
+      {!isWorkflowAwaitingApproval && structuredOutput?.stage === 'brainstorm' && (
+        <BrainstormOutputView brainstorm={structuredOutput.data} />
+      )}
+      {!isWorkflowAwaitingApproval && structuredOutput?.stage === 'plan' && (
+        <PlanOutputView plan={structuredOutput.data} />
+      )}
 
       {(isActive || workspace.fullOutput || workspace.output) && !hasStructuredOutput && (
         <AgentOutput
