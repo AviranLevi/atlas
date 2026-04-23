@@ -57,6 +57,19 @@ export class WorkspaceControlService {
             }
           }, 5000);
         }
+
+        // Fire the compensating action (e.g. rolling a review back from
+        // `pending` to `changes_requested` so the verdict panel returns).
+        // Must run before the delete so callers that inspect the entry
+        // still see it; wrapped in try/catch because a failed rollback
+        // should not block the stop.
+        if (entry.onCancelled) {
+          try {
+            entry.onCancelled();
+          } catch (e) {
+            logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - onCancelled callback failed`, e);
+          }
+        }
       }
 
       activeProcesses.delete(workspaceId);

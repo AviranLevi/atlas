@@ -32,8 +32,12 @@ export class CodeReviewService {
 
   /**
    * Attaches watchdog + soft-warn timers to a live review/auto-fix workspace.
-   * Review-stage timeout (default 15 min) is shorter than execute because
-   * reviewers aren't writing code — they shouldn't run long.
+   * The budget is read off `entry.stage`:
+   *   - 'review'  → short (default 15 min); reviewers don't write code
+   *   - 'execute' → long  (default 60 min); applyReviewFix spawns an implementer
+   * Missing/unknown stage falls back to the default execute budget — matches
+   * `getMaxRuntimeMs`'s own fallback so we don't kill legitimate long runs by
+   * mistake if a new caller forgets to set the stage.
    */
   private attachWatchdog(
     entry: ActiveProcessEntry,
@@ -43,7 +47,9 @@ export class CodeReviewService {
     agentId: string | null,
     onFailed: (output: string, error?: string) => void,
   ): void {
-    const maxRuntimeMs = getMaxRuntimeMs('review');
+    const stage = entry.stage;
+    const maxRuntimeMs = getMaxRuntimeMs(stage);
+    const stageLabel = stage ?? 'default';
 
     entry.softWarnTimer = setTimeout(() => {
       const remainingMs = maxRuntimeMs * 0.1;
@@ -53,15 +59,19 @@ export class CodeReviewService {
         workspaceId,
         agentId,
         eventType: 'agent_warning',
-        description: `Review approaching runtime limit. Will terminate at ${new Date(Date.now() + remainingMs).toISOString()}.`,
-        metadata: { maxRuntimeMs, stage: 'review' },
+        description: `Agent approaching runtime limit. Will terminate at ${new Date(Date.now() + remainingMs).toISOString()}.`,
+        metadata: { maxRuntimeMs, stage: stageLabel },
       });
-      logger.warn(`${FILE_PATH} :: watchdog - review workspace ${workspaceId} at 90% of ${maxRuntimeMs}ms budget`);
+      logger.warn(
+        `${FILE_PATH} :: watchdog - workspace ${workspaceId} (${stageLabel}) at 90% of ${maxRuntimeMs}ms budget`,
+      );
     }, maxRuntimeMs * 0.9);
     entry.softWarnTimer.unref();
 
     entry.watchdogTimer = setTimeout(() => {
-      logger.warn(`${FILE_PATH} :: watchdog - review workspace ${workspaceId} exceeded ${maxRuntimeMs}ms, terminating`);
+      logger.warn(
+        `${FILE_PATH} :: watchdog - workspace ${workspaceId} (${stageLabel}) exceeded ${maxRuntimeMs}ms, terminating`,
+      );
       const current = activeProcesses.get(workspaceId);
       if (!current) return;
       const proc = current.process;
@@ -89,7 +99,10 @@ export class CodeReviewService {
           }
         }, 5000).unref();
       }
-      onFailed(`[watchdog] timeout: review exceeded ${Math.round(maxRuntimeMs / 60_000)} minute limit`, 'timeout');
+      onFailed(
+        `[watchdog] timeout: ${stageLabel} exceeded ${Math.round(maxRuntimeMs / 60_000)} minute limit`,
+        'timeout',
+      );
     }, maxRuntimeMs);
     entry.watchdogTimer.unref();
   }
@@ -506,6 +519,238 @@ export class CodeReviewService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to start AI review', { cause: error });
+    }
+  }
+
+  /**
+   * Spawns an implementer on a completed workspace whose latest review is
+   * `changes_requested`, feeding the reviewer's notes + unchecked checklist
+   * items as prompt context. Resets the review to `pending` so that when the
+   * implementer finishes the user can run AI review again cleanly.
+   *
+   * Parallels `requestChanges` (same worktree, same branch) but sources the
+   * feedback from `review.notes` + `review.checklist` instead of inline diff
+   * comments, and is triggered from the workspace page "Apply AI Suggestions"
+   * button.
+   */
+  async applyReviewFix(workspaceId: string, agentRuntimeId: string): Promise<Workspace> {
+    const FUNCTION_NAME = 'applyReviewFix';
+    try {
+      if (isShuttingDown()) {
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
+      const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+
+      if (workspace.status !== 'completed') {
+        throw new AppError('Apply review fix requires a completed workspace', { status: 400 });
+      }
+
+      const { reviewsService } = await import('../../index.js');
+      const review = await reviewsService.getByTask(workspace.taskId);
+      if (!review) {
+        throw new AppError('No review found for this task', { status: 400 });
+      }
+      if (review.status !== 'changes_requested') {
+        throw new AppError('Apply review fix requires a review with changes_requested', { status: 400 });
+      }
+
+      const project = await projectsService.getById(workspace.projectId);
+      if (!project.localPath) {
+        throw new AppError('Project has no local path', { status: 400 });
+      }
+
+      const executor = executorRegistry.getById(agentRuntimeId);
+      if (!executor) {
+        throw new AppError(`Unknown agent runtime: ${agentRuntimeId}`, { status: 400 });
+      }
+
+      const uncheckedItems = (review.checklist ?? []).filter((c: ChecklistItem) => !c.checked);
+      const checklistSection =
+        uncheckedItems.length > 0
+          ? uncheckedItems.map((c: ChecklistItem) => `- [ ] ${c.item}`).join('\n')
+          : '(no unchecked checklist items)';
+
+      const basePrompt = await buildPrompt({
+        taskId: workspace.taskId,
+        projectId: project.id,
+        agentId: workspace.agentId,
+        hasMcpAccess: executor.mcpConfigFormat !== 'none',
+      });
+
+      const fixSection = [
+        '',
+        '---',
+        '',
+        '## Reviewer Feedback — Changes Requested',
+        '',
+        'The AI reviewer has requested changes on this task. Apply every fix described below, commit each change, then stop — we will re-run the review afterward.',
+        '',
+        '### Reviewer Notes',
+        '',
+        review.notes?.trim() ? review.notes : '(no notes)',
+        '',
+        '### Outstanding Definition of Done',
+        '',
+        checklistSection,
+      ].join('\n');
+
+      const fullPrompt = basePrompt + fixSection;
+
+      // Capture the pre-mutation review state so every exit path (failure,
+      // watchdog, user-stop) can restore it. Without this the verdict panel
+      // disappears on any non-happy path because it renders off
+      // `review.status !== 'pending'` — leaving the user with no UI to retry,
+      // approve, or open a follow-up.
+      const originalReviewStatus = review.status;
+      const originalDecidedAt = review.decidedAt;
+
+      // Reset the review so that the next reviewer run starts from pending.
+      // Notes/checklist are preserved — they're historical context the human
+      // may still want to read, and the prompt has already captured them.
+      const { reviewsRepository } = await import('../../../db/repositories/index.js');
+      reviewsRepository.update(review.id, { status: 'pending', decidedAt: null });
+
+      // Centralised rollback — idempotent, callable from onFailed, onCancelled,
+      // and the watchdog (which feeds back through onFailed). Swallows errors
+      // because a failed rollback must not block the kill path.
+      const restoreReview = () => {
+        try {
+          reviewsRepository.update(review.id, {
+            status: originalReviewStatus,
+            decidedAt: originalDecidedAt,
+          });
+        } catch (e) {
+          logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to restore review state`, e);
+        }
+      };
+
+      const { spawnOpts } = await resolveSpawnOptions(executor, workspace.agentId, workspace.model ?? undefined);
+
+      let fired = false;
+      const onFailed = (output: string, error?: string) => {
+        if (fired) return;
+        fired = true;
+        const entry = activeProcesses.get(workspace.id);
+        if (entry) clearEntryTimers(entry);
+        activeProcesses.delete(workspace.id);
+        // Roll the workspace back to its prior state so the user can try
+        // again without losing the diff or the review context.
+        workspacesRepository.update(workspace.id, {
+          status: 'completed',
+          output,
+          completedAt: new Date().toISOString(),
+        });
+        restoreReview();
+        activityLogService.log({
+          projectId: workspace.projectId,
+          taskId: workspace.taskId,
+          workspaceId,
+          agentId: workspace.agentId,
+          eventType: 'agent_failed',
+          description: `Agent failed during apply-review-fix: ${error ?? 'unknown error'}`,
+          metadata: { error },
+        });
+      };
+
+      const cwd = executor.usesProjectRoot ? project.localPath : workspace.worktreePath;
+
+      const result = await spawnAgent(
+        workspace.id,
+        executor,
+        cwd,
+        fullPrompt,
+        {
+          onCompleted: (output) => {
+            if (fired) return;
+            fired = true;
+            const entry = activeProcesses.get(workspace.id);
+            if (entry) clearEntryTimers(entry);
+            activeProcesses.delete(workspace.id);
+            workspacesRepository.update(workspace.id, {
+              status: 'completed',
+              output,
+              completedAt: new Date().toISOString(),
+            });
+            // Keep the task flow symmetric with requestChanges: once the
+            // implementer finishes, the task is ready for a fresh review,
+            // so it returns to In Review.
+            tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
+              logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to move task to In Review`, e);
+            });
+            activityLogService.log({
+              projectId: workspace.projectId,
+              taskId: workspace.taskId,
+              workspaceId,
+              agentId: workspace.agentId,
+              eventType: 'agent_completed',
+              description: 'Agent completed applying reviewer fixes',
+              metadata: {},
+            });
+          },
+          onFailed,
+        },
+        spawnOpts,
+      );
+
+      if (isShuttingDown()) {
+        const proc = result.process;
+        if (proc.pid) {
+          try {
+            process.kill(-proc.pid, 'SIGKILL');
+          } catch {
+            try {
+              proc.kill('SIGKILL');
+            } catch {
+              /* already dead */
+            }
+          }
+        }
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
+      const entry: ActiveProcessEntry = {
+        process: result.process,
+        onFailed,
+        // User-stop path: restore the review so the verdict panel reappears.
+        // The workspace status roll-back still happens inside `stopWork`
+        // (writes `stopped`), but the review side has no other owner.
+        onCancelled: restoreReview,
+        startedAt: Date.now(),
+        // Use 'execute' — this is an implementer run, not a reviewer run.
+        // `attachWatchdog` reads this stage to pick the correct budget
+        // (execute = 60m default, vs review = 15m), so mis-tagging here
+        // would kill legitimate long fixes.
+        stage: 'execute',
+      };
+      this.attachWatchdog(entry, workspace.id, workspace.projectId, workspace.taskId, workspace.agentId, onFailed);
+      activeProcesses.set(workspace.id, entry);
+
+      workspacesRepository.update(workspace.id, {
+        status: 'running',
+        pid: result.process.pid ?? null,
+        startedAt: new Date().toISOString(),
+        completedAt: null,
+        // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
+      } as any);
+
+      await tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_PROGRESS });
+
+      activityLogService.log({
+        projectId: project.id,
+        taskId: workspace.taskId,
+        workspaceId,
+        agentId: workspace.agentId,
+        eventType: 'agent_started',
+        description: 'Apply review fix started',
+        metadata: { reviewId: review.id, agentRuntimeId },
+      });
+
+      return workspacesRepository.findByIdOrThrow(workspace.id);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to apply review fix', { cause: error });
     }
   }
 

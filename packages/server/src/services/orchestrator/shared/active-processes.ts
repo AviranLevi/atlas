@@ -14,6 +14,20 @@ export interface ActiveProcessEntry {
    * `proc.on('close')` would, guaranteeing DB/activity-log consistency.
    */
   onFailed: (output: string, error?: string) => void;
+  /**
+   * Optional compensating action to run when the user manually stops this
+   * workspace (via `workspaceControlService.stopWork`). Used for operations
+   * that mutate auxiliary state before spawning — e.g. `applyReviewFix`
+   * flips the review to `pending` so a fresh review cycle can start, and
+   * if the user stops mid-flight that mutation must be rolled back, or the
+   * verdict panel disappears with no way to bring it back.
+   *
+   * Called exactly once, before `activeProcesses.delete`, and any throw is
+   * caught so it never prevents the kill/cleanup path from completing.
+   * Do not rely on it for the onFailed/onCompleted paths — those have
+   * their own closures that already capture what they need.
+   */
+  onCancelled?: () => void;
   watchdogTimer?: NodeJS.Timeout;
   softWarnTimer?: NodeJS.Timeout;
   startedAt: number;

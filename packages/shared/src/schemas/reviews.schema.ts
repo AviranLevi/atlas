@@ -56,7 +56,12 @@ export const StartAiReviewSchema = z.object({
   autoFix: z.boolean().optional().default(false),
 });
 
+export const ApplyReviewFixSchema = z.object({
+  agentRuntimeId: z.string().min(1),
+});
+
 export type ReviewDecision = z.infer<typeof ReviewDecisionEnum>;
 export type DecideReview = z.infer<typeof DecideReviewSchema>;
 export type SubmitAiReview = z.infer<typeof SubmitAiReviewSchema>;
 export type StartAiReview = z.infer<typeof StartAiReviewSchema>;
+export type ApplyReviewFix = z.infer<typeof ApplyReviewFixSchema>;
