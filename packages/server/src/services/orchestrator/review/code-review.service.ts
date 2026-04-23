@@ -440,7 +440,12 @@ export class CodeReviewService {
         const entry = activeProcesses.get(workspaceId);
         if (entry) clearEntryTimers(entry);
         activeProcesses.delete(workspaceId);
-        workspacesRepository.update(workspaceId, { status: 'failed', output, completedAt: new Date().toISOString() });
+        workspacesRepository.update(workspaceId, {
+          status: 'failed',
+          output,
+          completedAt: new Date().toISOString(),
+          currentStage: null,
+        });
         logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - reviewer agent failed`, error);
       };
 
@@ -455,6 +460,7 @@ export class CodeReviewService {
             status: 'completed',
             output,
             completedAt: new Date().toISOString(),
+            currentStage: null,
           });
           activityLogService.log({
             projectId: workspace.projectId,
@@ -503,7 +509,11 @@ export class CodeReviewService {
         onFailedReview,
       );
       activeProcesses.set(workspaceId, reviewEntry);
-      workspacesRepository.update(workspaceId, { pid: result.process.pid ?? null, status: 'running' });
+      workspacesRepository.update(workspaceId, {
+        pid: result.process.pid ?? null,
+        status: 'running',
+        currentStage: 'review',
+      });
 
       activityLogService.log({
         projectId: workspace.projectId,
@@ -640,6 +650,7 @@ export class CodeReviewService {
           status: 'completed',
           output,
           completedAt: new Date().toISOString(),
+          currentStage: null,
         });
         restoreReview();
         activityLogService.log({
@@ -671,6 +682,7 @@ export class CodeReviewService {
               status: 'completed',
               output,
               completedAt: new Date().toISOString(),
+              currentStage: null,
             });
             // Keep the task flow symmetric with requestChanges: once the
             // implementer finishes, the task is ready for a fresh review,
@@ -731,8 +743,8 @@ export class CodeReviewService {
         pid: result.process.pid ?? null,
         startedAt: new Date().toISOString(),
         completedAt: null,
-        // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
-      } as any);
+        currentStage: 'execute',
+      });
 
       await tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_PROGRESS });
 

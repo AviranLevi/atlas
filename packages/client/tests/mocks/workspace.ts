@@ -9,11 +9,16 @@ import type { Workspace, WorkspaceStatus, WorkflowStage } from '@atlas/shared';
  * `workflowStage` accepts `undefined` so tests can cover the
  * `workflowStage` omitted/null/execute round-trip that `deriveWorkspaceView`
  * collapses to the flow category.
+ *
+ * `currentStage` mirrors the server-written column that distinguishes an AI
+ * reviewer run ('review') from an implementer run ('execute') while the
+ * workspace is `running`. Defaults to `null` (nothing special running).
  */
 export function mkWorkspace(
   status: WorkspaceStatus,
   workflowStage: WorkflowStage | null | undefined,
   output: string | null = null,
+  currentStage: 'brainstorm' | 'plan' | 'execute' | 'review' | null = null,
 ): Workspace {
   return {
     id: '00000000-0000-0000-0000-000000000001',
@@ -29,6 +34,7 @@ export function mkWorkspace(
     status,
     output,
     workflowStage,
+    currentStage,
     parentWorkspaceId: null,
     providerFallbackReason: null,
     diffComments: null,

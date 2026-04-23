@@ -100,28 +100,20 @@ function stageCategoryOf(stage: WorkflowStage | null | undefined): StageCategory
  * plan doc; the tests in `packages/client/tests/workspace-view.test.ts`
  * mirror those tables row-for-row.
  */
-export function deriveWorkspaceView(workspace: Workspace, review?: Review | null): WorkspaceView {
+export function deriveWorkspaceView(workspace: Workspace, _review?: Review | null): WorkspaceView {
   const status = workspace.status;
   const stage = workspace.workflowStage ?? null;
   const stageCategory = stageCategoryOf(stage);
 
   // --- aiReviewing: reviewer agent is running on top of a completed flow ----
   //
-  // Today the server mutates the same workspace row to `running` when it
-  // spawns a reviewer. The only client-visible signal that distinguishes
-  // reviewer-run from implementer-run is `review.status === 'pending'` with
-  // `reviewerType === 'agent'` while the workspace is live. The
-  // reviewerType guard matters: a human review can also be `pending` while
-  // an unrelated implementer run (e.g. a follow-up) is live, and without
-  // it the UI would lie and claim "AI Review in Progress" for a human
-  // review. `kind: 'aiReviewing'` is the single source of truth the header
-  // and diff section read off.
-  if (
-    status === 'running' &&
-    stageCategory === 'flow' &&
-    review?.status === 'pending' &&
-    review.reviewerType === 'agent'
-  ) {
+  // `workspace.currentStage` is the authoritative signal: the server sets it
+  // to 'review' when startAiReview spawns and clears it on every exit path
+  // (completion, failure, watchdog, user-stop). It is distinct from
+  // 'execute', which applyReviewFix uses, so the client never confuses an
+  // implementer run with a reviewer run. `kind: 'aiReviewing'` is the single
+  // source of truth the header and diff section read off.
+  if (status === 'running' && stageCategory === 'flow' && workspace.currentStage === 'review') {
     return {
       kind: 'aiReviewing',
       stageCategory: 'flow',

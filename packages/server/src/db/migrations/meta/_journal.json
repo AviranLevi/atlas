@@ -162,6 +162,13 @@
       "when": 1775300000000,
       "tag": "0022_add_provider_fallback_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1775400000000,
+      "tag": "0023_workspace_current_stage",
+      "breakpoints": true
     }
   ]
 }

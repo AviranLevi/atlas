@@ -46,6 +46,7 @@ export const WorkspaceSchema = z.object({
   parentWorkspaceId: z.string().uuid().nullable().optional(),
   providerFallbackReason: z.string().nullable().optional(),
   diffComments: z.array(DiffCommentSchema).nullable().optional(),
+  currentStage: z.enum(['brainstorm', 'plan', 'execute', 'review']).nullable().optional(),
   startedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),

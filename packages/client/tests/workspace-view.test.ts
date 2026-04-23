@@ -18,7 +18,6 @@ import type { WorkflowStage } from '@atlas/shared';
 import { assertNever, type Caps, deriveWorkspaceView } from '../src/pages/workspaces/workspace-view';
 
 // Test fixtures
-import { mkReview } from './mocks/review';
 import { mkWorkspace } from './mocks/workspace';
 import { MALFORMED_JSON, VALID_BRAINSTORM, WRONG_SHAPE_JSON, validFor } from './mocks/workflow-output';
 import type { FlowRow, StructuredRow } from './types/workspace-view.types';
@@ -415,11 +414,11 @@ describe('deriveWorkspaceView — stage normalization', () => {
   });
 });
 
-// ---------- aiReviewing (review param) --------------------------------------
+// ---------- aiReviewing (currentStage signal) --------------------------------
 
 describe('deriveWorkspaceView — aiReviewing arm', () => {
-  it('running + flow + review.pending (agent) → aiReviewing with review caps', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('pending'));
+  it('running + flow + currentStage=review → aiReviewing with correct caps', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute', null, 'review'));
     expect(view.kind).toBe('aiReviewing');
     expect(view.stageCategory).toBe('flow');
     expect(view.caps).toEqual<Caps>({
@@ -434,58 +433,36 @@ describe('deriveWorkspaceView — aiReviewing arm', () => {
     });
   });
 
-  it('running + null stage + review.pending (agent) → aiReviewing (null workflowStage normalised to flow)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', null), mkReview('pending'));
+  it('running + null workflowStage + currentStage=review → aiReviewing (null stage normalised to flow)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', null, null, 'review'));
     expect(view.kind).toBe('aiReviewing');
   });
 
-  it('running + flow + review undefined → active (fresh implementer run, no reviewer signal)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'));
+  it('running + flow + currentStage=execute → active (applyReviewFix implementer run)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute', null, 'execute'));
     expect(view.kind).toBe('active');
   });
 
-  it('running + flow + review null → active (no review record at all)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), null);
+  it('running + flow + currentStage=null → active (fresh implementer run, no reviewer signal)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'execute', null, null));
     expect(view.kind).toBe('active');
   });
 
-  it('running + flow + review.changes_requested → active (user re-ran implementer after a verdict)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('changes_requested'));
-    expect(view.kind).toBe('active');
-  });
-
-  it('running + flow + review.approved → active (review already decided)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('approved'));
-    expect(view.kind).toBe('active');
-  });
-
-  it('running + structured + review.pending → active (reviewer only runs on flow)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', 'brainstorm'), mkReview('pending'));
+  it('running + structured + currentStage=review → active (reviewer only runs on flow stages)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('running', 'brainstorm', null, 'review'));
     expect(view.kind).toBe('active');
     expect(view.stageCategory).toBe('structured');
   });
 
-  it('pending + flow + review.pending → active (pending is implementer startup, not reviewer)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('pending', 'execute'), mkReview('pending'));
+  it('pending + flow + currentStage=review → active (pending status, not running)', () => {
+    const view = deriveWorkspaceView(mkWorkspace('pending', 'execute', null, 'review'));
     expect(view.kind).toBe('active');
   });
 
-  it('completed + flow + review.pending → codeReview (not aiReviewing — reviewer has already exited)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('completed', 'execute'), mkReview('pending'));
+  it('completed + flow + currentStage=review → codeReview (reviewer has exited, stage is stale)', () => {
+    // currentStage is cleared on exit paths — this guards against a stale value
+    const view = deriveWorkspaceView(mkWorkspace('completed', 'execute', null, 'review'));
     expect(view.kind).toBe('codeReview');
-  });
-
-  // reviewerType gating: a pending human review + a live implementer
-  // (e.g. follow-up task running alongside an un-decided prior review)
-  // must NOT be mistaken for AI reviewing. The UI would otherwise lie.
-  it('running + flow + review.pending (human) → active (human reviewer, not AI)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('pending', 'human'));
-    expect(view.kind).toBe('active');
-  });
-
-  it('running + flow + review.pending (agent) → aiReviewing (explicit reviewerType check)', () => {
-    const view = deriveWorkspaceView(mkWorkspace('running', 'execute'), mkReview('pending', 'agent'));
-    expect(view.kind).toBe('aiReviewing');
   });
 });
 

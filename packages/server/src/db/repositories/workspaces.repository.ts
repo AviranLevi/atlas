@@ -29,6 +29,7 @@ type InsertWorkspace = {
   workflowStage?: string | null;
   parentWorkspaceId?: string | null;
   providerFallbackReason?: string | null;
+  currentStage?: string | null;
   inputTokens?: number | null;
   outputTokens?: number | null;
   costUsd?: number | null;

@@ -34,6 +34,12 @@ export const workspaces = sqliteTable('workspaces', {
   // users understand why they got prose output instead of structured JSON.
   providerFallbackReason: text('provider_fallback_reason'),
   diffComments: text('diff_comments'), // JSON: [{id, filename, lineNumber, lineContent, body, createdAt}]
+  // The orchestration stage of the agent currently (or most recently) running
+  // in this workspace. Set when an agent spawns; cleared (to null) on
+  // completion, failure, or stop. Lets the client distinguish an AI reviewer
+  // run ('review') from an implementer run ('execute') without having to
+  // cross-reference the review entity.
+  currentStage: text('current_stage'),
   inputTokens: integer('input_tokens'),
   outputTokens: integer('output_tokens'),
   costUsd: real('cost_usd'),
