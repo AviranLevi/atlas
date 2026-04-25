@@ -97,6 +97,19 @@ export const CreateProjectSchema = z.object({
 
 export const UpdateProjectSchema = CreateProjectSchema.partial();
 
+export const ScaffoldProjectSchema = z.object({
+  parentPath: z.string().min(1),
+  folderName: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[^/\\:*?"<>|]+$/, 'Invalid folder name'),
+  initGit: z.boolean().default(true),
+  initialBranch: z.string().min(1).default('main'),
+  projectName: z.string().min(1).max(100),
+  color: z.string().nullable().optional(),
+});
+
 export type AgentBehavior = z.infer<typeof AgentBehaviorSchema>;
 export type ApprovalGates = z.infer<typeof ApprovalGatesSchema>;
 export type AiConfig = z.infer<typeof AiConfigSchema>;
@@ -108,3 +121,4 @@ export type ProjectScanData = z.infer<typeof ProjectScanDataSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
 export type CreateProject = z.infer<typeof CreateProjectSchema>;
 export type UpdateProject = z.infer<typeof UpdateProjectSchema>;
+export type ScaffoldProject = z.infer<typeof ScaffoldProjectSchema>;

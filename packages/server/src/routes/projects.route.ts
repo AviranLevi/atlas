@@ -7,6 +7,7 @@ import {
   CreateBranchSchema,
   CreateProjectSchema,
   ImportRulesSchema,
+  ScaffoldProjectSchema,
   UpdateProjectSchema,
 } from '@atlas/shared';
 import { zValidator } from '@hono/zod-validator';
@@ -26,6 +27,7 @@ import {
   listProjectAgents,
   listProjects,
   openProjectInEditor,
+  scaffoldProject,
   scanProject,
   unassignProjectAgent,
   updateProject,
@@ -38,6 +40,7 @@ export const projectsRoute = new Hono()
   .post('/:id/import-rules', zValidator('json', ImportRulesSchema), importProjectRules)
   .get('/:id/context', getProjectContext)
   .get('/:id', getProject)
+  .post('/scaffold', zValidator('json', ScaffoldProjectSchema), scaffoldProject)
   .post('/', zValidator('json', CreateProjectSchema), createProject)
   .post('/:id/scan', scanProject)
   .post('/:id/generate-brief', generateProjectBrief)

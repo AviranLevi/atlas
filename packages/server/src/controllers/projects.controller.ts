@@ -2,13 +2,21 @@
 import type { Context } from 'hono';
 
 // Shared
-import type { AssignAgent, CreateBranch, CreateProject, ImportRules, UpdateProject } from '@atlas/shared';
+import type {
+  AssignAgent,
+  CreateBranch,
+  CreateProject,
+  ImportRules,
+  ScaffoldProject,
+  UpdateProject,
+} from '@atlas/shared';
 
 // Services
 import {
   agentsService,
   briefGeneratorService,
   designContextGeneratorService,
+  projectScaffoldService,
   projectsService,
   rulesService,
 } from '../services/index.js';
@@ -65,6 +73,13 @@ export async function getProject(c: Context) {
 export async function createProject(c: Context) {
   const data = getValidatedBody<CreateProject>(c);
   const project = await projectsService.create(data);
+  return c.json(project, 201);
+}
+
+/** Creates a new folder, optionally initializes git, and registers it as a project. */
+export async function scaffoldProject(c: Context) {
+  const data = getValidatedBody<ScaffoldProject>(c);
+  const project = await projectScaffoldService.scaffold(data);
   return c.json(project, 201);
 }
 

@@ -1,6 +1,33 @@
 // External
 import { execSync } from 'node:child_process';
 
+// Lib
+import { AppError } from '../errors.js';
+
+/**
+ * Initializes a git repo at `dirPath` with the given branch as HEAD. Uses the portable
+ * `git init && git symbolic-ref HEAD refs/heads/<branch>` pair so we don't require git
+ * ≥ 2.28 (which introduced `git init -b`).
+ */
+export function gitInit(dirPath: string, branch: string): void {
+  try {
+    execSync('git init', { cwd: dirPath, stdio: ['pipe', 'pipe', 'pipe'] });
+    execSync(`git symbolic-ref HEAD refs/heads/${branch}`, {
+      cwd: dirPath,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+  } catch (error: unknown) {
+    const code = (error as NodeJS.ErrnoException | undefined)?.code;
+    if (code === 'ENOENT') {
+      throw new AppError('Git is required to initialize a repository — please install git', {
+        status: 500,
+        cause: error,
+      });
+    }
+    throw new AppError('Failed to initialize git repository', { status: 500, cause: error });
+  }
+}
+
 /** Returns the git remote origin URL converted to HTTPS format. */
 export function detectRepoUrl(dirPath: string): string | null {
   try {

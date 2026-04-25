@@ -22,6 +22,7 @@ import { PackageImporterService } from './package-io/package-importer.service.js
 import { WorkflowRunnerService } from './workflow-runner/workflow-runner.service.js';
 import { PhasesService } from './phases/phases.service.js';
 import { PreferencesService } from './preferences/preferences.service.js';
+import { ProjectScaffoldService } from './projects/project-scaffold.service.js';
 import { ProjectsService } from './projects/projects.service.js';
 import { PromptBuilderService } from './prompt-builder/prompt-builder.service.js';
 import { ReviewsService } from './reviews/reviews.service.js';
@@ -42,6 +43,7 @@ export const rulesService = new RulesService();
 export const memoryService = new MemoryService();
 export const tasksService = new TasksService();
 export const projectsService = new ProjectsService();
+export const projectScaffoldService = new ProjectScaffoldService(projectsService);
 export const settingsService = new SettingsService();
 export const searchService = new SearchService();
 export const agentProvidersService = new AgentProvidersService();
