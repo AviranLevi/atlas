@@ -78,6 +78,16 @@ That's it. No manual migration step needed.
 
 ## First-time setup
 
+When you first open Atlas at **http://localhost:5173** with no API key or projects, you land in a guided 3-step onboarding flow at `/welcome`:
+
+1. **API key** — generate a key (also accessible at `/setup` for legacy users)
+2. **First project** — scaffold a fresh folder, pick an existing one, or (soon) clone from Git
+3. **Done** — open the project workspace or add an agent
+
+After at least one project exists you'll land on the **All Projects** dashboard whenever no project is active. The full project shell — Kanban, Workspaces, Chat, Memory, etc. — only renders once you select a project.
+
+See [docs/onboarding.md](docs/onboarding.md) for the full state diagram, env vars, and security notes around the scaffold endpoint.
+
 ### 1. Add a provider
 
 Go to **Agents → AI Providers → Add Provider** and enter your API key (Anthropic or OpenAI). This is what Atlas uses for its own AI features (chat, code review, project briefs).
@@ -153,6 +163,9 @@ All variables are optional — Atlas works out of the box without a `.env` file.
 |----------|---------|-------------|
 | `PORT` | `3100` | Server HTTP port |
 | `MCP_PORT` | `3101` | MCP HTTP/SSE server port |
+| `ATLAS_ALLOWED_PARENT_ROOTS` | `~`, `~/Documents`, `~/code`, `~/dev`, `~/Projects`, `/tmp` | Colon-separated absolute paths the project scaffolder is allowed to create folders inside |
+| `VITE_ATLAS_MARKETPLACE_ENABLED` | `false` | Surface the in-progress Marketplace nav entry |
+| `VITE_ATLAS_NEW_SHELL` | `true` | Set to `false` to fall back to the legacy "always full shell" mode |
 
 Copy `.env.example` to `.env` only if you need non-default ports.
 
@@ -172,6 +185,10 @@ Copy `.env.example` to `.env` only if you need non-default ports.
 | `pnpm mcp` | Start the MCP server (stdio) for IDE integration |
 | `pnpm db:generate` | Generate Drizzle migrations from schema changes |
 | `pnpm db:migrate` | Run pending database migrations |
+
+## Roadmap
+
+- **Marketplace** — coming in a future release. The route is reserved (`/marketplace`) but rendering a "Coming soon" card. Set `VITE_ATLAS_MARKETPLACE_ENABLED=true` to surface the in-progress UI.
 
 ## Security Note
 
