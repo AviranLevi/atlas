@@ -17,6 +17,7 @@ import { RuleDetailPage } from '@/pages/rule-detail/rule-detail.page';
 import { RulesPage } from '@/pages/rules/rules.page';
 import { SettingsPage } from '@/pages/settings/settings.page';
 import { SetupPage } from '@/pages/setup/setup.page';
+import { WelcomePage } from '@/pages/onboarding/welcome.page';
 import { SkillDetailPage } from '@/pages/skill-detail/skill-detail.page';
 import { SkillsPage } from '@/pages/skills/skills.page';
 import { UsagePage } from '@/pages/usage/usage.page';
@@ -26,7 +27,8 @@ import { WorkspacesPage } from '@/pages/workspaces/workspaces.page';
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/kanban" replace />} />
+      <Route path="/" element={<Navigate to="/projects" replace />} />
+      <Route path="/welcome" element={<WelcomePage />} />
       <Route path="/setup" element={<SetupPage />} />
       <Route path="/agents" element={<AgentsPage />} />
       <Route path="/agents/:id" element={<AgentDetailPage />} />

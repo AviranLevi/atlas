@@ -18,14 +18,21 @@ import { useActiveProject } from '@/contexts/ProjectContext';
 import { cn } from '@/lib/utils';
 
 // Types
-import type { NavItem } from './layout.types';
+import type { NavItem, ShellMode } from './layout.types';
 
 // Constants
 import { navItems } from './layout.constants';
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+type AppShellProps = {
+  children: React.ReactNode;
+  /** When 'noActiveProject', renders a slim sidebar with only globalAlwaysOn entries. */
+  mode: ShellMode;
+};
+
+export function AppShell({ children, mode }: AppShellProps) {
   const [expanded, setExpanded] = useState(true);
   const { activeProjectId } = useActiveProject();
+  const slim = mode === 'noActiveProject';
 
   const resolvedItems = useMemo(() => {
     return navItems.map((item) => {
@@ -38,8 +45,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     });
   }, [activeProjectId]);
 
-  const projectItems = resolvedItems.filter((n) => n.section === 'project');
-  const globalItems = resolvedItems.filter((n) => n.section === 'global');
+  // In slim mode, only globalAlwaysOn entries render.
+  const projectItems = slim ? [] : resolvedItems.filter((n) => n.section === 'project');
+  const globalItems = slim
+    ? resolvedItems.filter((n) => n.section === 'global' && n.globalAlwaysOn)
+    : resolvedItems.filter((n) => n.section === 'global');
 
   function renderNavItem(item: NavItem) {
     const { to, icon: Icon, label, badge, disabled } = item;
@@ -83,7 +93,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <span className="relative shrink-0">
                 <Icon className="h-[18px] w-[18px]" />
-                {badge && <ActiveWorkspaceDot />}
+                {/* ActiveWorkspaceDot polls workspace state — keep it out of slim mode. */}
+                {badge && mode === 'activeProject' && <ActiveWorkspaceDot />}
               </span>
               {expanded && <span>{label}</span>}
             </NavLink>
@@ -148,27 +159,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex flex-1 flex-col overflow-y-auto p-2">
-          {expanded && (
-            <span className="mb-1 mt-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              Project
-            </span>
+          {projectItems.length > 0 && (
+            <>
+              {expanded && (
+                <span className="mb-1 mt-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Project
+                </span>
+              )}
+              <div className="flex flex-col gap-0.5">{projectItems.map(renderNavItem)}</div>
+            </>
           )}
-          <div className="flex flex-col gap-0.5">{projectItems.map(renderNavItem)}</div>
 
-          {expanded ? (
-            <span className="mb-1 mt-4 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              Global
-            </span>
-          ) : (
-            <div className="my-2 mx-2 h-px bg-border" />
+          {globalItems.length > 0 && (
+            <>
+              {expanded ? (
+                <span
+                  className={cn(
+                    'mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60',
+                    projectItems.length > 0 ? 'mt-4' : 'mt-1',
+                  )}
+                >
+                  Global
+                </span>
+              ) : projectItems.length > 0 ? (
+                <div className="my-2 mx-2 h-px bg-border" />
+              ) : null}
+              <div className="flex flex-col gap-0.5">{globalItems.map(renderNavItem)}</div>
+            </>
           )}
-          <div className="flex flex-col gap-0.5">{globalItems.map(renderNavItem)}</div>
         </nav>
 
-        <AgentStatusPanel expanded={expanded} />
+        {/* AgentStatusPanel polls agent runs — only relevant when a project is active. */}
+        {mode === 'activeProject' && <AgentStatusPanel expanded={expanded} />}
       </aside>
       <div className="flex flex-1 flex-col overflow-hidden">
-        <ProjectTabBar />
+        {mode === 'activeProject' && <ProjectTabBar />}
         <main className="flex flex-1 flex-col overflow-auto p-6">{children}</main>
       </div>
     </div>

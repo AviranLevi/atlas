@@ -9,7 +9,23 @@ export type NavItem = {
   section: 'project' | 'global';
   /** When true, renders as a muted span instead of a NavLink */
   disabled?: boolean;
+  /** Optional feature flag — entry hidden unless the matching env flag is enabled */
+  flag?: 'marketplace';
+  /**
+   * When true, this item still renders in the slim "no active project" sidebar (state B).
+   * Project-scoped items never render in slim mode.
+   */
+  globalAlwaysOn?: boolean;
 };
+
+/**
+ * The current shell rendering mode, derived from auth + active project state.
+ *
+ *  - `firstRun`: no API key OR no projects → full-bleed onboarding, no shell chrome
+ *  - `noActiveProject`: authenticated with projects but none selected → slim global sidebar
+ *  - `activeProject`: authenticated with an active project → full shell + project tab bar
+ */
+export type ShellMode = 'firstRun' | 'noActiveProject' | 'activeProject';
 
 export type PageHeaderProps = {
   title: string;

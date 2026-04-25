@@ -29,13 +29,13 @@ const queryClient = new QueryClient({
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ProjectProvider>
-        <TooltipProvider>
-          <AuthProvider>
+      <AuthProvider>
+        <ProjectProvider>
+          <TooltipProvider>
             <BrowserRouter>{children}</BrowserRouter>
-          </AuthProvider>
-        </TooltipProvider>
-      </ProjectProvider>
+          </TooltipProvider>
+        </ProjectProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

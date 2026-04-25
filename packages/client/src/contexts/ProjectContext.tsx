@@ -1,5 +1,6 @@
 import type { Project } from '@atlas/shared';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useProjects } from '@/hooks/use-projects.hook';
 
 const STORAGE_KEY = 'active-project-id';
@@ -39,6 +40,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     if (activeProjectId && !activeProject && projects.length > 0) {
       setActiveProjectIdRaw(null);
       localStorage.removeItem(STORAGE_KEY);
+      toast.info('Active project was removed — pick another from the dashboard.');
     }
   }, [activeProjectId, activeProject, projects.length]);
 
