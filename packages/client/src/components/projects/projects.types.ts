@@ -39,3 +39,22 @@ export type FolderPickerDialogProps = {
   initialPath?: string;
   onSelect: (path: string) => void;
 };
+
+export type ProjectCreateMode = 'scaffold' | 'existing' | 'clone';
+
+export type ProjectCreateBodyProps = {
+  /** Called once a project has been created. */
+  onCreated?: (project: Project) => void;
+  /** Optional cancel button — typically wired to close a parent dialog. */
+  onCancel?: () => void;
+  /** When true, hides the cancel button (useful inside the welcome stepper). */
+  hideCancel?: boolean;
+  /** Initial active mode. Defaults to 'scaffold'. */
+  initialMode?: ProjectCreateMode;
+};
+
+export type ProjectCreateDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated?: (project: Project) => void;
+};

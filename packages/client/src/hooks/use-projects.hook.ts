@@ -2,11 +2,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+// Context
+import { useAuth } from '@/contexts/auth.context';
+
 // Lib
 import { api } from '@/lib/api';
 
 // Types
-import type { CreateProject, Project, UpdateProject } from '@atlas/shared';
+import type { CreateProject, Project, ScaffoldProject, UpdateProject } from '@atlas/shared';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { BrowseResponse, ScanResult } from '@/components/projects/projects.types';
 import type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projects.types';
@@ -17,16 +20,20 @@ export type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projec
 const PROJECTS_KEY = ['projects'] as const;
 
 export function useProjects() {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: PROJECTS_KEY,
     queryFn: () => api.get<Project[]>('/projects'),
+    enabled: isAuthenticated,
   });
 }
 
 export function useProjectsWithSummary() {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: [...PROJECTS_KEY, 'summary'],
     queryFn: () => api.get<ProjectWithSummary[]>('/projects?include=summary'),
+    enabled: isAuthenticated,
   });
 }
 
@@ -92,6 +99,15 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateProject) => api.post<Project>('/projects', data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+  });
+}
+
+/** Scaffolds a new folder, optionally initializes git, and registers it as a project. */
+export function useScaffoldProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ScaffoldProject) => api.post<Project>('/projects/scaffold', data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
   });
 }

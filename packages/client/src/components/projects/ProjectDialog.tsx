@@ -13,13 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FolderPickerDialog } from './FolderPickerDialog';
 
 // Hooks
-import {
-  useCreateProject,
-  useProjectBranches,
-  useScanFolder,
-  useScanProject,
-  useUpdateProject,
-} from '@/hooks/use-projects.hook';
+import { useProjectBranches, useScanFolder, useUpdateProject } from '@/hooks/use-projects.hook';
 
 // Types
 import type { ProjectStatus } from '@atlas/shared';
@@ -29,9 +23,8 @@ import type { ProjectDialogProps } from './projects.types';
 import { COLOR_PRESETS, STATUSES } from './projects.constants';
 
 export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProps) {
-  const createProject = useCreateProject();
+  // ProjectDialog is now edit-only — creation flows live in ProjectCreateDialog.
   const updateProject = useUpdateProject();
-  const scanProject = useScanProject();
   const scanFolder = useScanFolder();
   const isEditing = !!project;
   const { data: branches = [] } = useProjectBranches(isEditing ? project?.id : undefined);
@@ -117,42 +110,24 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
     if (isEditing) {
       updateProject.mutate({ id: project.id, data }, { onSuccess: () => onOpenChange(false) });
     } else {
-      createProject.mutate(data, {
-        onSuccess: (created) => {
-          onOpenChange(false);
-          if (data.localPath) {
-            scanProject.mutate(created.id);
-          }
-        },
-      });
+      // Defensive: this dialog is edit-only. Callers should use ProjectCreateDialog instead.
+      onOpenChange(false);
     }
   };
 
-  const isPending = createProject.isPending || updateProject.isPending;
-  const submitMutation = isEditing ? updateProject : createProject;
+  const isPending = updateProject.isPending;
+  const submitMutation = updateProject;
+
+  if (!isEditing) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Project' : 'New Project'}</DialogTitle>
+          <DialogTitle>Edit Project</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isEditing && !localPath && (
-            <button
-              type="button"
-              onClick={() => setFolderPickerOpen(true)}
-              className="w-full rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30 transition-colors p-6 flex flex-col items-center gap-2 text-center"
-            >
-              <FolderOpen className="h-8 w-8 text-muted-foreground" />
-              <p className="font-medium text-sm">Select a project folder</p>
-              <p className="text-muted-foreground text-xs">
-                Pick your local git repository and we'll auto-fill the rest
-              </p>
-            </button>
-          )}
-
-          {(isEditing || localPath) && (
+          {(
             <>
               <div className="space-y-2">
                 <Label>Local Path</Label>
@@ -316,13 +291,11 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                 Cancel
               </button>
             </Button>
-            {(isEditing || localPath) && (
-              <Button asChild>
-                <button type="submit" disabled={isPending || !name.trim()}>
-                  {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Project'}
-                </button>
-              </Button>
-            )}
+            <Button asChild>
+              <button type="submit" disabled={isPending || !name.trim()}>
+                {isPending ? 'Saving...' : 'Save Changes'}
+              </button>
+            </Button>
             {submitMutation.isError && (
               <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
             )}

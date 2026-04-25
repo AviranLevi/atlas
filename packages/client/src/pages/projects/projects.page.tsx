@@ -1,16 +1,21 @@
 // React / library
-import { FolderOpen, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { FolderOpen, Plus, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
+import { ProjectCreateDialog } from '@/components/projects/ProjectCreateDialog';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProjectCard } from './components/ProjectCard';
 
 // Hooks
-import { useProjectsWithSummary, useDeleteProject } from '@/hooks/use-projects.hook';
+import { useDeleteProject, useProjectsWithSummary } from '@/hooks/use-projects.hook';
+
+// Context
+import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Types
 import type { Project } from '@atlas/shared';
@@ -19,20 +24,22 @@ import type { ProjectWithSummary } from './projects.types';
 export function ProjectsPage() {
   const { data: projects, isLoading } = useProjectsWithSummary();
   const deleteProject = useDeleteProject();
+  const { setActiveProjectId } = useActiveProject();
   const navigate = useNavigate();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | undefined>();
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
 
   const handleCreate = () => {
-    setEditingProject(undefined);
-    setDialogOpen(true);
+    setCreateDialogOpen(true);
   };
 
   const handleEdit = (e: React.MouseEvent, project: ProjectWithSummary) => {
     e.stopPropagation();
     setEditingProject(project);
-    setDialogOpen(true);
+    setEditDialogOpen(true);
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -42,14 +49,37 @@ export function ProjectsPage() {
     }
   };
 
-  const filtered = projects?.filter((p) => statusFilter === 'all' || p.status === statusFilter);
+  const handleOpen = (id: string) => {
+    setActiveProjectId(id);
+    navigate(`/projects/${id}`);
+  };
+
+  const filtered = useMemo(() => {
+    if (!projects) return undefined;
+    const q = search.trim().toLowerCase();
+    return projects.filter((p) => {
+      if (statusFilter !== 'all' && p.status !== statusFilter) return false;
+      if (!q) return true;
+      const haystack = [p.name, p.description, p.techStack, p.localPath, p.defaultBranch]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [projects, statusFilter, search]);
+
+  const total = projects?.length ?? 0;
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground mt-0.5 text-sm">Manage project configurations and agent assignments</p>
+          <h1 className="text-2xl font-bold tracking-tight">All Projects</h1>
+          <p className="text-muted-foreground mt-0.5 text-sm">
+            {total === 0
+              ? 'Create or pick a project to get started.'
+              : `${total} project${total === 1 ? '' : 's'} — pick one to open or manage.`}
+          </p>
         </div>
         <Button onClick={handleCreate} size="sm">
           <Plus className="mr-1.5 h-4 w-4" />
@@ -57,7 +87,16 @@ export function ProjectsPage() {
         </Button>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, path, or tech..."
+            className="h-8 pl-8 text-xs"
+          />
+        </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="h-8 w-[180px] text-xs">
             <SelectValue placeholder="All Statuses" />
@@ -74,15 +113,21 @@ export function ProjectsPage() {
 
       {isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
-      ) : !filtered?.length ? (
+      ) : !projects?.length ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
           <FolderOpen className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
           <h3 className="mb-1 text-base font-medium">No projects yet</h3>
-          <p className="text-muted-foreground mb-4 text-sm">Create your first project to manage configurations.</p>
-          <Button onClick={handleCreate} variant="outline" size="sm">
+          <p className="text-muted-foreground mb-4 text-sm">
+            Create your first project to start tracking tasks and running agents.
+          </p>
+          <Button onClick={handleCreate} size="sm">
             <Plus className="mr-1.5 h-4 w-4" />
-            New Project
+            Create your first project
           </Button>
+        </div>
+      ) : !filtered?.length ? (
+        <div className="rounded-lg border border-dashed p-12 text-center">
+          <p className="text-muted-foreground text-sm">No projects match your filter.</p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -92,13 +137,18 @@ export function ProjectsPage() {
               project={project}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onNavigate={(id) => navigate(`/projects/${id}`)}
+              onNavigate={handleOpen}
             />
           ))}
         </div>
       )}
 
-      <ProjectDialog open={dialogOpen} onOpenChange={setDialogOpen} project={editingProject} />
+      <ProjectCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreated={(p) => handleOpen(p.id)}
+      />
+      <ProjectDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} project={editingProject} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 // React / library
-import { Pencil, Trash2, Users } from 'lucide-react';
+import { Check, Copy, FolderOpen, GitBranch, Pencil, Trash2, Users } from 'lucide-react';
+import { useState } from 'react';
 
 // Components
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,15 @@ export function ProjectCard({ project, onEdit, onDelete, onNavigate }: ProjectCa
   const status = statusConfig[project.status as ProjectStatus] ?? statusConfig.active;
   const { taskCounts, agentCount } = project;
   const doneRatio = taskCounts.total > 0 ? Math.round((taskCounts.done / taskCounts.total) * 100) : 0;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyPath = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!project.localPath) return;
+    await navigator.clipboard.writeText(project.localPath);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   return (
     <Card
@@ -38,6 +48,28 @@ export function ProjectCard({ project, onEdit, onDelete, onNavigate }: ProjectCa
           {status.label}
         </Badge>
       </div>
+
+      {(project.localPath || project.defaultBranch) && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground">
+          {project.localPath && (
+            <button
+              type="button"
+              onClick={handleCopyPath}
+              className="inline-flex max-w-full items-center gap-1 rounded hover:text-foreground"
+              title="Copy path"
+            >
+              <span className="truncate font-mono">{project.localPath}</span>
+              {copied ? <Check className="h-3 w-3 shrink-0" /> : <Copy className="h-3 w-3 shrink-0 opacity-60" />}
+            </button>
+          )}
+          {project.defaultBranch && (
+            <span className="inline-flex items-center gap-1">
+              <GitBranch className="h-3 w-3" />
+              {project.defaultBranch}
+            </span>
+          )}
+        </div>
+      )}
 
       {project.techStack && (
         <div className="flex flex-wrap gap-1">
@@ -65,12 +97,26 @@ export function ProjectCard({ project, onEdit, onDelete, onNavigate }: ProjectCa
             </span>
           </div>
         )}
-        <div className="text-muted-foreground flex items-center justify-between text-[10px]">
-          <span className="inline-flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {agentCount} agent{agentCount !== 1 ? 's' : ''}
-          </span>
-          <span>{timeAgo(project.updatedAt)}</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-muted-foreground flex min-w-0 items-center gap-2 text-[10px]">
+            <span className="inline-flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {agentCount} agent{agentCount !== 1 ? 's' : ''}
+            </span>
+            <span className="truncate">{timeAgo(project.updatedAt)}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate(project.id);
+            }}
+          >
+            <FolderOpen className="mr-1 h-3 w-3" />
+            Open
+          </Button>
         </div>
       </div>
 
