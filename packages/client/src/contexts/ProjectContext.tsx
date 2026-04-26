@@ -1,5 +1,13 @@
 import type { Project } from '@atlas/shared';
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
 import { useProjects } from '@/hooks/use-projects.hook';
 
@@ -44,19 +52,18 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
   }, [activeProjectId, activeProject, projects.length]);
 
-  return (
-    <ProjectCtx.Provider
-      value={{
-        activeProjectId: activeProject ? activeProjectId : null,
-        activeProject,
-        projects,
-        setActiveProjectId,
-        isLoading,
-      }}
-    >
-      {children}
-    </ProjectCtx.Provider>
+  const value = useMemo<ProjectContextValue>(
+    () => ({
+      activeProjectId: activeProject ? activeProjectId : null,
+      activeProject,
+      projects,
+      setActiveProjectId,
+      isLoading,
+    }),
+    [activeProject, activeProjectId, projects, setActiveProjectId, isLoading],
   );
+
+  return <ProjectCtx.Provider value={value}>{children}</ProjectCtx.Provider>;
 }
 
 export function useActiveProject() {

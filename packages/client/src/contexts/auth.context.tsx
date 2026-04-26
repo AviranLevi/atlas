@@ -1,5 +1,5 @@
 // React / library
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 // Lib
@@ -35,11 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setApiKeyState(null);
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated: !!apiKey, apiKey, setKey, clearKey }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthContextValue>(
+    () => ({ isAuthenticated: !!apiKey, apiKey, setKey, clearKey }),
+    [apiKey, setKey, clearKey],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {
