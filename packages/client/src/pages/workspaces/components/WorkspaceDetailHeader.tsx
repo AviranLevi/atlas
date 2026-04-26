@@ -2,6 +2,7 @@
 import { Bot, FolderOpen, Square, Trash2, RotateCcw, ListPlus } from 'lucide-react';
 
 // Components
+import { HintDot } from '@/components/onboarding/HintDot';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StatusIcon } from './StatusIcon';
@@ -103,16 +104,18 @@ export function WorkspaceDetailHeader({
           </Button>
         )}
         {canCleanup && (
-          <Button
-            data-tour={TOUR_TARGETS.workspaceCleanup}
-            variant="outline"
-            size="sm"
-            onClick={onCleanup}
-            disabled={isCleaning}
-          >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Clean Up
-          </Button>
+          <HintDot id="worktree-cleanup">
+            <Button
+              data-tour={TOUR_TARGETS.workspaceCleanup}
+              variant="outline"
+              size="sm"
+              onClick={onCleanup}
+              disabled={isCleaning}
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Clean Up
+            </Button>
+          </HintDot>
         )}
       </div>
     </div>

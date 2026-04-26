@@ -3,7 +3,9 @@ import { Settings } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 // Components
+import { HintDot } from '@/components/onboarding/HintDot';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 import { AppearanceTab } from './components/AppearanceTab';
 import { DefaultWorkspaceTab } from './components/DefaultWorkspaceTab';
 import { IntegrationsTab } from './components/IntegrationsTab';
@@ -43,7 +45,11 @@ export function SettingsPage() {
         <TabsList>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="workspace">Workspace</TabsTrigger>
-          <TabsTrigger value="mcp">MCP</TabsTrigger>
+          <HintDot id="mcp-config" anchor="top-right" dismissOnChildClick={false}>
+            <TabsTrigger data-tour={TOUR_TARGETS.mcpConfig} value="mcp">
+              MCP
+            </TabsTrigger>
+          </HintDot>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>

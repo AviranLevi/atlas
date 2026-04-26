@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 // Components
+import { HintDot } from '@/components/onboarding/HintDot';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -140,9 +141,11 @@ export function GlobalPage() {
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="general">Global Instructions</TabsTrigger>
-          <TabsTrigger data-tour={TOUR_TARGETS.globalDispatchTab} value="dispatch-rules">
-            Dispatch Rules
-          </TabsTrigger>
+          <HintDot id="dispatch-rules" anchor="top-right" dismissOnChildClick={false}>
+            <TabsTrigger data-tour={TOUR_TARGETS.globalDispatchTab} value="dispatch-rules">
+              Dispatch Rules
+            </TabsTrigger>
+          </HintDot>
         </TabsList>
 
         <TabsContent value="general" className="mt-6" data-tour={TOUR_TARGETS.globalInstructions}>

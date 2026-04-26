@@ -127,3 +127,37 @@ html.font-size-lg {
   --color-sidebar-border: oklch(0.2 0 0);
   --color-sidebar-ring: oklch(0.97 0 0);
 }
+
+/* Onboarding: HintDot pulse (plan §8). Reduced-motion users get a static
+   dot — see `HintDot.tsx`, which omits this class when `isReducedMotion()`. */
+@keyframes atlas-hint-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 60%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in oklch, var(--color-primary) 0%, transparent);
+  }
+}
+
+.atlas-hint-pulse {
+  animation: atlas-hint-pulse 1.8s ease-out infinite;
+}
+
+/* Plan §11 — `prefers-reduced-motion: reduce` audit. The engine (`tour-engine.ts`)
+   passes `animate: false` to driver.js, but driver.js still emits a few inline
+   transitions on its overlay/popover. Belt-and-suspenders: forcibly suppress
+   pulse, overlay fade, and popover slide so the animation budget is
+   verifiably zero for users who asked for it. Tours still autostart. */
+@media (prefers-reduced-motion: reduce) {
+  .atlas-hint-pulse {
+    animation: none;
+  }
+  .driver-overlay,
+  .driver-popover,
+  .driver-popover-arrow,
+  .driver-active-element {
+    animation: none !important;
+    transition: none !important;
+  }
+}

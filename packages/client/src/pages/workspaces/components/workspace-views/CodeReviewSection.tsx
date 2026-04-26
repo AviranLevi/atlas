@@ -2,6 +2,7 @@
 import { Bot, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
 
 // Components
+import { HintDot } from '@/components/onboarding/HintDot';
 import { Button } from '@/components/ui/button';
 import { DiffSection } from '@/pages/workspaces/diff';
 import { ReviewVerdictPanel } from './ReviewVerdictPanel';
@@ -78,16 +79,18 @@ export function CodeReviewSection({
           )}
         </div>
         {review?.status === 'pending' && !isReviewerRunning && diff && diff.files.length > 0 && (
-          <Button
-            data-tour={TOUR_TARGETS.workspaceRunReview}
-            variant="outline"
-            size="sm"
-            onClick={onOpenAiReview}
-            disabled={startAiReview.isPending}
-          >
-            {startAiReview.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-            Run AI Review
-          </Button>
+          <HintDot id="run-ai-review">
+            <Button
+              data-tour={TOUR_TARGETS.workspaceRunReview}
+              variant="outline"
+              size="sm"
+              onClick={onOpenAiReview}
+              disabled={startAiReview.isPending}
+            >
+              {startAiReview.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+              Run AI Review
+            </Button>
+          </HintDot>
         )}
       </div>
       <p className="text-xs text-muted-foreground mb-3">
