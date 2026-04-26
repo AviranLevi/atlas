@@ -8,16 +8,16 @@ import type { Workspace } from '@atlas/shared';
 import type { DB } from '../index.js';
 import { projects, tasks, workspaces } from '../schema/index.js';
 
+// Lib
+import { NotFoundError } from '../../lib/errors.js';
+import { withAppErrorSync } from '../../lib/with-app-error.js';
+
 type WorkspaceRow = typeof workspaces.$inferSelect;
 type WorkspaceJoinRow = {
   workspaces: WorkspaceRow;
   tasks: typeof tasks.$inferSelect | null;
   projects: typeof projects.$inferSelect | null;
 };
-
-// Lib
-import { AppError, NotFoundError } from '../../lib/errors.js';
-import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'db/repositories/workspaces.repository.ts';
 
@@ -72,122 +72,134 @@ export class WorkspacesRepository {
 
   /** Returns all workspaces enriched with task and project names. */
   findAll(): Workspace[] {
-    const FUNCTION_NAME = 'findAll';
-    try {
-      const rows = this.db
-        .select()
-        .from(workspaces)
-        .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
-        .leftJoin(projects, eq(workspaces.projectId, projects.id))
-        .all();
-      return rows.map((r) => this.enrichRow(r));
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to query workspaces', { cause: error });
-    }
+    return withAppErrorSync(
+      () => {
+        const rows = this.db
+          .select()
+          .from(workspaces)
+          .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
+          .leftJoin(projects, eq(workspaces.projectId, projects.id))
+          .all();
+        return rows.map((r) => this.enrichRow(r));
+      },
+      { filePath: FILE_PATH, functionName: 'findAll', message: 'Failed to query workspaces' },
+    );
   }
 
   /** Returns workspaces by status, enriched with task and project names. */
   findByStatus(status: string): Workspace[] {
-    const FUNCTION_NAME = 'findByStatus';
-    try {
-      const rows = this.db
-        .select()
-        .from(workspaces)
-        .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
-        .leftJoin(projects, eq(workspaces.projectId, projects.id))
-        .where(eq(workspaces.status, status))
-        .all();
-      return rows.map((r) => this.enrichRow(r));
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to query workspaces by status', { cause: error });
-    }
+    return withAppErrorSync(
+      () => {
+        const rows = this.db
+          .select()
+          .from(workspaces)
+          .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
+          .leftJoin(projects, eq(workspaces.projectId, projects.id))
+          .where(eq(workspaces.status, status))
+          .all();
+        return rows.map((r) => this.enrichRow(r));
+      },
+      {
+        filePath: FILE_PATH,
+        functionName: 'findByStatus',
+        message: 'Failed to query workspaces by status',
+      },
+    );
   }
 
   /** Returns all workspaces for a task, ordered by createdAt ascending. */
   findAllByTaskId(taskId: string): Workspace[] {
-    const FUNCTION_NAME = 'findAllByTaskId';
-    try {
-      const rows = this.db
-        .select()
-        .from(workspaces)
-        .where(eq(workspaces.taskId, taskId))
-        .orderBy(asc(workspaces.createdAt))
-        .all();
-      return rows.map((r) => ({ ...r, diffComments: this.parseComments(r.diffComments) }) as Workspace);
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to query workspaces by task', { cause: error });
-    }
+    return withAppErrorSync(
+      () => {
+        const rows = this.db
+          .select()
+          .from(workspaces)
+          .where(eq(workspaces.taskId, taskId))
+          .orderBy(asc(workspaces.createdAt))
+          .all();
+        return rows.map((r) => ({ ...r, diffComments: this.parseComments(r.diffComments) }) as Workspace);
+      },
+      {
+        filePath: FILE_PATH,
+        functionName: 'findAllByTaskId',
+        message: 'Failed to query workspaces by task',
+      },
+    );
   }
 
   /** Returns the workspace for a task, or null if not found. */
   findByTaskId(taskId: string): Workspace | null {
-    const FUNCTION_NAME = 'findByTaskId';
-    try {
-      const row = this.db.select().from(workspaces).where(eq(workspaces.taskId, taskId)).get();
-      if (!row) return null;
-      return { ...row, diffComments: this.parseComments(row.diffComments) } as Workspace;
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to query workspace by task', { cause: error });
-    }
+    return withAppErrorSync(
+      () => {
+        const row = this.db.select().from(workspaces).where(eq(workspaces.taskId, taskId)).get();
+        if (!row) return null;
+        return { ...row, diffComments: this.parseComments(row.diffComments) } as Workspace;
+      },
+      {
+        filePath: FILE_PATH,
+        functionName: 'findByTaskId',
+        message: 'Failed to query workspace by task',
+      },
+    );
   }
 
   /** Returns child workspaces of a given parent, ordered newest first. */
   findByParentId(parentId: string): Workspace[] {
-    const FUNCTION_NAME = 'findByParentId';
-    try {
-      const rows = this.db
-        .select()
-        .from(workspaces)
-        .where(eq(workspaces.parentWorkspaceId, parentId))
-        .orderBy(desc(workspaces.createdAt))
-        .all();
-      return rows.map((r) => ({ ...r, diffComments: this.parseComments(r.diffComments) }) as Workspace);
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to query child workspaces', { cause: error });
-    }
+    return withAppErrorSync(
+      () => {
+        const rows = this.db
+          .select()
+          .from(workspaces)
+          .where(eq(workspaces.parentWorkspaceId, parentId))
+          .orderBy(desc(workspaces.createdAt))
+          .all();
+        return rows.map((r) => ({ ...r, diffComments: this.parseComments(r.diffComments) }) as Workspace);
+      },
+      {
+        filePath: FILE_PATH,
+        functionName: 'findByParentId',
+        message: 'Failed to query child workspaces',
+      },
+    );
   }
 
   /** Walks the parent chain from a workspace back to the root, returning the full lineage (oldest first). */
   findLineage(workspaceId: string): Workspace[] {
-    const FUNCTION_NAME = 'findLineage';
-    try {
-      const chain: Workspace[] = [];
-      let currentId: string | null = workspaceId;
-      while (currentId) {
-        const ws = this.findByIdOrThrow(currentId);
-        chain.unshift(ws);
-        currentId = ws.parentWorkspaceId ?? null;
-      }
-      return chain;
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      if (error instanceof AppError) throw error;
-      throw new AppError('Failed to build workspace lineage', { cause: error });
-    }
+    return withAppErrorSync(
+      () => {
+        const chain: Workspace[] = [];
+        let currentId: string | null = workspaceId;
+        while (currentId) {
+          const ws = this.findByIdOrThrow(currentId);
+          chain.unshift(ws);
+          currentId = ws.parentWorkspaceId ?? null;
+        }
+        return chain;
+      },
+      {
+        filePath: FILE_PATH,
+        functionName: 'findLineage',
+        message: 'Failed to build workspace lineage',
+      },
+    );
   }
 
   /** Returns a workspace by ID enriched with task/project names, or null. */
   findById(id: string): Workspace | null {
-    const FUNCTION_NAME = 'findById';
-    try {
-      const row = this.db
-        .select()
-        .from(workspaces)
-        .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
-        .leftJoin(projects, eq(workspaces.projectId, projects.id))
-        .where(eq(workspaces.id, id))
-        .get();
-      if (!row) return null;
-      return this.enrichRow(row);
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to query workspace', { cause: error });
-    }
+    return withAppErrorSync(
+      () => {
+        const row = this.db
+          .select()
+          .from(workspaces)
+          .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
+          .leftJoin(projects, eq(workspaces.projectId, projects.id))
+          .where(eq(workspaces.id, id))
+          .get();
+        if (!row) return null;
+        return this.enrichRow(row);
+      },
+      { filePath: FILE_PATH, functionName: 'findById', message: 'Failed to query workspace' },
+    );
   }
 
   /** Returns a workspace by ID enriched with task/project names, or throws NotFoundError. */
@@ -201,49 +213,47 @@ export class WorkspacesRepository {
 
   /** Inserts a new workspace and returns the created record. */
   insert(data: InsertWorkspace): Workspace {
-    const FUNCTION_NAME = 'insert';
-    try {
-      return this.db.insert(workspaces).values(data).returning().get() as Workspace;
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to insert workspace', { cause: error });
-    }
+    return withAppErrorSync(
+      () => this.db.insert(workspaces).values(data).returning().get() as Workspace,
+      { filePath: FILE_PATH, functionName: 'insert', message: 'Failed to insert workspace' },
+    );
   }
 
   /** Updates a workspace and returns the updated record. */
   update(id: string, data: UpdateWorkspace): Workspace {
-    const FUNCTION_NAME = 'update';
-    try {
-      return this.db
-        .update(workspaces)
-        .set({ ...data, updatedAt: new Date().toISOString() })
-        .where(eq(workspaces.id, id))
-        .returning()
-        .get() as Workspace;
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to update workspace', { cause: error });
-    }
+    return withAppErrorSync(
+      () =>
+        this.db
+          .update(workspaces)
+          .set({ ...data, updatedAt: new Date().toISOString() })
+          .where(eq(workspaces.id, id))
+          .returning()
+          .get() as Workspace,
+      { filePath: FILE_PATH, functionName: 'update', message: 'Failed to update workspace' },
+    );
   }
 
   /** Deletes a workspace by ID. */
   remove(id: string): void {
-    const FUNCTION_NAME = 'remove';
-    try {
-      this.db.delete(workspaces).where(eq(workspaces.id, id)).run();
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to delete workspace', { cause: error });
-    }
+    withAppErrorSync(
+      () => {
+        this.db.delete(workspaces).where(eq(workspaces.id, id)).run();
+      },
+      { filePath: FILE_PATH, functionName: 'remove', message: 'Failed to delete workspace' },
+    );
   }
 
   /** Deletes all workspaces for a task. */
   removeByTaskId(taskId: string): void {
-    try {
-      this.db.delete(workspaces).where(eq(workspaces.taskId, taskId)).run();
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: removeByTaskId`, error);
-      throw new AppError('Failed to delete workspaces for task', { cause: error });
-    }
+    withAppErrorSync(
+      () => {
+        this.db.delete(workspaces).where(eq(workspaces.taskId, taskId)).run();
+      },
+      {
+        filePath: FILE_PATH,
+        functionName: 'removeByTaskId',
+        message: 'Failed to delete workspaces for task',
+      },
+    );
   }
 }
