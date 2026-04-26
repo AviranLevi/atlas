@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/AviranLevi/atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/AviranLevi/atlas/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![status](https://img.shields.io/badge/status-alpha-orange)
+
+> **Atlas is in alpha.** Expect breaking changes between minor versions until 1.0.
 
 Atlas is a local-first management hub for AI coding agents. It gives you a single place to track tasks across projects, run agents against those tasks, review their output, and build up a shared knowledge base (rules, skills, memory) that agents can reference via MCP.
 
@@ -165,9 +168,11 @@ All variables are optional — Atlas works out of the box without a `.env` file.
 | `MCP_PORT` | `3101` | MCP HTTP/SSE server port |
 | `ATLAS_ALLOWED_PARENT_ROOTS` | `~`, `~/Documents`, `~/code`, `~/dev`, `~/Projects`, `/tmp` | Colon-separated absolute paths the project scaffolder is allowed to create folders inside |
 | `VITE_ATLAS_MARKETPLACE_ENABLED` | `false` | Surface the in-progress Marketplace nav entry |
+| `ATLAS_AUTH_BYPASS` | `false` | Dev-only auth bypass — do not set in production |
 | `VITE_ATLAS_NEW_SHELL` | `true` | Set to `false` to fall back to the legacy "always full shell" mode |
+| `VITE_ATLAS_TOUR_DEBUG` | `false` | Surfaces tour telemetry table + `?tour-debug=1` page overlay |
 
-Copy `.env.example` to `.env` only if you need non-default ports.
+Copy `.env.example` to `.env` to override any of the above defaults.
 
 ## Scripts
 
@@ -186,9 +191,13 @@ Copy `.env.example` to `.env` only if you need non-default ports.
 | `pnpm db:generate` | Generate Drizzle migrations from schema changes |
 | `pnpm db:migrate` | Run pending database migrations |
 
-## Roadmap
+## Roadmap to 1.0
 
-- **Marketplace** — coming in a future release. The route is reserved (`/marketplace`) but rendering a "Coming soon" card. Set `VITE_ATLAS_MARKETPLACE_ENABLED=true` to surface the in-progress UI.
+- **Remote access** — tunnel-based remote access to your local Atlas instance ([plan](docs/remote-access-plan.md))
+- **DB diagram viewer** — interactive, auto-laid-out schema diagram replacing the static Mermaid render ([plan](docs/db-diagram-plan.md))
+- **End-to-end tests** — Playwright coverage for critical flows
+- **Bundle perf trim** — code-split heavy deps (mermaid, cytoscape), target ≤ 500 KB gzip main chunk
+- **Marketplace** — the route is reserved (`/marketplace`) but renders a "Coming soon" card. Set `VITE_ATLAS_MARKETPLACE_ENABLED=true` to surface the in-progress UI.
 
 ## Security Note
 
