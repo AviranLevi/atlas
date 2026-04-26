@@ -8,6 +8,13 @@ import type { Workspace } from '@atlas/shared';
 import type { DB } from '../index.js';
 import { projects, tasks, workspaces } from '../schema/index.js';
 
+type WorkspaceRow = typeof workspaces.$inferSelect;
+type WorkspaceJoinRow = {
+  workspaces: WorkspaceRow;
+  tasks: typeof tasks.$inferSelect | null;
+  projects: typeof projects.$inferSelect | null;
+};
+
 // Lib
 import { AppError, NotFoundError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
@@ -29,6 +36,7 @@ type InsertWorkspace = {
   workflowStage?: string | null;
   parentWorkspaceId?: string | null;
   providerFallbackReason?: string | null;
+  diffComments?: string | null;
   currentStage?: string | null;
   inputTokens?: number | null;
   outputTokens?: number | null;
@@ -53,14 +61,10 @@ export class WorkspacesRepository {
     }
   }
 
-  private enrichRow(row: {
-    workspaces: Workspace;
-    tasks: { name: string } | null;
-    projects: { name: string } | null;
-  }): Workspace {
+  private enrichRow(row: WorkspaceJoinRow): Workspace {
     return {
-      ...row.workspaces,
-      diffComments: this.parseComments(row.workspaces.diffComments as unknown as string),
+      ...(row.workspaces as unknown as Workspace),
+      diffComments: this.parseComments(row.workspaces.diffComments),
       taskName: row.tasks?.name ?? undefined,
       projectName: row.projects?.name ?? undefined,
     };
@@ -76,8 +80,7 @@ export class WorkspacesRepository {
         .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
         .leftJoin(projects, eq(workspaces.projectId, projects.id))
         .all();
-      // biome-ignore lint/suspicious/noExplicitAny: Drizzle join result type requires casting
-      return rows.map((r) => this.enrichRow(r as any));
+      return rows.map((r) => this.enrichRow(r));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspaces', { cause: error });
@@ -95,8 +98,7 @@ export class WorkspacesRepository {
         .leftJoin(projects, eq(workspaces.projectId, projects.id))
         .where(eq(workspaces.status, status))
         .all();
-      // biome-ignore lint/suspicious/noExplicitAny: Drizzle join result type requires casting
-      return rows.map((r) => this.enrichRow(r as any));
+      return rows.map((r) => this.enrichRow(r));
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspaces by status', { cause: error });
@@ -181,8 +183,7 @@ export class WorkspacesRepository {
         .where(eq(workspaces.id, id))
         .get();
       if (!row) return null;
-      // biome-ignore lint/suspicious/noExplicitAny: Drizzle join result type requires casting
-      return this.enrichRow(row as any);
+      return this.enrichRow(row);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to query workspace', { cause: error });

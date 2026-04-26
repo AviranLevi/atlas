@@ -89,8 +89,7 @@ export class ProjectsRepository {
       const serialized = serializeScanData(data as Record<string, unknown>);
       const result = this.db
         .insert(projects)
-        // biome-ignore lint/suspicious/noExplicitAny: Drizzle insert requires casting serialized scan data
-        .values(serialized as any)
+        .values(serialized as typeof projects.$inferInsert)
         .returning()
         .get();
       return hydrateProject(result as Record<string, unknown>);

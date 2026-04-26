@@ -120,8 +120,7 @@ export class RequestChangesService {
               output,
               completedAt: new Date().toISOString(),
               diffComments: JSON.stringify([]),
-              // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
-            } as any);
+            });
             tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
               logger.warn(`${FILE_PATH} :: requestChanges - failed to move task to In Review`, e);
             });
@@ -174,8 +173,7 @@ export class RequestChangesService {
         pid: result.process.pid ?? null,
         startedAt: new Date().toISOString(),
         completedAt: null,
-        // biome-ignore lint/suspicious/noExplicitAny: workspace update payload type is wider than the schema allows
-      } as any);
+      });
 
       await tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_PROGRESS });
 
