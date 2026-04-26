@@ -1,0 +1,12 @@
+# Revisions to ignore in `git blame`.
+#
+# Add commits here that touch many lines without changing semantics
+# (formatter passes, mass renames, codemods). GitHub honors this file
+# automatically. Locally, run once:
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Format: one full 40-char SHA per line. Comments begin with `#`.
+
+# style: apply biome formatter pass across client, server, scripts, tests
+a371ff2a22357e1106ef1cab4d9a176a7454386f
