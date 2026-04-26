@@ -4,93 +4,62 @@ import type { CreateSkill, Skill, UpdateSkill } from '@atlas/shared';
 // Repositories
 import { skillsRepository } from '../../db/repositories/index.js';
 
+// Services
+import { createResourceCrud } from '../shared/resource-crud.js';
+
 // Lib
+import { withAppError } from '../../lib/with-app-error.js';
 import type { SkillDetail } from './skills.types.js';
-import { AppError } from '../../lib/errors.js';
-import { logger } from '../../lib/logger.js';
 
 const FILE_PATH = 'services/skills/skills.service.ts';
 
 export class SkillsService {
-  constructor(private readonly repo = skillsRepository) {}
+  private readonly crud;
+
+  constructor(private readonly repo = skillsRepository) {
+    this.crud = createResourceCrud<Skill, CreateSkill, UpdateSkill>(this.repo, {
+      resourceName: 'skill',
+      filePath: FILE_PATH,
+    });
+  }
 
   /**
    * Retrieves all skills, optionally filtered by projectId.
    * When projectId is provided, returns skills where projectId matches OR projectId is null (global).
    */
-  async list(filters?: { projectId?: string; type?: string }): Promise<Skill[]> {
-    const FUNCTION_NAME = 'list';
-    try {
-      let result: Skill[];
-      if (filters?.projectId) {
-        result = this.repo.findByProjectOrGlobal(filters.projectId);
-      } else {
-        result = this.repo.findAll();
-      }
-      if (filters?.type) {
-        result = result.filter((s) => s.type === filters.type);
-      }
-      return result;
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to list skills', { cause: error });
-    }
+  list(filters?: { projectId?: string; type?: string }): Promise<Skill[]> {
+    return this.crud.list(filters);
   }
 
   /** Returns a skill by ID. */
-  async getById(id: string): Promise<Skill> {
-    const FUNCTION_NAME = 'getById';
-    try {
-      return this.repo.findByIdOrThrow(id);
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to get skill', { cause: error });
-    }
+  getById(id: string): Promise<Skill> {
+    return this.crud.getById(id);
   }
 
   /** Creates a new skill. */
-  async create(data: CreateSkill): Promise<Skill> {
-    const FUNCTION_NAME = 'create';
-    try {
-      return this.repo.insert(data);
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to create skill', { cause: error });
-    }
+  create(data: CreateSkill): Promise<Skill> {
+    return this.crud.create(data);
   }
 
   /** Updates a skill by ID. */
-  async update(id: string, data: UpdateSkill): Promise<Skill> {
-    const FUNCTION_NAME = 'update';
-    try {
-      return this.repo.update(id, data);
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to update skill', { cause: error });
-    }
+  update(id: string, data: UpdateSkill): Promise<Skill> {
+    return this.crud.update(id, data);
   }
 
   /** Deletes a skill by ID. */
-  async delete(id: string): Promise<void> {
-    const FUNCTION_NAME = 'delete';
-    try {
-      this.repo.remove(id);
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to delete skill', { cause: error });
-    }
+  delete(id: string): Promise<void> {
+    return this.crud.remove(id);
   }
 
   /** Returns a skill with its associated agents. */
-  async getDetail(skillId: string): Promise<SkillDetail> {
-    const FUNCTION_NAME = 'getDetail';
-    try {
-      const skill = await this.getById(skillId);
-      const agentsList = this.repo.findAgentsBySkillId(skillId);
-      return { skill, agents: agentsList };
-    } catch (error: unknown) {
-      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      throw new AppError('Failed to get skill detail', { cause: error });
-    }
+  getDetail(skillId: string): Promise<SkillDetail> {
+    return withAppError(
+      async () => {
+        const skill = await this.getById(skillId);
+        const agentsList = this.repo.findAgentsBySkillId(skillId);
+        return { skill, agents: agentsList };
+      },
+      { filePath: FILE_PATH, functionName: 'getDetail', message: 'Failed to get skill detail' },
+    );
   }
 }
