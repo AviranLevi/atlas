@@ -9,6 +9,7 @@ import { usePreferences, useUpdatePreferences } from './use-preferences.hook';
 // Lib
 import {
   asInt,
+  buildCompletionPatch,
   buildDismissalPatch,
   FATIGUE_THRESHOLD,
   hintSeenKey,
@@ -16,9 +17,11 @@ import {
   isWithinSnooze,
   TOURS_GLOBAL_DISMISSALS_KEY,
   TOURS_PAUSED_KEY,
+  tourCompletedCountKey,
   tourCompletedKey,
   tourDismissedAtKey,
   tourSkipCountKey,
+  tourSkipStepSumKey,
 } from '@/lib/tours/tour-state-helpers';
 
 // Types
@@ -54,6 +57,22 @@ export function useTourState() {
 
   const isHintSeen = useCallback((id: HintId) => isTrue(prefs[hintSeenKey(id)]), [prefs]);
 
+  /**
+   * M8 telemetry — read counters for a single tour. Pure derivation; never
+   * triggers a write. `meanSkipStep` is null when there are no skips so
+   * "0 skips → mean 0" can't be confused with "always skips at step 0".
+   */
+  const getTelemetry = useCallback(
+    (id: TourId) => {
+      const completedCount = asInt(prefs[tourCompletedCountKey(id)]);
+      const skipCount = asInt(prefs[tourSkipCountKey(id)]);
+      const skipStepSum = asInt(prefs[tourSkipStepSumKey(id)]);
+      const meanSkipStep = skipCount > 0 ? skipStepSum / skipCount : null;
+      return { completedCount, skipCount, meanSkipStep };
+    },
+    [prefs],
+  );
+
   return useMemo(
     () => ({
       isLoading,
@@ -63,9 +82,10 @@ export function useTourState() {
       isCompleted,
       isSnoozed,
       isHintSeen,
+      getTelemetry,
       fatigueThreshold: FATIGUE_THRESHOLD,
     }),
-    [isLoading, prefs, toursPaused, globalDismissals, isCompleted, isSnoozed, isHintSeen],
+    [isLoading, prefs, toursPaused, globalDismissals, isCompleted, isSnoozed, isHintSeen, getTelemetry],
   );
 }
 
@@ -88,14 +108,22 @@ export function useTourStateMutations() {
 
   const writePref = useCallback((key: string, value: string) => update.mutateAsync({ [key]: value }), [update]);
 
-  const markCompleted = useCallback((id: TourId) => writePref(tourCompletedKey(id), 'true'), [writePref]);
+  const markCompleted = useCallback(
+    async (id: TourId) => {
+      const { patch } = buildCompletionPatch(id, asInt(prefs[tourCompletedCountKey(id)]));
+      await update.mutateAsync(patch);
+    },
+    [update, prefs],
+  );
 
   const markDismissed = useCallback(
-    async (id: TourId) => {
+    async (id: TourId, exitedAtStep: number = 0) => {
       const { patch, nextGlobalCount } = buildDismissalPatch(
         id,
         asInt(prefs[tourSkipCountKey(id)]),
         asInt(prefs[TOURS_GLOBAL_DISMISSALS_KEY]),
+        asInt(prefs[tourSkipStepSumKey(id)]),
+        exitedAtStep,
       );
       await update.mutateAsync(patch);
       return nextGlobalCount;
@@ -106,7 +134,9 @@ export function useTourStateMutations() {
   const pauseTours = useCallback(() => writePref(TOURS_PAUSED_KEY, 'true'), [writePref]);
   const resumeTours = useCallback(() => writePref(TOURS_PAUSED_KEY, 'false'), [writePref]);
 
-  /** Wipe completed/dismissed flags so a tour fires again. Used by help center. */
+  /** Wipe completed/dismissed flags so a tour fires again. Used by help center.
+   * Telemetry counters (`completed_count`, `skip_step_sum`) are intentionally
+   * preserved so a re-run from settings doesn't erase aggregate stats. */
   const resetTour = useCallback(
     (id: TourId) =>
       update.mutateAsync({

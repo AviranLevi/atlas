@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 // Under test
 import {
   asInt,
+  buildCompletionPatch,
   buildDismissalPatch,
   FATIGUE_THRESHOLD,
   hintSeenKey,
@@ -12,9 +13,11 @@ import {
   shouldAutoPause,
   SNOOZE_MS,
   TOURS_GLOBAL_DISMISSALS_KEY,
+  tourCompletedCountKey,
   tourCompletedKey,
   tourDismissedAtKey,
   tourSkipCountKey,
+  tourSkipStepSumKey,
 } from '../src/lib/tours/tour-state-helpers';
 
 describe('isTrue', () => {
@@ -93,20 +96,43 @@ describe('buildDismissalPatch', () => {
   const fixedNow = new Date('2026-04-26T10:00:00.000Z');
 
   it('writes ISO timestamp + bumps both counters', () => {
-    const { patch, nextGlobalCount } = buildDismissalPatch('kanban', 0, 0, fixedNow);
+    const { patch, nextGlobalCount } = buildDismissalPatch('kanban', 0, 0, 0, 0, fixedNow);
     expect(patch).toEqual({
       [tourDismissedAtKey('kanban')]: fixedNow.toISOString(),
       [tourSkipCountKey('kanban')]: '1',
+      [tourSkipStepSumKey('kanban')]: '0',
       [TOURS_GLOBAL_DISMISSALS_KEY]: '1',
     });
     expect(nextGlobalCount).toBe(1);
   });
 
   it('increments from existing values monotonically', () => {
-    const r1 = buildDismissalPatch('agents', 2, 5, fixedNow);
+    const r1 = buildDismissalPatch('agents', 2, 5, 0, 0, fixedNow);
     expect(r1.patch[tourSkipCountKey('agents')]).toBe('3');
     expect(r1.patch[TOURS_GLOBAL_DISMISSALS_KEY]).toBe('6');
     expect(r1.nextGlobalCount).toBe(6);
+  });
+
+  it('records exitedAtStep into the running skip-step sum', () => {
+    const r = buildDismissalPatch('agents', 1, 1, 7, 3, fixedNow);
+    expect(r.patch[tourSkipStepSumKey('agents')]).toBe('10');
+  });
+});
+
+describe('buildCompletionPatch', () => {
+  it('flips completed flag and bumps the completion counter', () => {
+    const { patch, nextCompletedCount } = buildCompletionPatch('kanban', 0);
+    expect(patch).toEqual({
+      [tourCompletedKey('kanban')]: 'true',
+      [tourCompletedCountKey('kanban')]: '1',
+    });
+    expect(nextCompletedCount).toBe(1);
+  });
+
+  it('counts re-runs', () => {
+    const { patch, nextCompletedCount } = buildCompletionPatch('kanban', 4);
+    expect(patch[tourCompletedCountKey('kanban')]).toBe('5');
+    expect(nextCompletedCount).toBe(5);
   });
 });
 
@@ -120,7 +146,7 @@ describe('tour fatigue end-to-end (3 dismissals → auto-pause)', () => {
     let pauseTriggered = false;
 
     for (let i = 0; i < 3; i++) {
-      const { nextGlobalCount } = buildDismissalPatch('kanban', i, globalCount, fixedNow);
+      const { nextGlobalCount } = buildDismissalPatch('kanban', i, globalCount, 0, 0, fixedNow);
       globalCount = nextGlobalCount;
       if (shouldAutoPause(globalCount)) pauseTriggered = true;
     }
@@ -135,7 +161,7 @@ describe('tour fatigue end-to-end (3 dismissals → auto-pause)', () => {
     let pauseTriggered = false;
 
     for (let i = 0; i < 2; i++) {
-      const { nextGlobalCount } = buildDismissalPatch('kanban', i, globalCount, fixedNow);
+      const { nextGlobalCount } = buildDismissalPatch('kanban', i, globalCount, 0, 0, fixedNow);
       globalCount = nextGlobalCount;
       if (shouldAutoPause(globalCount)) pauseTriggered = true;
     }

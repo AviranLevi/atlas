@@ -96,7 +96,7 @@ export function usePageTour() {
       if (result.outcome === 'completed') {
         await writersRef.current.markCompleted(def.id);
       } else if (result.outcome === 'skipped') {
-        const globalCount = await writersRef.current.markDismissed(def.id);
+        const globalCount = await writersRef.current.markDismissed(def.id, result.exitedAtStep);
         if (globalCount >= stateRef.current.fatigueThreshold) {
           await writersRef.current.pauseTours();
           toast.info("We'll stop interrupting", {

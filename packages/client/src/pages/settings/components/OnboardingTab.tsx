@@ -18,12 +18,14 @@ import { loadTourById, TOUR_CATALOG } from '@/lib/tours/tour-registry';
 // Types
 import type { TourId } from '@/lib/tours/tour-types';
 
+const TOUR_DEBUG_ENABLED = import.meta.env.VITE_ATLAS_TOUR_DEBUG === 'true';
+
 /**
  * Settings → Onboarding. Mirrors the help center but lives where users
  * actually go to manage app preferences. Use the same handlers.
  */
 export function OnboardingTab() {
-  const { toursPaused, isCompleted, globalDismissals, fatigueThreshold } = useTourState();
+  const { toursPaused, isCompleted, globalDismissals, fatigueThreshold, getTelemetry } = useTourState();
   const { resumeTours, pauseTours, resetTour, resetGlobalDismissals } = useTourStateMutations();
 
   async function handleRunTour(id: TourId) {
@@ -72,6 +74,51 @@ export function OnboardingTab() {
           </div>
         </CardContent>
       </Card>
+
+      {TOUR_DEBUG_ENABLED && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Tour analytics (local-only)</CardTitle>
+            <CardDescription>
+              Debug counters from <code className="text-xs">preferences</code>. Visible because{' '}
+              <code className="text-xs">VITE_ATLAS_TOUR_DEBUG=true</code>. Never sent off-device.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-hidden rounded-md border">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">Tour</th>
+                    <th className="px-3 py-2 text-right font-medium">Completed</th>
+                    <th className="px-3 py-2 text-right font-medium">Skipped</th>
+                    <th className="px-3 py-2 text-right font-medium">Mean skip step</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {TOUR_CATALOG.map((entry) => {
+                    const t = getTelemetry(entry.id);
+                    return (
+                      <tr key={entry.id} className="border-t">
+                        <td className="px-3 py-2 font-mono">{entry.id}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{t.completedCount}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{t.skipCount}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {t.meanSkipStep === null ? '—' : t.meanSkipStep.toFixed(1)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Tip: append <code>?tour-debug=1</code> to any URL to highlight every{' '}
+              <code className="text-xs">data-tour</code> element on the page.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

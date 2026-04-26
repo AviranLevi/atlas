@@ -35,6 +35,24 @@ export function tourSkipCountKey(id: TourId): string {
   return `tour.${id}.skip_count`;
 }
 
+/**
+ * M8 telemetry — number of times the user reached the final step of this tour.
+ * Distinct from `tour.<id>.completed` (boolean, one-shot) because re-runs from
+ * Settings → Onboarding should also be counted.
+ */
+export function tourCompletedCountKey(id: TourId): string {
+  return `tour.${id}.completed_count`;
+}
+
+/**
+ * M8 telemetry — running sum of `exitedAtStep` across every skip. Combined
+ * with `tour.<id>.skip_count` this yields the mean skip step (which lets us
+ * tell "users skip at step 1" from "users skip at step 4").
+ */
+export function tourSkipStepSumKey(id: TourId): string {
+  return `tour.${id}.skip_step_sum`;
+}
+
 export function hintSeenKey(id: HintId): string {
   return `hint.${id}.seen`;
 }
@@ -74,21 +92,47 @@ export function shouldAutoPause(globalDismissals: number, threshold: number = FA
 /**
  * Build the preference patch written when a tour is marked `skipped`.
  * Centralised so the hook and tests agree on the exact payload.
+ *
+ * `prevSkipStepSum` and `exitedAtStep` are M8 telemetry counters — kept in the
+ * same patch so the write is atomic with the dismissal flag.
  */
 export function buildDismissalPatch(
   id: TourId,
   prevSkipCount: number,
   prevGlobalDismissals: number,
+  prevSkipStepSum: number = 0,
+  exitedAtStep: number = 0,
   now: Date = new Date(),
 ): { patch: Record<string, string>; nextGlobalCount: number } {
   const nextSkipCount = prevSkipCount + 1;
   const nextGlobalCount = prevGlobalDismissals + 1;
+  const nextSkipStepSum = prevSkipStepSum + exitedAtStep;
   return {
     patch: {
       [tourDismissedAtKey(id)]: now.toISOString(),
       [tourSkipCountKey(id)]: String(nextSkipCount),
+      [tourSkipStepSumKey(id)]: String(nextSkipStepSum),
       [TOURS_GLOBAL_DISMISSALS_KEY]: String(nextGlobalCount),
     },
     nextGlobalCount,
+  };
+}
+
+/**
+ * M8 telemetry — patch written on completion. Increments `completed_count`
+ * alongside the `completed` boolean so re-runs from the help center are
+ * counted too.
+ */
+export function buildCompletionPatch(
+  id: TourId,
+  prevCompletedCount: number,
+): { patch: Record<string, string>; nextCompletedCount: number } {
+  const nextCompletedCount = prevCompletedCount + 1;
+  return {
+    patch: {
+      [tourCompletedKey(id)]: 'true',
+      [tourCompletedCountKey(id)]: String(nextCompletedCount),
+    },
+    nextCompletedCount,
   };
 }
