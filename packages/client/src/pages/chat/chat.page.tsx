@@ -23,6 +23,7 @@ import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 
 // Context
 import { useActiveProject } from '@/contexts/ProjectContext';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 // Types
 import type { ChatAttachment, ChatBackendType } from '@atlas/shared';
@@ -229,7 +230,7 @@ export function ChatPage() {
 
   return (
     <div className="flex flex-1 min-h-0 -m-6">
-      <div className="w-[280px] shrink-0">
+      <div data-tour={TOUR_TARGETS.chatSidebar} className="w-[280px] shrink-0">
         <ConversationSidebar
           conversations={conversations}
           activeId={conversationId}

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 // Lib
 import { cn } from '@/lib/utils';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 // Types
 import type { ConversationSidebarProps } from '../chat.types';
@@ -127,7 +128,10 @@ export function ConversationSidebar({
       <div className="border-t border-border p-3 space-y-2">
         {/* Mode toggle -- only show if both options are available */}
         {providers.length > 0 && installedExecutors.length > 0 && (
-          <div className="flex rounded-md border border-border overflow-hidden">
+          <div
+            data-tour={TOUR_TARGETS.chatBackendSwitch}
+            className="flex rounded-md border border-border overflow-hidden"
+          >
             <button
               type="button"
               onClick={() => onBackendTypeChange('api')}
@@ -159,7 +163,7 @@ export function ConversationSidebar({
 
         {backendType === 'api' ? (
           <>
-            <div className="space-y-1">
+            <div data-tour={TOUR_TARGETS.chatProviderSelect} className="space-y-1">
               <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Provider</span>
               <Select value={selectedProviderId} onValueChange={onProviderChange}>
                 <SelectTrigger className="h-8 text-xs">
@@ -195,7 +199,7 @@ export function ConversationSidebar({
             </div>
           </>
         ) : (
-          <div className="space-y-1">
+          <div data-tour={TOUR_TARGETS.chatProviderSelect} className="space-y-1">
             <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">CLI Agent</span>
             <Select value={selectedExecutorId} onValueChange={onExecutorChange}>
               <SelectTrigger className="h-8 text-xs">

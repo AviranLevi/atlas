@@ -4,6 +4,8 @@ import { AlertTriangle } from 'lucide-react';
 // Types
 import type { Workspace } from '@atlas/shared';
 
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
+
 /**
  * Persistent notice shown on a workspace whose brainstorm/plan stage fell
  * back to CLI execution because no API provider could be resolved. Renders
@@ -17,6 +19,7 @@ export function CliFallbackBanner({ workspace }: { workspace: Workspace }) {
 
   return (
     <div
+      data-tour={TOUR_TARGETS.workspaceCliBanner}
       role="status"
       className="flex items-start gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3"
     >

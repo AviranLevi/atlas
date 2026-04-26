@@ -11,6 +11,7 @@ import type { WorkspaceDetailHeaderProps } from '../workspaces.types';
 
 // Constants
 import { statusMeta } from '../workspaces.constants';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 export function WorkspaceDetailHeader({
   workspace,
@@ -34,7 +35,7 @@ export function WorkspaceDetailHeader({
   const isReviewerRunning = view.kind === 'aiReviewing';
 
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div data-tour={TOUR_TARGETS.workspaceHeader} className="flex items-start justify-between gap-4">
       <div className="flex items-start gap-3">
         <StatusIcon status={workspace.status} className="mt-1 h-6 w-6" />
         <div className="space-y-1">
@@ -96,13 +97,19 @@ export function WorkspaceDetailHeader({
           </Button>
         )}
         {canFollowUp && (
-          <Button variant="outline" size="sm" onClick={onFollowUp}>
+          <Button data-tour={TOUR_TARGETS.workspaceFollowUp} variant="outline" size="sm" onClick={onFollowUp}>
             <ListPlus className="mr-1.5 h-3.5 w-3.5" />
             Follow-up Task
           </Button>
         )}
         {canCleanup && (
-          <Button variant="outline" size="sm" onClick={onCleanup} disabled={isCleaning}>
+          <Button
+            data-tour={TOUR_TARGETS.workspaceCleanup}
+            variant="outline"
+            size="sm"
+            onClick={onCleanup}
+            disabled={isCleaning}
+          >
             <Trash2 className="mr-1.5 h-3.5 w-3.5" />
             Clean Up
           </Button>

@@ -27,9 +27,11 @@ export const TOUR_LOADERS: Partial<Record<TourId, TourLoader>> = {
   agents: () => import('./definitions/agents.tour').then((m) => m.default),
   //
   // M5 — Wave 2
-  // 'workspaces': () => import('./definitions/workspaces.tour').then((m) => m.default),
-  // 'workspace-detail': () => import('./definitions/workspace-detail.tour').then((m) => m.default),
-  // 'chat': () => import('./definitions/chat.tour').then((m) => m.default),
+  // workspace-detail must precede `workspaces` in catalog ordering only —
+  // matching is route-pattern-based so loader order doesn't change behavior.
+  workspaces: () => import('./definitions/workspaces.tour').then((m) => m.default),
+  'workspace-detail': () => import('./definitions/workspace-detail.tour').then((m) => m.default),
+  chat: () => import('./definitions/chat.tour').then((m) => m.default),
   //
   // M6 — Wave 3
   // 'memory': () => import('./definitions/memory.tour').then((m) => m.default),
@@ -108,11 +110,32 @@ export const TOUR_CATALOG: ReadonlyArray<{ id: TourId; title: string; descriptio
     title: 'Set up agents',
     description: 'Wire up a model, build an agent, or import one from the community.',
   },
+  // M5 — Wave 2
+  {
+    id: 'workspaces',
+    title: 'Track agent runs',
+    description: 'Stats, filters, and the run list — everything an agent has touched.',
+  },
+  {
+    id: 'workspace-detail',
+    title: 'Inside a workspace',
+    description: 'Header status, AI review, follow-ups, and cleanup.',
+  },
+  {
+    id: 'chat',
+    title: 'Chat with your stack',
+    description: 'Pick a backend, choose a model, and @-mention agents.',
+  },
 ];
 
 export function matchPage(page: string | RegExp, pathname: string): boolean {
-  if (typeof page === 'string') {
-    return pathname === page;
+  if (page instanceof RegExp) {
+    return page.test(pathname);
   }
-  return page.test(pathname);
+  // Support `:param` segments — e.g. `/workspaces/:id` matches `/workspaces/abc`.
+  if (page.includes(':')) {
+    const re = new RegExp(`^${page.replace(/:[^/]+/g, '[^/]+')}/?$`);
+    return re.test(pathname);
+  }
+  return pathname === page;
 }

@@ -18,6 +18,15 @@ describe('matchPage', () => {
     expect(matchPage(p, '/projects')).toBe(false);
     expect(matchPage(p, '/projects/abc-123/extra')).toBe(false);
   });
+
+  it('expands `:param` segments into single-segment matchers', () => {
+    expect(matchPage('/workspaces/:id', '/workspaces/abc-123')).toBe(true);
+    expect(matchPage('/workspaces/:id', '/workspaces/abc/extra')).toBe(false);
+    expect(matchPage('/workspaces/:id', '/workspaces')).toBe(false);
+    // Sanity: `/workspaces` literal still matches only itself, not children.
+    expect(matchPage('/workspaces', '/workspaces')).toBe(true);
+    expect(matchPage('/workspaces', '/workspaces/abc')).toBe(false);
+  });
 });
 
 describe('tour registry', () => {
@@ -26,6 +35,13 @@ describe('tour registry', () => {
     expect(ids).toContain('projects-dashboard');
     expect(ids).toContain('kanban');
     expect(ids).toContain('agents');
+  });
+
+  it('lists the M5 wave (workspaces, workspace-detail, chat)', () => {
+    const ids = TOUR_CATALOG.map((t) => t.id);
+    expect(ids).toContain('workspaces');
+    expect(ids).toContain('workspace-detail');
+    expect(ids).toContain('chat');
   });
 
   it('catalog entries all have a non-empty title and description', () => {
@@ -54,6 +70,29 @@ describe('tour registry', () => {
       expect(def?.steps.length).toBeGreaterThan(0);
       expect(def?.steps.length).toBeLessThanOrEqual(5);
     }
+  });
+
+  it('every M5 tour respects the 5-step cap and has a non-empty step list', async () => {
+    const ids: TourId[] = ['workspaces', 'workspace-detail', 'chat'];
+    for (const id of ids) {
+      const def = await loadTourById(id);
+      expect(def, `tour ${id} should resolve`).not.toBeNull();
+      expect(def?.steps.length).toBeGreaterThan(0);
+      expect(def?.steps.length).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it('routes /workspaces/:id to the workspace-detail tour, not the workspaces list tour', async () => {
+    const detail = await loadTourForRoute('/workspaces/abc-123');
+    expect(detail?.id).toBe('workspace-detail');
+
+    const list = await loadTourForRoute('/workspaces');
+    expect(list?.id).toBe('workspaces');
+  });
+
+  it('routes /chat to the chat tour', async () => {
+    const def = await loadTourForRoute('/chat');
+    expect(def?.id).toBe('chat');
   });
 
   it('every catalog id has a matching loader', async () => {

@@ -18,6 +18,7 @@ import type { StatusFilter } from './workspaces.types';
 
 // Constants
 import { bucketOfWorkspace, filterTabs } from './workspaces.constants';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 export function WorkspacesPage() {
   const { data: allWorkspaces = [], isLoading } = useWorkspaces();
@@ -52,7 +53,7 @@ export function WorkspacesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+      <div data-tour={TOUR_TARGETS.workspacesStats} className="grid grid-cols-2 gap-3 sm:grid-cols-6">
         {[
           { label: 'Active', count: counts.active, color: 'text-blue-600 dark:text-blue-400' },
           { label: 'Awaiting Approval', count: counts.awaitingApproval, color: 'text-amber-600 dark:text-amber-400' },
@@ -68,7 +69,7 @@ export function WorkspacesPage() {
         ))}
       </div>
 
-      <div className="flex gap-1 border-b">
+      <div data-tour={TOUR_TARGETS.workspacesStatusTabs} className="flex gap-1 border-b">
         {filterTabs.map((tab) => (
           <button
             key={tab.key}

@@ -19,6 +19,7 @@ import type { AttachedFile, ChatInputProps } from '../chat.types';
 
 // Constants
 import { ATTACHMENT_MAX_COUNT, ATTACHMENT_MAX_SIZE_BYTES } from '@atlas/shared';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 const ACCEPTED_FILE_TYPES = [
   'image/png',
@@ -161,7 +162,7 @@ export function ChatInput({ onSend, disabled, isStreaming, onAbort }: ChatInputP
   const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !disabled;
 
   return (
-    <div className="border-t border-border bg-background p-4">
+    <div data-tour={TOUR_TARGETS.chatInput} className="border-t border-border bg-background p-4">
       <div className="mx-auto flex max-w-3xl flex-col gap-2">
         {attachedFiles.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

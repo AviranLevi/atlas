@@ -13,6 +13,7 @@ import type { useStartAiReview, useWorkspaceDiff } from '@/hooks/use-workspaces.
 
 // Lib
 import type { WorkspaceView } from '@/pages/workspaces/workspace-view';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 // Types
 import type { DiffComment, Workspace } from '@atlas/shared';
@@ -77,7 +78,13 @@ export function CodeReviewSection({
           )}
         </div>
         {review?.status === 'pending' && !isReviewerRunning && diff && diff.files.length > 0 && (
-          <Button variant="outline" size="sm" onClick={onOpenAiReview} disabled={startAiReview.isPending}>
+          <Button
+            data-tour={TOUR_TARGETS.workspaceRunReview}
+            variant="outline"
+            size="sm"
+            onClick={onOpenAiReview}
+            disabled={startAiReview.isPending}
+          >
             {startAiReview.isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
             Run AI Review
           </Button>

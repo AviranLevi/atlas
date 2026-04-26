@@ -31,6 +31,7 @@ import type { WorkspaceRowProps } from '../workspaces.types';
 
 // Constants
 import { statusMeta } from '../workspaces.constants';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 const STAGE_META: Record<string, { label: string; icon: typeof Sparkles; className: string }> = {
   brainstorm: {
@@ -66,7 +67,11 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
   const stageMeta = workspace.workflowStage ? STAGE_META[workspace.workflowStage] : null;
 
   return (
-    <Card className="border-l-[3px] transition-shadow hover:shadow-md" style={{ borderLeftColor: meta.leftColor }}>
+    <Card
+      data-tour={TOUR_TARGETS.workspacesRow}
+      className="border-l-[3px] transition-shadow hover:shadow-md"
+      style={{ borderLeftColor: meta.leftColor }}
+    >
       <Link to={`/workspaces/${workspace.id}`} className="flex items-center gap-3 p-4">
         <div className="shrink-0">
           <StatusIcon status={workspace.status} className="h-4 w-4" />

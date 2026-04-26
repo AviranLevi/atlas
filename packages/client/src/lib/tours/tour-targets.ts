@@ -32,13 +32,17 @@ export const TOUR_TARGETS = {
   navWorkspaces: 'nav-workspaces',
 
   // M5 — Wave 2 (workspaces, workspace-detail, chat)
+  workspacesStats: 'workspaces-stats',
   workspacesStatusTabs: 'workspaces-status-tabs',
   workspacesRow: 'workspaces-row',
 
+  workspaceHeader: 'workspace-header',
   workspaceRunReview: 'workspace-run-review',
   workspaceCliBanner: 'workspace-cli-banner',
   workspaceCleanup: 'workspace-cleanup',
+  workspaceFollowUp: 'workspace-follow-up',
 
+  chatSidebar: 'chat-sidebar',
   chatBackendSwitch: 'chat-backend-switch',
   chatProviderSelect: 'chat-provider-select',
   chatInput: 'chat-input',
