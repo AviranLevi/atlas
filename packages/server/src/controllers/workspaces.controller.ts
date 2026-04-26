@@ -75,33 +75,15 @@ export async function getWorkspace(c: Context) {
 
 /** Starts a new agent workspace for a task. */
 export async function createWorkspace(c: Context) {
-  const { taskId, agentRuntimeId, baseBranch, model, providerId, workflowEnabled } =
-    getValidatedBody<CreateWorkspace>(c);
-
-  // Persist the chosen provider on the task — this is the single source of
-  // truth downstream services read from (workflow advance, rerun, structured
-  // stage AI SDK calls, CLI credential injection). Do NOT also pass it as a
-  // parameter to startWork.
-  {
-    const { tasksService } = await import('../services/index.js');
-    if (workflowEnabled) {
-      await tasksService.update(taskId, {
-        workflowEnabled: true,
-        workflowStage: 'brainstorm',
-        workflowProviderId: providerId ?? null,
-      });
-    } else {
-      await tasksService.update(taskId, {
-        workflowEnabled: false,
-        workflowStage: null,
-        // Even for non-workflow tasks, remember which provider the user picked
-        // so CLI credential injection and potential future reruns stay stable.
-        workflowProviderId: providerId ?? null,
-      });
-    }
-  }
-
-  const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model);
+  const body = getValidatedBody<CreateWorkspace>(c);
+  const workspace = await orchestratorService.prepareAndStartWork({
+    taskId: body.taskId,
+    agentRuntimeId: body.agentRuntimeId,
+    baseBranch: body.baseBranch,
+    model: body.model,
+    providerId: body.providerId,
+    workflowEnabled: body.workflowEnabled ?? false,
+  });
   return c.json(workspace, 201);
 }
 

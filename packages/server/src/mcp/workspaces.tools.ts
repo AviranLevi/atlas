@@ -3,7 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
 // Services
-import { orchestratorService, tasksService } from '../services/index.js';
+import { orchestratorService } from '../services/index.js';
 
 // Executors
 import { executorRegistry } from '../executors/index.js';
@@ -40,12 +40,16 @@ export function registerWorkspaceTools(server: McpServer) {
       }),
     },
     async ({ taskId, agentRuntimeId, baseBranch, model, providerId }) => {
-      // Persist the chosen provider on the task — downstream services read
-      // from `task.workflowProviderId`, not from a passthrough parameter.
-      if (providerId) {
-        await tasksService.update(taskId, { workflowProviderId: providerId });
-      }
-      const workspace = await orchestratorService.startWork(taskId, agentRuntimeId, baseBranch, model);
+      // Use the shared orchestration entry point so the MCP path stays in
+      // lockstep with the HTTP path. `workflowEnabled` is omitted on
+      // purpose — MCP callers don't toggle workflow state.
+      const workspace = await orchestratorService.prepareAndStartWork({
+        taskId,
+        agentRuntimeId,
+        baseBranch,
+        model,
+        providerId,
+      });
       return { content: [{ type: 'text' as const, text: JSON.stringify(workspace, null, 2) }] };
     },
   );

@@ -40,6 +40,54 @@ export class OrchestratorService {
     return workspaceSpawnService.startWork(taskId, agentRuntimeId, baseBranch, model, workflowStage, parentWorkspaceId);
   }
 
+  /**
+   * Persists the chosen provider/workflow state on the task and then starts
+   * a workspace. This is the entry point that HTTP and MCP callers should
+   * use — `startWork` itself reads provider data from the task row, so any
+   * caller-supplied providerId MUST be persisted first.
+   *
+   * `workflowEnabled` semantics:
+   *   - true  → workflowEnabled=true, workflowStage='brainstorm'
+   *   - false → workflowEnabled=false, workflowStage=null
+   *   - undefined (e.g. MCP) → leave workflow flags untouched
+   */
+  async prepareAndStartWork(input: {
+    taskId: string;
+    agentRuntimeId: string;
+    baseBranch?: string;
+    model?: string;
+    providerId?: string;
+    workflowEnabled?: boolean;
+  }): Promise<Workspace> {
+    const { taskId, agentRuntimeId, baseBranch, model, providerId, workflowEnabled } = input;
+
+    // Dynamic import avoids a static cycle with services/index.js — tasks
+    // and orchestrator are both registered there as singletons, and we need
+    // the singleton (not a fresh instance) so any in-flight task state is
+    // visible to other callers.
+    const { tasksService } = await import('../index.js');
+
+    if (workflowEnabled === true) {
+      await tasksService.update(taskId, {
+        workflowEnabled: true,
+        workflowStage: 'brainstorm',
+        workflowProviderId: providerId ?? null,
+      });
+    } else if (workflowEnabled === false) {
+      await tasksService.update(taskId, {
+        workflowEnabled: false,
+        workflowStage: null,
+        // Even for non-workflow tasks, remember which provider the user picked
+        // so CLI credential injection and potential future reruns stay stable.
+        workflowProviderId: providerId ?? null,
+      });
+    } else if (providerId) {
+      await tasksService.update(taskId, { workflowProviderId: providerId });
+    }
+
+    return this.startWork(taskId, agentRuntimeId, baseBranch, model);
+  }
+
   // ─── Workflow advancement ──────────────────────────────────────────────────
 
   /** Advances a workflow task to the next stage (brainstorm → plan → execute). */
