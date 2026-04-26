@@ -193,8 +193,8 @@ Copy `.env.example` to `.env` to override any of the above defaults.
 
 ## Roadmap to 1.0
 
-- **Remote access** — tunnel-based remote access to your local Atlas instance ([plan](docs/remote-access-plan.md))
-- **DB diagram viewer** — interactive, auto-laid-out schema diagram replacing the static Mermaid render ([plan](docs/db-diagram-plan.md))
+- **Remote access** — tunnel-based remote access to your local Atlas instance
+- **DB diagram viewer** — interactive, auto-laid-out schema diagram replacing the static Mermaid render
 - **End-to-end tests** — Playwright coverage for critical flows
 - **Bundle perf trim** — code-split heavy deps (mermaid, cytoscape), target ≤ 500 KB gzip main chunk
 - **Marketplace** — the route is reserved (`/marketplace`) but renders a "Coming soon" card. Set `VITE_ATLAS_MARKETPLACE_ENABLED=true` to surface the in-progress UI.
