@@ -19,7 +19,6 @@ import { chatRepository } from '../../db/repositories/index.js';
 // Lib
 import {
   type InternalMessage,
-  type ToolContext,
   CHAT_TOOLS,
   executeTool,
   formatCliPrompt,
@@ -29,6 +28,9 @@ import {
 import { logger } from '../../lib/logger.js';
 
 import { buildChatSystemPrompt } from './chat-system-prompt.js';
+import { getProjectContext, toInternalMessages } from './chat-context.js';
+import { ChatStreamSessions } from './chat-stream-session.js';
+import { maybeGenerateTitle } from './chat-title.js';
 
 const FILE_PATH = 'services/chat/chat.service.ts';
 const MAX_TOOL_ROUNDS = 10;
@@ -39,7 +41,7 @@ type PendingToolCall = { id: string; name: string; args: Record<string, unknown>
 
 export class ChatService {
   private readonly repo = chatRepository;
-  private activeStreams = new Map<string, AbortController>();
+  private readonly sessions = new ChatStreamSessions();
 
   async listConversations(projectId?: string | null): Promise<ChatConversation[]> {
     return this.repo.findAllConversations(projectId);
@@ -63,11 +65,7 @@ export class ChatService {
   }
 
   abortStream(conversationId: string): void {
-    const controller = this.activeStreams.get(conversationId);
-    if (controller) {
-      controller.abort();
-      this.activeStreams.delete(conversationId);
-    }
+    this.sessions.abort(conversationId);
   }
 
   async sendMessage(
@@ -102,21 +100,6 @@ export class ChatService {
     }
   }
 
-  private beginStreamSession(conversationId: string): AbortController {
-    const controller = new AbortController();
-    this.activeStreams.set(conversationId, controller);
-    return controller;
-  }
-
-  private endStreamSession(conversationId: string): void {
-    this.activeStreams.delete(conversationId);
-  }
-
-  /** Avoids leaving the last message as user-only when the client aborts mid-stream. */
-  private insertCancelledAssistantMessage(conversationId: string): void {
-    this.repo.insertMessage({ conversationId, role: 'assistant', content: '(response cancelled)' });
-  }
-
   private async sendMessageApi(
     conversation: ChatConversation,
     emit: StreamCallback,
@@ -131,7 +114,7 @@ export class ChatService {
     }
 
     const provider = await agentProvidersService.getById(conversation.providerId);
-    const abortController = this.beginStreamSession(conversationId);
+    const abortController = this.sessions.begin(conversationId);
 
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
@@ -140,7 +123,7 @@ export class ChatService {
       const startMs = Date.now();
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}]`);
       const systemPrompt = await buildChatSystemPrompt(conversation.projectId, mentionedAgent);
-      let messages = this.toInternalMessages(this.repo.findMessagesByConversation(conversationId));
+      let messages = toInternalMessages(this.repo.findMessagesByConversation(conversationId));
 
       let toolRound = 0;
       let done = false;
@@ -212,17 +195,17 @@ export class ChatService {
         `${FILE_PATH} :: ${FUNCTION_NAME} - done in ${Date.now() - startMs}ms` +
           ` [${totalInputTokens}in/${totalOutputTokens}out tokens, ${toolRound} tool round(s)]`,
       );
-      await this.maybeGenerateTitle(conversation);
+      maybeGenerateTitle(conversation);
       this.repo.updateConversation(conversationId, {});
     } catch (error: unknown) {
       if (abortController.signal.aborted) {
-        this.insertCancelledAssistantMessage(conversationId);
+        this.sessions.insertCancelledAssistantMessage(conversationId);
         return;
       }
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       await emit('error', { message: error instanceof Error ? error.message : 'Stream failed' });
     } finally {
-      this.endStreamSession(conversationId);
+      this.sessions.end(conversationId);
     }
   }
 
@@ -287,7 +270,7 @@ export class ChatService {
       toolCalls: pendingToolCalls,
     });
 
-    const projectContext = await this.getProjectContext(conversation.projectId, mentionedAgentId);
+    const projectContext = await getProjectContext(conversation.projectId, mentionedAgentId);
 
     for (const tc of pendingToolCalls) {
       const result = await executeTool(tc.name, tc.args, projectContext);
@@ -301,7 +284,7 @@ export class ChatService {
       });
     }
 
-    return this.toInternalMessages(this.repo.findMessagesByConversation(conversationId));
+    return toInternalMessages(this.repo.findMessagesByConversation(conversationId));
   }
 
   private async sendMessageCli(
@@ -324,7 +307,7 @@ export class ChatService {
       return;
     }
 
-    const abortController = this.beginStreamSession(conversationId);
+    const abortController = this.sessions.begin(conversationId);
 
     try {
       const startMs = Date.now();
@@ -374,65 +357,17 @@ export class ChatService {
       await emit('done', { messageId: savedMsg.id });
 
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - done in ${Date.now() - startMs}ms`);
-      await this.maybeGenerateTitle(conversation);
+      maybeGenerateTitle(conversation);
       this.repo.updateConversation(conversationId, {});
     } catch (error: unknown) {
       if (abortController.signal.aborted) {
-        this.insertCancelledAssistantMessage(conversationId);
+        this.sessions.insertCancelledAssistantMessage(conversationId);
         return;
       }
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       await emit('error', { message: error instanceof Error ? error.message : 'CLI chat failed' });
     } finally {
-      this.endStreamSession(conversationId);
+      this.sessions.end(conversationId);
     }
-  }
-
-  private toInternalMessages(messages: ChatMessage[]): InternalMessage[] {
-    return messages.map((m) => {
-      if (m.role === 'user') {
-        return {
-          role: 'user' as const,
-          content: m.content,
-          attachments: m.attachments ?? undefined,
-        };
-      }
-      if (m.role === 'tool') {
-        const toolCallId = m.toolResults?.[0]?.toolCallId ?? 'unknown';
-        return { role: 'tool' as const, toolCallId, content: m.content };
-      }
-      return {
-        role: 'assistant' as const,
-        content: m.content,
-        toolCalls: m.toolCalls ?? undefined,
-      };
-    });
-  }
-
-  private async getProjectContext(projectId: string | null, mentionedAgentId?: string | null): Promise<ToolContext> {
-    if (!projectId) return { mentionedAgentId };
-    try {
-      const { project } = await projectsService.getContext(projectId);
-      return { projectId, projectLocalPath: project.localPath ?? null, mentionedAgentId };
-    } catch (error: unknown) {
-      logger.warn(`${FILE_PATH} :: getProjectContext failed`, error);
-      return { projectId, mentionedAgentId };
-    }
-  }
-
-  private async maybeGenerateTitle(conversation: ChatConversation): Promise<void> {
-    if (conversation.title) return;
-
-    const messages = this.repo.findMessagesByConversation(conversation.id);
-    const firstUserMsg = messages.find((m) => m.role === 'user');
-    if (!firstUserMsg) return;
-
-    // Prefer text content; fall back to the first attachment name for attachment-only messages
-    const rawTitle =
-      firstUserMsg.content.trim() ||
-      (firstUserMsg.attachments?.[0] ? `[${firstUserMsg.attachments[0].name}]` : 'New conversation');
-
-    const title = rawTitle.slice(0, 50) + (rawTitle.length > 50 ? '...' : '');
-    this.repo.updateConversation(conversation.id, { title });
   }
 }
