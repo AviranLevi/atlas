@@ -20,6 +20,7 @@ import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Constants
 import { TYPE_OPTIONS, SCOPE_OPTIONS, STATUS_OPTIONS } from './memory.constants';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 export function MemoryPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -63,7 +64,7 @@ export function MemoryPage() {
             Decisions, conventions, and preferences remembered across sessions
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} size="sm">
+        <Button data-tour={TOUR_TARGETS.memoryNewBtn} onClick={() => setDialogOpen(true)} size="sm">
           <Plus className="mr-1.5 h-4 w-4" />
           New Memory
         </Button>
@@ -104,7 +105,7 @@ export function MemoryPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-8 w-[130px] text-xs">
+          <SelectTrigger data-tour={TOUR_TARGETS.memoryStatusFilter} className="h-8 w-[130px] text-xs">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>

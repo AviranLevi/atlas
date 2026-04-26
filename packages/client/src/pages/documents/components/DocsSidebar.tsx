@@ -9,6 +9,7 @@ import type { DocType, ProjectDoc } from '@atlas/shared';
 
 // Constants
 import { AI_TYPES, TYPE_CONFIG } from '../documents.constants';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 type DocsSidebarProps = {
   docs: ProjectDoc[];
@@ -33,7 +34,7 @@ export function DocsSidebar({
 }: DocsSidebarProps) {
   return (
     <div className="w-64 shrink-0 space-y-4">
-      <div className="space-y-1.5">
+      <div data-tour={TOUR_TARGETS.documentsAiTypes} className="space-y-1.5">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Auto-Generated</p>
         {AI_TYPES.map((type) => {
           const cfg = TYPE_CONFIG[type];
@@ -98,6 +99,7 @@ export function DocsSidebar({
           );
         })}
         <Button
+          data-tour={TOUR_TARGETS.documentsCustomDoc}
           variant="ghost"
           size="sm"
           className="w-full justify-start gap-2 text-muted-foreground"

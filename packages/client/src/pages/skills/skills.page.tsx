@@ -27,6 +27,7 @@ import type { Skill } from '@atlas/shared';
 
 // Constants
 import { SKILL_TYPE_OPTIONS, SKILL_TYPE_COLORS } from './skills.constants';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 export function SkillsPage() {
   const navigate = useNavigate();
@@ -84,6 +85,7 @@ export function SkillsPage() {
     return (
       <Card
         key={skill.id}
+        data-tour={TOUR_TARGETS.skillsCard}
         className={`group relative flex cursor-pointer flex-col gap-2 border-l-[3px] p-4 transition-shadow hover:shadow-md ${borderColor}`}
         onClick={() => navigate(`/skills/${skill.id}`)}
       >
@@ -133,11 +135,11 @@ export function SkillsPage() {
           <p className="text-muted-foreground mt-0.5 text-sm">Define reusable skill templates for agents</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+          <Button data-tour={TOUR_TARGETS.skillsImport} variant="outline" size="sm" onClick={() => setImportOpen(true)}>
             <Upload className="mr-1.5 h-4 w-4" />
             Import
           </Button>
-          <Button onClick={() => setDialogOpen(true)} size="sm">
+          <Button data-tour={TOUR_TARGETS.skillsNewBtn} onClick={() => setDialogOpen(true)} size="sm">
             <Plus className="mr-1.5 h-4 w-4" />
             New Skill
           </Button>

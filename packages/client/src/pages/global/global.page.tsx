@@ -36,6 +36,7 @@ import type { RuleForm } from '@/pages/settings/settings.types';
 
 // Constants
 import { NONE_SKILL_VALUE, emptyRuleForm } from '@/pages/settings/settings.constants';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 const VALID_TABS = ['general', 'dispatch-rules'] as const;
 type GlobalTab = (typeof VALID_TABS)[number];
@@ -139,10 +140,12 @@ export function GlobalPage() {
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="general">Global Instructions</TabsTrigger>
-          <TabsTrigger value="dispatch-rules">Dispatch Rules</TabsTrigger>
+          <TabsTrigger data-tour={TOUR_TARGETS.globalDispatchTab} value="dispatch-rules">
+            Dispatch Rules
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="mt-6">
+        <TabsContent value="general" className="mt-6" data-tour={TOUR_TARGETS.globalInstructions}>
           <GlobalInstructionsCard
             instructions={instructions}
             isLoading={instructionsLoading}

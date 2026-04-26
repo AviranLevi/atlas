@@ -44,6 +44,15 @@ describe('tour registry', () => {
     expect(ids).toContain('chat');
   });
 
+  it('lists the M6 wave (memory, documents, skills, rules, global)', () => {
+    const ids = TOUR_CATALOG.map((t) => t.id);
+    expect(ids).toContain('memory');
+    expect(ids).toContain('documents');
+    expect(ids).toContain('skills');
+    expect(ids).toContain('rules');
+    expect(ids).toContain('global');
+  });
+
   it('catalog entries all have a non-empty title and description', () => {
     for (const entry of TOUR_CATALOG) {
       expect(entry.title.length).toBeGreaterThan(0);
@@ -93,6 +102,24 @@ describe('tour registry', () => {
   it('routes /chat to the chat tour', async () => {
     const def = await loadTourForRoute('/chat');
     expect(def?.id).toBe('chat');
+  });
+
+  it('every M6 tour respects the 5-step cap and has a non-empty step list', async () => {
+    const ids: TourId[] = ['memory', 'documents', 'skills', 'rules', 'global'];
+    for (const id of ids) {
+      const def = await loadTourById(id);
+      expect(def, `tour ${id} should resolve`).not.toBeNull();
+      expect(def?.steps.length).toBeGreaterThan(0);
+      expect(def?.steps.length).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it('routes the M6 page paths to their tours', async () => {
+    expect((await loadTourForRoute('/memory'))?.id).toBe('memory');
+    expect((await loadTourForRoute('/documents'))?.id).toBe('documents');
+    expect((await loadTourForRoute('/skills'))?.id).toBe('skills');
+    expect((await loadTourForRoute('/rules'))?.id).toBe('rules');
+    expect((await loadTourForRoute('/global'))?.id).toBe('global');
   });
 
   it('every catalog id has a matching loader', async () => {

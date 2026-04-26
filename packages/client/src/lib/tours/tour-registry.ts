@@ -34,11 +34,11 @@ export const TOUR_LOADERS: Partial<Record<TourId, TourLoader>> = {
   chat: () => import('./definitions/chat.tour').then((m) => m.default),
   //
   // M6 — Wave 3
-  // 'memory': () => import('./definitions/memory.tour').then((m) => m.default),
-  // 'documents': () => import('./definitions/documents.tour').then((m) => m.default),
-  // 'skills': () => import('./definitions/skills.tour').then((m) => m.default),
-  // 'rules': () => import('./definitions/rules.tour').then((m) => m.default),
-  // 'global': () => import('./definitions/global.tour').then((m) => m.default),
+  memory: () => import('./definitions/memory.tour').then((m) => m.default),
+  documents: () => import('./definitions/documents.tour').then((m) => m.default),
+  skills: () => import('./definitions/skills.tour').then((m) => m.default),
+  rules: () => import('./definitions/rules.tour').then((m) => m.default),
+  global: () => import('./definitions/global.tour').then((m) => m.default),
 };
 
 /**
@@ -125,6 +125,32 @@ export const TOUR_CATALOG: ReadonlyArray<{ id: TourId; title: string; descriptio
     id: 'chat',
     title: 'Chat with your stack',
     description: 'Pick a backend, choose a model, and @-mention agents.',
+  },
+  // M6 — Wave 3
+  {
+    id: 'memory',
+    title: 'Memories that stick',
+    description: 'Decisions, conventions, and preferences agents recall across sessions.',
+  },
+  {
+    id: 'documents',
+    title: 'Generate and write docs',
+    description: 'Auto-generate diagrams from code or hand-author a custom doc.',
+  },
+  {
+    id: 'skills',
+    title: 'Reusable skill templates',
+    description: 'Build, import, and assign skills agents can pick up at run time.',
+  },
+  {
+    id: 'rules',
+    title: 'Coding standards for agents',
+    description: 'Templates, custom rules, and how scoping works.',
+  },
+  {
+    id: 'global',
+    title: 'Global configuration',
+    description: 'System-wide instructions and dispatch rules.',
   },
 ];
 

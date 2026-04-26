@@ -28,6 +28,7 @@ import type { Rule } from '@atlas/shared';
 
 // Constants
 import { RULE_TYPE_OPTIONS, RULE_TYPE_COLORS } from './rules.constants';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 export function RulesPage() {
   const navigate = useNavigate();
@@ -141,7 +142,12 @@ export function RulesPage() {
           <p className="text-muted-foreground mt-0.5 text-sm">Coding standards and conventions for agents</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setTemplatesOpen(true)}>
+          <Button
+            data-tour={TOUR_TARGETS.rulesTemplates}
+            variant="outline"
+            size="sm"
+            onClick={() => setTemplatesOpen(true)}
+          >
             <Sparkles className="mr-1.5 h-4 w-4" />
             Templates
           </Button>
@@ -149,7 +155,7 @@ export function RulesPage() {
             <Upload className="mr-1.5 h-4 w-4" />
             Import
           </Button>
-          <Button onClick={() => setDialogOpen(true)} size="sm">
+          <Button data-tour={TOUR_TARGETS.rulesNewBtn} onClick={() => setDialogOpen(true)} size="sm">
             <Plus className="mr-1.5 h-4 w-4" />
             New Rule
           </Button>
