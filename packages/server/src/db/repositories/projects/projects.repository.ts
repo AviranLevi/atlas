@@ -5,46 +5,18 @@ import { eq, sql } from 'drizzle-orm';
 import type { CreateProject, Project, UpdateProject } from '@atlas/shared';
 
 // DB
-import type { DB } from '../index.js';
-import { agentProjects, agents, memory, phases, projects, tasks, workspaces } from '../schema/index.js';
+import type { DB } from '../../index.js';
+import { agentProjects, agents, memory, phases, projects, tasks, workspaces } from '../../schema/index.js';
 
 // Lib
-import { AppError, NotFoundError } from '../../lib/errors.js';
-import { logger } from '../../lib/logger.js';
-import { parseTags } from '../../lib/utils/index.js';
+import { AppError, NotFoundError } from '../../../lib/errors.js';
+import { logger } from '../../../lib/logger.js';
+import { parseTags } from '../../../lib/utils/index.js';
 
-const FILE_PATH = 'db/repositories/projects.repository.ts';
+// Local
+import { hydrateProject, serializeScanData } from './projects.serialization.js';
 
-/** Parse JSON blob fields from a DB row */
-function hydrateProject(row: Record<string, unknown>): Project {
-  if (row.scanData && typeof row.scanData === 'string') {
-    try {
-      row.scanData = JSON.parse(row.scanData);
-    } catch {
-      row.scanData = null;
-    }
-  }
-  if (row.agentBehavior && typeof row.agentBehavior === 'string') {
-    try {
-      row.agentBehavior = JSON.parse(row.agentBehavior);
-    } catch {
-      row.agentBehavior = null;
-    }
-  }
-  return row as Project;
-}
-
-/** Serialize JSON blob fields to strings for DB storage */
-function serializeScanData(data: Record<string, unknown>): Record<string, unknown> {
-  const result = { ...data };
-  if (result.scanData && typeof result.scanData === 'object') {
-    result.scanData = JSON.stringify(result.scanData);
-  }
-  if (result.agentBehavior && typeof result.agentBehavior === 'object') {
-    result.agentBehavior = JSON.stringify(result.agentBehavior);
-  }
-  return result;
-}
+const FILE_PATH = 'db/repositories/projects/projects.repository.ts';
 
 export class ProjectsRepository {
   constructor(private readonly db: DB) {}

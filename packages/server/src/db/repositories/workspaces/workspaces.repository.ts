@@ -5,49 +5,17 @@ import { asc, desc, eq } from 'drizzle-orm';
 import type { Workspace } from '@atlas/shared';
 
 // DB
-import type { DB } from '../index.js';
-import { projects, tasks, workspaces } from '../schema/index.js';
+import type { DB } from '../../index.js';
+import { projects, tasks, workspaces } from '../../schema/index.js';
 
 // Lib
-import { NotFoundError } from '../../lib/errors.js';
-import { withAppErrorSync } from '../../lib/with-app-error.js';
+import { NotFoundError } from '../../../lib/errors.js';
+import { withAppErrorSync } from '../../../lib/with-app-error.js';
 
-type WorkspaceRow = typeof workspaces.$inferSelect;
-type WorkspaceJoinRow = {
-  workspaces: WorkspaceRow;
-  tasks: typeof tasks.$inferSelect | null;
-  projects: typeof projects.$inferSelect | null;
-};
+// Local
+import type { InsertWorkspace, UpdateWorkspace, WorkspaceJoinRow } from './workspaces.repository.types.js';
 
-const FILE_PATH = 'db/repositories/workspaces.repository.ts';
-
-type InsertWorkspace = {
-  taskId: string;
-  projectId: string;
-  agentId?: string | null;
-  agentRuntime: string;
-  model?: string | null;
-  branchName: string;
-  baseBranch?: string | null;
-  worktreePath: string;
-  pid?: number | null;
-  status?: string;
-  output?: string | null;
-  workflowStage?: string | null;
-  parentWorkspaceId?: string | null;
-  providerFallbackReason?: string | null;
-  diffComments?: string | null;
-  currentStage?: string | null;
-  inputTokens?: number | null;
-  outputTokens?: number | null;
-  costUsd?: number | null;
-  startedAt?: string | null;
-  completedAt?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-type UpdateWorkspace = Partial<Omit<InsertWorkspace, 'taskId' | 'projectId'>>;
+const FILE_PATH = 'db/repositories/workspaces/workspaces.repository.ts';
 
 export class WorkspacesRepository {
   constructor(private readonly db: DB) {}
@@ -213,10 +181,11 @@ export class WorkspacesRepository {
 
   /** Inserts a new workspace and returns the created record. */
   insert(data: InsertWorkspace): Workspace {
-    return withAppErrorSync(
-      () => this.db.insert(workspaces).values(data).returning().get() as Workspace,
-      { filePath: FILE_PATH, functionName: 'insert', message: 'Failed to insert workspace' },
-    );
+    return withAppErrorSync(() => this.db.insert(workspaces).values(data).returning().get() as Workspace, {
+      filePath: FILE_PATH,
+      functionName: 'insert',
+      message: 'Failed to insert workspace',
+    });
   }
 
   /** Updates a workspace and returns the updated record. */
