@@ -6,6 +6,9 @@ import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
+// Lib
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
+
 // Types
 import type { AgentsSectionProps } from '../agents.types';
 
@@ -26,11 +29,11 @@ export function AgentsSection({
           <p className="text-muted-foreground mt-0.5 text-sm">Manage your AI agent configurations</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onImport}>
+          <Button variant="outline" size="sm" onClick={onImport} data-tour={TOUR_TARGETS.agentsImport}>
             <Upload className="mr-1.5 h-4 w-4" />
             Import
           </Button>
-          <Button onClick={onCreate} size="sm">
+          <Button onClick={onCreate} size="sm" data-tour={TOUR_TARGETS.agentsNewAgent}>
             <Plus className="mr-1.5 h-4 w-4" />
             New Agent
           </Button>
@@ -51,6 +54,7 @@ export function AgentsSection({
           {agents.map((agent) => (
             <Card
               key={agent.id}
+              data-tour={TOUR_TARGETS.agentsCard}
               className="group relative flex cursor-pointer flex-col gap-1.5 p-4 transition-shadow hover:shadow-md"
               onClick={() => onNavigate(agent.id)}
             >

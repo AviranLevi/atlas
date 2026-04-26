@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 
 // Lib
 import { timeAgo } from '@/lib/format';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 // Types
 import type { ProjectStatus } from '@atlas/shared';
@@ -33,6 +34,7 @@ export function ProjectCard({ project, onEdit, onDelete, onNavigate }: ProjectCa
 
   return (
     <Card
+      data-tour={TOUR_TARGETS.projectsCard}
       className="group relative flex cursor-pointer flex-col gap-2 p-4 transition-shadow hover:shadow-md"
       style={{ borderLeftWidth: 3, borderLeftColor: project.color ?? 'transparent' }}
       onClick={() => onNavigate(project.id)}

@@ -53,7 +53,7 @@ export function AppShell({ children, mode }: AppShellProps) {
     : resolvedItems.filter((n) => n.section === 'global');
 
   function renderNavItem(item: NavItem) {
-    const { to, icon: Icon, label, badge, disabled } = item;
+    const { to, icon: Icon, label, badge, disabled, dataTour } = item;
 
     if (disabled) {
       return (
@@ -82,6 +82,7 @@ export function AppShell({ children, mode }: AppShellProps) {
           <div>
             <NavLink
               to={to}
+              data-tour={dataTour}
               className={({ isActive }) =>
                 cn(
                   'flex h-9 flex-row items-center rounded-md text-[13px] font-medium transition-colors',

@@ -16,6 +16,9 @@ import {
   Zap,
 } from 'lucide-react';
 
+// Lib
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
+
 // Types
 import type { NavItem } from './layout.types';
 
@@ -34,7 +37,14 @@ const MARKETPLACE_ENABLED = import.meta.env.VITE_ATLAS_MARKETPLACE_ENABLED === '
 const allNavItems: NavItem[] = [
   // ── Project-scoped ──
   { to: '/kanban', icon: Columns3, label: 'Kanban', section: 'project' },
-  { to: '/workspaces', icon: Activity, label: 'Workspaces', badge: true, section: 'project' },
+  {
+    to: '/workspaces',
+    icon: Activity,
+    label: 'Workspaces',
+    badge: true,
+    section: 'project',
+    dataTour: TOUR_TARGETS.navWorkspaces,
+  },
   { to: '#', icon: FolderKanban, label: 'Context', section: 'project' },
   { to: '/chat', icon: MessageSquare, label: 'Chat', section: 'project' },
   { to: '/memory', icon: Brain, label: 'Memory', section: 'project' },

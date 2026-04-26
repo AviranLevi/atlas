@@ -14,6 +14,7 @@ import { useReview } from '@/hooks/use-reviews.hook';
 
 // Lib
 import { timeAgo } from '@/lib/format';
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 import { cn } from '@/lib/utils';
 
 // Types
@@ -97,6 +98,7 @@ export function KanbanCard({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      data-tour={TOUR_TARGETS.kanbanTaskCard}
       role="button"
       tabIndex={0}
       onClick={() => onEdit(task)}

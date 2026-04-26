@@ -5,12 +5,15 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+// Lib
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
+
 // Types
 import type { KanbanFilterBarProps } from '../kanban.types';
 
 export function KanbanFilterBar({ agents, agentFilter, onAgentFilterChange, onClearFilters }: KanbanFilterBarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3" data-tour={TOUR_TARGETS.kanbanFilterBar}>
       <Select
         value={agentFilter ?? '__all__'}
         onValueChange={(v) => onAgentFilterChange(v === '__all__' ? undefined : v)}

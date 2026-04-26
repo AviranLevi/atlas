@@ -18,14 +18,18 @@ export const TOUR_TARGETS = {
   projectsCard: 'projects-card',
   projectsFilter: 'projects-filter',
 
-  kanbanColumnTodo: 'kanban-column-todo',
+  kanbanBoard: 'kanban-board',
   kanbanAddTask: 'kanban-add-task',
   kanbanTaskCard: 'kanban-task-card',
   kanbanFilterBar: 'kanban-filter-bar',
 
+  agentsProviders: 'agents-providers',
+  agentsAddProvider: 'agents-add-provider',
   agentsNewAgent: 'agents-new-agent',
   agentsImport: 'agents-import',
-  agentsProvider: 'agents-provider',
+  agentsCard: 'agents-card',
+
+  navWorkspaces: 'nav-workspaces',
 
   // M5 — Wave 2 (workspaces, workspace-detail, chat)
   workspacesStatusTabs: 'workspaces-status-tabs',

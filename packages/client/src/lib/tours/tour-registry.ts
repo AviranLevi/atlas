@@ -17,13 +17,14 @@ type TourLoader = () => Promise<TourDefinition>;
 
 /**
  * Maps each TourId to a dynamic import that resolves to its definition.
- * Empty until M4 — see plan §6 + §12.
+ * Each entry is paid for only when the matching route is hit, so the
+ * baseline bundle stays small. M4–M6 fill this in wave-by-wave.
  */
 export const TOUR_LOADERS: Partial<Record<TourId, TourLoader>> = {
   // M4 — Wave 1
-  // 'projects-dashboard': () => import('./definitions/projects-dashboard.tour').then((m) => m.default),
-  // 'kanban': () => import('./definitions/kanban.tour').then((m) => m.default),
-  // 'agents': () => import('./definitions/agents.tour').then((m) => m.default),
+  'projects-dashboard': () => import('./definitions/projects-dashboard.tour').then((m) => m.default),
+  kanban: () => import('./definitions/kanban.tour').then((m) => m.default),
+  agents: () => import('./definitions/agents.tour').then((m) => m.default),
   //
   // M5 — Wave 2
   // 'workspaces': () => import('./definitions/workspaces.tour').then((m) => m.default),
@@ -86,11 +87,28 @@ export async function loadTourById(id: TourId): Promise<TourDefinition | null> {
 
 /**
  * Listed tour metadata for the help center (no `steps[]` payload, so
- * cheap to render even before any tour is loaded).
- *
- * NOTE: Currently empty — populated by M4–M6 alongside `TOUR_LOADERS`.
+ * cheap to render even before any tour is loaded). Keep this list in
+ * sync with `TOUR_LOADERS` — every loader entry should have a catalog
+ * row, and vice-versa.
  */
-export const TOUR_CATALOG: ReadonlyArray<{ id: TourId; title: string; description: string }> = [];
+export const TOUR_CATALOG: ReadonlyArray<{ id: TourId; title: string; description: string }> = [
+  // M4 — Wave 1
+  {
+    id: 'projects-dashboard',
+    title: 'Get oriented on projects',
+    description: 'Tour the dashboard — create, find, and open projects.',
+  },
+  {
+    id: 'kanban',
+    title: 'Kanban basics',
+    description: 'Columns, creating a task, dragging, running an agent.',
+  },
+  {
+    id: 'agents',
+    title: 'Set up agents',
+    description: 'Wire up a model, build an agent, or import one from the community.',
+  },
+];
 
 export function matchPage(page: string | RegExp, pathname: string): boolean {
   if (typeof page === 'string') {

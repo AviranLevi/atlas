@@ -18,6 +18,9 @@ import { useDeleteProject, useProjectsWithSummary } from '@/hooks/use-projects.h
 // Context
 import { useActiveProject } from '@/contexts/ProjectContext';
 
+// Lib
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
+
 // Types
 import type { Project } from '@atlas/shared';
 import type { ProjectWithSummary } from './projects.types';
@@ -82,13 +85,13 @@ export function ProjectsPage() {
               : `${total} project${total === 1 ? '' : 's'} — pick one to open or manage.`}
           </p>
         </div>
-        <Button onClick={handleCreate} size="sm">
+        <Button onClick={handleCreate} size="sm" data-tour={TOUR_TARGETS.projectsNewBtn}>
           <Plus className="mr-1.5 h-4 w-4" />
           New Project
         </Button>
       </div>
 
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center" data-tour={TOUR_TARGETS.projectsFilter}>
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input

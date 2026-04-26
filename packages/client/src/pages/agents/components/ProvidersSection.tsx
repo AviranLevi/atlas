@@ -7,12 +7,15 @@ import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
+// Lib
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
+
 // Types
 import type { ProvidersSectionProps } from '../agents.types';
 
 export function ProvidersSection({ providers, isLoading, onEdit, onCreate, onDelete }: ProvidersSectionProps) {
   return (
-    <div>
+    <div data-tour={TOUR_TARGETS.agentsProviders}>
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
@@ -21,7 +24,7 @@ export function ProvidersSection({ providers, isLoading, onEdit, onCreate, onDel
           </h2>
           <p className="text-muted-foreground mt-0.5 text-sm">API keys and model configurations</p>
         </div>
-        <Button onClick={onCreate} size="sm" variant="outline">
+        <Button onClick={onCreate} size="sm" variant="outline" data-tour={TOUR_TARGETS.agentsAddProvider}>
           <Plus className="mr-1.5 h-4 w-4" />
           Add Provider
         </Button>

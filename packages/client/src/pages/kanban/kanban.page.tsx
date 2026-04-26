@@ -27,6 +27,9 @@ import { useKanbanDnd } from './use-kanban-dnd.hook';
 // Context
 import { useActiveProject } from '@/contexts/ProjectContext';
 
+// Lib
+import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
+
 // Types
 import type { Task, TaskStatus } from '@atlas/shared';
 
@@ -120,6 +123,7 @@ export function KanbanPage() {
             setDialogOpen(true);
           }}
           size="sm"
+          data-tour={TOUR_TARGETS.kanbanAddTask}
         >
           <Plus className="mr-1.5 h-4 w-4" />
           New Task
@@ -165,7 +169,7 @@ export function KanbanPage() {
 
           <TabsContent value="board" className="mt-4">
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-              <div className="flex gap-4 overflow-x-auto pb-4">
+              <div className="flex gap-4 overflow-x-auto pb-4" data-tour={TOUR_TARGETS.kanbanBoard}>
                 {COLUMNS.map((status) => (
                   <KanbanColumn
                     key={status}

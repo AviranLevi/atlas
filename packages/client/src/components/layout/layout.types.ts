@@ -16,6 +16,8 @@ export type NavItem = {
    * Project-scoped items never render in slim mode.
    */
   globalAlwaysOn?: boolean;
+  /** Optional `data-tour` selector — wired through to the rendered NavLink for tour anchoring. */
+  dataTour?: string;
 };
 
 /**
