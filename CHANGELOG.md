@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-04-26 (Alpha)
+
+### Added
+- **First-run UX** — welcome stepper with API-key generation, project creation (scaffold / pick-existing / clone stub), and reusable `ApiKeyStep` component
+- **Three-state shell** — `firstRun` / `noActiveProject` / `activeProject` modes with `useShellMode` hook and `RouteGuard` redirects
+- **Project scaffold endpoint** — `POST /projects/scaffold` with `mkdirSafe`, `git init`, allowed-roots enforcement, and adversarial-input validation
+- **Marketplace placeholder** — nav entry behind `VITE_ATLAS_MARKETPLACE_ENABLED` feature flag
+- **Empty-state library** — contextual empty states across 9 pages
+- **Onboarding tour engine** — Driver.js wrapper, 11 guided tours (projects-dashboard, kanban, agents, workspaces, workspace-detail, chat, memory, documents, skills, rules, global), fatigue-based auto-pause
+- **HintDots** — 5 discoverable hint dots across key UI surfaces
+- **Tour telemetry** — Settings → Onboarding tab, telemetry table, `?tour-debug=1` overlay
+- **Reduced-motion path** — respects `prefers-reduced-motion` for all tour animations
+- **Per-step commits** — structured `step N/M` commit protocol with revert support
+- **AI code review** — auto-triggered re-review on implementer completion, verdict panel, `aiReviewing` workspace state
+- **Workflow approval panel** — rejection functionality for workspace workflows
+- **Structured output views** — brainstorm and plan stage views in workspace detail
+- **Workspace diff viewer** — diff handling with file size limits and error management
+- **Inline model fetching** — dynamic model selection in agent provider dialog and `StartWorkDialog`
+- **Runtime limits & cleanup** — server-side resource limits and cleanup services
+- **@agent mention** — mention agents in chat with `@agent` syntax
+- **Node.js version check** — pre-dev script validates Node ≥ 24
+- **Gemini 3.1 Pro** — added model support
+- **Commit plan feature** — plan commits in workspace management
+- **Background execution** — structured brainstorming and planning stages run in background
+- **Safety net** — catches uncommitted changes in workspace management
+- **404 handling** — `NotFoundPage` + catch-all route
+- **Funding & security workflows** — GitHub community files
+
+### Changed
+- Workspace detail refactored from boolean tangle to view state machine
+- Code review services refactored with new diff handling architecture
+- Agent provider removal nullifies foreign keys instead of cascading
+- Test infrastructure extracted into dedicated mock and type directories
+
+### Fixed
+- Responsive Kanban columns at narrow viewport
+- Kanban card click opens edit dialog
+- ModelSection "Agent default" gated on provider match
+- Obsidian "Sync now" gated on saved enabled state
+- MCP tab header layout at narrow viewport
+- Agent detail shows "not found" immediately on error
+- Disabled retry on 404 responses
+- Review watchdog + rollback attached to `applyReviewFix`
+
 ## [0.0.1] — 2026-04-07
 
 ### Added
