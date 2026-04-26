@@ -95,13 +95,7 @@ export function PickExistingForm({ onCreated, onCancel, hideCancel }: ProjectCre
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label htmlFor="exName">Project name</Label>
-          <Input
-            id="exName"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="My App"
-            required
-          />
+          <Input id="exName" value={name} onChange={(e) => setName(e.target.value)} placeholder="My App" required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="exBranch">Default branch</Label>

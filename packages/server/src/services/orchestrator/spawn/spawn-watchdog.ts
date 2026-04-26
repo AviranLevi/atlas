@@ -78,10 +78,7 @@ export function attachWatchdog(params: AttachWatchdogParams): void {
         }
       }, 5000).unref();
     }
-    onTimeout(
-      `[watchdog] timeout: workspace exceeded ${Math.round(maxRuntimeMs / 60_000)} minute limit`,
-      'timeout',
-    );
+    onTimeout(`[watchdog] timeout: workspace exceeded ${Math.round(maxRuntimeMs / 60_000)} minute limit`, 'timeout');
   }, maxRuntimeMs);
   entry.watchdogTimer.unref();
 }

@@ -2,12 +2,7 @@
 import { Hono } from 'hono';
 
 // Shared
-import {
-  CreateReviewSchema,
-  DecideReviewSchema,
-  SubmitAiReviewSchema,
-  UpdateReviewSchema,
-} from '@atlas/shared';
+import { CreateReviewSchema, DecideReviewSchema, SubmitAiReviewSchema, UpdateReviewSchema } from '@atlas/shared';
 import { zValidator } from '@hono/zod-validator';
 
 // Controllers

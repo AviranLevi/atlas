@@ -1,13 +1,5 @@
 import type { Project } from '@atlas/shared';
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useProjects } from '@/hooks/use-projects.hook';
 

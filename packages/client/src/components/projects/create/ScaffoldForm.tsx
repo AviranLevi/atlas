@@ -115,7 +115,9 @@ export function ScaffoldForm({ onCreated, onCancel, hideCancel }: ProjectCreateB
 
       <div className="flex items-center justify-between rounded-lg border p-3">
         <div>
-          <Label htmlFor="initGit" className="text-sm">Initialize git repository</Label>
+          <Label htmlFor="initGit" className="text-sm">
+            Initialize git repository
+          </Label>
           <p className="text-muted-foreground text-xs">
             Runs <code>git init</code> inside the new folder.
           </p>

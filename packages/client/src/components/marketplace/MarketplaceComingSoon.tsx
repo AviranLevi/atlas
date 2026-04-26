@@ -21,9 +21,7 @@ export function MarketplaceComingSoon() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <p className="text-muted-foreground text-sm">
-            Until then, follow development and contribute on GitHub.
-          </p>
+          <p className="text-muted-foreground text-sm">Until then, follow development and contribute on GitHub.</p>
           <Button asChild variant="outline">
             <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
               View on GitHub

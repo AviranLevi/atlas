@@ -4,7 +4,7 @@ const [major] = process.versions.node.split('.').map(Number);
 
 if (major < REQUIRED_MAJOR) {
   const v = process.versions.node;
-  const r = '\x1b[0m';   // reset
+  const r = '\x1b[0m'; // reset
   const red = '\x1b[31m';
   const bold = '\x1b[1m';
   const yellow = '\x1b[33m';

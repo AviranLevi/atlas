@@ -172,68 +172,68 @@ export function ProjectKnowledgeGraph({ project }: ProjectKnowledgeGraphProps) {
     loadForceGraph().then((ForceGraph) => {
       if (cancelled || !canvasRef.current) return;
       graph = new ForceGraph(canvasRef.current)
-      .width(dimensions.width)
-      .height(dimensions.height)
-      .backgroundColor('rgba(0,0,0,0)')
-      .nodeId('id')
-      .nodeVal('val')
-      .nodeColor((node: NodeObject) => NODE_CONFIG[(node as GraphNode).type].color)
-      .nodeCanvasObject((node: NodeObject, ctx: CanvasRenderingContext2D, globalScale: number) => {
-        const n = node as GraphNode;
-        const cfg = NODE_CONFIG[n.type];
-        const r = cfg.radius;
-        const x = n.x ?? 0;
-        const y = n.y ?? 0;
+        .width(dimensions.width)
+        .height(dimensions.height)
+        .backgroundColor('rgba(0,0,0,0)')
+        .nodeId('id')
+        .nodeVal('val')
+        .nodeColor((node: NodeObject) => NODE_CONFIG[(node as GraphNode).type].color)
+        .nodeCanvasObject((node: NodeObject, ctx: CanvasRenderingContext2D, globalScale: number) => {
+          const n = node as GraphNode;
+          const cfg = NODE_CONFIG[n.type];
+          const r = cfg.radius;
+          const x = n.x ?? 0;
+          const y = n.y ?? 0;
 
-        // Node circle
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, 2 * Math.PI);
-        ctx.fillStyle = cfg.color;
-        ctx.fill();
+          // Node circle
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, 2 * Math.PI);
+          ctx.fillStyle = cfg.color;
+          ctx.fill();
 
-        // Glow ring on project node
-        if (n.type === 'project') {
-          ctx.shadowColor = cfg.color;
-          ctx.shadowBlur = 16;
-          ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-          ctx.lineWidth = 1.5 / globalScale;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-        }
+          // Glow ring on project node
+          if (n.type === 'project') {
+            ctx.shadowColor = cfg.color;
+            ctx.shadowBlur = 16;
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            ctx.lineWidth = 1.5 / globalScale;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+          }
 
-        // Label — visible above a zoom threshold
-        if (globalScale >= 0.5) {
-          const fs = Math.min(13, Math.max(8, 10 / globalScale));
-          ctx.font = `${n.type === 'project' ? '600' : '400'} ${fs}px Inter, system-ui, sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'top';
-          ctx.fillStyle = labelColor;
-          const label = n.name.length > 24 ? `${n.name.slice(0, 22)}…` : n.name;
-          ctx.fillText(label, x, y + r + 3 / globalScale);
-        }
-      })
-      .nodeCanvasObjectMode(() => 'replace')
-      // Expand hit area slightly beyond visible radius for easier clicking
-      .nodePointerAreaPaint((node: NodeObject, color: string, ctx: CanvasRenderingContext2D) => {
-        const n = node as GraphNode;
-        ctx.beginPath();
-        ctx.arc(n.x ?? 0, n.y ?? 0, NODE_CONFIG[n.type].radius + 4, 0, 2 * Math.PI);
-        ctx.fillStyle = color;
-        ctx.fill();
-      })
-      .linkColor(() => linkColor)
-      .linkWidth(1)
-      .onNodeClick((node: object) => {
-        const n = node as GraphNode;
-        if (n.type === 'rule') navigateRef.current(`/rules/${n.entityId}`);
-        else if (n.type === 'agent') navigateRef.current(`/agents/${n.entityId}`);
-        else if (n.type === 'memory') navigateRef.current('/memory');
-        else if (n.type === 'task') navigateRef.current(`/projects/${projectIdRef.current}`);
-      })
-      .cooldownTicks(120)
-      .d3AlphaDecay(0.02)
-      .d3VelocityDecay(0.3)
-      .graphData(graphDataRef.current);
+          // Label — visible above a zoom threshold
+          if (globalScale >= 0.5) {
+            const fs = Math.min(13, Math.max(8, 10 / globalScale));
+            ctx.font = `${n.type === 'project' ? '600' : '400'} ${fs}px Inter, system-ui, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = labelColor;
+            const label = n.name.length > 24 ? `${n.name.slice(0, 22)}…` : n.name;
+            ctx.fillText(label, x, y + r + 3 / globalScale);
+          }
+        })
+        .nodeCanvasObjectMode(() => 'replace')
+        // Expand hit area slightly beyond visible radius for easier clicking
+        .nodePointerAreaPaint((node: NodeObject, color: string, ctx: CanvasRenderingContext2D) => {
+          const n = node as GraphNode;
+          ctx.beginPath();
+          ctx.arc(n.x ?? 0, n.y ?? 0, NODE_CONFIG[n.type].radius + 4, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
+        })
+        .linkColor(() => linkColor)
+        .linkWidth(1)
+        .onNodeClick((node: object) => {
+          const n = node as GraphNode;
+          if (n.type === 'rule') navigateRef.current(`/rules/${n.entityId}`);
+          else if (n.type === 'agent') navigateRef.current(`/agents/${n.entityId}`);
+          else if (n.type === 'memory') navigateRef.current('/memory');
+          else if (n.type === 'task') navigateRef.current(`/projects/${projectIdRef.current}`);
+        })
+        .cooldownTicks(120)
+        .d3AlphaDecay(0.02)
+        .d3VelocityDecay(0.3)
+        .graphData(graphDataRef.current);
 
       graphRef.current = graph;
     });

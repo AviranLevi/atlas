@@ -26,10 +26,7 @@ const STEP_COMMIT_REGEX = /^step\s+(\d+)\s*\/\s*(\d+)\s*:\s*(.+)$/i;
  * Safety net: commits any uncommitted changes left behind by the agent.
  * Returns true if a commit was created, false if the tree was already clean.
  */
-export function ensureChangesCommitted(
-  worktreePath: string,
-  context?: EnsureChangesCommittedContext,
-): boolean {
+export function ensureChangesCommitted(worktreePath: string, context?: EnsureChangesCommittedContext): boolean {
   const FUNCTION_NAME = 'ensureChangesCommitted';
   try {
     if (!fs.existsSync(worktreePath)) {
@@ -102,10 +99,7 @@ export function listCommits(worktreePath: string, baseRef: string): WorktreeComm
     } catch (err) {
       // baseRef may not exist inside the worktree (shallow clones, missing
       // upstream). Fall back to HEAD's entire history as a best-effort.
-      logger.warn(
-        `${FILE_PATH} :: ${FUNCTION_NAME} - ${baseRef}..HEAD failed, falling back to full HEAD history`,
-        err,
-      );
+      logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - ${baseRef}..HEAD failed, falling back to full HEAD history`, err);
       raw = execSync(`git log HEAD --format="${format}" --numstat`, {
         cwd: worktreePath,
         encoding: 'utf-8',

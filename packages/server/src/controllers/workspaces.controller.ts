@@ -30,9 +30,7 @@ import { openInEditor } from '../lib/open-in-editor.js';
 
 const FILE_PATH = 'controllers/workspaces.controller.ts';
 
-const AdvanceWorkflowBodySchema = z
-  .object({ selectedApproach: z.string().optional() })
-  .partial();
+const AdvanceWorkflowBodySchema = z.object({ selectedApproach: z.string().optional() }).partial();
 
 /** Lists all registered agent runtimes. */
 export async function listAgentRuntimes(c: Context) {
@@ -275,10 +273,7 @@ export async function revertWorkspace(c: Context) {
 export async function advanceWorkspaceWorkflow(c: Context) {
   const raw = await c.req.json().catch(() => ({}));
   const body = AdvanceWorkflowBodySchema.parse(raw);
-  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(
-    c.req.param('id')!,
-    body.selectedApproach,
-  );
+  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(c.req.param('id')!, body.selectedApproach);
   return c.json(workspace);
 }
 

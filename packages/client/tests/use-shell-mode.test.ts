@@ -44,7 +44,9 @@ describe('resolveShellMode', () => {
 
   it('forces activeProject mode when the new shell flag is disabled', () => {
     expect(
-      resolveShellMode(input({ isAuthenticated: false, projectCount: 0, hasActiveProject: false, newShellEnabled: false })),
+      resolveShellMode(
+        input({ isAuthenticated: false, projectCount: 0, hasActiveProject: false, newShellEnabled: false }),
+      ),
     ).toEqual({ mode: 'activeProject', isReady: true });
   });
 

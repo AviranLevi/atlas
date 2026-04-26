@@ -76,9 +76,7 @@ export function WelcomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <Button
-                onClick={() => navigate(createdProjectId ? `/projects/${createdProjectId}` : '/projects')}
-              >
+              <Button onClick={() => navigate(createdProjectId ? `/projects/${createdProjectId}` : '/projects')}>
                 Open project workspace
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>

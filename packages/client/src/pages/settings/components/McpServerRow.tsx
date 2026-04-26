@@ -51,12 +51,7 @@ export function McpServerRow({
         >
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => onRequestDelete(server.id)}
-          aria-label="Delete server"
-        >
+        <Button size="icon" variant="ghost" onClick={() => onRequestDelete(server.id)} aria-label="Delete server">
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>

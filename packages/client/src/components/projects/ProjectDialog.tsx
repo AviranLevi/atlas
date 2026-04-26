@@ -127,7 +127,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
           <DialogTitle>Edit Project</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {(
+          {
             <>
               <div className="space-y-2">
                 <Label>Local Path</Label>
@@ -283,7 +283,7 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                 </div>
               </div>
             </>
-          )}
+          }
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" asChild>

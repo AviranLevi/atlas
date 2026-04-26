@@ -53,4 +53,3 @@ export async function submitAiReview(c: Context): Promise<Response> {
   const review = await reviewsService.submitAiReview(c.req.param('id')!, data);
   return c.json(review);
 }
-

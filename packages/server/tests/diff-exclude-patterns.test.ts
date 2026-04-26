@@ -13,8 +13,7 @@ import { DIFF_EXCLUDE_PATTERNS } from '../src/services/worktree/worktree.constan
 
 // vi.mock for logger/errors from setup.ts is fine — we don't use them here.
 
-const shouldExclude = (filepath: string) =>
-  DIFF_EXCLUDE_PATTERNS.some((p) => minimatch(filepath, p, { dot: true }));
+const shouldExclude = (filepath: string) => DIFF_EXCLUDE_PATTERNS.some((p) => minimatch(filepath, p, { dot: true }));
 
 describe('DIFF_EXCLUDE_PATTERNS with minimatch({ dot: true })', () => {
   it('excludes node_modules/.bin symlinks (dotdir inside node_modules)', () => {

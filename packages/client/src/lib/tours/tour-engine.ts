@@ -14,9 +14,7 @@ import type { TourDefinition, TourRunResult, TourStep } from './tour-types';
 let driverPromise: Promise<typeof import('driver.js').driver> | null = null;
 function loadDriver() {
   if (!driverPromise) {
-    driverPromise = Promise.all([import('driver.js'), import('driver.js/dist/driver.css')]).then(
-      ([mod]) => mod.driver,
-    );
+    driverPromise = Promise.all([import('driver.js'), import('driver.js/dist/driver.css')]).then(([mod]) => mod.driver);
   }
   return driverPromise;
 }

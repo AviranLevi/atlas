@@ -16,24 +16,32 @@ const TEST_ROOT = fs.realpathSync(os.tmpdir());
 
 function makeStubProjectsService() {
   return {
-    create: vi.fn(async (data: { name: string; localPath: string | null; defaultBranch: string | null; color: string | null; status: string }) => ({
-      id: 'fake-id',
-      name: data.name,
-      description: null,
-      techStack: null,
-      status: data.status,
-      repositoryUrl: null,
-      localPath: data.localPath,
-      defaultBranch: data.defaultBranch,
-      scanData: null,
-      projectBrief: null,
-      designContext: null,
-      agentBehavior: null,
-      color: data.color,
-      mission: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })),
+    create: vi.fn(
+      async (data: {
+        name: string;
+        localPath: string | null;
+        defaultBranch: string | null;
+        color: string | null;
+        status: string;
+      }) => ({
+        id: 'fake-id',
+        name: data.name,
+        description: null,
+        techStack: null,
+        status: data.status,
+        repositoryUrl: null,
+        localPath: data.localPath,
+        defaultBranch: data.defaultBranch,
+        scanData: null,
+        projectBrief: null,
+        designContext: null,
+        agentBehavior: null,
+        color: data.color,
+        mission: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }),
+    ),
   };
 }
 
