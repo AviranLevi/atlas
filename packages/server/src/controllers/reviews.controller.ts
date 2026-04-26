@@ -8,13 +8,14 @@ import type { CreateReview, DecideReview, SubmitAiReview, UpdateReview } from '@
 import { reviewsService } from '../services/index.js';
 
 // Lib
+import { AppError } from '../lib/errors.js';
 import { getValidatedBody } from '../lib/hono-helpers.js';
 
 /** Returns the review for a task. Requires taskId query param. */
 export async function listReviews(c: Context) {
   const taskId = c.req.query('taskId');
   if (!taskId) {
-    return c.json({ error: 'taskId query param is required' }, 400);
+    throw new AppError('taskId query param is required', { status: 400 });
   }
   const review = await reviewsService.getByTask(taskId);
   return c.json(review);

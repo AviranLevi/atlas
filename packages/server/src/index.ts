@@ -3,6 +3,7 @@ import type { Server as HttpServer } from 'node:http';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { ZodError } from 'zod';
 
 import { startMcpHttpServer } from './mcp-http.js';
 import { apiRoutes } from './routes/index.js';
@@ -51,6 +52,9 @@ app.use('*', cors());
 app.onError((err, c) => {
   if (err instanceof AppError) {
     return c.json({ error: err.message }, err.status as 400 | 404 | 500);
+  }
+  if (err instanceof ZodError) {
+    return c.json({ error: 'Invalid request body', issues: err.issues }, 400);
   }
   logger.error('Unhandled error', err);
   return c.json({ error: 'Internal server error' }, 500);

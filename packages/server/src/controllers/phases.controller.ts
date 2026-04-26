@@ -8,13 +8,14 @@ import type { CreatePhase, UpdatePhase } from '@atlas/shared';
 import { phasesService } from '../services/index.js';
 
 // Lib
+import { AppError } from '../lib/errors.js';
 import { getValidatedBody } from '../lib/hono-helpers.js';
 
 /** Lists phases for a project. Requires projectId query param. */
 export async function listPhases(c: Context) {
   const projectId = c.req.query('projectId');
   if (!projectId) {
-    return c.json({ error: 'projectId query param is required' }, 400);
+    throw new AppError('projectId query param is required', { status: 400 });
   }
   const items = await phasesService.list(projectId);
   return c.json(items);

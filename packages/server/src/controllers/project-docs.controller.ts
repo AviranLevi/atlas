@@ -8,6 +8,7 @@ import type { CreateProjectDoc, GenerateDoc, UpdateProjectDoc } from '@atlas/sha
 import { docsGeneratorService, projectDocsService, projectsService } from '../services/index.js';
 
 // Lib
+import { AppError } from '../lib/errors.js';
 import { getValidatedBody } from '../lib/hono-helpers.js';
 
 /** Lists all docs across all projects. */
@@ -52,7 +53,7 @@ export async function generateProjectDoc(c: Context) {
 
   const project = await projectsService.getById(projectId);
   if (!project.localPath) {
-    return c.json({ error: 'Project has no local path — cannot scan files' }, 400);
+    throw new AppError('Project has no local path — cannot scan files', { status: 400 });
   }
 
   const TITLES: Record<string, string> = {

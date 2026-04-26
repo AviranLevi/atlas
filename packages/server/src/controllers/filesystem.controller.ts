@@ -4,6 +4,9 @@ import type { Context } from 'hono';
 // Services
 import { filesystemService } from '../services/index.js';
 
+// Lib
+import { AppError } from '../lib/errors.js';
+
 /** Lists subdirectories of a path, indicating which are git repos. */
 export function browseFilesystem(c: Context) {
   const result = filesystemService.browse(c.req.query('path'));
@@ -14,7 +17,7 @@ export function browseFilesystem(c: Context) {
 export function scanFilesystem(c: Context) {
   const rawPath = c.req.query('path');
   if (!rawPath) {
-    return c.json({ error: 'path query parameter is required' }, 400);
+    throw new AppError('path query parameter is required', { status: 400 });
   }
   const result = filesystemService.scan(rawPath);
   return c.json(result);

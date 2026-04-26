@@ -22,6 +22,7 @@ import {
 } from '../services/index.js';
 
 // Lib
+import { AppError, NotFoundError } from '../lib/errors.js';
 import { getValidatedBody } from '../lib/hono-helpers.js';
 import { openInEditor } from '../lib/open-in-editor.js';
 
@@ -140,11 +141,11 @@ export async function unassignProjectAgent(c: Context) {
 export async function openProjectInEditor(c: Context) {
   const project = await projectsService.getById(c.req.param('id')!);
   if (!project?.localPath) {
-    return c.json({ error: 'Project has no local path configured' }, 400);
+    throw new AppError('Project has no local path configured', { status: 400 });
   }
   const editor = await openInEditor(project.localPath);
   if (!editor) {
-    return c.json({ error: 'No supported editor found (tried: cursor, code, windsurf)' }, 404);
+    throw new NotFoundError('Editor', 'cursor|code|windsurf');
   }
   return c.json({ editor, path: project.localPath });
 }

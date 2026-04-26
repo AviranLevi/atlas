@@ -3,6 +3,7 @@ import type { Context } from 'hono';
 import fs from 'node:fs';
 import path from 'node:path';
 import { streamSSE } from 'hono/streaming';
+import { z } from 'zod';
 
 // Shared
 import type {
@@ -22,9 +23,16 @@ import { executorRegistry } from '../executors/index.js';
 import { orchestratorService } from '../services/index.js';
 
 // Lib
+import { NotFoundError } from '../lib/errors.js';
 import { getValidatedBody } from '../lib/hono-helpers.js';
 import { logger } from '../lib/logger.js';
 import { openInEditor } from '../lib/open-in-editor.js';
+
+const FILE_PATH = 'controllers/workspaces.controller.ts';
+
+const AdvanceWorkflowBodySchema = z
+  .object({ selectedApproach: z.string().optional() })
+  .partial();
 
 /** Lists all registered agent runtimes. */
 export async function listAgentRuntimes(c: Context) {
@@ -44,8 +52,9 @@ export function listArchivedLogs(c: Context) {
 
 /** Returns the content of an archived workspace log file. */
 export function getArchivedLog(c: Context) {
-  const content = orchestratorService.getArchivedLog(c.req.param('filename')!);
-  if (!content) return c.json({ error: 'Log not found' }, 404);
+  const filename = c.req.param('filename')!;
+  const content = orchestratorService.getArchivedLog(filename);
+  if (!content) throw new NotFoundError('Log', filename);
   return c.text(content);
 }
 
@@ -58,8 +67,9 @@ export async function listWorkspaces(c: Context) {
 
 /** Returns a workspace with its current status. */
 export async function getWorkspace(c: Context) {
-  const workspace = await orchestratorService.getStatus(c.req.param('id')!);
-  if (!workspace) return c.json({ error: 'Workspace not found' }, 404);
+  const id = c.req.param('id')!;
+  const workspace = await orchestratorService.getStatus(id);
+  if (!workspace) throw new NotFoundError('Workspace', id);
   return c.json(workspace);
 }
 
@@ -171,12 +181,13 @@ export async function deleteWorkspace(c: Context) {
 
 /** Opens the workspace's worktree path in the first available editor (Cursor → VS Code → Windsurf). */
 export async function openWorkspaceInEditor(c: Context) {
+  const id = c.req.param('id')!;
   const { workspacesRepository } = await import('../db/repositories/index.js');
-  const workspace = workspacesRepository.findById(c.req.param('id')!);
-  if (!workspace) return c.json({ error: 'Workspace not found' }, 404);
+  const workspace = workspacesRepository.findById(id);
+  if (!workspace) throw new NotFoundError('Workspace', id);
   const editor = await openInEditor(workspace.worktreePath);
   if (!editor) {
-    return c.json({ error: 'No supported editor found (tried: cursor, code, windsurf)' }, 404);
+    throw new NotFoundError('Editor', 'cursor|code|windsurf');
   }
   return c.json({ editor, path: workspace.worktreePath });
 }
@@ -253,10 +264,14 @@ export async function streamWorkspaceLogs(c: Context) {
 /** Returns the workspace lineage chain (root → current). */
 export async function getWorkspaceLineage(c: Context) {
   const { workspacesRepository } = await import('../db/repositories/index.js');
+  const id = c.req.param('id')!;
   try {
-    const lineage = workspacesRepository.findLineage(c.req.param('id')!);
+    const lineage = workspacesRepository.findLineage(id);
     return c.json(lineage);
-  } catch {
+  } catch (error: unknown) {
+    // Lineage failures are non-fatal (e.g. missing parent row from older
+    // data). Return an empty chain rather than 500ing the workspace view.
+    logger.warn(`${FILE_PATH} :: getWorkspaceLineage`, { id, error });
     return c.json([]);
   }
 }
@@ -276,8 +291,12 @@ export async function revertWorkspace(c: Context) {
 
 /** Advances the workflow from a specific workspace to the next stage. */
 export async function advanceWorkspaceWorkflow(c: Context) {
-  const body = (await c.req.json().catch(() => ({}))) as { selectedApproach?: string };
-  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(c.req.param('id')!, body.selectedApproach);
+  const raw = await c.req.json().catch(() => ({}));
+  const body = AdvanceWorkflowBodySchema.parse(raw);
+  const workspace = await orchestratorService.advanceWorkflowFromWorkspace(
+    c.req.param('id')!,
+    body.selectedApproach,
+  );
   return c.json(workspace);
 }
 
