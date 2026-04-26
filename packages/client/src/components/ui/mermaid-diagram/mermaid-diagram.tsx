@@ -1,13 +1,21 @@
-// React / library
 import { useEffect, useRef, useState } from 'react';
-import mermaid from 'mermaid';
-
-mermaid.initialize({ startOnLoad: false, theme: 'dark', darkMode: true });
 
 type MermaidDiagramProps = {
   definition: string;
   id: string;
 };
+
+let mermaidPromise: Promise<typeof import('mermaid').default> | null = null;
+
+function loadMermaid() {
+  if (!mermaidPromise) {
+    mermaidPromise = import('mermaid').then(({ default: mermaid }) => {
+      mermaid.initialize({ startOnLoad: false, theme: 'dark', darkMode: true });
+      return mermaid;
+    });
+  }
+  return mermaidPromise;
+}
 
 export function MermaidDiagram({ definition, id }: MermaidDiagramProps) {
   const [svg, setSvg] = useState<string>('');
@@ -20,8 +28,8 @@ export function MermaidDiagram({ definition, id }: MermaidDiagramProps) {
     setError(null);
 
     const uniqueId = `${id}-${currentRender}`;
-    mermaid
-      .render(uniqueId, definition)
+    loadMermaid()
+      .then((mermaid) => mermaid.render(uniqueId, definition))
       .then(({ svg: rendered }) => {
         if (currentRender === renderIdRef.current) {
           setSvg(rendered);

@@ -1,8 +1,22 @@
 // React / library
-import ForceGraph from 'force-graph';
-import type { NodeObject } from 'force-graph';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+// Types
+import type ForceGraphType from 'force-graph';
+import type { NodeObject } from 'force-graph';
+
+/**
+ * Dynamic import of force-graph. Loaded only when the knowledge graph is
+ * mounted so the library does not bloat the initial bundle. Cached.
+ */
+let forceGraphPromise: Promise<typeof ForceGraphType> | null = null;
+function loadForceGraph() {
+  if (!forceGraphPromise) {
+    forceGraphPromise = import('force-graph').then((m) => m.default);
+  }
+  return forceGraphPromise;
+}
 
 // Hooks
 import { useMemories } from '@/hooks/use-memory.hook';
@@ -67,7 +81,7 @@ export function ProjectKnowledgeGraph({ project }: ProjectKnowledgeGraphProps) {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const graphRef = useRef<ForceGraph | null>(null);
+  const graphRef = useRef<InstanceType<typeof ForceGraphType> | null>(null);
   const graphDataRef = useRef<{ nodes: GraphNode[]; links: { source: string; target: string }[] }>({
     nodes: [],
     links: [],
@@ -152,7 +166,12 @@ export function ProjectKnowledgeGraph({ project }: ProjectKnowledgeGraphProps) {
     const labelColor = isDark ? 'rgba(248,250,252,0.9)' : 'rgba(15,23,42,0.9)';
     const linkColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
 
-    const graph = new ForceGraph(el)
+    let cancelled = false;
+    let graph: InstanceType<typeof ForceGraphType> | null = null;
+
+    loadForceGraph().then((ForceGraph) => {
+      if (cancelled || !canvasRef.current) return;
+      graph = new ForceGraph(canvasRef.current)
       .width(dimensions.width)
       .height(dimensions.height)
       .backgroundColor('rgba(0,0,0,0)')
@@ -216,11 +235,14 @@ export function ProjectKnowledgeGraph({ project }: ProjectKnowledgeGraphProps) {
       .d3VelocityDecay(0.3)
       .graphData(graphDataRef.current);
 
-    graphRef.current = graph;
+      graphRef.current = graph;
+    });
 
     return () => {
+      cancelled = true;
       el.innerHTML = '';
       graphRef.current = null;
+      graph = null;
     };
   }, [dimensions]);
 

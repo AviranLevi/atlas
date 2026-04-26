@@ -1,15 +1,25 @@
 // FILE_PATH: packages/client/src/lib/tours/tour-engine.ts
 
-// Library
-import { driver } from 'driver.js';
-import 'driver.js/dist/driver.css';
-
 // Lib
 import { acquire, release } from './tour-lock';
 
 // Types
 import type { Driver, DriveStep } from 'driver.js';
 import type { TourDefinition, TourRunResult, TourStep } from './tour-types';
+
+/**
+ * Dynamic import of driver.js + its CSS. Loaded on first tour trigger so the
+ * library does not bloat the initial bundle. Cached on subsequent calls.
+ */
+let driverPromise: Promise<typeof import('driver.js').driver> | null = null;
+function loadDriver() {
+  if (!driverPromise) {
+    driverPromise = Promise.all([import('driver.js'), import('driver.js/dist/driver.css')]).then(
+      ([mod]) => mod.driver,
+    );
+  }
+  return driverPromise;
+}
 
 /**
  * Single thin wrapper around `driver.js`. The rest of the codebase NEVER
@@ -66,25 +76,25 @@ function elementForStep(step: TourStep): Element | null {
  *   - filters out steps whose target isn't currently in the DOM.
  *   - if the resulting step list is empty → resolves `aborted` immediately.
  */
-export function startTour(definition: TourDefinition): Promise<TourRunResult> {
+export async function startTour(definition: TourDefinition): Promise<TourRunResult> {
+  if (!acquire()) {
+    return { outcome: 'aborted', exitedAtStep: 0 };
+  }
+
+  const eligibleSteps = definition.steps.filter((s) => {
+    if (s.when && !s.when()) return false;
+    if (!elementForStep(s)) return false;
+    return true;
+  });
+
+  if (eligibleSteps.length === 0) {
+    release();
+    return { outcome: 'aborted', exitedAtStep: 0 };
+  }
+
+  const driver = await loadDriver();
+
   return new Promise((resolve) => {
-    if (!acquire()) {
-      resolve({ outcome: 'aborted', exitedAtStep: 0 });
-      return;
-    }
-
-    const eligibleSteps = definition.steps.filter((s) => {
-      if (s.when && !s.when()) return false;
-      if (!elementForStep(s)) return false;
-      return true;
-    });
-
-    if (eligibleSteps.length === 0) {
-      release();
-      resolve({ outcome: 'aborted', exitedAtStep: 0 });
-      return;
-    }
-
     let lastIndex = 0;
     let completed = false;
     let resolved = false;
