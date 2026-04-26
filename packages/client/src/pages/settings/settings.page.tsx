@@ -8,10 +8,11 @@ import { AppearanceTab } from './components/AppearanceTab';
 import { DefaultWorkspaceTab } from './components/DefaultWorkspaceTab';
 import { IntegrationsTab } from './components/IntegrationsTab';
 import { McpTab } from './components/McpTab';
+import { OnboardingTab } from './components/OnboardingTab';
 import { ApiKeysTab } from './components/ApiKeysTab';
 import { SystemTab } from './components/SystemTab';
 
-const VALID_TABS = ['appearance', 'workspace', 'mcp', 'integrations', 'system', 'api-keys'] as const;
+const VALID_TABS = ['appearance', 'workspace', 'mcp', 'integrations', 'system', 'api-keys', 'onboarding'] as const;
 
 type SettingsTab = (typeof VALID_TABS)[number];
 
@@ -46,6 +47,7 @@ export function SettingsPage() {
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+          <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
         </TabsList>
 
         <TabsContent value="appearance" className="mt-6">
@@ -70,6 +72,10 @@ export function SettingsPage() {
 
         <TabsContent value="api-keys" className="mt-6">
           <ApiKeysTab />
+        </TabsContent>
+
+        <TabsContent value="onboarding" className="mt-6">
+          <OnboardingTab />
         </TabsContent>
       </Tabs>
     </div>

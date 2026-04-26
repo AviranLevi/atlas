@@ -6,6 +6,7 @@ import { WorkspaceNotifications } from '@/components/layout/WorkspaceNotificatio
 
 // Hooks
 import { useFirstTimeStateBToast } from '@/hooks/use-first-time-toast.hook';
+import { usePageTour } from '@/hooks/use-page-tour.hook';
 import { useShellMode } from '@/hooks/use-shell-mode.hook';
 
 import { AppProviders } from './AppProviders';
@@ -14,6 +15,7 @@ import { AppRoutes } from './AppRoutes';
 function ShellSwitcher() {
   const { mode } = useShellMode();
   useFirstTimeStateBToast();
+  usePageTour();
 
   if (mode === 'firstRun') {
     return (

@@ -55,19 +55,12 @@ export function ApiKeyStep({ onContinue, continueLabel = 'Continue', bare }: Api
         <>
           <div className="space-y-2">
             <Label htmlFor="key-name">Key Name</Label>
-            <Input
-              id="key-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. My Laptop"
-            />
+            <Input id="key-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. My Laptop" />
           </div>
           <Button className="w-full" onClick={handleGenerate} disabled={setupMutation.isPending || !name.trim()}>
             {setupMutation.isPending ? 'Generating...' : 'Generate My Key'}
           </Button>
-          {setupMutation.error && (
-            <p className="text-sm text-destructive">{(setupMutation.error as Error).message}</p>
-          )}
+          {setupMutation.error && <p className="text-sm text-destructive">{(setupMutation.error as Error).message}</p>}
         </>
       ) : (
         <>
@@ -80,9 +73,7 @@ export function ApiKeyStep({ onContinue, continueLabel = 'Continue', bare }: Api
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                Save this key — it will not be shown again.
-              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400">Save this key — it will not be shown again.</p>
             </div>
           )}
           {!rawKey && isAuthenticated && (

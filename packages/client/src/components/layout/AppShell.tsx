@@ -5,6 +5,7 @@ import { NavLink } from 'react-router-dom';
 
 // Components
 import { AtlasLogo } from '@/components/icons/AtlasLogo.icon';
+import { HelpButton } from '@/components/onboarding/HelpButton';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ActiveWorkspaceDot } from './ActiveWorkspaceDot';
@@ -191,6 +192,11 @@ export function AppShell({ children, mode }: AppShellProps) {
 
         {/* AgentStatusPanel polls agent runs — only relevant when a project is active. */}
         {mode === 'activeProject' && <AgentStatusPanel expanded={expanded} />}
+
+        {/* Help / onboarding access — always present so paused tours can be re-run. */}
+        <div className={cn('shrink-0 border-t border-sidebar-border', expanded ? 'p-2' : 'flex justify-center p-2')}>
+          <HelpButton expanded={expanded} />
+        </div>
       </aside>
       <div className="flex flex-1 flex-col overflow-hidden">
         {mode === 'activeProject' && <ProjectTabBar />}
