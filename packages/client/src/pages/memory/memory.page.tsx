@@ -3,6 +3,7 @@ import { Brain, Plus, Search } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 // Components
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { MemoryDialog } from '@/components/memory/MemoryDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -119,21 +120,16 @@ export function MemoryPage() {
       {isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center">
-          <Brain className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
-          <h3 className="mb-1 text-base font-medium">No memories found</h3>
-          <p className="text-muted-foreground mb-4 text-sm">
-            {search
+        <EmptyState
+          icon={Brain}
+          title="No memories found"
+          body={
+            search
               ? 'Try adjusting your search or filters.'
-              : 'Memories are created automatically by agents, or you can add them manually.'}
-          </p>
-          {!search && (
-            <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm">
-              <Plus className="mr-1.5 h-4 w-4" />
-              New Memory
-            </Button>
-          )}
-        </div>
+              : 'Decisions, conventions, and preferences agents remember across sessions. Agents add these automatically — you can also add them manually.'
+          }
+          primaryCta={!search ? { label: 'New Memory', onClick: () => setDialogOpen(true), icon: Plus } : undefined}
+        />
       ) : (
         <MemoryTable
           memories={filtered}

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { ProjectCreateDialog } from '@/components/projects/ProjectCreateDialog';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { Button } from '@/components/ui/button';
@@ -114,21 +115,19 @@ export function ProjectsPage() {
       {isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : !projects?.length ? (
-        <div className="rounded-lg border border-dashed p-12 text-center">
-          <FolderOpen className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
-          <h3 className="mb-1 text-base font-medium">No projects yet</h3>
-          <p className="text-muted-foreground mb-4 text-sm">
-            Create your first project to start tracking tasks and running agents.
-          </p>
-          <Button onClick={handleCreate} size="sm">
-            <Plus className="mr-1.5 h-4 w-4" />
-            Create your first project
-          </Button>
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          title="No projects yet"
+          body="Create your first project to start tracking tasks and running agents."
+          primaryCta={{ label: 'Create your first project', onClick: handleCreate, icon: Plus }}
+        />
       ) : !filtered?.length ? (
-        <div className="rounded-lg border border-dashed p-12 text-center">
-          <p className="text-muted-foreground text-sm">No projects match your filter.</p>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="No projects match your filter"
+          body="Try clearing the search or status filter."
+          compact
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((project) => (

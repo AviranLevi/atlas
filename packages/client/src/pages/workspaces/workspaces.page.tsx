@@ -3,6 +3,7 @@ import { Terminal, Activity } from 'lucide-react';
 import { useState } from 'react';
 
 // Components
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Card } from '@/components/ui/card';
 import { WorkspaceRow } from './components/WorkspaceRow';
 
@@ -98,12 +99,21 @@ export function WorkspacesPage() {
           <p className="text-sm text-muted-foreground">Loading workspaces...</p>
         </div>
       ) : visible.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed">
-          <Terminal className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {filter === 'all' ? 'No workspaces yet. Start an agent from the Kanban board.' : `No ${filter} workspaces.`}
-          </p>
-        </div>
+        <EmptyState
+          icon={Terminal}
+          title={filter === 'all' ? 'No workspaces yet' : `No ${filter} workspaces`}
+          body={
+            filter === 'all'
+              ? 'A workspace is an isolated git worktree where an agent runs. Start work on any task from the Kanban board to spin one up.'
+              : 'Try a different filter to see workspaces in other states.'
+          }
+          primaryCta={
+            filter === 'all'
+              ? { label: 'Open Kanban', asLink: { to: '/kanban' } }
+              : { label: 'Show all', onClick: () => setFilter('all') }
+          }
+          compact
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {visible.map((ws) => (

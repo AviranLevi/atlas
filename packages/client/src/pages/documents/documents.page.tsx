@@ -1,5 +1,5 @@
 // React / library
-import { BookOpen, Loader2 } from 'lucide-react';
+import { BookOpen, FileText, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // Context
@@ -20,6 +20,7 @@ import type { DocType, ProjectDoc } from '@atlas/shared';
 import type { SelectedItem } from './documents.types';
 
 // Components
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { AiTypePrompt } from './components/AiTypePrompt';
 import { AllProjectsView } from './components/AllProjectsView';
 import { DocCreator } from './components/DocCreator';
@@ -226,15 +227,21 @@ export function DocumentsPage() {
               />
             )}
 
-            {!creating && !selectedAiType && !selectedDoc && (
-              <div className="flex h-64 items-center justify-center rounded-lg border border-dashed">
-                <p className="text-sm text-muted-foreground">
-                  {docs.length === 0
-                    ? 'No documentation yet — select a diagram type to generate, or create a custom doc'
-                    : 'Select a document from the sidebar'}
-                </p>
-              </div>
-            )}
+            {!creating &&
+              !selectedAiType &&
+              !selectedDoc &&
+              (docs.length === 0 ? (
+                <EmptyState
+                  icon={FileText}
+                  title="No documentation yet"
+                  body="Generate diagrams (architecture, DB schema, API) from your code, or write a custom doc."
+                  compact
+                />
+              ) : (
+                <div className="flex h-64 items-center justify-center rounded-lg border border-dashed">
+                  <p className="text-sm text-muted-foreground">Select a document from the sidebar</p>
+                </div>
+              ))}
 
             {!creating && !selectedAiType && selectedDoc && !editing && (
               <DocViewer

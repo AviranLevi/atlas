@@ -2,6 +2,7 @@
 import { Bot, Plus, Pencil, Trash2, Upload } from 'lucide-react';
 
 // Components
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -39,15 +40,12 @@ export function AgentsSection({
       {isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : !agents?.length ? (
-        <div className="rounded-lg border border-dashed p-12 text-center">
-          <Bot className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
-          <h3 className="mb-1 text-base font-medium">No agents yet</h3>
-          <p className="text-muted-foreground mb-4 text-sm">Create your first AI agent to get started.</p>
-          <Button onClick={onCreate} variant="outline" size="sm">
-            <Plus className="mr-1.5 h-4 w-4" />
-            Create Agent
-          </Button>
-        </div>
+        <EmptyState
+          icon={Bot}
+          title="No agents yet"
+          body="An agent is a named persona — a system prompt + a model. Create one to start delegating work."
+          primaryCta={{ label: 'Create Agent', onClick: onCreate, icon: Plus }}
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {agents.map((agent) => (

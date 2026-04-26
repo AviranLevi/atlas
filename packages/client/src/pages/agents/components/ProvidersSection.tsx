@@ -3,6 +3,7 @@ import { Cpu, Plus, Pencil, Trash2 } from 'lucide-react';
 
 // Components
 import { ProviderTypeBadge } from '@/components/agents/ProviderTypeBadge';
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -29,12 +30,13 @@ export function ProvidersSection({ providers, isLoading, onEdit, onCreate, onDel
       {isLoading ? (
         <div className="text-muted-foreground py-6 text-center text-sm">Loading...</div>
       ) : providers.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-6 text-center">
-          <Cpu className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
-          <p className="text-muted-foreground text-sm">
-            No providers configured. Add one to link agents to real AI models.
-          </p>
-        </div>
+        <EmptyState
+          icon={Cpu}
+          title="No providers configured"
+          body="Add an API provider (Anthropic, OpenAI, OpenRouter, …) to link your agents to a real model."
+          primaryCta={{ label: 'Add Provider', onClick: onCreate, icon: Plus }}
+          compact
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {providers.map((provider) => (

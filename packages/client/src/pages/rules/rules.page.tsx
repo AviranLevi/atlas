@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
 import { RuleDialog } from '@/components/rules/RuleDialog';
 import { RuleTemplatesDialog } from '@/components/rules/RuleTemplatesDialog';
@@ -182,19 +183,19 @@ export function RulesPage() {
       {isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center">
-          <ScrollText className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
-          <h3 className="mb-1 text-base font-medium">No rules found</h3>
-          <p className="text-muted-foreground mb-4 text-sm">
-            {search ? 'Try adjusting your filters.' : 'Create your first rule to get started.'}
-          </p>
-          {!search && (
-            <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm">
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Rule
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={ScrollText}
+          title="No rules found"
+          body={
+            search
+              ? 'Try adjusting your filters.'
+              : 'Rules are coding standards and conventions agents must follow. Start from a template or write your own.'
+          }
+          primaryCta={!search ? { label: 'Create Rule', onClick: () => setDialogOpen(true), icon: Plus } : undefined}
+          secondaryCta={
+            !search ? { label: 'Browse templates', onClick: () => setTemplatesOpen(true), icon: Sparkles } : undefined
+          }
+        />
       ) : grouped ? (
         <div className="space-y-6">
           {Array.from(grouped.entries()).map(([typeName, typeRules]) => (

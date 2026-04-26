@@ -1,10 +1,10 @@
 // React / library
 import { MessageSquare, Settings, Terminal, Loader2 } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 // Components
-import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { ChatInput } from './components/ChatInput';
 import { ConversationSidebar } from './components/ConversationSidebar';
 import { MessageList } from './components/MessageList';
@@ -207,29 +207,15 @@ export function ChatPage() {
 
   if (!hasAnyBackend) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-        <div className="rounded-full bg-muted p-4">
-          <MessageSquare className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <h2 className="text-lg font-semibold">No AI Backends Available</h2>
-        <p className="text-sm text-muted-foreground max-w-md">
-          To use the chat, either configure an AI provider with an API key, or install a supported CLI agent (like
-          Claude Code).
-        </p>
-        <div className="flex gap-3">
-          <Button asChild variant="outline">
-            <Link to="/agents">
-              <Settings className="h-4 w-4 mr-2" />
-              Configure API Provider
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/agents">
-              <Terminal className="h-4 w-4 mr-2" />
-              View CLI Agents
-            </Link>
-          </Button>
-        </div>
+      <div className="flex flex-1 items-center justify-center p-8">
+        <EmptyState
+          icon={MessageSquare}
+          title="No AI backends available"
+          body="To use chat, either configure an AI provider with an API key, or install a supported CLI agent (like Claude Code)."
+          primaryCta={{ label: 'Configure API Provider', asLink: { to: '/agents' }, icon: Settings }}
+          secondaryCta={{ label: 'View CLI Agents', asLink: { to: '/agents' }, icon: Terminal }}
+          className="border-0"
+        />
       </div>
     );
   }
@@ -267,14 +253,13 @@ export function ChatPage() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {isNewChat && !creatingChat ? (
-          <div className="flex flex-col items-center justify-center flex-1 gap-4 text-center p-8">
-            <div className="rounded-full bg-muted p-4">
-              <MessageSquare className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h2 className="text-lg font-semibold">New conversation</h2>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Ask about your project, create tasks, set up agents, or manage rules -- all through natural conversation.
-            </p>
+          <div className="flex flex-1 items-center justify-center p-8">
+            <EmptyState
+              icon={MessageSquare}
+              title="New conversation"
+              body="Ask about your project, create tasks, set up agents, or manage rules — all through natural conversation."
+              className="border-0"
+            />
           </div>
         ) : (
           <MessageList

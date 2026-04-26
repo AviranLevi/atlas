@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
 import { SkillDialog } from '@/components/skills/SkillDialog';
 import { Badge } from '@/components/ui/badge';
@@ -170,19 +171,17 @@ export function SkillsPage() {
       {isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-12 text-center">
-          <Zap className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
-          <h3 className="mb-1 text-base font-medium">No skills found</h3>
-          <p className="text-muted-foreground mb-4 text-sm">
-            {search ? 'Try adjusting your filters.' : 'Create your first skill template to get started.'}
-          </p>
-          {!search && (
-            <Button onClick={() => setDialogOpen(true)} variant="outline" size="sm">
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Skill
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={Zap}
+          title="No skills found"
+          body={
+            search
+              ? 'Try adjusting your filters.'
+              : 'Skills are reusable instruction templates an agent can pick up at run-time. Create one to standardise repeatable jobs.'
+          }
+          primaryCta={!search ? { label: 'Create Skill', onClick: () => setDialogOpen(true), icon: Plus } : undefined}
+          secondaryCta={!search ? { label: 'Import', onClick: () => setImportOpen(true), icon: Upload } : undefined}
+        />
       ) : grouped ? (
         <div className="space-y-6">
           {Array.from(grouped.entries()).map(([typeName, typeSkills]) => (

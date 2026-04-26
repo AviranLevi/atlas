@@ -2,6 +2,7 @@
 import { Plus, Pencil, Trash2, Zap } from 'lucide-react';
 
 // Components
+import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DispatchRuleFormRow } from './DispatchRuleFormRow';
@@ -46,6 +47,14 @@ export function DispatchRulesCard({
       <CardContent className="space-y-4">
         {isLoading ? (
           <div className="text-muted-foreground py-8 text-center">Loading...</div>
+        ) : rules.length === 0 && editingRuleId !== 'new' ? (
+          <EmptyState
+            icon={Zap}
+            title="No dispatch rules"
+            body="Dispatch rules auto-route new tasks to agents based on the task name (regex). Powerful, but only fires when you've set rules up — most users never discover this."
+            primaryCta={{ label: 'Add Rule', onClick: onAdd, icon: Plus }}
+            compact
+          />
         ) : (
           <div className="rounded-md border">
             <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-4 border-b bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground">
@@ -107,12 +116,6 @@ export function DispatchRulesCard({
                 onSave={onSave}
                 onCancel={onCancel}
               />
-            )}
-
-            {rules.length === 0 && editingRuleId !== 'new' && (
-              <div className="text-muted-foreground px-4 py-6 text-center text-sm">
-                No dispatch rules configured. Add a rule to auto-assign agents to tasks.
-              </div>
             )}
           </div>
         )}
