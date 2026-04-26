@@ -6,46 +6,35 @@ import { useCallback, useMemo } from 'react';
 // Hooks
 import { usePreferences, useUpdatePreferences } from './use-preferences.hook';
 
+// Lib
+import {
+  asInt,
+  buildDismissalPatch,
+  FATIGUE_THRESHOLD,
+  hintSeenKey,
+  isTrue,
+  isWithinSnooze,
+  TOURS_GLOBAL_DISMISSALS_KEY,
+  TOURS_PAUSED_KEY,
+  tourCompletedKey,
+  tourDismissedAtKey,
+  tourSkipCountKey,
+} from '@/lib/tours/tour-state-helpers';
+
 // Types
-import type { TourId } from '@/lib/tours/tour-types';
+import type { HintId, TourId } from '@/lib/tours/tour-types';
 
 /**
- * Pref-key conventions (flat strings — see plan §7).
+ * Pref-key conventions live in `tour-state-helpers.ts` (single source of
+ * truth so tests can verify the exact payload shape without mounting React).
  *
- *   tours_paused                        → '"true"' | '"false"'
+ *   tours_paused                        → 'true' | 'false'
  *   tours.global_dismissals             → numeric counter (string-encoded)
- *   tour.<id>.completed                 → '"true"' once user finishes that tour
+ *   tour.<id>.completed                 → 'true' once user finishes that tour
  *   tour.<id>.dismissed_at              → ISO timestamp the user last skipped
  *   tour.<id>.skip_count                → numeric counter (string-encoded)
- *   hint.<id>.seen                      → '"true"' (M7)
+ *   hint.<id>.seen                      → 'true' (M7)
  */
-
-const SNOOZE_DAYS = 7;
-const FATIGUE_THRESHOLD = 3;
-
-const TOURS_PAUSED_KEY = 'tours_paused';
-const TOURS_GLOBAL_DISMISSALS_KEY = 'tours.global_dismissals';
-
-function tourCompletedKey(id: TourId): string {
-  return `tour.${id}.completed`;
-}
-
-function tourDismissedAtKey(id: TourId): string {
-  return `tour.${id}.dismissed_at`;
-}
-
-function tourSkipCountKey(id: TourId): string {
-  return `tour.${id}.skip_count`;
-}
-
-function isTrue(v: string | undefined): boolean {
-  return v === 'true';
-}
-
-function asInt(v: string | undefined): number {
-  const n = Number.parseInt(v ?? '0', 10);
-  return Number.isFinite(n) ? n : 0;
-}
 
 /**
  * Read-only access to tour state. Preference data is loaded once via
@@ -61,17 +50,9 @@ export function useTourState() {
 
   const isCompleted = useCallback((id: TourId) => isTrue(prefs[tourCompletedKey(id)]), [prefs]);
 
-  const isSnoozed = useCallback(
-    (id: TourId) => {
-      const ts = prefs[tourDismissedAtKey(id)];
-      if (!ts) return false;
-      const dismissedAt = new Date(ts).getTime();
-      if (Number.isNaN(dismissedAt)) return false;
-      const elapsed = Date.now() - dismissedAt;
-      return elapsed < SNOOZE_DAYS * 24 * 60 * 60 * 1000;
-    },
-    [prefs],
-  );
+  const isSnoozed = useCallback((id: TourId) => isWithinSnooze(prefs[tourDismissedAtKey(id)], Date.now()), [prefs]);
+
+  const isHintSeen = useCallback((id: HintId) => isTrue(prefs[hintSeenKey(id)]), [prefs]);
 
   return useMemo(
     () => ({
@@ -81,9 +62,10 @@ export function useTourState() {
       globalDismissals,
       isCompleted,
       isSnoozed,
+      isHintSeen,
       fatigueThreshold: FATIGUE_THRESHOLD,
     }),
-    [isLoading, prefs, toursPaused, globalDismissals, isCompleted, isSnoozed],
+    [isLoading, prefs, toursPaused, globalDismissals, isCompleted, isSnoozed, isHintSeen],
   );
 }
 
@@ -91,9 +73,13 @@ export function useTourState() {
  * Mutations for tour state. Returns a stable object with named writers.
  *
  * `markCompleted` / `markDismissed` are the two writers fired after a tour
- * resolves. `markDismissed` also bumps `tours.global_dismissals`; the hook
- * (`use-page-tour.hook.ts`) checks the counter and may call `pauseTours`
- * to enforce the auto-fatigue rule (3 skips ⇒ tours globally paused).
+ * resolves. `markDismissed` also bumps `tours.global_dismissals` and returns
+ * the new total; the hook (`use-page-tour.hook.ts`) checks the counter and
+ * may call `pauseTours` to enforce the auto-fatigue rule (3 skips ⇒ tours
+ * globally paused).
+ *
+ * `markHintSeen` is M7 territory but ships here so the state surface is
+ * complete in one place.
  */
 export function useTourStateMutations() {
   const update = useUpdatePreferences();
@@ -106,14 +92,13 @@ export function useTourStateMutations() {
 
   const markDismissed = useCallback(
     async (id: TourId) => {
-      const skipCount = asInt(prefs[tourSkipCountKey(id)]) + 1;
-      const globalCount = asInt(prefs[TOURS_GLOBAL_DISMISSALS_KEY]) + 1;
-      await update.mutateAsync({
-        [tourDismissedAtKey(id)]: new Date().toISOString(),
-        [tourSkipCountKey(id)]: String(skipCount),
-        [TOURS_GLOBAL_DISMISSALS_KEY]: String(globalCount),
-      });
-      return globalCount;
+      const { patch, nextGlobalCount } = buildDismissalPatch(
+        id,
+        asInt(prefs[tourSkipCountKey(id)]),
+        asInt(prefs[TOURS_GLOBAL_DISMISSALS_KEY]),
+      );
+      await update.mutateAsync(patch);
+      return nextGlobalCount;
     },
     [update, prefs],
   );
@@ -135,6 +120,21 @@ export function useTourStateMutations() {
   /** Wipe the global "stop interrupting me" counter — used when user resumes tours. */
   const resetGlobalDismissals = useCallback(() => writePref(TOURS_GLOBAL_DISMISSALS_KEY, '0'), [writePref]);
 
+  /** Mark a HintDot as seen (M7). One-shot — never re-armed except via "Reset hints". */
+  const markHintSeen = useCallback((id: HintId) => writePref(hintSeenKey(id), 'true'), [writePref]);
+
+  /** Wipe every `hint.*.seen` so dots re-appear. Used by help center "Reset hints". */
+  const resetAllHints = useCallback(() => {
+    const patch: Record<string, string> = {};
+    for (const key of Object.keys(prefs)) {
+      if (key.startsWith('hint.') && key.endsWith('.seen')) {
+        patch[key] = '';
+      }
+    }
+    if (Object.keys(patch).length === 0) return Promise.resolve(prefs);
+    return update.mutateAsync(patch);
+  }, [update, prefs]);
+
   return {
     markCompleted,
     markDismissed,
@@ -142,6 +142,8 @@ export function useTourStateMutations() {
     resumeTours,
     resetTour,
     resetGlobalDismissals,
+    markHintSeen,
+    resetAllHints,
     isPending: update.isPending,
   };
 }

@@ -28,6 +28,17 @@ export type TourId =
   | 'rules'
   | 'global';
 
+/**
+ * Stable IDs for the HintDot tooltips (plan §8). Adding a new hint?
+ *
+ *   1. Justify it in the §8 "earning rule": non-obvious + high-leverage.
+ *   2. Add the ID here.
+ *   3. Wrap the target control with `<HintDot id="...">`.
+ *
+ * Like TourId, never reuse — `hint.<id>.seen` preferences are keyed off it.
+ */
+export type HintId = 'run-ai-review' | 'cli-fallback' | 'mcp-config' | 'dispatch-rules' | 'worktree-cleanup';
+
 export type TourStepSide = 'top' | 'bottom' | 'left' | 'right';
 export type TourStepAlign = 'start' | 'center' | 'end';
 
