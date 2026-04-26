@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/a11y/useSemanticElements: button-styled radio pattern inside an ARIA radiogroup; <input type="radio"> would break the card layout. */
 // FILE_PATH: packages/client/src/components/projects/ProjectCreateBody.tsx
 
 // React / library
@@ -26,7 +27,12 @@ const MODE_LABELS: Record<ProjectCreateMode, { title: string; description: strin
  * clone) live in their own files under `./create/` so this component stays focused on
  * mode selection.
  */
-export function ProjectCreateBody({ onCreated, onCancel, hideCancel, initialMode = 'scaffold' }: ProjectCreateBodyProps) {
+export function ProjectCreateBody({
+  onCreated,
+  onCancel,
+  hideCancel,
+  initialMode = 'scaffold',
+}: ProjectCreateBodyProps) {
   const [mode, setMode] = useState<ProjectCreateMode>(initialMode);
 
   return (

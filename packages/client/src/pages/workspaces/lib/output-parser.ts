@@ -17,7 +17,7 @@ export type OutputBlock = NarrativeBlock | ToolCallBlock;
 
 const TOOL_CALL_WITH_ARGS = /^▸\s+(\S+)\s{2,}(.*)$/;
 const TOOL_CALL_BARE = /^▸\s+(\S+)\s*$/;
-// eslint-disable-next-line no-control-regex
+// biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape sequences begin with the ESC control character (\x1b); required for stripping terminal color codes.
 const ANSI_REGEX = /\x1b\[[0-9;]*m/g;
 
 /** Strips ANSI escape sequences (color codes) from text. */

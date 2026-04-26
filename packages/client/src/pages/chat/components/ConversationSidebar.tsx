@@ -94,24 +94,17 @@ export function ConversationSidebar({
                 activeId === conv.id && 'bg-muted',
               )}
             >
-              <div
-                role="button"
-                tabIndex={0}
+              <button
+                type="button"
                 onClick={() => onSelect(conv.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelect(conv.id);
-                  }
-                }}
-                className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+                className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
               >
                 <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">{conv.title || 'New Chat'}</p>
                   <p className="text-xs text-muted-foreground">{new Date(conv.updatedAt).toLocaleDateString()}</p>
                 </div>
-              </div>
+              </button>
               <button
                 type="button"
                 onClick={() => onDelete(conv.id)}

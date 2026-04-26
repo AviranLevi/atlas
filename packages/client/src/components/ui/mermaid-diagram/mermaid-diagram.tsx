@@ -54,5 +54,11 @@ export function MermaidDiagram({ definition, id }: MermaidDiagramProps) {
     );
   }
 
-  return <div className="overflow-auto" dangerouslySetInnerHTML={{ __html: svg }} />;
+  return (
+    <div
+      className="overflow-auto"
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: SVG output produced by mermaid from a controlled diagram definition; mermaid sanitizes user-facing labels.
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
 }

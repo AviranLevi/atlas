@@ -71,7 +71,9 @@ for (const file of files) {
 
 if (errors.length > 0) {
   console.error('\n❌ Migration validation failed:\n');
-  errors.forEach((e) => console.error(e + '\n'));
+  for (const e of errors) {
+    console.error(`${e}\n`);
+  }
   console.error(
     'Drizzle requires "--> statement-breakpoint" between every SQL statement in a migration file.\n' +
       'Use "pnpm db:generate" to auto-generate migrations instead of writing them by hand.\n',

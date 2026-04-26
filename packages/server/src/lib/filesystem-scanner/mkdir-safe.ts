@@ -38,6 +38,7 @@ function validateName(name: string): void {
   if (name.includes('/') || name.includes('\\')) {
     throw new AppError('Folder name must not contain path separators', { status: 400 });
   }
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: This regex's purpose is to detect and reject control characters in folder names.
   if (/[\u0000-\u001f]/.test(name)) {
     throw new AppError('Folder name contains control characters', { status: 400 });
   }
