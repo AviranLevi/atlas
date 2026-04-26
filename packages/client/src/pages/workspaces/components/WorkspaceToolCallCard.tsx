@@ -5,13 +5,13 @@ import { CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getToolMeta } from '../lib/tool-meta';
 
-type ToolCallCardProps = {
+type WorkspaceToolCallCardProps = {
   tool: string;
   args: string;
   isRunning: boolean;
 };
 
-export function ToolCallCard({ tool, args, isRunning }: ToolCallCardProps) {
+export function WorkspaceToolCallCard({ tool, args, isRunning }: WorkspaceToolCallCardProps) {
   const meta = getToolMeta(tool);
   const Icon = meta.icon;
 

@@ -5,11 +5,11 @@ import { useState } from 'react';
 // Types
 import type { ChatToolCall } from '@atlas/shared';
 
-interface ToolCallCardProps {
+interface ChatToolCallCardProps {
   toolCall: ChatToolCall;
 }
 
-export function ToolCallCard({ toolCall }: ToolCallCardProps) {
+export function ChatToolCallCard({ toolCall }: ChatToolCallCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (

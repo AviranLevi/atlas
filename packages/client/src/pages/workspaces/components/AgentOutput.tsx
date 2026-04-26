@@ -8,7 +8,7 @@ import { stripCliPromptEchoStreaming } from '@atlas/shared';
 // Components
 import { Button } from '@/components/ui/button';
 import { NarrativeBlock } from './NarrativeBlock';
-import { ToolCallCard } from './ToolCallCard';
+import { WorkspaceToolCallCard } from './WorkspaceToolCallCard';
 
 // Lib
 import { parseAgentOutput, stripAnsi } from '../lib/output-parser';
@@ -125,7 +125,7 @@ export function AgentOutput({
                 return <NarrativeBlock key={i} content={block.content} />;
               }
               return (
-                <ToolCallCard
+                <WorkspaceToolCallCard
                   key={i}
                   tool={block.tool}
                   args={block.args}
