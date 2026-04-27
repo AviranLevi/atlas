@@ -1,6 +1,6 @@
 // React / library
 import { useQueryClient } from '@tanstack/react-query';
-import { MessageSquare, Settings, Terminal, Loader2 } from 'lucide-react';
+import { MessageSquare, Settings, Terminal, Loader2, Unplug } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -233,11 +233,16 @@ export function ChatPage() {
   }
 
   const isNewChat = !conversationId;
+  // Schema-level FK ON DELETE SET NULL on chat_conversations.provider_id: when
+  // the user deletes the underlying provider, history survives but the
+  // conversation can't continue until they pick a new provider/agent.
+  const isProviderDisconnected =
+    !!activeConversation && activeConversation.backendType === 'api' && activeConversation.providerId === null;
   const canSend = isNewChat
     ? backendType === 'api'
       ? !!selectedProviderId && !!selectedModel
       : !!selectedExecutorId
-    : true;
+    : !isProviderDisconnected;
 
   return (
     <div className="flex flex-1 min-h-0 -m-6">
@@ -294,9 +299,23 @@ export function ChatPage() {
             </button>
           </div>
         )}
+        {isProviderDisconnected && (
+          <div className="flex items-center gap-3 px-4 py-2 text-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 border-t border-amber-500/20">
+            <Unplug className="h-4 w-4 shrink-0" />
+            <span className="flex-1">
+              This conversation&rsquo;s AI provider was removed. Start a new chat or reconnect a provider.
+            </span>
+          </div>
+        )}
         <ChatInput
           onSend={handleSend}
-          disabled={!canSend || creatingChat || isAwaitingResponse || (state !== 'idle' && state !== 'error')}
+          disabled={
+            !canSend ||
+            creatingChat ||
+            isAwaitingResponse ||
+            isProviderDisconnected ||
+            (state !== 'idle' && state !== 'error')
+          }
           isStreaming={state === 'streaming' || creatingChat || isAwaitingResponse}
           onAbort={abort}
         />

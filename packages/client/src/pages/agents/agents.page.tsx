@@ -1,6 +1,7 @@
 // React / library
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 // Components
 import { AgentDialog } from '@/components/agents/AgentDialog';
@@ -12,6 +13,9 @@ import { ProvidersSection } from './components/ProvidersSection';
 // Hooks
 import { useAgentProviders, useDeleteAgentProvider } from '@/hooks/use-agent-providers.hook';
 import { useAgents, useDeleteAgent } from '@/hooks/use-agents.hook';
+
+// Lib
+import { ApiError } from '@/lib/api';
 
 // Types
 import type { Agent, AgentProvider } from '@atlas/shared';
@@ -42,9 +46,23 @@ export function AgentsPage() {
 
   const handleDeleteAgent = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm('Delete this agent?')) {
-      deleteAgent.mutate(id);
-    }
+    const agent = agents?.find((a) => a.id === id);
+    const name = agent?.name ?? 'this agent';
+    if (!confirm(`Delete agent "${name}"?`)) return;
+    deleteAgent.mutate(id, {
+      onError: (err) => {
+        // 409 from RESTRICT pre-check: server returns structured details so we
+        // can render a precise toast instead of a generic FK error string.
+        if (err instanceof ApiError && err.status === 409 && err.details) {
+          const { agentName, taskCount } = err.details as { agentName?: string; taskCount?: number };
+          toast.error(
+            `Cannot delete "${agentName ?? name}" — ${taskCount ?? '?'} active task(s) still assigned. Reassign first.`,
+          );
+          return;
+        }
+        toast.error((err as Error).message);
+      },
+    });
   };
 
   const handleCreateProvider = () => {

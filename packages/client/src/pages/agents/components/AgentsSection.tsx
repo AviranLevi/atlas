@@ -1,5 +1,5 @@
 // React / library
-import { Bot, Plus, Pencil, Trash2, Upload } from 'lucide-react';
+import { Bot, Plus, Pencil, Trash2, Upload, Unplug } from 'lucide-react';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
@@ -63,7 +63,19 @@ export function AgentsSection({
                   <Bot className="text-primary h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-semibold">{agent.name}</h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="truncate text-sm font-semibold">{agent.name}</h3>
+                    {/* Provider was deleted (FK ON DELETE SET NULL on
+                        agents.provider_id): the agent is dormant until the
+                        user re-points it at a provider. */}
+                    {agent.providerId === null && (
+                      <Unplug
+                        className="h-3 w-3 shrink-0 text-amber-500"
+                        aria-label="Provider disconnected"
+                        data-testid="provider-disconnected-icon"
+                      />
+                    )}
+                  </div>
                   {agent.description && (
                     <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs leading-relaxed">
                       {agent.description}

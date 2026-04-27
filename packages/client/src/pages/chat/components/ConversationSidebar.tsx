@@ -1,5 +1,5 @@
 // React / library
-import { Plus, Trash2, MessageSquare, Loader2, Terminal, Cloud, Search, X } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Loader2, Terminal, Cloud, Search, X, Unplug } from 'lucide-react';
 import { useState } from 'react';
 
 // Components
@@ -101,7 +101,19 @@ export function ConversationSidebar({
               >
                 <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">{conv.title || 'New Chat'}</p>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="truncate text-sm">{conv.title || 'New Chat'}</p>
+                    {/* Provider was deleted (FK ON DELETE SET NULL): the chat
+                        history survives but the conversation can't continue
+                        until the user picks a new provider. */}
+                    {conv.backendType === 'api' && conv.providerId === null && (
+                      <Unplug
+                        className="h-3 w-3 shrink-0 text-amber-500"
+                        aria-label="Provider disconnected"
+                        data-testid="provider-disconnected-icon"
+                      />
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">{new Date(conv.updatedAt).toLocaleDateString()}</p>
                 </div>
               </button>
