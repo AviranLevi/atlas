@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Schema-enforced delete cascades** — every foreign key now has an explicit `ON DELETE` policy (CASCADE / SET NULL / RESTRICT) applied at the SQLite layer via a one-time table rebuild (`apply-fk-cascade-policy.ts`). Replaces ~70 lines of imperative cascade code in `projects.removeWithRelations`.
+- **Agent-delete RESTRICT pre-check** — deleting an agent with active task assignments returns HTTP 409 with `{ agentId, agentName, taskCount }` so the UI can render a precise "reassign first" toast instead of a raw FK error.
+- **Provider-disconnected UI** — when a chat conversation's or agent's `provider_id` is nulled out by a provider deletion, an `Unplug` indicator surfaces in the chat sidebar / agents grid and the chat input is disabled with a banner explaining the state. Conversation history is preserved instead of being deleted alongside the provider.
+
+### Changed
+- `ApiError` now carries an optional `details` payload from the server's error body so callers can render structured UI without parsing message strings.
+
 ## [0.1.0] — 2026-04-26 (Alpha)
 
 ### Added
