@@ -51,6 +51,11 @@ export class AgentsRepository {
     crud.remove(this.db, id);
   }
 
+  /** Counts tasks currently assigned to an agent (used by RESTRICT pre-check). */
+  countAssignedTasks(agentId: string): number {
+    return crud.countAssignedTasks(this.db, agentId);
+  }
+
   /** Returns global instructions as a single joined string. */
   findGlobalInstructions(): string {
     return crud.findGlobalInstructions(this.db);

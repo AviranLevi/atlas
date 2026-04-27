@@ -58,12 +58,47 @@ export class AgentsService {
     }
   }
 
-  /** Deletes an agent by ID. */
+  /**
+   * Deletes an agent by ID.
+   *
+   * Schema-level FKs:
+   *   - `tasks.agent_id` is RESTRICT — we pre-check the count and throw a 409
+   *     with a precise `{ agentName, taskCount }` payload so the UI can render
+   *     a useful confirmation/reassignment flow instead of a raw FK error.
+   *   - `workspaces.agent_id`, `reviews.reviewer_id`, `agents.provider_id` and
+   *     `chat_conversations.provider_id` are SET NULL — historical rows survive
+   *     and the UI surfaces a "(deleted agent)" / "disconnected" state.
+   *   - `heartbeat_configs.agent_id`, `memory.agent_id`, `agent_skills`,
+   *     `agent_resources`, `agent_projects`, `dispatch_rules.agent_id` are
+   *     CASCADE — junction rows and per-agent config disappear with the agent.
+   */
   async delete(id: string): Promise<void> {
     const FUNCTION_NAME = 'delete';
     try {
+      const agent = this.repo.findByIdOrThrow(id);
+      const taskCount = this.repo.countAssignedTasks(id);
+      if (taskCount > 0) {
+        throw new AppError(
+          `Cannot delete "${agent.name}" — ${taskCount} active task(s) still assigned. Reassign or delete those tasks first.`,
+          {
+            status: 409,
+            cause: { agentId: id, agentName: agent.name, taskCount },
+          },
+        );
+      }
       this.repo.remove(id);
     } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      // TOCTOU: a task can be assigned between the count pre-check and the
+      // DELETE. SQLite then raises a generic "FOREIGN KEY constraint failed".
+      // Translate that to the same 409 contract the pre-check uses so the
+      // client renders a sensible toast instead of a 500 "Failed to delete".
+      if (error instanceof Error && /FOREIGN KEY/i.test(error.message)) {
+        throw new AppError('Cannot delete agent — task assignment changed during delete. Refresh and retry.', {
+          status: 409,
+          cause: { agentId: id },
+        });
+      }
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete agent', { cause: error });
     }

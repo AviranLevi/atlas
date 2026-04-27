@@ -1,12 +1,12 @@
 // External
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 // Shared
 import type { Agent, CreateAgent, UpdateAgent } from '@atlas/shared';
 
 // DB
 import type { DB } from '../../index.js';
-import { agents, globalInstructions } from '../../schema/index.js';
+import { agents, globalInstructions, tasks } from '../../schema/index.js';
 
 // Lib
 import { AppError } from '../../../lib/errors.js';
@@ -69,6 +69,22 @@ export function remove(db: DB, id: string): void {
   } catch (error: unknown) {
     logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
     throw new AppError('Failed to delete agent', { cause: error });
+  }
+}
+
+/** Counts tasks currently assigned to an agent. Used by the RESTRICT pre-check. */
+export function countAssignedTasks(db: DB, agentId: string): number {
+  const FUNCTION_NAME = 'countAssignedTasks';
+  try {
+    const row = db
+      .select({ count: sql<number>`count(*)`.as('count') })
+      .from(tasks)
+      .where(eq(tasks.agentId, agentId))
+      .get();
+    return Number(row?.count ?? 0);
+  } catch (error: unknown) {
+    logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+    throw new AppError('Failed to count tasks assigned to agent', { cause: error });
   }
 }
 
