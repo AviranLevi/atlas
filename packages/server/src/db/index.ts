@@ -7,6 +7,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 
 // DB
+import { applyFkCascadePolicy } from './apply-fk-cascade-policy.js';
 import * as schema from './schema/index.js';
 import { applySchemaPatches } from './schema-patches.js';
 
@@ -36,6 +37,7 @@ try {
 }
 
 applySchemaPatches(sqlite);
+applyFkCascadePolicy(sqlite);
 
 console.error(`[DB] Database initialized successfully`);
 

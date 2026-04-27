@@ -9,11 +9,11 @@ import { projects } from './projects.schema.js';
 export const chatConversations = sqliteTable('chat_conversations', {
   id: text('id').primaryKey().$defaultFn(uuidDefault),
   title: text('title'),
-  projectId: text('project_id').references(() => projects.id),
+  projectId: text('project_id').references(() => projects.id, { onDelete: 'cascade' }),
   backendType: text('backend_type')
     .notNull()
     .$defaultFn(() => 'api'),
-  providerId: text('provider_id').references(() => agentProviders.id),
+  providerId: text('provider_id').references(() => agentProviders.id, { onDelete: 'set null' }),
   executorId: text('executor_id'),
   model: text('model'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
@@ -24,7 +24,7 @@ export const chatMessages = sqliteTable('chat_messages', {
   id: text('id').primaryKey().$defaultFn(uuidDefault),
   conversationId: text('conversation_id')
     .notNull()
-    .references(() => chatConversations.id),
+    .references(() => chatConversations.id, { onDelete: 'cascade' }),
   role: text('role').notNull(),
   content: text('content')
     .notNull()

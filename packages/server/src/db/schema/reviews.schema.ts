@@ -10,8 +10,8 @@ export const reviews = sqliteTable('reviews', {
   id: text('id').primaryKey().$defaultFn(uuidDefault),
   taskId: text('task_id')
     .notNull()
-    .references(() => tasks.id),
-  reviewerId: text('reviewer_id').references(() => agents.id),
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  reviewerId: text('reviewer_id').references(() => agents.id, { onDelete: 'set null' }),
   reviewerType: text('reviewer_type').notNull().default('human'), // 'human' | 'agent'
   status: text('status').notNull().default('pending'), // 'pending' | 'approved' | 'changes_requested'
   checklist: text('checklist'), // JSON: [{item: string, checked: boolean}]

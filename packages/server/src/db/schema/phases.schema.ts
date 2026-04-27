@@ -9,7 +9,7 @@ export const phases = sqliteTable('phases', {
   id: text('id').primaryKey().$defaultFn(uuidDefault),
   projectId: text('project_id')
     .notNull()
-    .references(() => projects.id),
+    .references(() => projects.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
   successCriteria: text('success_criteria'),

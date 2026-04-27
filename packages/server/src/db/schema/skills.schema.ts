@@ -12,7 +12,7 @@ export const skills = sqliteTable('skills', {
   steps: text('steps'),
   inputFormat: text('input_format'),
   outputFormat: text('output_format'),
-  projectId: text('project_id').references(() => projects.id),
+  projectId: text('project_id').references(() => projects.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

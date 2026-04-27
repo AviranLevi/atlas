@@ -15,8 +15,8 @@ export const globalInstructions = sqliteTable('global_instructions', {
 export const dispatchRules = sqliteTable('dispatch_rules', {
   id: text('id').primaryKey().$defaultFn(uuidDefault),
   pattern: text('pattern').notNull(),
-  agentId: text('agent_id').references(() => agents.id),
-  skillId: text('skill_id').references(() => skills.id),
+  agentId: text('agent_id').references(() => agents.id, { onDelete: 'cascade' }),
+  skillId: text('skill_id').references(() => skills.id, { onDelete: 'cascade' }),
   autoStart: integer('auto_start', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),

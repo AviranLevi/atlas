@@ -11,11 +11,11 @@ export const workspaces = sqliteTable('workspaces', {
   id: text('id').primaryKey().$defaultFn(uuidDefault),
   taskId: text('task_id')
     .notNull()
-    .references(() => tasks.id),
+    .references(() => tasks.id, { onDelete: 'cascade' }),
   projectId: text('project_id')
     .notNull()
-    .references(() => projects.id),
-  agentId: text('agent_id').references(() => agents.id),
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  agentId: text('agent_id').references(() => agents.id, { onDelete: 'set null' }),
   agentRuntime: text('agent_runtime').notNull(),
   model: text('model'),
   branchName: text('branch_name').notNull(),

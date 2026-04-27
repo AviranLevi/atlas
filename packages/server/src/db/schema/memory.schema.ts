@@ -16,10 +16,14 @@ export const memory = sqliteTable('memory', {
   status: text('status')
     .notNull()
     .$defaultFn(() => 'active'),
+  // FK enforced via apply-fk-cascade-policy.ts (self-ref ON DELETE SET NULL);
+  // drizzle can't express self-references without TS circular type errors.
+  // If a future drizzle-kit generate proposes dropping this column, that's
+  // the SQL-only FK going missing — preserve it.
   supersededBy: text('superseded_by'),
   isPinned: integer('is_pinned', { mode: 'boolean' }).notNull().default(false),
-  projectId: text('project_id').references(() => projects.id),
-  agentId: text('agent_id').references(() => agents.id),
+  projectId: text('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  agentId: text('agent_id').references(() => agents.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

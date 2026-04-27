@@ -10,8 +10,8 @@ export const heartbeatConfigs = sqliteTable('heartbeat_configs', {
   id: text('id').primaryKey().$defaultFn(uuidDefault),
   agentId: text('agent_id')
     .notNull()
-    .references(() => agents.id),
-  projectId: text('project_id').references(() => projects.id),
+    .references(() => agents.id, { onDelete: 'cascade' }),
+  projectId: text('project_id').references(() => projects.id, { onDelete: 'cascade' }),
   runtime: text('runtime').notNull(),
   cronExpression: text('cron_expression').notNull(),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
@@ -25,7 +25,7 @@ export const heartbeatRuns = sqliteTable('heartbeat_runs', {
   id: text('id').primaryKey().$defaultFn(uuidDefault),
   configId: text('config_id')
     .notNull()
-    .references(() => heartbeatConfigs.id),
+    .references(() => heartbeatConfigs.id, { onDelete: 'cascade' }),
   agentId: text('agent_id').notNull(),
   workspaceId: text('workspace_id'),
   status: text('status').notNull(),

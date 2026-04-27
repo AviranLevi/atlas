@@ -11,7 +11,7 @@ export const rules = sqliteTable('resources', {
   type: text('type'),
   tags: text('tags'),
   content: text('content'),
-  projectId: text('project_id').references(() => projects.id),
+  projectId: text('project_id').references(() => projects.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });
