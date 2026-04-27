@@ -51,7 +51,14 @@ app.use('*', cors());
 
 app.onError((err, c) => {
   if (err instanceof AppError) {
-    return c.json({ error: err.message }, err.status as 400 | 404 | 500);
+    // Forward a structured `cause` payload (e.g. { agentName, taskCount } on
+    // a 409 RESTRICT block) so the client can render a precise toast/modal
+    // without parsing the message string.
+    const body: { error: string; details?: Record<string, unknown> } = { error: err.message };
+    if (err.cause && typeof err.cause === 'object' && !(err.cause instanceof Error)) {
+      body.details = err.cause as Record<string, unknown>;
+    }
+    return c.json(body, err.status as 400 | 404 | 409 | 500);
   }
   if (err instanceof ZodError) {
     return c.json({ error: 'Invalid request body', issues: err.issues }, 400);

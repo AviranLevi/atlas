@@ -14,10 +14,17 @@ export function getApiKey(): string | null {
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  /**
+   * Server-provided structured payload (e.g. `{ agentName, taskCount }` on a
+   * 409 RESTRICT block). Lets callers render precise UI without parsing the
+   * message string.
+   */
+  details?: Record<string, unknown>;
+  constructor(message: string, status: number, details?: Record<string, unknown>) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -38,7 +45,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
         : typeof body.message === 'string'
           ? body.message
           : `HTTP ${res.status}`;
-    throw new ApiError(errorMsg, res.status);
+    const details =
+      body && typeof body.details === 'object' && body.details !== null
+        ? (body.details as Record<string, unknown>)
+        : undefined;
+    throw new ApiError(errorMsg, res.status, details);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
