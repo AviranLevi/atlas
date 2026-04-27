@@ -1,4 +1,5 @@
 // React / library
+import { useQueryClient } from '@tanstack/react-query';
 import { MessageSquare, Settings, Terminal, Loader2 } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -31,7 +32,17 @@ import type { ChatAttachment, ChatBackendType } from '@atlas/shared';
 export function ChatPage() {
   const { id: conversationId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { activeProjectId } = useActiveProject();
+
+  // Force a fresh fetch whenever the user lands on a conversation — defends
+  // against a stale `[]` cache from a race where the messages query resolved
+  // before the streaming POST persisted the user message server-side.
+  useEffect(() => {
+    if (conversationId) {
+      queryClient.invalidateQueries({ queryKey: ['chat-messages', conversationId] });
+    }
+  }, [conversationId, queryClient]);
 
   const { data: providers = [], isLoading: providersLoading } = useAgentProviders();
   const { data: executors = [], isLoading: executorsLoading } = useAgentRuntimes();

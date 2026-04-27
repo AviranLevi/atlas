@@ -30,16 +30,32 @@ export function useConversation(id: string | undefined) {
   });
 }
 
-/** Returns messages for a conversation, polling every 2s while the last message is still from the user (response pending). */
+/**
+ * Returns messages for a conversation.
+ *
+ * Polling rules:
+ *   - Empty conversation: poll every 1.5s. Catches the race where the cache
+ *     was populated as `[]` before the streaming POST persisted the user
+ *     message (otherwise the UI sticks on a blank state forever — no message,
+ *     no thinking indicator).
+ *   - Last message from user: poll every 2s while waiting for the assistant
+ *     response (so navigating away and back still picks up the eventual reply
+ *     or cancelled placeholder).
+ *   - Last message from assistant: stop polling.
+ *
+ * `refetchOnMount: 'always'` ensures we revalidate every time the hook
+ * subscribes for a new conversationId, even if cached data exists.
+ */
 export function useConversationMessages(conversationId: string | undefined) {
   return useQuery({
     queryKey: [...MESSAGES_KEY, conversationId],
     queryFn: () => api.get<ChatMessage[]>(`/chat/conversations/${conversationId}/messages`),
     enabled: !!conversationId,
-    // Poll while awaiting a response so navigating away and back still works
+    refetchOnMount: 'always',
     refetchInterval: (query) => {
       const msgs = query.state.data;
-      if (!msgs || msgs.length === 0) return false;
+      if (!msgs) return false;
+      if (msgs.length === 0) return 1500;
       const lastRole = msgs[msgs.length - 1]?.role;
       return lastRole === 'user' ? 2000 : false;
     },

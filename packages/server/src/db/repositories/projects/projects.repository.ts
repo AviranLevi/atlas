@@ -1,12 +1,29 @@
 // External
-import { eq, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 
 // Shared
 import type { CreateProject, Project, UpdateProject } from '@atlas/shared';
 
 // DB
 import type { DB } from '../../index.js';
-import { agentProjects, agents, memory, phases, projects, tasks, workspaces } from '../../schema/index.js';
+import {
+  agentProjects,
+  agentRules,
+  agentSkills,
+  agents,
+  chatConversations,
+  chatMessages,
+  heartbeatConfigs,
+  heartbeatRuns,
+  memory,
+  phases,
+  projects,
+  rules,
+  skillRules,
+  skills,
+  tasks,
+  workspaces,
+} from '../../schema/index.js';
 
 // Lib
 import { AppError, NotFoundError } from '../../../lib/errors.js';
@@ -183,17 +200,83 @@ export class ProjectsRepository {
   }
 
   /**
-   * Deletes related rows then the project (workspaces, tasks, phases, memory, agent links).
+   * Deletes a project and every row that transitively references it.
+   *
+   * Wrapped in a single transaction so any FK failure rolls back the whole
+   * operation — otherwise an error mid-flight would leave the project alive
+   * but with its workspaces/tasks/phases/memory/agent links already gone.
+   *
+   * Tables cleaned (in dependency order):
+   *   chat_messages → chat_conversations
+   *   heartbeat_runs → heartbeat_configs
+   *   agent_rules + skill_rules (by ruleId) + agent_skills + skill_rules (by skillId) → rules + skills
+   *   workspaces, tasks, phases, memory, agent_projects
+   *   project_docs is handled by the DB (ON DELETE CASCADE).
+   *
+   * activity_log and usage_logs intentionally left alone — their projectId
+   * columns have no FK constraint and historical logs survive deletion.
    */
   removeWithRelations(id: string): void {
     const FUNCTION_NAME = 'removeWithRelations';
     try {
-      this.db.delete(workspaces).where(eq(workspaces.projectId, id)).run();
-      this.db.delete(tasks).where(eq(tasks.projectId, id)).run();
-      this.db.delete(phases).where(eq(phases.projectId, id)).run();
-      this.db.delete(memory).where(eq(memory.projectId, id)).run();
-      this.db.delete(agentProjects).where(eq(agentProjects.projectId, id)).run();
-      this.remove(id);
+      this.db.transaction((tx) => {
+        const conversationIds = tx
+          .select({ id: chatConversations.id })
+          .from(chatConversations)
+          .where(eq(chatConversations.projectId, id))
+          .all()
+          .map((r) => r.id);
+        if (conversationIds.length > 0) {
+          tx.delete(chatMessages).where(inArray(chatMessages.conversationId, conversationIds)).run();
+          tx.delete(chatConversations).where(inArray(chatConversations.id, conversationIds)).run();
+        }
+
+        const heartbeatConfigIds = tx
+          .select({ id: heartbeatConfigs.id })
+          .from(heartbeatConfigs)
+          .where(eq(heartbeatConfigs.projectId, id))
+          .all()
+          .map((r) => r.id);
+        if (heartbeatConfigIds.length > 0) {
+          tx.delete(heartbeatRuns).where(inArray(heartbeatRuns.configId, heartbeatConfigIds)).run();
+          tx.delete(heartbeatConfigs).where(inArray(heartbeatConfigs.id, heartbeatConfigIds)).run();
+        }
+
+        const ruleIds = tx
+          .select({ id: rules.id })
+          .from(rules)
+          .where(eq(rules.projectId, id))
+          .all()
+          .map((r) => r.id);
+        const skillIds = tx
+          .select({ id: skills.id })
+          .from(skills)
+          .where(eq(skills.projectId, id))
+          .all()
+          .map((r) => r.id);
+
+        if (ruleIds.length > 0) {
+          tx.delete(agentRules).where(inArray(agentRules.ruleId, ruleIds)).run();
+          tx.delete(skillRules).where(inArray(skillRules.ruleId, ruleIds)).run();
+        }
+        if (skillIds.length > 0) {
+          tx.delete(agentSkills).where(inArray(agentSkills.skillId, skillIds)).run();
+          tx.delete(skillRules).where(inArray(skillRules.skillId, skillIds)).run();
+        }
+        if (ruleIds.length > 0) {
+          tx.delete(rules).where(inArray(rules.id, ruleIds)).run();
+        }
+        if (skillIds.length > 0) {
+          tx.delete(skills).where(inArray(skills.id, skillIds)).run();
+        }
+
+        tx.delete(workspaces).where(eq(workspaces.projectId, id)).run();
+        tx.delete(tasks).where(eq(tasks.projectId, id)).run();
+        tx.delete(phases).where(eq(phases.projectId, id)).run();
+        tx.delete(memory).where(eq(memory.projectId, id)).run();
+        tx.delete(agentProjects).where(eq(agentProjects.projectId, id)).run();
+        tx.delete(projects).where(eq(projects.id, id)).run();
+      });
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to delete project and relations', { cause: error });
