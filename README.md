@@ -194,8 +194,9 @@ Copy `.env.example` to `.env` to override any of the above defaults.
 ## Roadmap to 1.0
 
 - **Commands & task templates** — quick parameterized invocations from Chat (`/refactor file.ts`) and Kanban ("New from template…"). See [docs/commands-plan.md](docs/commands-plan.md). Targets v0.2.0.
+- **DB diagram viewer** — interactive, auto-laid-out schema diagram replacing the static Mermaid render. See [docs/db-diagram-plan.md](docs/db-diagram-plan.md). Targets v0.3.0.
+- **Authored diagrams** — draw flow/architecture diagrams using React Flow, save as project documents, `@`-mention from tasks/chat, expose via MCP for 3rd-party agents (Cursor, etc.). See [docs/authored-diagrams-plan.md](docs/authored-diagrams-plan.md). Targets v0.4.0.
 - **Remote access** — tunnel-based remote access to your local Atlas instance. See [docs/remote-access-plan.md](docs/remote-access-plan.md).
-- **DB diagram viewer** — interactive, auto-laid-out schema diagram replacing the static Mermaid render. See [docs/db-diagram-plan.md](docs/db-diagram-plan.md).
 - **End-to-end tests** — Playwright coverage for critical flows
 - **Bundle perf trim** — code-split heavy deps (mermaid, cytoscape), target ≤ 500 KB gzip main chunk
 - **Marketplace** — the route is reserved (`/marketplace`) but renders a "Coming soon" card. Set `VITE_ATLAS_MARKETPLACE_ENABLED=true` to surface the in-progress UI.
