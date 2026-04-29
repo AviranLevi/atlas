@@ -74,6 +74,40 @@ export class AuthService {
     }
   }
 
+  /** True if at least one API key exists. Used to gate bootstrap. */
+  async keysExist(): Promise<boolean> {
+    const FUNCTION_NAME = 'keysExist';
+    try {
+      return apiKeysRepository.findAll().length > 0;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to check API keys', { cause: error });
+    }
+  }
+
+  /**
+   * Browser bootstrap path. Identical to `setupFirstKey` but with a fixed
+   * default name and a structured 409 cause so the client can render a
+   * targeted recovery banner instead of parsing the message string.
+   */
+  async bootstrapKey(): Promise<{ apiKey: ApiKey; rawKey: string }> {
+    const FUNCTION_NAME = 'bootstrapKey';
+    try {
+      const existing = apiKeysRepository.findAll();
+      if (existing.length > 0) {
+        throw new AppError('Atlas is already initialized — keys exist', {
+          status: 409,
+          cause: { code: 'ALREADY_INITIALIZED' },
+        });
+      }
+      return this.generateKey('Browser default');
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to bootstrap API key', { cause: error });
+    }
+  }
+
   /** Lists all API keys (no hashes). */
   async listKeys(): Promise<ApiKey[]> {
     const FUNCTION_NAME = 'listKeys';

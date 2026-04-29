@@ -34,3 +34,14 @@ export async function setupApiKey(c: Context) {
   const result = await authService.setupFirstKey(data.name);
   return c.json({ ...result.apiKey, rawKey: result.rawKey }, 201);
 }
+
+/**
+ * Browser bootstrap — silently mints the first API key on a fresh install.
+ * Locked to localhost origins by `localOnly` middleware on the route. Returns
+ * 409 with `details.code = 'ALREADY_INITIALIZED'` if any key already exists,
+ * which the client uses to surface a targeted recovery banner.
+ */
+export async function bootstrapApiKey(c: Context) {
+  const result = await authService.bootstrapKey();
+  return c.json({ ...result.apiKey, rawKey: result.rawKey }, 201);
+}
