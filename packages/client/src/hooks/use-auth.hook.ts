@@ -34,10 +34,3 @@ export function useDeleteApiKey() {
     onSuccess: () => qc.invalidateQueries({ queryKey: AUTH_KEYS_KEY }),
   });
 }
-
-/** First-time setup — creates the initial key. Only works when no keys exist. */
-export function useSetupApiKey() {
-  return useMutation({
-    mutationFn: (name: string) => api.post<CreateApiKeyResponse>('/auth/setup', { name }),
-  });
-}

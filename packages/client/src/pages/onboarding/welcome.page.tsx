@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 
 // Components
 import { AtlasLogo } from '@/components/icons/AtlasLogo.icon';
-import { ApiKeyStep } from '@/components/onboarding/ApiKeyStep';
 import { StepIndicator } from '@/components/onboarding/StepIndicator';
 import { ProjectCreateBody } from '@/components/projects/ProjectCreateBody';
 import { Button } from '@/components/ui/button';
@@ -13,19 +12,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 // Context
 import { useActiveProject } from '@/contexts/ProjectContext';
-import { useAuth } from '@/contexts/auth.context';
 
 const STEPS = [
-  { id: 'auth', label: 'API key' },
   { id: 'project', label: 'First project' },
   { id: 'done', label: 'Done' },
 ];
 
+/**
+ * The onboarding flow no longer asks the user to generate an API key.
+ * `AuthProvider` silently calls `POST /api/v1/auth/bootstrap` (gated by
+ * `localOnly` middleware on the server) on first load, so by the time the
+ * user reaches `/welcome` the browser already has a key in localStorage.
+ *
+ * If the server rejected bootstrap (because keys already exist on disk
+ * but localStorage is empty), `BootstrapNotifications` renders a recovery
+ * banner above this page with the exact reset command.
+ */
 export function WelcomePage() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
   const { setActiveProjectId } = useActiveProject();
-  const [step, setStep] = useState<number>(isAuthenticated ? 1 : 0);
+  const [step, setStep] = useState<number>(0);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
 
   return (
@@ -43,9 +49,7 @@ export function WelcomePage() {
           Step {step + 1} of {STEPS.length}: {STEPS[step].label}
         </div>
 
-        {step === 0 && <ApiKeyStep onContinue={() => setStep(1)} continueLabel="Next: pick a project" />}
-
-        {step === 1 && (
+        {step === 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Set up your first project</CardTitle>
@@ -60,14 +64,14 @@ export function WelcomePage() {
                 onCreated={(p) => {
                   setActiveProjectId(p.id);
                   setCreatedProjectId(p.id);
-                  setStep(2);
+                  setStep(1);
                 }}
               />
             </CardContent>
           </Card>
         )}
 
-        {step === 2 && (
+        {step === 1 && (
           <Card>
             <CardHeader className="text-center">
               <CardTitle>You're all set</CardTitle>

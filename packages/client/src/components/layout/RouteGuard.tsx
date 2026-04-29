@@ -28,6 +28,8 @@ const PROJECT_AGNOSTIC_PATHS = new Set<string>([
 ]);
 
 // Routes reachable without an API key (state A). Everything else gets sent to /welcome.
+// `/setup` was the old manual API-key page; it now redirects to `/welcome`, but we still
+// allow it through the guard so the redirect can resolve cleanly during firstRun.
 const FIRST_RUN_PATHS = new Set<string>(['/welcome', '/setup']);
 
 function isPrefixOf(path: string, prefix: string): boolean {

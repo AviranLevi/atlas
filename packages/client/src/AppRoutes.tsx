@@ -27,7 +27,6 @@ const RuleDetailPage = lazy(() =>
 );
 const RulesPage = lazy(() => import('@/pages/rules/rules.page').then((m) => ({ default: m.RulesPage })));
 const SettingsPage = lazy(() => import('@/pages/settings/settings.page').then((m) => ({ default: m.SettingsPage })));
-const SetupPage = lazy(() => import('@/pages/setup/setup.page').then((m) => ({ default: m.SetupPage })));
 const WelcomePage = lazy(() => import('@/pages/onboarding/welcome.page').then((m) => ({ default: m.WelcomePage })));
 const SkillDetailPage = lazy(() =>
   import('@/pages/skill-detail/skill-detail.page').then((m) => ({ default: m.SkillDetailPage })),
@@ -53,7 +52,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="/welcome" element={<WelcomePage />} />
-        <Route path="/setup" element={<SetupPage />} />
+        <Route path="/setup" element={<Navigate to="/welcome" replace />} />
         <Route path="/agents" element={<AgentsPage />} />
         <Route path="/agents/:id" element={<AgentDetailPage />} />
         <Route path="/skills" element={<SkillsPage />} />
