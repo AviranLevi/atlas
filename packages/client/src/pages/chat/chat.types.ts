@@ -48,6 +48,17 @@ export type ChatInputProps = {
   disabled?: boolean;
   isStreaming?: boolean;
   onAbort?: () => void;
+  /** Whether this is a new (unsaved) conversation — controls whether model picker is interactive. */
+  isNewChat?: boolean;
+  backendType?: ChatBackendType;
+  /** API mode: available models for the selected provider. */
+  models?: ProviderModel[];
+  selectedModel?: string;
+  onModelChange?: (model: string) => void;
+  /** CLI mode: available installed executors. */
+  executors?: ExecutorStatus[];
+  selectedExecutorId?: string;
+  onExecutorChange?: (id: string) => void;
 };
 
 export type MessageBubbleProps = {

@@ -318,6 +318,14 @@ export function ChatPage() {
           }
           isStreaming={state === 'streaming' || creatingChat || isAwaitingResponse}
           onAbort={abort}
+          isNewChat={isNewChat}
+          backendType={backendType}
+          models={providerModels}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          executors={installedExecutors}
+          selectedExecutorId={selectedExecutorId}
+          onExecutorChange={setSelectedExecutorId}
         />
       </div>
     </div>
