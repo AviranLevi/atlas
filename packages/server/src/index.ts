@@ -1,6 +1,10 @@
 // External
+import fs from 'node:fs';
 import type { Server as HttpServer } from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { ZodError } from 'zod';
@@ -73,6 +77,27 @@ app.use('/api/v1/*', async (c, next) => {
 });
 app.route('/api/v1/auth', authRoute);
 app.route('/api/v1', apiRoutes);
+
+// Production: serve built client from a single process.
+// The atlas start script sets CWD to ATLAS_HOME (repo root), so the relative
+// path 'packages/client/dist' resolves correctly regardless of where Node was invoked.
+// API routes above take priority — only unmatched paths reach these handlers.
+if (process.env.NODE_ENV === 'production') {
+  const __serverDir = path.dirname(fileURLToPath(import.meta.url));
+  // In compiled output: packages/server/dist/ → ../../client/dist
+  const clientDist = path.resolve(__serverDir, '../../client/dist');
+
+  if (!fs.existsSync(path.join(clientDist, 'index.html'))) {
+    logger.warn(`[static] Client build not found at ${clientDist}. Run 'atlas update' to build.`);
+  } else {
+    // Serve JS/CSS/images and other hashed assets
+    app.use('/*', serveStatic({ root: path.relative(process.cwd(), clientDist) }));
+    // SPA fallback: client-side routes (e.g. /chat, /agents) all get index.html
+    const indexHtml = fs.readFileSync(path.join(clientDist, 'index.html'), 'utf-8');
+    app.get('*', (c) => c.html(indexHtml));
+    logger.info(`[static] Serving client from ${clientDist}`);
+  }
+}
 
 const port = parseInt(process.env.PORT || '3100', 10);
 const server = serve({ fetch: app.fetch, port });
