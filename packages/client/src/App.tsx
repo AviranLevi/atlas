@@ -3,6 +3,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { RouteGuard } from '@/components/layout/RouteGuard';
 import { ThemedToaster } from '@/components/layout/ThemedToaster';
 import { WorkspaceNotifications } from '@/components/layout/WorkspaceNotifications';
+import { BootstrapNotifications } from '@/components/onboarding/BootstrapNotifications';
 import { TourDebugOverlay } from '@/components/onboarding/TourDebugOverlay';
 
 // Hooks
@@ -20,14 +21,18 @@ function ShellSwitcher() {
 
   if (mode === 'firstRun') {
     return (
-      <RouteGuard>
-        <AppRoutes />
-      </RouteGuard>
+      <>
+        <BootstrapNotifications />
+        <RouteGuard>
+          <AppRoutes />
+        </RouteGuard>
+      </>
     );
   }
 
   return (
     <AppShell mode={mode}>
+      <BootstrapNotifications />
       <WorkspaceNotifications />
       <RouteGuard>
         <AppRoutes />
