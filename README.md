@@ -43,13 +43,71 @@ Agents marked **MCP ✓** get live access to the project knowledge base (tasks, 
 
 ## Installation
 
-### Prerequisites
+### Quick install (recommended)
 
-- **Node.js ≥ 24** — check with `node --version`, install via [nvm](https://github.com/nvm-sh/nvm)
+One command installs Node.js 24, pnpm, Atlas itself, and optionally registers it as a background service that starts automatically on login:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AviranLevi/atlas/main/install.sh | bash
+```
+
+The installer:
+1. Installs **Node.js 24** via [fnm](https://github.com/Schniz/fnm) (no sudo, no system pollution)
+2. Installs **pnpm** via corepack
+3. Clones Atlas to `~/.atlas/`
+4. Builds all packages
+5. Installs the `atlas` CLI to `~/.local/bin/atlas`
+6. Asks whether to register a startup service (LaunchAgent on macOS, systemd user unit on Linux)
+7. Opens **http://localhost:3100** in your browser
+
+Re-running the script on an existing install performs an in-place update instead of a fresh clone.
+
+**Custom install location:**
+```bash
+ATLAS_HOME=/opt/atlas curl -fsSL https://raw.githubusercontent.com/AviranLevi/atlas/main/install.sh | bash
+```
+
+### Running as a background service
+
+The installer prompts you to set this up. You can also manage it manually at any time:
+
+```bash
+atlas service install    # register as LaunchAgent (macOS) or systemd unit (Linux)
+atlas service uninstall  # remove the service
+atlas start              # start manually without a service
+atlas stop               # stop the server
+atlas status             # show PID, port, health
+```
+
+The service restarts automatically on crash and starts again on every login/boot.
+
+### The `atlas` CLI
+
+After install, `atlas` is available on your PATH:
+
+| Command | Description |
+|---------|-------------|
+| `atlas start` | Start Atlas in the background |
+| `atlas stop` | Stop the server |
+| `atlas restart` | Stop then start |
+| `atlas status` | PID, port, HTTP health |
+| `atlas logs` | Tail stdout + stderr logs |
+| `atlas open` | Open http://localhost:3100 |
+| `atlas update` | Pull latest, rebuild, restart |
+| `atlas service install` | Register as login/boot service |
+| `atlas service uninstall` | Remove service |
+| `atlas uninstall` | Remove Atlas completely |
+
+---
+
+### Manual install (for contributors / development)
+
+Use this path if you want to run from source with hot-reload.
+
+**Prerequisites:**
+- **Node.js ≥ 24** — check with `node --version`, install via [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm)
 - **pnpm** — `npm install -g pnpm`
 - At least one agent CLI installed and authenticated (see table above)
-
-### Install
 
 ```bash
 git clone https://github.com/AviranLevi/atlas.git
@@ -65,17 +123,22 @@ Open **http://localhost:5173**. The SQLite database is created automatically —
 
 ## Updating
 
-Pull the latest code and reinstall dependencies. The database migrates automatically when the server starts.
+**With the `atlas` CLI** (quick install):
+```bash
+atlas update
+```
+Pulls latest changes, reinstalls dependencies, rebuilds, and restarts the server automatically.
 
+**Manual (dev install):**
 ```bash
 git pull
 pnpm install
 pnpm dev
 ```
 
-That's it. No manual migration step needed.
+The database migrates automatically when the server starts — no manual migration step needed.
 
-> **If something breaks after an update:** the most common cause is a stale build artifact. Run `pnpm build` once, then `pnpm dev`.
+> **If something breaks after an update:** the most common cause is a stale build artifact. Run `pnpm build` once, then restart.
 
 ---
 
