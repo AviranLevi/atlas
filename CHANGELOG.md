@@ -13,6 +13,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - `ApiError` now carries an optional `details` payload from the server's error body so callers can render structured UI without parsing message strings.
+- **Auto-bootstrap API key** — first-time browser load now silently calls `POST /api/v1/auth/bootstrap` and stores the returned key in `localStorage`. The welcome flow no longer asks the user to name and copy a key. Keys are still managed (rotated, revoked) from Settings → API Keys. Existing browsers with a stored key are unaffected.
+
+### Removed
+- `ApiKeyStep` onboarding component and the `/setup` page that used it. The page now redirects to `/welcome`. `useSetupApiKey` hook is removed (the underlying `POST /auth/setup` endpoint remains available behind the new localhost-only middleware for power users).
+
+### Security
+- **`/api/v1/auth/*` is now localhost-only.** Previously these endpoints were exempt from `authMiddleware` and reachable from any host on the LAN, meaning anyone on the same network could mint, list, or revoke API keys against a default-bound dev server. A new `localOnly` middleware enforces an `Origin` allowlist (primary, defends against DNS rebinding) plus a `Host` allowlist (backup, catches dual-spoofed Origin). IPv6 (`[::1]`) is included in both.
+- **Lockout escape hatch** — `pnpm atlas:reset-auth` (with interactive `[y/N]` confirmation, `--force` for scripted use) clears `api_keys` so a fresh bootstrap can run. Documented in README troubleshooting.
 
 ## [0.1.0] — 2026-04-26 (Alpha)
 

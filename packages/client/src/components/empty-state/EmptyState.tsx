@@ -60,7 +60,9 @@ export function EmptyState({
       <Icon aria-hidden className={cn('text-muted-foreground mx-auto', compact ? 'mb-3 h-8 w-8' : 'mb-4 h-10 w-10')} />
       <h3 className={cn('mb-1 font-medium', compact ? 'text-sm' : 'text-base')}>{title}</h3>
       {body && (
-        <p className={cn('text-muted-foreground mx-auto max-w-sm', compact ? 'text-xs' : 'mb-4 text-sm')}>{body}</p>
+        <p className={cn('text-muted-foreground mx-auto max-w-sm', compact ? 'mb-3 text-xs' : 'mb-4 text-sm')}>
+          {body}
+        </p>
       )}
       {(primaryCta || secondaryCta) && (
         <div className={cn('flex flex-wrap items-center justify-center gap-2', !compact && 'mt-1')}>

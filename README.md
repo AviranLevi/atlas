@@ -81,11 +81,12 @@ That's it. No manual migration step needed.
 
 ## First-time setup
 
-When you first open Atlas at **http://localhost:5173** with no API key or projects, you land in a guided 3-step onboarding flow at `/welcome`:
+When you first open Atlas at **http://localhost:5173** with no projects, you land in a guided 2-step onboarding flow at `/welcome`:
 
-1. **API key** — generate a key (also accessible at `/setup` for legacy users)
-2. **First project** — scaffold a fresh folder, pick an existing one, or (soon) clone from Git
-3. **Done** — open the project workspace or add an agent
+1. **First project** — scaffold a fresh folder, pick an existing one, or (soon) clone from Git
+2. **Done** — open the project workspace or add an agent
+
+> The browser silently bootstraps an API key on first load. You can rotate or revoke it at any time from **Settings → API Keys**.
 
 After at least one project exists you'll land on the **All Projects** dashboard whenever no project is active. The full project shell — Kanban, Workspaces, Chat, Memory, etc. — only renders once you select a project.
 
@@ -190,6 +191,19 @@ Copy `.env.example` to `.env` to override any of the above defaults.
 | `pnpm mcp` | Start the MCP server (stdio) for IDE integration |
 | `pnpm db:generate` | Generate Drizzle migrations from schema changes |
 | `pnpm db:migrate` | Run pending database migrations |
+| `pnpm atlas:reset-auth` | Delete all stored API keys (lockout escape hatch) |
+
+## Troubleshooting
+
+**Locked out of the UI after clearing browser data?** Atlas only stores SHA-256 hashes of API keys, so a cleared `localStorage` plus an existing keys table means the app can't auto-bootstrap a new key. Run:
+
+```bash
+pnpm atlas:reset-auth
+```
+
+Confirm the prompt, then reload the page — the browser will mint a fresh key. Pass `--force` (or set `ATLAS_RESET_AUTH_FORCE=1`) to skip the prompt in scripted setups.
+
+**`/api/v1/auth/*` returning 403?** All auth endpoints require a localhost origin. If you're hitting them from a different machine, route via SSH tunnel or wait for the Tailscale-based remote-access feature.
 
 ## Roadmap to 1.0
 
