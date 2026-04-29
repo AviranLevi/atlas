@@ -12,7 +12,8 @@
     "mcp": "tsx src/mcp.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:validate": "tsx scripts/validate-migrations.ts"
+    "db:validate": "tsx scripts/validate-migrations.ts",
+    "reset-auth": "tsx scripts/reset-auth.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",

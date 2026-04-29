@@ -30,6 +30,7 @@
     "typecheck": "pnpm --filter @atlas/shared build && pnpm --filter @atlas/server exec tsc --noEmit && pnpm --filter @atlas/client exec tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "atlas:reset-auth": "pnpm --filter @atlas/server reset-auth",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
