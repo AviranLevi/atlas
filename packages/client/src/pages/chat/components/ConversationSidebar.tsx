@@ -21,21 +21,25 @@ export function ConversationSidebar({
   onSelect,
   onNewChat,
   onDelete,
-  backendType,
-  onBackendTypeChange,
-  providers,
-  selectedProviderId,
-  onProviderChange,
-  selectedModel,
-  onModelChange,
-  models,
-  modelsLoading,
-  executors,
-  selectedExecutorId,
-  onExecutorChange,
+  config,
 }: ConversationSidebarProps) {
+  const {
+    backendType,
+    onBackendTypeChange,
+    providers,
+    selectedProviderId,
+    onProviderChange,
+    selectedModel,
+    onModelChange,
+    models,
+    modelsLoading,
+    installedExecutors,
+    selectedExecutorId,
+    onExecutorChange,
+  } = config;
+
   const [searchQuery, setSearchQuery] = useState('');
-  const installedExecutors = executors.filter((e) => e.installed && e.authenticated);
+  const cliModelPresets = installedExecutors.find((e) => e.id === selectedExecutorId)?.modelPresets ?? [];
 
   const filteredConversations = searchQuery.trim()
     ? conversations.filter((c) => (c.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase()))
@@ -204,21 +208,41 @@ export function ConversationSidebar({
             </div>
           </>
         ) : (
-          <div data-tour={TOUR_TARGETS.chatProviderSelect} className="space-y-1">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">CLI Agent</span>
-            <Select value={selectedExecutorId} onValueChange={onExecutorChange}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Select CLI" />
-              </SelectTrigger>
-              <SelectContent>
-                {installedExecutors.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <>
+            <div data-tour={TOUR_TARGETS.chatProviderSelect} className="space-y-1">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">CLI Agent</span>
+              <Select value={selectedExecutorId} onValueChange={onExecutorChange}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Select CLI" />
+                </SelectTrigger>
+                <SelectContent>
+                  {installedExecutors.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {cliModelPresets.length > 0 && (
+              <div className="space-y-1">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Model</span>
+                <Select value={selectedModel} onValueChange={onModelChange}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cliModelPresets.map((p) => (
+                      <SelectItem key={p.value} value={p.value} className="text-xs">
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

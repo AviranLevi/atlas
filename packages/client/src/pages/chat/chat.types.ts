@@ -1,12 +1,12 @@
 // Types
 import type {
+  AgentProvider,
   ChatAttachment,
+  ChatBackendType,
   ChatConversation,
   ChatMessage,
-  AgentProvider,
-  ProviderModel,
-  ChatBackendType,
   ExecutorStatus,
+  ProviderModel,
 } from '@atlas/shared';
 
 export type ChatStreamState = 'idle' | 'streaming' | 'error';
@@ -70,22 +70,33 @@ export type StreamingBubbleProps = {
   toolCalls: StreamingToolCall[];
 };
 
+/** All backend/provider/model/executor config managed by `useChatConfig`. */
+export type ChatConfigState = {
+  providers: AgentProvider[];
+  models: ProviderModel[];
+  modelsLoading: boolean;
+  executors: ExecutorStatus[];
+  installedExecutors: ExecutorStatus[];
+  chatModels: ProviderModel[];
+  backendType: ChatBackendType;
+  selectedProviderId: string;
+  selectedModel: string;
+  selectedExecutorId: string;
+  onBackendTypeChange: (type: ChatBackendType) => void;
+  onProviderChange: (id: string) => void;
+  onModelChange: (model: string) => void;
+  onExecutorChange: (id: string) => void;
+  canSend: boolean;
+  isProviderDisconnected: boolean;
+  providersLoading: boolean;
+  executorsLoading: boolean;
+};
+
 export type ConversationSidebarProps = {
   conversations: ChatConversation[];
   activeId?: string;
   onSelect: (id: string) => void;
   onNewChat: () => void;
   onDelete: (id: string) => void;
-  backendType: ChatBackendType;
-  onBackendTypeChange: (type: ChatBackendType) => void;
-  providers: AgentProvider[];
-  selectedProviderId: string;
-  onProviderChange: (id: string) => void;
-  selectedModel: string;
-  onModelChange: (model: string) => void;
-  models: ProviderModel[];
-  modelsLoading: boolean;
-  executors: ExecutorStatus[];
-  selectedExecutorId: string;
-  onExecutorChange: (id: string) => void;
+  config: ChatConfigState;
 };
