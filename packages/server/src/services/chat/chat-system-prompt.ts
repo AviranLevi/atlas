@@ -1,8 +1,9 @@
 // Services
-import { memoryService, projectsService, settingsService } from '../index.js';
+import { agentsService, memoryService, projectsService, settingsService } from '../index.js';
 
 // Lib
 import { logger } from '../../lib/logger.js';
+import { formatRuleList, formatSkillList } from '../prompt-builder/prompt-sections.js';
 
 const FILE_PATH = 'services/chat/chat-system-prompt.ts';
 const MAX_RECENT_MEMORIES = 5;
@@ -73,12 +74,40 @@ export async function buildChatSystemPrompt(
   }
 
   if (mentionedAgent) {
-    sections.push(
-      `## Tagged Agent\n\n` +
-        `The user has tagged **@${mentionedAgent.name}** in this message.\n` +
-        `Agent ID: \`${mentionedAgent.id}\`\n\n` +
-        `When creating tasks in response to this message, use \`agentId: "${mentionedAgent.id}"\`.`,
-    );
+    try {
+      const agentCtx = await agentsService.getContext(mentionedAgent.id, projectId ?? undefined);
+      const { agent, skills, rules, projectSkills, projectRules, memories } = agentCtx;
+
+      const parts: string[] = [];
+
+      const identityLines = [`## Your Identity: ${agent.name}`];
+      if (agent.personality) identityLines.push(`\n**Personality:** ${agent.personality}`);
+      if (agent.unbreakableRules) identityLines.push(`\n**Unbreakable Rules:**\n${agent.unbreakableRules}`);
+      identityLines.push(`\nWhen creating tasks in response to this conversation, use \`agentId: "${agent.id}"\`.`);
+      parts.push(identityLines.join(''));
+
+      if (skills.length > 0) parts.push(`## Your Skills\n\n${formatSkillList(skills)}`);
+      if (projectSkills.length > 0) parts.push(`## Project-Specific Skills\n\n${formatSkillList(projectSkills)}`);
+      if (rules.length > 0) parts.push(`## Coding Rules\n\n${formatRuleList(rules)}`);
+      if (projectRules.length > 0) parts.push(`## Project-Specific Rules\n\n${formatRuleList(projectRules)}`);
+      if (memories.length > 0) {
+        const memList = (memories as { type: string; content: string }[])
+          .map((m) => `- [${m.type}] ${m.content}`)
+          .join('\n');
+        parts.push(`## Agent Memories\n\n${memList}`);
+      }
+
+      sections.push(parts.join('\n\n---\n\n'));
+    } catch (error: unknown) {
+      logger.warn(`${FILE_PATH} :: buildChatSystemPrompt agent context unavailable`, error);
+      // Fallback: at minimum identify the tagged agent
+      sections.push(
+        `## Tagged Agent\n\n` +
+          `The user has tagged **@${mentionedAgent.name}**.\n` +
+          `Agent ID: \`${mentionedAgent.id}\`\n\n` +
+          `When creating tasks in response to this message, use \`agentId: "${mentionedAgent.id}"\`.`,
+      );
+    }
   }
 
   return sections.join('\n\n---\n\n');

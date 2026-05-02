@@ -4,7 +4,7 @@ import type { PromptContext } from './prompt-builder.types.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-function formatSkillList(skills: Record<string, unknown>[]): string {
+export function formatSkillList(skills: Record<string, unknown>[]): string {
   return skills
     .map((s) => {
       const line = `- **${s.name}** (${s.type})`;
@@ -13,7 +13,7 @@ function formatSkillList(skills: Record<string, unknown>[]): string {
     .join('\n');
 }
 
-function formatRuleList(rules: Record<string, unknown>[]): string {
+export function formatRuleList(rules: Record<string, unknown>[]): string {
   return rules.map((r) => `- **${r.name}**: ${r.content ?? ''}`).join('\n');
 }
 
