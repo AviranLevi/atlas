@@ -1,5 +1,5 @@
 // React / library
-import { Plus, Trash2, MessageSquare, Loader2, Terminal, Cloud, Search, X, Unplug } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Loader2, Terminal, Cloud, Search, X, Unplug, Bot } from 'lucide-react';
 import { useState } from 'react';
 
 // Components
@@ -36,7 +36,12 @@ export function ConversationSidebar({
     installedExecutors,
     selectedExecutorId,
     onExecutorChange,
+    agents,
+    selectedAgentId,
+    onAgentChange,
   } = config;
+
+  const agentOptions = agents.map((a) => ({ value: a.id, label: a.name }));
 
   const [searchQuery, setSearchQuery] = useState('');
   const cliModelPresets = installedExecutors.find((e) => e.id === selectedExecutorId)?.modelPresets ?? [];
@@ -243,6 +248,30 @@ export function ConversationSidebar({
               </div>
             )}
           </>
+        )}
+
+        {/* Agent picker — always visible when agents exist */}
+        {agentOptions.length > 0 && (
+          <div className="space-y-1 pt-1 border-t border-border">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+              <Bot className="h-3 w-3" />
+              Agent
+            </span>
+            <Combobox
+              options={[{ value: '', label: 'None (default)' }, ...agentOptions]}
+              value={selectedAgentId}
+              onValueChange={onAgentChange}
+              placeholder="No agent selected"
+              searchPlaceholder="Search agents..."
+              emptyText="No agents found."
+              className="h-8 text-xs"
+            />
+            {selectedAgentId && (
+              <p className="text-[10px] text-muted-foreground/70 leading-tight">
+                Rules, skills &amp; memories injected. @mention overrides per message.
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>

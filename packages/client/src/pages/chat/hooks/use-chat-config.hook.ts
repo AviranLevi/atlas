@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 // Hooks
+import { useAgents } from '@/hooks/use-agents.hook';
 import { useAgentProviders, useProviderModels } from '@/hooks/use-agent-providers.hook';
 import { useConversation } from '@/hooks/use-chat.hook';
 import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
@@ -20,6 +21,9 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
   const [selectedProviderId, setSelectedProviderId] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedExecutorId, setSelectedExecutorId] = useState('');
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+
+  const { data: agents = [] } = useAgents();
 
   const { data: providerModels = [], isLoading: modelsLoading } = useProviderModels(
     backendType === 'api' ? selectedProviderId || undefined : undefined,
@@ -91,6 +95,10 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
     setSelectedModel('');
   }, []);
 
+  const onAgentChange = useCallback((id: string) => {
+    setSelectedAgentId(id);
+  }, []);
+
   const onBackendTypeChange = useCallback((type: ChatBackendType) => {
     setBackendType(type);
     setSelectedModel('');
@@ -117,6 +125,9 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
     selectedProviderId,
     selectedModel,
     selectedExecutorId,
+    agents,
+    selectedAgentId,
+    onAgentChange,
     onBackendTypeChange,
     onProviderChange,
     onModelChange: setSelectedModel,

@@ -1,5 +1,6 @@
 // Types
 import type {
+  Agent,
   AgentProvider,
   ChatAttachment,
   ChatBackendType,
@@ -70,7 +71,7 @@ export type StreamingBubbleProps = {
   toolCalls: StreamingToolCall[];
 };
 
-/** All backend/provider/model/executor config managed by `useChatConfig`. */
+/** All backend/provider/model/executor/agent config managed by `useChatConfig`. */
 export type ChatConfigState = {
   providers: AgentProvider[];
   models: ProviderModel[];
@@ -82,6 +83,10 @@ export type ChatConfigState = {
   selectedProviderId: string;
   selectedModel: string;
   selectedExecutorId: string;
+  /** Persistent agent selection — applies to all messages unless overridden by an @mention. */
+  agents: Agent[];
+  selectedAgentId: string;
+  onAgentChange: (id: string) => void;
   onBackendTypeChange: (type: ChatBackendType) => void;
   onProviderChange: (id: string) => void;
   onModelChange: (model: string) => void;

@@ -12,7 +12,10 @@ import type { ChatConfigState, ChatStreamState } from '../chat.types';
 type ChatActionsParams = {
   conversationId: string | undefined;
   activeProjectId: string | null | undefined;
-  config: Pick<ChatConfigState, 'backendType' | 'selectedProviderId' | 'selectedModel' | 'selectedExecutorId'>;
+  config: Pick<
+    ChatConfigState,
+    'backendType' | 'selectedProviderId' | 'selectedModel' | 'selectedExecutorId' | 'selectedAgentId'
+  >;
   send: (content: string, attachments?: ChatAttachment[], mentionedAgentId?: string) => void;
   streamState: ChatStreamState;
 };
@@ -64,8 +67,11 @@ export function useChatActions({ conversationId, activeProjectId, config, send, 
 
   const handleSend = useCallback(
     async (content: string, attachments?: ChatAttachment[], mentionedAgentId?: string) => {
+      // @mention overrides the persistent agent picker; picker is the fallback
+      const effectiveAgentId = mentionedAgentId || config.selectedAgentId || undefined;
+
       if (conversationId) {
-        send(content, attachments, mentionedAgentId);
+        send(content, attachments, effectiveAgentId);
         return;
       }
 
@@ -74,7 +80,7 @@ export function useChatActions({ conversationId, activeProjectId, config, send, 
       if (backendType === 'api') {
         if (!selectedProviderId || !selectedModel) return;
         setCreatingChat(true);
-        pendingMessageRef.current = { content, attachments, mentionedAgentId };
+        pendingMessageRef.current = { content, attachments, mentionedAgentId: effectiveAgentId };
         const result = await createConversation.mutateAsync({
           projectId: activeProjectId ?? null,
           backendType: 'api',
@@ -85,7 +91,7 @@ export function useChatActions({ conversationId, activeProjectId, config, send, 
       } else {
         if (!selectedExecutorId) return;
         setCreatingChat(true);
-        pendingMessageRef.current = { content, attachments, mentionedAgentId };
+        pendingMessageRef.current = { content, attachments, mentionedAgentId: effectiveAgentId };
         const result = await createConversation.mutateAsync({
           projectId: activeProjectId ?? null,
           backendType: 'cli',
