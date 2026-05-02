@@ -270,12 +270,17 @@ Confirm the prompt, then reload the page — the browser will mint a fresh key. 
 
 ## Roadmap to 1.0
 
-- **Commands & task templates** — quick parameterized invocations from Chat (`/refactor file.ts`) and Kanban ("New from template…"). See [docs/commands-plan.md](docs/commands-plan.md). Targets v0.2.0.
-- **DB diagram viewer** — interactive, auto-laid-out schema diagram replacing the static Mermaid render. See [docs/db-diagram-plan.md](docs/db-diagram-plan.md). Targets v0.3.0.
-- **Authored diagrams** — draw flow/architecture diagrams using React Flow, save as project documents, `@`-mention from tasks/chat, expose via MCP for 3rd-party agents (Cursor, etc.). See [docs/authored-diagrams-plan.md](docs/authored-diagrams-plan.md). Targets v0.4.0.
+See [docs/roadmap.md](docs/roadmap.md) for full detail on each item.
+
+- **Agent Flows** *(v0.2)* — chain agents into reusable multi-step pipelines (plan → review → execute → critique). Visual editor built on React Flow, shareable bundle export/import, per-step model selection, checkpoint approvals between steps.
+- **Commands & task templates** *(v0.2)* — quick parameterized invocations from Chat (`/refactor file.ts`) and Kanban ("New from template…"). See [docs/commands-plan.md](docs/commands-plan.md).
+- **Semantic memory** *(v0.3)* — replace keyword-based memory retrieval with vector similarity search. Pluggable embedding providers (Google Gemini Embedding 2, OpenAI, local). Enables cross-modal search over attached PDFs and images.
+- **DB diagram viewer** *(v0.3)* — interactive, auto-laid-out schema diagram replacing the static Mermaid render. See [docs/db-diagram-plan.md](docs/db-diagram-plan.md).
+- **Automations** *(v0.3)* — event-driven trigger/action rules: `onFlowComplete → save memory`, `onTaskComplete → notify`. No-code builder UI. See [docs/rules-skills-hooks-plan.md](docs/rules-skills-hooks-plan.md).
+- **Authored diagrams** *(v0.4)* — draw flow/architecture diagrams using React Flow, save as project documents, `@`-mention from tasks/chat, expose via MCP for 3rd-party agents (Cursor, etc.). See [docs/authored-diagrams-plan.md](docs/authored-diagrams-plan.md).
 - **Remote access** — tunnel-based remote access to your local Atlas instance. See [docs/remote-access-plan.md](docs/remote-access-plan.md).
-- **End-to-end tests** — Playwright coverage for critical flows
-- **Bundle perf trim** — code-split heavy deps (mermaid, cytoscape), target ≤ 500 KB gzip main chunk
+- **End-to-end tests** — Playwright coverage for critical flows.
+- **Bundle perf trim** — code-split heavy deps (mermaid, cytoscape), target ≤ 500 KB gzip main chunk.
 - **Marketplace** — the route is reserved (`/marketplace`) but renders a "Coming soon" card. Set `VITE_ATLAS_MARKETPLACE_ENABLED=true` to surface the in-progress UI.
 
 ## Security Note
