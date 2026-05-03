@@ -77,7 +77,7 @@ export function ensureChangesCommitted(worktreePath: string, context?: EnsureCha
  * newest-first, enriched with numstat totals so the UI can render
  * "+X / -Y" without a second round-trip.
  */
-export function listCommits(worktreePath: string, baseRef: string): WorktreeCommit[] {
+export function listCommits(worktreePath: string, baseRef: string, branchRef = 'HEAD'): WorktreeCommit[] {
   const FUNCTION_NAME = 'listCommits';
   try {
     if (!fs.existsSync(worktreePath)) {
@@ -91,16 +91,19 @@ export function listCommits(worktreePath: string, baseRef: string): WorktreeComm
 
     let raw: string;
     try {
-      raw = execSync(`git log ${baseRef}..HEAD --format="${format}" --numstat`, {
+      raw = execSync(`git log ${baseRef}..${branchRef} --format="${format}" --numstat`, {
         cwd: worktreePath,
         encoding: 'utf-8',
         maxBuffer: DIFF_MAX_BUFFER,
       });
     } catch (err) {
       // baseRef may not exist inside the worktree (shallow clones, missing
-      // upstream). Fall back to HEAD's entire history as a best-effort.
-      logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - ${baseRef}..HEAD failed, falling back to full HEAD history`, err);
-      raw = execSync(`git log HEAD --format="${format}" --numstat`, {
+      // upstream). Fall back to branchRef's entire history as a best-effort.
+      logger.warn(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - ${baseRef}..${branchRef} failed, falling back to full history`,
+        err,
+      );
+      raw = execSync(`git log ${branchRef} --format="${format}" --numstat`, {
         cwd: worktreePath,
         encoding: 'utf-8',
         maxBuffer: DIFF_MAX_BUFFER,

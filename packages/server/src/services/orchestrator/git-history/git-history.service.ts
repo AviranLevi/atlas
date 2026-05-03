@@ -46,19 +46,14 @@ export class GitHistoryService {
         return [];
       }
 
-      if (!workspace.worktreePath || !fs.existsSync(workspace.worktreePath)) {
-        // Worktree was cleaned up (merged/deleted) — no history to show.
-        return [];
-      }
-
       // Prefer the branch persisted at spawn time so the diff base stays
       // stable even if the project's defaultBranch is later changed.
       // Fall back to auto-detect for older workspaces created before the
       // base_branch column existed.
+      const project = await projectsService.getById(workspace.projectId);
       let baseRef = workspace.baseBranch ?? null;
       if (!baseRef) {
         try {
-          const project = await projectsService.getById(workspace.projectId);
           if (project.localPath) {
             baseRef = this.worktreeService.getDefaultBranch(project.localPath);
           }
@@ -71,7 +66,21 @@ export class GitHistoryService {
         baseRef = 'main';
       }
 
-      return this.worktreeService.listCommits(workspace.worktreePath, baseRef);
+      // Worktree directory exists — read directly from it (fast path).
+      if (workspace.worktreePath && fs.existsSync(workspace.worktreePath)) {
+        return this.worktreeService.listCommits(workspace.worktreePath, baseRef);
+      }
+
+      // Worktree directory is gone but branch still lives in the main repo —
+      // read commits from there so the UI stays populated after navigation.
+      if (workspace.branchName && project.localPath) {
+        logger.info(
+          `${FILE_PATH} :: ${FUNCTION_NAME} - worktree dir gone, reading from main repo for branch ${workspace.branchName}`,
+        );
+        return this.worktreeService.listCommitsOnBranch(project.localPath, workspace.branchName, baseRef);
+      }
+
+      return [];
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;

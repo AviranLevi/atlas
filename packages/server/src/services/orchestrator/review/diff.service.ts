@@ -38,16 +38,27 @@ export class DiffService {
         throw new AppError('Project has no local path', { status: 400 });
       }
 
-      // Check that the worktree path still exists before calling git
-      if (!fs.existsSync(workspace.worktreePath)) {
-        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree path no longer exists: ${workspace.worktreePath}`);
-        return {
-          files: [],
-          summary: { additions: 0, deletions: 0, filesChanged: 0 },
-        };
+      // Worktree directory exists — fast path.
+      if (fs.existsSync(workspace.worktreePath)) {
+        return this.worktreeService.getDiff(workspace.worktreePath, project.localPath);
       }
 
-      return this.worktreeService.getDiff(workspace.worktreePath, project.localPath);
+      // Worktree directory is gone but branch still lives in the main repo —
+      // compute diff from there so the review page stays populated after navigation.
+      if (workspace.branchName) {
+        logger.info(
+          `${FILE_PATH} :: ${FUNCTION_NAME} - worktree dir gone, diffing branch ${workspace.branchName} from main repo`,
+        );
+        return this.worktreeService.getDiff(project.localPath, project.localPath, workspace.branchName);
+      }
+
+      logger.warn(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - worktree path no longer exists and no branch stored: ${workspace.worktreePath}`,
+      );
+      return {
+        files: [],
+        summary: { additions: 0, deletions: 0, filesChanged: 0 },
+      };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, { err: error, workspaceId });
       if (error instanceof AppError) throw error;

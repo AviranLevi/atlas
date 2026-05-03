@@ -123,7 +123,7 @@ export class WorktreeService {
    * Files exceeding PER_FILE_LINE_CAP are returned with `truncated: true` and
    * no patch, so the UI can render a placeholder instead of OOMing the buffer.
    */
-  getDiff(worktreePath: string, projectLocalPath: string): WorktreeDiffResult {
+  getDiff(worktreePath: string, projectLocalPath: string, branchRef = 'HEAD'): WorktreeDiffResult {
     const FUNCTION_NAME = 'getDiff';
     const emptyResult: WorktreeDiffResult = {
       files: [],
@@ -131,7 +131,7 @@ export class WorktreeService {
     };
     try {
       const baseBranch = this.getDefaultBranch(projectLocalPath);
-      const diffRef = `${baseBranch}...HEAD`;
+      const diffRef = `${baseBranch}...${branchRef}`;
 
       const nameRaw = execFileSync('git', ['diff', diffRef, '--name-only', '-z'], {
         cwd: worktreePath,
@@ -237,6 +237,15 @@ export class WorktreeService {
    */
   listCommits(worktreePath: string, baseRef: string): WorktreeCommit[] {
     return listCommitsHelper(worktreePath, baseRef);
+  }
+
+  /**
+   * Lists commits on `branchName` ahead of `baseRef`, read from the main repo
+   * at `projectPath`. Used as a fallback when the worktree directory is gone
+   * but the branch still exists in the project's git history.
+   */
+  listCommitsOnBranch(projectPath: string, branchName: string, baseRef: string): WorktreeCommit[] {
+    return listCommitsHelper(projectPath, baseRef, branchName);
   }
 
   /**
