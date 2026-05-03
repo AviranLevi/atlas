@@ -102,6 +102,10 @@ const TOOL_META: Record<string, ToolMeta> = {
 
   // ── Tasks / agents ────────────────────────────────────────────────────────
   Task: TASK_META,
+
+  // ── Claude Code internal meta-tools ───────────────────────────────────────
+  // ToolSearch: pre-loads deferred tool schemas before first use
+  ToolSearch: SEARCH_META,
 };
 
 const DEFAULT_META: ToolMeta = {
@@ -111,10 +115,22 @@ const DEFAULT_META: ToolMeta = {
     'border-neutral-200 bg-neutral-50 text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400',
 };
 
+const MCP_META: ToolMeta = {
+  icon: Wrench,
+  label: 'MCP',
+  colorClass: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300',
+};
+
 /**
  * Returns icon, label, and color classes for a given tool name.
- * Tries exact match first, then case-insensitive fallback, then DEFAULT_META.
+ * Tries exact match first, then case-insensitive fallback, then MCP prefix
+ * detection, then DEFAULT_META.
  */
 export function getToolMeta(toolName: string): ToolMeta {
-  return TOOL_META[toolName] ?? TOOL_META[toolName.toLowerCase()] ?? DEFAULT_META;
+  if (TOOL_META[toolName]) return TOOL_META[toolName];
+  const lower = toolName.toLowerCase();
+  if (TOOL_META[lower]) return TOOL_META[lower];
+  // MCP namespaced tools: mcp__server__method
+  if (lower.startsWith('mcp__')) return MCP_META;
+  return DEFAULT_META;
 }

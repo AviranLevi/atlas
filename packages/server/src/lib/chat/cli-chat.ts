@@ -70,9 +70,28 @@ export function parseCliStreamJsonLine(line: string): { text: string; isFinal: b
           parts.push(block.text);
         } else if (block.type === 'tool_use' && typeof block.name === 'string') {
           const input = isRecord(block.input) ? block.input : {};
-          const hint = input.command ?? input.file_path ?? input.pattern ?? input.query ?? input.url ?? '';
-          const summary = hint ? `${hint}`.slice(0, 100) : '';
-          parts.push(`▸ ${block.name}${summary ? `  ${summary}` : ''}`);
+          let hint = '';
+          // TodoWrite/TodoRead: extract count from todos array
+          if (Array.isArray(input.todos)) {
+            hint = `${input.todos.length} todo${input.todos.length !== 1 ? 's' : ''}`;
+          } else {
+            // Standard hint fields → path/description fallbacks → first string value (covers MCP tools)
+            const firstStringVal = Object.values(input).find(
+              (v): v is string => typeof v === 'string' && v.length > 0 && v.length < 200,
+            );
+            hint = String(
+              input.command ??
+                input.file_path ??
+                input.path ??
+                input.pattern ??
+                input.query ??
+                input.url ??
+                input.description ??
+                firstStringVal ??
+                '',
+            ).slice(0, 100);
+          }
+          parts.push(`▸ ${block.name}${hint ? `  ${hint}` : ''}`);
         }
       }
       return parts.length ? { text: parts.join('\n'), isFinal: false } : null;
