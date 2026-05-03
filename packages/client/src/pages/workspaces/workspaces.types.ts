@@ -36,6 +36,8 @@ export type WorkspaceDetailHeaderProps = {
   isRerunning: boolean;
   isCleaning: boolean;
   isOpeningInEditor: boolean;
+  /** When true (agent running/pending), all buttons except Stop are disabled. */
+  isRunning: boolean;
 };
 
 export type WorkspaceInfoCardsProps = {

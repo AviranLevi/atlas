@@ -96,6 +96,7 @@ export function WorkspaceDetailPage() {
         isRerunning={false}
         isCleaning={cleanup.isPending}
         isOpeningInEditor={openInEditor.isPending}
+        isRunning={isLive}
       />
 
       {lineage.length > 1 && <WorkspaceLineage lineage={lineage} currentId={workspace.id} />}

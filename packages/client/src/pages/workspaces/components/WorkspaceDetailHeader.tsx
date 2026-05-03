@@ -26,6 +26,7 @@ export function WorkspaceDetailHeader({
   isRerunning,
   isCleaning,
   isOpeningInEditor,
+  isRunning,
 }: WorkspaceDetailHeaderProps) {
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const { canStop, canRerun, canFollowUp, canCleanup, canOpenInEditor } = view.caps;
@@ -72,8 +73,8 @@ export function WorkspaceDetailHeader({
             variant="outline"
             size="sm"
             onClick={onOpenInEditor}
-            disabled={isOpeningInEditor}
-            title="Open worktree in Cursor / VS Code"
+            disabled={isRunning || isOpeningInEditor}
+            title={isRunning ? 'Stop the agent first' : 'Open worktree in Cursor / VS Code'}
           >
             <FolderOpen className="mr-1.5 h-3.5 w-3.5" />
             {isOpeningInEditor ? 'Opening...' : 'Open in Editor'}
