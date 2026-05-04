@@ -188,19 +188,19 @@ export class WorkspaceSpawnService {
         const entry = activeProcesses.get(workspace.id);
         if (entry) clearEntryTimers(entry);
         activeProcesses.delete(workspace.id);
-        const ws = workspacesRepository.update(workspace.id, {
+        workspacesRepository.update(workspace.id, {
           status: 'failed',
           output,
           completedAt: new Date().toISOString(),
         });
-        tasksService.update(ws.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
+        tasksService.update(workspace.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
           logger.warn(`${FILE_PATH} :: spawnAgent - failed to reset task status`, e);
         });
         activityLogService.log({
-          projectId: ws.projectId,
-          taskId: ws.taskId,
+          projectId: workspace.projectId,
+          taskId: workspace.taskId,
           workspaceId: workspace.id,
-          agentId: ws.agentId,
+          agentId: workspace.agentId,
           eventType: 'agent_failed',
           description: `Agent failed: ${error ?? 'unknown error'}`,
           metadata: { error },
@@ -231,22 +231,22 @@ export class WorkspaceSpawnService {
               stage: effectiveStage ?? null,
             });
 
-            const ws = workspacesRepository.update(workspace.id, {
+            workspacesRepository.update(workspace.id, {
               status: 'completed',
               output,
               completedAt: new Date().toISOString(),
             });
 
-            const isWorkflowStage = ws.workflowStage === 'brainstorm' || ws.workflowStage === 'plan';
+            const isWorkflowStage = workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
             const nextStatus = isWorkflowStage ? TASK_STATUS.AWAITING_APPROVAL : TASK_STATUS.IN_REVIEW;
-            tasksService.update(ws.taskId, { status: nextStatus }).catch((e) => {
+            tasksService.update(workspace.taskId, { status: nextStatus }).catch((e) => {
               logger.warn(`${FILE_PATH} :: spawnAgent - failed to update task status after completion`, e);
             });
             activityLogService.log({
-              projectId: ws.projectId,
-              taskId: ws.taskId,
+              projectId: workspace.projectId,
+              taskId: workspace.taskId,
               workspaceId: workspace.id,
-              agentId: ws.agentId,
+              agentId: workspace.agentId,
               eventType: 'agent_completed',
               description: 'Agent completed successfully',
               metadata: {},
