@@ -103,16 +103,8 @@ export function WorkspacesPage() {
         <EmptyState
           icon={Terminal}
           title={filter === 'all' ? 'No workspaces yet' : `No ${filter} workspaces`}
-          body={
-            filter === 'all'
-              ? 'A workspace is an isolated git worktree where an agent runs. Start work on any task from the Kanban board to spin one up.'
-              : 'Try a different filter to see workspaces in other states.'
-          }
-          primaryCta={
-            filter === 'all'
-              ? { label: 'Open Kanban', asLink: { to: '/kanban' } }
-              : { label: 'Show all', onClick: () => setFilter('all') }
-          }
+          body="A workspace is an isolated git worktree where an agent runs. Start work on any task from the Kanban board to spin one up."
+          primaryCta={{ label: 'Open Kanban', asLink: { to: '/kanban' } }}
           compact
         />
       ) : (

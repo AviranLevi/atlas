@@ -1,5 +1,8 @@
 // FILE_PATH: packages/client/src/components/empty-state/EmptyState.tsx
 
+// React / library
+import { Link } from 'react-router-dom';
+
 // Components
 import { Button } from '@/components/ui/button';
 
@@ -81,10 +84,10 @@ function CtaButton({ cta, variant }: { cta: Cta; variant: 'default' | 'outline' 
   if (cta.asLink) {
     return (
       <Button asChild size={size} variant={variant}>
-        <a href={cta.asLink.to}>
+        <Link to={cta.asLink.to}>
           {Icon && <Icon className="mr-1.5 h-4 w-4" aria-hidden />}
           {cta.label}
-        </a>
+        </Link>
       </Button>
     );
   }
