@@ -40,9 +40,18 @@ packages/client/src/
       KanbanColumn.tsx
       TaskDialog.tsx
     layout/
-      layout.types.ts
-      layout.constants.ts
-      AppShell.tsx
+      index.ts                  ← barrel: re-exports all public components + shared types
+      layout.types.ts           ← shared types used across sub-components
+      layout.constants.ts       ← shared constants
+      app-shell/
+        AppShell.tsx
+        app-shell.types.ts      ← AppShellProps + types for sub-components in this folder
+        SidebarNavItem.tsx      ← sub-component only used by AppShell
+      executor-popover/
+        ExecutorPopover.tsx
+        executor-popover.types.ts
+        CopyCommand.tsx         ← sub-component only used by ExecutorPopover
+      ...
     ui/
       button.tsx
       card.tsx
@@ -52,6 +61,19 @@ packages/client/src/
     utils.ts                    ← cn() and other generic utilities
     api.ts                      ← API client
 ```
+
+### Nested component subfolders
+
+When a feature component has one or more sub-components that are only used internally (not by other features), group them in a subfolder named after the parent:
+
+```
+<feature>/
+  <Feature>.tsx               ← main exported component
+  <feature>.types.ts          ← props for all components in this folder
+  SubComponent.tsx            ← only used by <Feature>
+```
+
+Add a barrel `index.ts` at the feature root when the feature folder contains multiple public components (i.e., components imported by code outside the folder). The barrel re-exports all public components and any shared types.
 
 ## Component Structure (order matters)
 

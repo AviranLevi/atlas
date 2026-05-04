@@ -41,8 +41,11 @@ pages/<feature>/
   <feature>-detail.page.tsx     # Detail page if applicable
   <feature>.types.ts            # Shared types for the page
   <feature>.constants.ts        # Shared constants for the page
+  <feature>.utils.ts            # Pure utility functions for the page
   components/                   # Sub-components used only within this page
     ComponentName.tsx            # PascalCase component files
+  hooks/                        # Page-scoped hooks (too tightly coupled for src/hooks/)
+    use-<concern>.hook.ts        # e.g. use-chat-config.hook.ts, use-chat-actions.hook.ts
   <sub-feature>/                # Complex sub-features get their own subfolder
 ```
 

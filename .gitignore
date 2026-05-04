@@ -28,7 +28,8 @@ packages/shared/src/**/*.d.ts.map
 .claude-plugins/
 CLAUDE.md
 packages/*/CLAUDE.md
-.cursor/
+.cursor/*
+!.cursor/rules/
 
 # Local planning / scratch docs (not part of the repo contract)
 docs/
