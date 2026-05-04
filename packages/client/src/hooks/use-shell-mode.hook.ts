@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/auth.context';
 import { useActiveProject } from '@/contexts/ProjectContext';
 
 // Types
-import type { ShellMode } from '@/components/layout/layout.types';
+import type { ShellMode } from '@/components/layout';
 
 const NEW_SHELL_FLAG = import.meta.env.VITE_ATLAS_NEW_SHELL;
 

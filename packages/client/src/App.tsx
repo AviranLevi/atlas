@@ -1,8 +1,5 @@
 // Components
-import { AppShell } from '@/components/layout/AppShell';
-import { RouteGuard } from '@/components/layout/RouteGuard';
-import { ThemedToaster } from '@/components/layout/ThemedToaster';
-import { WorkspaceNotifications } from '@/components/layout/WorkspaceNotifications';
+import { AppShell, RouteGuard, ThemedToaster, WorkspaceNotifications } from '@/components/layout';
 import { BootstrapNotifications } from '@/components/onboarding/BootstrapNotifications';
 import { TourDebugOverlay } from '@/components/onboarding/TourDebugOverlay';
 
