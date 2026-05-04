@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 // Types
 import type { TabButtonProps } from './layout.types';
 
-export function TabButton({ active, onClick, color, label, icon }: TabButtonProps) {
+export function TabButton({ active, onClick, color, label, icon, indicator }: TabButtonProps) {
   return (
     <Tooltip delayDuration={500}>
       <TooltipTrigger asChild>
@@ -23,6 +23,7 @@ export function TabButton({ active, onClick, color, label, icon }: TabButtonProp
           {icon || <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color ?? '#64748b' }} />}
           <span className="max-w-[120px] truncate">{label}</span>
           {active && <span className="absolute bottom-0 left-1 right-1 h-0.5 rounded-full bg-primary" />}
+          {indicator}
         </button>
       </TooltipTrigger>
       <TooltipContent side="bottom" className="text-xs">

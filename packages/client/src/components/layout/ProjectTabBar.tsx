@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 // Components
 import { ProjectCreateDialog } from '@/components/projects/ProjectCreateDialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ActiveWorkspaceDot } from './ActiveWorkspaceDot';
 import { TabButton } from './TabButton';
 
 // Context
@@ -39,6 +40,7 @@ export function ProjectTabBar() {
             onClick={() => handleTabClick(project.id)}
             color={project.color}
             label={project.name}
+            indicator={<ActiveWorkspaceDot projectId={project.id} />}
           />
         ))}
 

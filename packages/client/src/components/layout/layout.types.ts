@@ -57,4 +57,5 @@ export type TabButtonProps = {
   color: string | null;
   label: string;
   icon?: React.ReactNode;
+  indicator?: React.ReactNode;
 };

@@ -8,7 +8,6 @@ import { AtlasLogo } from '@/components/icons/AtlasLogo.icon';
 import { HelpButton } from '@/components/onboarding/HelpButton';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ActiveWorkspaceDot } from './ActiveWorkspaceDot';
 import { AgentStatusPanel } from './AgentStatusPanel';
 import { ProjectTabBar } from './ProjectTabBar';
 
@@ -53,7 +52,7 @@ export function AppShell({ children, mode }: AppShellProps) {
     : resolvedItems.filter((n) => n.section === 'global');
 
   function renderNavItem(item: NavItem) {
-    const { to, icon: Icon, label, badge, disabled, dataTour } = item;
+    const { to, icon: Icon, label, disabled, dataTour } = item;
 
     if (disabled) {
       return (
@@ -95,8 +94,6 @@ export function AppShell({ children, mode }: AppShellProps) {
             >
               <span className="relative shrink-0">
                 <Icon className="h-[18px] w-[18px]" />
-                {/* ActiveWorkspaceDot polls workspace state — keep it out of slim mode. */}
-                {badge && mode === 'activeProject' && <ActiveWorkspaceDot />}
               </span>
               {expanded && <span>{label}</span>}
             </NavLink>

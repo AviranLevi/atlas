@@ -41,7 +41,6 @@ const allNavItems: NavItem[] = [
     to: '/workspaces',
     icon: Activity,
     label: 'Workspaces',
-    badge: true,
     section: 'project',
     dataTour: TOUR_TARGETS.navWorkspaces,
   },
