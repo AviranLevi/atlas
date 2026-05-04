@@ -12,6 +12,9 @@ import { activityLogService, projectsService, tasksService } from '../../index.j
 import { executorRegistry } from '../../../executors/index.js';
 import { spawnAgent } from '../../../executors/spawn-agent.js';
 
+// Services (worktree)
+import { WorktreeService } from '../../worktree/index.js';
+
 // Lib
 import { activeProcesses, clearEntryTimers, isShuttingDown } from '../shared/active-processes.js';
 import type { ActiveProcessEntry } from '../shared/active-processes.js';
@@ -25,6 +28,7 @@ import { aiReviewerService } from './ai-reviewer.service.js';
 const FILE_PATH = 'services/orchestrator/review/apply-review-fix.service.ts';
 
 export class ApplyReviewFixService {
+  private worktreeService = new WorktreeService();
   /**
    * Spawns an implementer on a completed workspace whose latest review is
    * `changes_requested`, feeding the reviewer's notes + unchecked checklist
@@ -150,6 +154,13 @@ export class ApplyReviewFixService {
             const entry = activeProcesses.get(workspace.id);
             if (entry) clearEntryTimers(entry);
             activeProcesses.delete(workspace.id);
+
+            // Safety net: commit any changes the agent left uncommitted.
+            this.worktreeService.ensureChangesCommitted(workspace.worktreePath, {
+              taskName: workspace.taskName ?? 'task',
+              stage: 'execute',
+            });
+
             workspacesRepository.update(workspace.id, {
               status: 'completed',
               output,

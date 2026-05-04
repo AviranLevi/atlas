@@ -12,6 +12,9 @@ import { activityLogService, projectsService, tasksService } from '../../index.j
 import { executorRegistry } from '../../../executors/index.js';
 import { spawnAgent } from '../../../executors/spawn-agent.js';
 
+// Services (worktree)
+import { WorktreeService } from '../../worktree/index.js';
+
 // Lib
 import { activeProcesses, clearEntryTimers, isShuttingDown } from '../shared/active-processes.js';
 import type { ActiveProcessEntry } from '../shared/active-processes.js';
@@ -24,6 +27,8 @@ import { buildRequestChangesPrompt, type DiffCommentForPrompt } from './prompts.
 const FILE_PATH = 'services/orchestrator/review/request-changes.service.ts';
 
 export class RequestChangesService {
+  private worktreeService = new WorktreeService();
+
   /** Re-runs the agent on a completed workspace with review comments as context. */
   async requestChanges(workspaceId: string): Promise<Workspace> {
     const FUNCTION_NAME = 'requestChanges';
@@ -115,6 +120,13 @@ export class RequestChangesService {
             const entry = activeProcesses.get(workspace.id);
             if (entry) clearEntryTimers(entry);
             activeProcesses.delete(workspace.id);
+
+            // Safety net: commit any changes the agent left uncommitted.
+            this.worktreeService.ensureChangesCommitted(workspace.worktreePath, {
+              taskName: workspace.taskName ?? 'task',
+              stage: 'execute',
+            });
+
             workspacesRepository.update(workspace.id, {
               status: 'completed',
               output,
