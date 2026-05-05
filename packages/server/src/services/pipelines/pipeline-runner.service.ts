@@ -107,9 +107,14 @@ export class PipelineRunnerService {
         }
       }
 
-      // Mark all queued tasks as skipped
+      // Mark running task as failed, queued tasks as skipped
       for (const task of pipeline.tasks) {
-        if (task.status === 'queued') {
+        if (task.status === 'running') {
+          pipelinesRepository.updateTask(pipeline.id, task.taskId, {
+            status: 'failed',
+            completedAt: new Date().toISOString(),
+          });
+        } else if (task.status === 'queued') {
           pipelinesRepository.updateTask(pipeline.id, task.taskId, { status: 'skipped' });
         }
       }

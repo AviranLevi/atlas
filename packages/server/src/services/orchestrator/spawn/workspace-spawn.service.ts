@@ -184,6 +184,7 @@ export class WorkspaceSpawnService {
 
       const onFailedCallback = (output: string, error?: string) => {
         if (terminalCallbackFired) return;
+        if (!activeProcesses.has(workspace.id)) return;
         terminalCallbackFired = true;
         const entry = activeProcesses.get(workspace.id);
         if (entry) clearEntryTimers(entry);
@@ -222,6 +223,10 @@ export class WorkspaceSpawnService {
         {
           onCompleted: (output) => {
             if (terminalCallbackFired) return;
+            // If stopWork already cleaned up this workspace (deleted from
+            // activeProcesses, set status to 'stopped', reset task), bail
+            // to avoid overwriting those states (e.g. task → inReview).
+            if (!activeProcesses.has(workspace.id)) return;
             terminalCallbackFired = true;
             const entry = activeProcesses.get(workspace.id);
             if (entry) clearEntryTimers(entry);
