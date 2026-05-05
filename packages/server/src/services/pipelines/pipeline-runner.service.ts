@@ -247,11 +247,24 @@ export class PipelineRunnerService {
       const { orchestratorService } = await import('../index.js');
       const workspace = await orchestratorService.startWork(nextTask.taskId, agentRuntimeId, baseBranch);
 
+      logger.info(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - workspace spawned: id=${workspace.id} for task ${nextTask.taskId}`,
+      );
+
       pipelinesRepository.updateTask(pipelineId, nextTask.taskId, {
         status: 'running',
         workspaceId: workspace.id,
         startedAt: new Date().toISOString(),
       });
+
+      // Verify workspaceId was persisted (guards against Drizzle set() silent misses)
+      const check = pipelinesRepository.findTask(pipelineId, nextTask.taskId);
+      if (check && !check.workspaceId) {
+        logger.error(
+          `${FILE_PATH} :: ${FUNCTION_NAME} - workspaceId NOT persisted after updateTask! workspace.id=${workspace.id}`,
+        );
+      }
+
       pipelinesRepository.update(pipelineId, { currentTaskId: nextTask.taskId });
 
       logger.info(
