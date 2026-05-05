@@ -6,6 +6,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { ReviewBadge } from '@/components/reviews/ReviewBadge';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { KanbanCardActions } from './KanbanCardActions';
 import { TaskSourceBadge } from './TaskSourceBadge';
 
@@ -34,6 +35,8 @@ export function KanbanCard({
   showProject = true,
   canStartWork = false,
   activeWorkspaceId,
+  isSelected = false,
+  onToggleSelect,
 }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id });
 
@@ -108,10 +111,29 @@ export function KanbanCard({
           onEdit(task);
         }
       }}
-      className={cn('cursor-pointer transition-shadow hover:shadow-md', isDragging && 'opacity-30')}
+      className={cn(
+        'group relative cursor-pointer transition-shadow hover:shadow-md',
+        isDragging && 'opacity-30',
+        isSelected && 'ring-2 ring-primary/60',
+      )}
     >
+      {onToggleSelect && (
+        <div
+          className="absolute left-2 top-2 z-10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect(task);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={isSelected}
+            className={cn('h-3.5 w-3.5 transition-opacity', !isSelected && 'opacity-0 group-hover:opacity-100')}
+          />
+        </div>
+      )}
       <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
-        <h4 className="font-medium leading-tight line-clamp-2">{task.name}</h4>
+        <h4 className={cn('font-medium leading-tight line-clamp-2', onToggleSelect && 'pl-5')}>{task.name}</h4>
         <KanbanCardActions
           task={task}
           onEdit={onEdit}

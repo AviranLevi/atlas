@@ -1,6 +1,6 @@
 // React / library
 import { ArrowDown, ArrowUp, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -29,12 +29,27 @@ type CreatePipelineDialogProps = {
   projectId: string;
   tasks: Task[];
   onCreated: (pipeline: PipelineWithTasks) => void;
+  initialTasks?: Array<{ taskId: string; taskName: string }>;
 };
 
-export function CreatePipelineDialog({ open, onOpenChange, projectId, tasks, onCreated }: CreatePipelineDialogProps) {
+export function CreatePipelineDialog({
+  open,
+  onOpenChange,
+  projectId,
+  tasks,
+  onCreated,
+  initialTasks,
+}: CreatePipelineDialogProps) {
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<TaskEntry[]>([]);
   const create = useCreatePipeline();
+
+  // Seed selection from initialTasks when dialog opens
+  useEffect(() => {
+    if (open && initialTasks && initialTasks.length > 0) {
+      setSelected(initialTasks.map((t) => ({ ...t, autoReview: false, autoAccept: false })));
+    }
+  }, [open]);
 
   const availableTasks = tasks.filter((t) => !selected.some((s) => s.taskId === t.id));
 

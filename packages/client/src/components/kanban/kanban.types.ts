@@ -21,6 +21,8 @@ export type KanbanCardProps = {
   showProject?: boolean;
   canStartWork?: boolean;
   activeWorkspaceId?: string;
+  isSelected?: boolean;
+  onToggleSelect?: (task: Task) => void;
 };
 
 export type KanbanColumnProps = {
@@ -34,6 +36,8 @@ export type KanbanColumnProps = {
   showProject: boolean;
   canStartWork?: boolean;
   activeWorkspaceMap?: Map<string, string>;
+  selectedTaskIds?: Set<string>;
+  onToggleSelect?: (task: Task) => void;
 };
 
 export type FollowUpContext = {

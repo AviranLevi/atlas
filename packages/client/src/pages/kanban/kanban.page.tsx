@@ -1,9 +1,9 @@
 // React / library
 import { TASK_STATUS } from '@atlas/shared';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
-import { LayoutGrid, Plus } from 'lucide-react';
+import { GitBranch, LayoutGrid, Plus, X } from 'lucide-react';
 import { useState, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StartWorkDialog } from '@/components/workspaces/StartWorkDialog';
+import { CreatePipelineDialog } from '@/pages/pipelines/components/CreatePipelineDialog';
 import { KanbanFilterBar } from './components/KanbanFilterBar';
 
 // Hooks
@@ -38,11 +39,14 @@ import { COLUMNS } from './kanban.constants';
 
 export function KanbanPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [newTaskStatus, setNewTaskStatus] = useState<TaskStatus>(TASK_STATUS.TODO);
   const [startWorkDialogOpen, setStartWorkDialogOpen] = useState(false);
   const [startWorkTask, setStartWorkTask] = useState<Task | null>(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
+  const [createPipelineOpen, setCreatePipelineOpen] = useState(false);
   const { activeProjectId } = useActiveProject();
 
   const projectFilter = activeProjectId ?? undefined;
@@ -98,6 +102,19 @@ export function KanbanPage() {
     },
     {} as Record<TaskStatus, Task[]>,
   );
+
+  const handleToggleSelect = useCallback((task: Task) => {
+    setSelectedTaskIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(task.id)) next.delete(task.id);
+      else next.add(task.id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedTaskIds(new Set()), []);
+
+  const selectedTasks = useMemo(() => tasks.filter((t) => selectedTaskIds.has(t.id)), [tasks, selectedTaskIds]);
 
   if (isLoading) {
     return (
@@ -168,6 +185,22 @@ export function KanbanPage() {
           </div>
 
           <TabsContent value="board" className="mt-4">
+            {selectedTaskIds.size > 0 && (
+              <div className="mb-3 flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-4 py-2">
+                <span className="text-sm font-medium">
+                  {selectedTaskIds.size} task{selectedTaskIds.size !== 1 ? 's' : ''} selected
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" onClick={() => setCreatePipelineOpen(true)}>
+                    <GitBranch className="mr-1.5 h-3.5 w-3.5" />
+                    Create Pipeline
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={clearSelection}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               <div className="flex gap-4 overflow-x-auto pb-4" data-tour={TOUR_TARGETS.kanbanBoard}>
                 {COLUMNS.map((status) => (
@@ -189,6 +222,8 @@ export function KanbanPage() {
                     showProject={!projectFilter}
                     canStartWork
                     activeWorkspaceMap={activeWorkspaceMap}
+                    selectedTaskIds={selectedTaskIds}
+                    onToggleSelect={handleToggleSelect}
                   />
                 ))}
               </div>
@@ -253,6 +288,24 @@ export function KanbanPage() {
         projectName={startWorkTask?.projectId ? projectMap.get(startWorkTask.projectId) : undefined}
         projectId={startWorkTask?.projectId ?? undefined}
       />
+
+      {activeProjectId && (
+        <CreatePipelineDialog
+          open={createPipelineOpen}
+          onOpenChange={(open) => {
+            setCreatePipelineOpen(open);
+            if (!open) clearSelection();
+          }}
+          projectId={activeProjectId}
+          tasks={tasks}
+          initialTasks={selectedTasks.map((t) => ({ taskId: t.id, taskName: t.name }))}
+          onCreated={(pipeline) => {
+            setCreatePipelineOpen(false);
+            clearSelection();
+            navigate(`/pipelines/${pipeline.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }

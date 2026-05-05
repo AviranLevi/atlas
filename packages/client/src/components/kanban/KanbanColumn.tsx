@@ -25,6 +25,8 @@ export function KanbanColumn({
   showProject,
   canStartWork,
   activeWorkspaceMap,
+  selectedTaskIds,
+  onToggleSelect,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id: status });
   const { column: columnStyle, heading: headingStyle } = COLUMN_STYLES[status] ?? DEFAULT_COLUMN_STYLE;
@@ -55,6 +57,8 @@ export function KanbanColumn({
             showProject={showProject}
             canStartWork={canStartWork}
             activeWorkspaceId={activeWorkspaceMap?.get(task.id)}
+            isSelected={selectedTaskIds?.has(task.id)}
+            onToggleSelect={onToggleSelect}
           />
         ))}
       </div>
