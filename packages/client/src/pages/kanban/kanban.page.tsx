@@ -134,17 +134,25 @@ export function KanbanPage() {
           <h1 className="text-2xl font-bold tracking-tight">Kanban Board</h1>
           <p className="text-muted-foreground mt-0.5 text-sm">Manage and track tasks across your workflow</p>
         </div>
-        <Button
-          onClick={() => {
-            setNewTaskStatus(TASK_STATUS.TODO);
-            setDialogOpen(true);
-          }}
-          size="sm"
-          data-tour={TOUR_TARGETS.kanbanAddTask}
-        >
-          <Plus className="mr-1.5 h-4 w-4" />
-          New Task
-        </Button>
+        <div className="flex items-center gap-2">
+          {activeProjectId && (
+            <Button variant="outline" size="sm" onClick={() => setCreatePipelineOpen(true)}>
+              <GitBranch className="mr-1.5 h-4 w-4" />
+              Create Pipeline
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              setNewTaskStatus(TASK_STATUS.TODO);
+              setDialogOpen(true);
+            }}
+            size="sm"
+            data-tour={TOUR_TARGETS.kanbanAddTask}
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            New Task
+          </Button>
+        </div>
       </div>
 
       {tasks.length === 0 && !hasFilter ? (
@@ -190,15 +198,10 @@ export function KanbanPage() {
                 <span className="text-sm font-medium">
                   {selectedTaskIds.size} task{selectedTaskIds.size !== 1 ? 's' : ''} selected
                 </span>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" onClick={() => setCreatePipelineOpen(true)}>
-                    <GitBranch className="mr-1.5 h-3.5 w-3.5" />
-                    Create Pipeline
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={clearSelection}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                <Button size="sm" variant="ghost" onClick={clearSelection}>
+                  <X className="mr-1 h-3.5 w-3.5" />
+                  Clear
+                </Button>
               </div>
             )}
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
