@@ -44,10 +44,18 @@ export function CreatePipelineDialog({
   const [selected, setSelected] = useState<TaskEntry[]>([]);
   const create = useCreatePipeline();
 
-  // Seed selection from initialTasks when dialog opens
+  // Seed selection + default name from initialTasks when dialog opens
   useEffect(() => {
     if (open && initialTasks && initialTasks.length > 0) {
       setSelected(initialTasks.map((t) => ({ ...t, autoReview: false, autoAccept: false })));
+      setName(
+        (prev) =>
+          prev.trim() || `Pipeline ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`,
+      );
+    }
+    if (!open) {
+      setName('');
+      setSelected([]);
     }
   }, [open]);
 
