@@ -41,6 +41,12 @@ const WorkspaceDetailPage = lazy(() =>
 const WorkspacesPage = lazy(() =>
   import('@/pages/workspaces/workspaces.page').then((m) => ({ default: m.WorkspacesPage })),
 );
+const PipelinesPage = lazy(() =>
+  import('@/pages/pipelines/pipelines.page').then((m) => ({ default: m.PipelinesPage })),
+);
+const PipelineDetailPage = lazy(() =>
+  import('@/pages/pipelines/pipeline-detail.page').then((m) => ({ default: m.PipelineDetailPage })),
+);
 
 function RouteFallback() {
   return <div className="flex h-full w-full items-center justify-center" aria-busy="true" />;
@@ -66,6 +72,8 @@ export function AppRoutes() {
         <Route path="/kanban" element={<KanbanPage />} />
         <Route path="/workspaces" element={<WorkspacesPage />} />
         <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
+        <Route path="/pipelines" element={<PipelinesPage />} />
+        <Route path="/pipelines/:id" element={<PipelineDetailPage />} />
         <Route path="/global" element={<GlobalPage />} />
         <Route path="/usage" element={<UsagePage />} />
         <Route path="/marketplace" element={<MarketplacePage />} />
