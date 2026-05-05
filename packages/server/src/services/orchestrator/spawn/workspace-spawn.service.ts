@@ -206,6 +206,12 @@ export class WorkspaceSpawnService {
           metadata: { error },
         });
         logger.error(`${FILE_PATH} :: spawnAgent - process failed for workspace ${workspace.id}: ${error}`);
+        // Notify pipeline runner so it can pause the pipeline on failure
+        import('../../index.js')
+          .then(({ pipelinesService }) =>
+            pipelinesService.onWorkspaceTransition(workspace.id, 'failed').catch(() => {}),
+          )
+          .catch(() => {});
       };
 
       const result = await spawnAgent(
@@ -252,6 +258,14 @@ export class WorkspaceSpawnService {
               metadata: {},
             });
             logger.info(`${FILE_PATH} :: spawnAgent - process completed for workspace ${workspace.id}`);
+            // Notify pipeline runner so it can auto-review or wait for approval
+            import('../../index.js')
+              .then(({ pipelinesService }) =>
+                pipelinesService
+                  .onWorkspaceTransition(workspace.id, 'completed', workspace.agentRuntime)
+                  .catch(() => {}),
+              )
+              .catch(() => {});
           },
           onFailed: onFailedCallback,
         },

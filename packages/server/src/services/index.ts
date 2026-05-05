@@ -21,6 +21,7 @@ import { PackageExporterService } from './package-io/package-exporter.service.js
 import { PackageImporterService } from './package-io/package-importer.service.js';
 import { WorkflowRunnerService } from './workflow-runner/workflow-runner.service.js';
 import { PhasesService } from './phases/phases.service.js';
+import { PipelinesService } from './pipelines/pipelines.service.js';
 import { PreferencesService } from './preferences/preferences.service.js';
 import { ProjectScaffoldService } from './projects/project-scaffold.service.js';
 import { ProjectsService } from './projects/projects.service.js';
@@ -48,6 +49,7 @@ export const settingsService = new SettingsService();
 export const searchService = new SearchService();
 export const agentProvidersService = new AgentProvidersService();
 export const phasesService = new PhasesService();
+export const pipelinesService = new PipelinesService();
 export const reviewsService = new ReviewsService();
 export const worktreeService = new WorktreeService();
 export const promptBuilderService = new PromptBuilderService();

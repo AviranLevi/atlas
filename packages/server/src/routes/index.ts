@@ -14,6 +14,7 @@ import { memoryRoute } from './memory.route.js';
 import { marketplaceRoute } from './marketplace.route.js';
 import { packageRoute } from './package.route.js';
 import { phasesRoute } from './phases.route.js';
+import { pipelinesRoute } from './pipelines.route.js';
 import { preferencesRoute } from './preferences.route.js';
 import { docsRoute } from './docs.route.js';
 import { projectDocsRoute } from './project-docs.route.js';
@@ -44,6 +45,7 @@ export const apiRoutes = new Hono()
   .route('/mcp', mcpConfigRoute)
   .route('/agent-providers', agentProvidersRoute)
   .route('/phases', phasesRoute)
+  .route('/pipelines', pipelinesRoute)
   .route('/reviews', reviewsRoute)
   .route('/chat', chatRoute)
   .route('/system', systemRoute)

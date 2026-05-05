@@ -6,7 +6,12 @@ import { TASK_STATUS } from '@atlas/shared';
 import { activityLogService } from '../index.js';
 
 // Repositories
-import { reviewsRepository, tasksRepository } from '../../db/repositories/index.js';
+import {
+  pipelinesRepository,
+  reviewsRepository,
+  tasksRepository,
+  workspacesRepository,
+} from '../../db/repositories/index.js';
 
 // Lib
 import { AppError } from '../../lib/errors.js';
@@ -120,6 +125,23 @@ export class ReviewsService {
         description: `Review ${decision === 'approved' ? 'approved' : 'changes requested'} for task: ${task.name}`,
         metadata: { reviewId: id, decision },
       });
+
+      // Fire pipeline advancement hook on approval
+      if (decision === 'approved') {
+        try {
+          // Find the most recent workspace for this task to get agentRuntime
+          const ws = workspacesRepository.findLatestByTask(review.taskId);
+          const pipelineTask = ws ? pipelinesRepository.findTaskByWorkspace(ws.id) : null;
+          if (pipelineTask) {
+            const { pipelinesService } = await import('../index.js');
+            pipelinesService
+              .onWorkspaceTransition(ws!.id, 'approved', ws?.agentRuntime)
+              .catch((e) => logger.warn(`${FILE_PATH} :: decide - pipeline hook failed`, e));
+          }
+        } catch (e) {
+          logger.warn(`${FILE_PATH} :: decide - failed to check pipeline membership`, e);
+        }
+      }
 
       return updated;
     } catch (error: unknown) {

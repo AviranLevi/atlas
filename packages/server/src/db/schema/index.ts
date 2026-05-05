@@ -19,3 +19,4 @@ export { tasks } from './tasks.schema.js';
 export { usageLogs } from './usage-logs.schema.js';
 export { workspaces } from './workspaces.schema.js';
 export { projectDocs } from './project-docs.schema.js';
+export { pipelines, pipelineTasks } from './pipelines.schema.js';

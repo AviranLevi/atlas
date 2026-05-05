@@ -95,6 +95,29 @@ export class WorkspacesRepository {
     );
   }
 
+  /** Returns the most recently created workspace for a task, or null. */
+  findLatestByTask(taskId: string): Workspace | null {
+    return withAppErrorSync(
+      () => {
+        const rows = this.db
+          .select()
+          .from(workspaces)
+          .leftJoin(tasks, eq(workspaces.taskId, tasks.id))
+          .leftJoin(projects, eq(workspaces.projectId, projects.id))
+          .where(eq(workspaces.taskId, taskId))
+          .orderBy(desc(workspaces.createdAt))
+          .all();
+        if (rows.length === 0) return null;
+        return this.enrichRow(rows[0]);
+      },
+      {
+        filePath: FILE_PATH,
+        functionName: 'findLatestByTask',
+        message: 'Failed to query latest workspace by task',
+      },
+    );
+  }
+
   /** Returns the workspace for a task, or null if not found. */
   findByTaskId(taskId: string): Workspace | null {
     return withAppErrorSync(

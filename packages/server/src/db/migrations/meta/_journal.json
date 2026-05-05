@@ -169,6 +169,13 @@
       "when": 1775400000000,
       "tag": "0023_workspace_current_stage",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1775500000000,
+      "tag": "0024_pipelines",
+      "breakpoints": true
     }
   ]
 }
