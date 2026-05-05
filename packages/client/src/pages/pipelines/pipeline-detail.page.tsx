@@ -1,5 +1,5 @@
 // React / library
-import { ArrowLeft, GitBranch, Loader2, Pause, Play, Square, StepForward } from 'lucide-react';
+import { ArrowLeft, ExternalLink, GitBranch, Loader2, Pause, Play, Square, StepForward } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -174,18 +174,9 @@ export function PipelineDetailPage() {
                         {task.position + 1}.
                       </span>
 
-                      {/* Task name + workspace link */}
+                      {/* Task name */}
                       <div className="flex-1 min-w-0">
                         <p className="truncate text-sm font-medium">{task.taskName ?? task.taskId}</p>
-                        {task.workspaceId && (
-                          <Link
-                            to={`/workspaces/${task.workspaceId}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-xs text-primary hover:underline"
-                          >
-                            View workspace →
-                          </Link>
-                        )}
                       </div>
 
                       {/* Auto-review / auto-accept toggles */}
@@ -224,6 +215,16 @@ export function PipelineDetailPage() {
                           Auto-accept
                         </label>
                       </div>
+
+                      {/* Workspace link */}
+                      {task.workspaceId && (
+                        <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-muted-foreground" asChild>
+                          <Link to={`/workspaces/${task.workspaceId}`}>
+                            <ExternalLink className="h-3 w-3" />
+                            Workspace
+                          </Link>
+                        </Button>
+                      )}
 
                       {/* Status badge */}
                       <Badge variant="outline" className={`shrink-0 ${taskMeta.badgeClass}`}>
