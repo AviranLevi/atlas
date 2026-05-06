@@ -1,6 +1,5 @@
 // External
-import fs from 'node:fs';
-import path from 'node:path';
+import type { ChildProcess } from 'node:child_process';
 
 // Shared
 import type { Workspace } from '@atlas/shared';
@@ -10,20 +9,24 @@ import { TASK_STATUS } from '@atlas/shared';
 import { workspacesRepository } from '../../../db/repositories/index.js';
 
 // Services
-import { activityLogService, projectsService, tasksService } from '../../index.js';
+import { activityLogService, tasksService } from '../../index.js';
 import { WorktreeService } from '../../worktree/index.js';
 
 // Orchestrator
 import { resolveSpawnOptions, buildPrompt } from './spawn-options.js';
 import { structuredStageService } from './structured-stage.service.js';
-import { ensureGitignore } from './spawn-gitignore.js';
 import { attachWatchdog } from './spawn-watchdog.js';
-import { activeProcesses, clearEntryTimers, isShuttingDown } from '../shared/active-processes.js';
+import { activeProcesses } from '../shared/active-processes.js';
 import type { ActiveProcessEntry } from '../shared/active-processes.js';
 import { getMaxRuntimeMs, type RuntimeStage } from '../../../lib/runtime-limits.js';
 
+// Helpers
+import { validateSpawnPreconditions } from './helpers/spawn-preconditions.helper.js';
+import { prepareWorktree } from './helpers/spawn-worktree-prep.helper.js';
+import { createTerminalCallbacks } from './helpers/spawn-terminal-callbacks.helper.js';
+import { killOnShutdown } from './helpers/spawn-shutdown-guard.helper.js';
+
 // Executors
-import { executorRegistry } from '../../../executors/index.js';
 import { spawnAgent } from '../../../executors/spawn-agent.js';
 
 // Lib
@@ -54,39 +57,11 @@ export class WorkspaceSpawnService {
   ): Promise<Workspace> {
     const FUNCTION_NAME = 'startWork';
     try {
-      if (isShuttingDown()) {
-        throw new AppError('Server is shutting down', { status: 503 });
-      }
+      const { task, project, executor } = await validateSpawnPreconditions(taskId, agentRuntimeId);
 
-      const task = await tasksService.getById(taskId);
-
-      if (!task.projectId) {
-        throw new AppError('Task must be assigned to a project with a local path', { status: 400 });
-      }
-
-      const project = await projectsService.getById(task.projectId);
-
-      if (!project.localPath) {
-        throw new AppError(`Project "${project.name}" has no local path configured`, { status: 400 });
-      }
-
-      if (!fs.existsSync(project.localPath)) {
-        throw new AppError(`Project local path does not exist: ${project.localPath}`, { status: 400 });
-      }
-
-      const executor = executorRegistry.getById(agentRuntimeId);
-      if (!executor) {
-        throw new AppError(`Unknown agent runtime: ${agentRuntimeId}`, { status: 400 });
-      }
-
-      const existing = workspacesRepository.findByTaskId(taskId);
-      if (existing && (existing.status === 'running' || existing.status === 'pending')) {
-        throw new AppError('A workspace is already active for this task', { status: 409 });
-      }
-
-      // Resolve provider once, from the single source of truth (the task),
-      // and reuse for both structured-stage AI SDK calls and CLI credential
-      // injection.
+      // Provider is sourced from the task so all entry-points share the same
+      // resolution path. Callers that want a different provider persist it to
+      // the task before calling startWork.
       const effectiveProviderId = task.workflowProviderId ?? undefined;
       const { resolvedModel, spawnOpts } = await resolveSpawnOptions(
         executor,
@@ -118,38 +93,16 @@ export class WorkspaceSpawnService {
         // Provider unavailable — fall through to CLI execution
       }
 
-      // Resolve which branch to base the worktree on:
-      //   1. Explicit baseBranch from the request
-      //   2. Project's configured default branch
-      //   3. Auto-detect (main/master) — handled inside worktreeService.create
-      const resolvedBaseBranch = baseBranch || project.defaultBranch || undefined;
-
-      const { worktreePath, branchName } = this.worktreeService.create(
-        project.localPath,
+      const { worktreePath, branchName, persistedBaseBranch } = prepareWorktree({
+        worktreeService: this.worktreeService,
+        // validateSpawnPreconditions already threw if localPath is null/missing
+        localPath: project.localPath!,
+        defaultBranch: project.defaultBranch,
         taskId,
-        task.name,
-        resolvedBaseBranch,
-      );
-
-      // Resolve the concrete base branch now so we can persist it with the
-      // workspace row. `resolvedBaseBranch` may be undefined (caller didn't
-      // specify, project has no defaultBranch); in that case fall through to
-      // the service's auto-detect (main/master).
-      const persistedBaseBranch = resolvedBaseBranch ?? this.worktreeService.getDefaultBranch(project.localPath);
-
-      // Ensure worktree has a .gitignore so agents don't commit generated files
-      ensureGitignore(worktreePath);
-
-      // Copy plan artifact into the worktree so the execute agent has it
-      if (effectiveStage === 'execute') {
-        const srcPlan = path.join(project.localPath, 'specs', 'atlas-plan.md');
-        if (fs.existsSync(srcPlan)) {
-          const destDir = path.join(worktreePath, 'specs');
-          fs.mkdirSync(destDir, { recursive: true });
-          fs.copyFileSync(srcPlan, path.join(destDir, 'atlas-plan.md'));
-          logger.info(`${FILE_PATH} :: startWork - copied atlas-plan.md into worktree`);
-        }
-      }
+        taskName: task.name,
+        baseBranch,
+        effectiveStage,
+      });
 
       const workspace = workspacesRepository.insert({
         taskId,
@@ -176,171 +129,33 @@ export class WorkspaceSpawnService {
         workflowStage: effectiveStage,
       });
 
-      const cwd = executor.usesProjectRoot ? project.localPath : worktreePath;
+      const cwd = executor.usesProjectRoot ? project.localPath! : worktreePath;
 
-      // Guard against double-fire: the watchdog can call onFailed directly, then
-      // proc.on('close') would call it again when the kill signal takes effect.
-      let terminalCallbackFired = false;
+      const { onCompleted, onFailed } = createTerminalCallbacks({
+        workspace,
+        worktreeService: this.worktreeService,
+        taskName: task.name,
+        notifyPipeline: true,
+      });
 
-      const onFailedCallback = (output: string, error?: string) => {
-        if (terminalCallbackFired) return;
-        if (!activeProcesses.has(workspace.id)) return;
-        terminalCallbackFired = true;
-        const entry = activeProcesses.get(workspace.id);
-        if (entry) clearEntryTimers(entry);
-        activeProcesses.delete(workspace.id);
-        workspacesRepository.update(workspace.id, {
-          status: 'failed',
-          output,
-          completedAt: new Date().toISOString(),
-        });
-        tasksService.update(workspace.taskId, { status: TASK_STATUS.TODO }).catch((e) => {
-          logger.warn(`${FILE_PATH} :: spawnAgent - failed to reset task status`, e);
-        });
-        activityLogService.log({
-          projectId: workspace.projectId,
-          taskId: workspace.taskId,
-          workspaceId: workspace.id,
-          agentId: workspace.agentId,
-          eventType: 'agent_failed',
-          description: `Agent failed: ${error ?? 'unknown error'}`,
-          metadata: { error },
-        });
-        logger.error(`${FILE_PATH} :: spawnAgent - process failed for workspace ${workspace.id}: ${error}`);
-        // Notify pipeline runner so it can pause the pipeline on failure
-        import('../../index.js')
-          .then(({ pipelinesService }) =>
-            pipelinesService.onWorkspaceTransition(workspace.id, 'failed').catch(() => {}),
-          )
-          .catch(() => {});
-      };
+      const result = await spawnAgent(workspace.id, executor, cwd, prompt, { onCompleted, onFailed }, spawnOpts);
 
-      const result = await spawnAgent(
-        workspace.id,
-        executor,
-        cwd,
-        prompt,
-        {
-          onCompleted: (output) => {
-            if (terminalCallbackFired) return;
-            // If stopWork already cleaned up this workspace (deleted from
-            // activeProcesses, set status to 'stopped', reset task), bail
-            // to avoid overwriting those states (e.g. task → inReview).
-            if (!activeProcesses.has(workspace.id)) return;
-            terminalCallbackFired = true;
-            const entry = activeProcesses.get(workspace.id);
-            if (entry) clearEntryTimers(entry);
-            activeProcesses.delete(workspace.id);
-
-            // Safety net: commit any changes the agent left uncommitted.
-            // For execute-stage runs, this produces a loud
-            // `execute: <task> (steps not tracked)` marker so prompt-
-            // compliance regressions surface in the Commits panel rather
-            // than hiding behind a generic chore commit.
-            this.worktreeService.ensureChangesCommitted(worktreePath, {
-              taskName: task.name,
-              stage: effectiveStage ?? null,
-            });
-
-            workspacesRepository.update(workspace.id, {
-              status: 'completed',
-              output,
-              completedAt: new Date().toISOString(),
-            });
-
-            const isWorkflowStage = workspace.workflowStage === 'brainstorm' || workspace.workflowStage === 'plan';
-            const nextStatus = isWorkflowStage ? TASK_STATUS.AWAITING_APPROVAL : TASK_STATUS.IN_REVIEW;
-            tasksService.update(workspace.taskId, { status: nextStatus }).catch((e) => {
-              logger.warn(`${FILE_PATH} :: spawnAgent - failed to update task status after completion`, e);
-            });
-            activityLogService.log({
-              projectId: workspace.projectId,
-              taskId: workspace.taskId,
-              workspaceId: workspace.id,
-              agentId: workspace.agentId,
-              eventType: 'agent_completed',
-              description: 'Agent completed successfully',
-              metadata: {},
-            });
-            logger.info(`${FILE_PATH} :: spawnAgent - process completed for workspace ${workspace.id}`);
-            // Notify pipeline runner so it can auto-review or wait for approval
-            import('../../index.js')
-              .then(({ pipelinesService }) =>
-                pipelinesService
-                  .onWorkspaceTransition(workspace.id, 'completed', workspace.agentRuntime)
-                  .catch(() => {}),
-              )
-              .catch(() => {});
-          },
-          onFailed: onFailedCallback,
-        },
-        spawnOpts,
-      );
-
-      // Race mitigation: isShuttingDown() was false at the top of startWork,
-      // but spawnAgent + buildPrompt + DB writes above can take non-trivial
-      // time. If a SIGINT arrived during that window, the shutdown handler
-      // snapshotted activeProcesses BEFORE we could insert our new child.
-      // Kill it now to prevent an orphan that survives process.exit.
-      if (isShuttingDown()) {
-        const proc = result.process;
-        if (proc.pid) {
-          try {
-            process.kill(-proc.pid, 'SIGKILL');
-          } catch {
-            try {
-              proc.kill('SIGKILL');
-            } catch {
-              /* already dead */
-            }
-          }
-        }
-        workspacesRepository.update(workspace.id, {
-          status: 'stopped',
-          pid: proc.pid ?? null,
-          completedAt: new Date().toISOString(),
-        });
+      if (killOnShutdown(workspace.id, result.process)) {
         throw new AppError('Server is shutting down', { status: 503 });
       }
 
-      const runtimeStage: RuntimeStage = (effectiveStage as RuntimeStage | undefined) ?? 'execute';
-      const maxRuntimeMs = getMaxRuntimeMs(runtimeStage);
-
-      const entry: ActiveProcessEntry = {
-        process: result.process,
-        onFailed: onFailedCallback,
-        startedAt: Date.now(),
-        stage: runtimeStage,
-      };
-
-      attachWatchdog({
-        entry,
-        workspaceId: workspace.id,
-        projectId: project.id,
+      await this.activateWorkspace({
+        workspace,
         taskId,
-        agentId: task.agentId,
-        runtimeStage,
-        maxRuntimeMs,
-        onTimeout: onFailedCallback,
-      });
-
-      activeProcesses.set(workspace.id, entry);
-      workspacesRepository.update(workspace.id, {
-        status: 'running',
-        pid: result.process.pid ?? null,
-        startedAt: new Date().toISOString(),
-      });
-
-      await tasksService.update(taskId, { status: TASK_STATUS.IN_PROGRESS });
-
-      activityLogService.log({
+        taskName: task.name,
+        agentId: task.agentId ?? null,
         projectId: project.id,
-        taskId,
-        workspaceId: workspace.id,
-        agentId: task.agentId,
-        eventType: 'agent_started',
-        description: `Agent started on task: ${task.name}`,
-        metadata: { agentRuntime: agentRuntimeId, branchName, model: resolvedModel },
+        proc: result.process,
+        onFailed,
+        effectiveStage,
+        agentRuntimeId,
+        resolvedModel,
+        branchName,
       });
 
       return workspacesRepository.findByIdOrThrow(workspace.id);
@@ -349,6 +164,81 @@ export class WorkspaceSpawnService {
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to start work', { cause: error });
     }
+  }
+
+  /**
+   * Registers the spawned process in activeProcesses, attaches the watchdog,
+   * marks the workspace as running, and emits the agent_started activity log.
+   * Kept as a private method (not a standalone helper) because it is not reused
+   * outside this service.
+   */
+  private async activateWorkspace(params: {
+    workspace: Workspace;
+    taskId: string;
+    taskName: string;
+    agentId: string | null;
+    projectId: string;
+    proc: ChildProcess;
+    onFailed: (output: string, error?: string) => void;
+    effectiveStage: 'brainstorm' | 'plan' | 'execute' | null;
+    agentRuntimeId: string;
+    resolvedModel: string | null | undefined;
+    branchName: string;
+  }): Promise<void> {
+    const {
+      workspace,
+      taskId,
+      taskName,
+      agentId,
+      projectId,
+      proc,
+      onFailed,
+      effectiveStage,
+      agentRuntimeId,
+      resolvedModel,
+      branchName,
+    } = params;
+
+    const runtimeStage: RuntimeStage = (effectiveStage as RuntimeStage | undefined) ?? 'execute';
+    const maxRuntimeMs = getMaxRuntimeMs(runtimeStage);
+
+    const entry: ActiveProcessEntry = {
+      process: proc,
+      onFailed,
+      startedAt: Date.now(),
+      stage: runtimeStage,
+    };
+
+    attachWatchdog({
+      entry,
+      workspaceId: workspace.id,
+      projectId,
+      taskId,
+      agentId,
+      runtimeStage,
+      maxRuntimeMs,
+      onTimeout: onFailed,
+    });
+
+    activeProcesses.set(workspace.id, entry);
+
+    workspacesRepository.update(workspace.id, {
+      status: 'running',
+      pid: proc.pid ?? null,
+      startedAt: new Date().toISOString(),
+    });
+
+    await tasksService.update(taskId, { status: TASK_STATUS.IN_PROGRESS });
+
+    activityLogService.log({
+      projectId,
+      taskId,
+      workspaceId: workspace.id,
+      agentId,
+      eventType: 'agent_started',
+      description: `Agent started on task: ${taskName}`,
+      metadata: { agentRuntime: agentRuntimeId, branchName, model: resolvedModel },
+    });
   }
 }
 
