@@ -24,18 +24,18 @@ export class PipelineRunnerService {
       if (pipeline.status === 'running') {
         throw new AppError('Pipeline is already running', { status: 400 });
       }
-      if (pipeline.status === 'completed') {
-        throw new AppError('Pipeline is already completed', { status: 400 });
-      }
       if (pipeline.tasks.length === 0) {
         throw new AppError('Pipeline has no tasks', { status: 400 });
       }
 
-      // Store agentRuntimeId in name temporarily: not ideal, but avoids schema change.
-      // We encode it into a separate field when we add pipeline.agentRuntimeId in a follow-up.
-      // For now we pass it through advance() calls directly.
+      // Reset failed/skipped tasks so re-runs can advance (advance() only picks up 'queued')
+      for (const task of pipeline.tasks) {
+        if (task.status === 'failed' || task.status === 'skipped') {
+          pipelinesRepository.updateTask(pipelineId, task.taskId, { status: 'queued' });
+        }
+      }
 
-      pipelinesRepository.update(pipelineId, { status: 'running' });
+      pipelinesRepository.update(pipelineId, { status: 'running', currentTaskId: null });
       await this.advance(pipelineId, agentRuntimeId);
       return pipelinesRepository.findWithTasks(pipelineId)!;
     } catch (error: unknown) {
