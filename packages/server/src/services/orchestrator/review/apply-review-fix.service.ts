@@ -7,6 +7,7 @@ import { workspacesRepository } from '../../../db/repositories/index.js';
 
 // Services
 import { activityLogService, projectsService, tasksService } from '../../index.js';
+import { createTerminalCallbacks } from '../spawn/index.js';
 
 // Executors
 import { executorRegistry } from '../../../executors/index.js';
@@ -16,7 +17,7 @@ import { spawnAgent } from '../../../executors/spawn-agent.js';
 import { WorktreeService } from '../../worktree/index.js';
 
 // Lib
-import { activeProcesses, clearEntryTimers, isShuttingDown } from '../shared/active-processes.js';
+import { activeProcesses, isShuttingDown } from '../shared/active-processes.js';
 import type { ActiveProcessEntry } from '../shared/active-processes.js';
 import { AppError } from '../../../lib/errors.js';
 import { logger } from '../../../lib/logger.js';
@@ -113,84 +114,42 @@ export class ApplyReviewFixService {
 
       const { spawnOpts } = await resolveSpawnOptions(executor, workspace.agentId, workspace.model ?? undefined);
 
-      let fired = false;
-      const onFailed = (output: string, error?: string) => {
-        if (fired) return;
-        fired = true;
-        const entry = activeProcesses.get(workspace.id);
-        if (entry) clearEntryTimers(entry);
-        activeProcesses.delete(workspace.id);
-        // Roll the workspace back to its prior state so the user can try
-        // again without losing the diff or the review context.
-        workspacesRepository.update(workspace.id, {
-          status: 'completed',
-          output,
-          completedAt: new Date().toISOString(),
-          currentStage: null,
-        });
-        restoreReview();
-        activityLogService.log({
-          projectId: workspace.projectId,
-          taskId: workspace.taskId,
-          workspaceId,
-          agentId: workspace.agentId,
-          eventType: 'agent_failed',
-          description: `Agent failed during apply-review-fix: ${error ?? 'unknown error'}`,
-          metadata: { error },
-        });
-      };
+      const { onCompleted, onFailed } = createTerminalCallbacks({
+        workspace,
+        worktreeService: this.worktreeService,
+        taskName: workspace.taskName ?? 'task',
+        // Roll workspace back to its prior state so the user can retry
+        // without losing the diff or the review context.
+        failedStatus: 'completed',
+        // No task status update on failure — review status is the signal here.
+        failedTaskStatus: null,
+        failedDescriptionPrefix: 'Agent failed during apply-review-fix',
+        onAfterFailed: () => {
+          workspacesRepository.update(workspace.id, { currentStage: null });
+          restoreReview();
+        },
+        commitStage: 'execute',
+        // No direct task update on completion — the auto-triggered AI review
+        // will advance the task status when it finishes.
+        completedTaskStatus: null,
+        completedDescription: 'Agent completed applying reviewer fixes — triggering AI re-review',
+        onAfterCompleted: () => {
+          workspacesRepository.update(workspace.id, { currentStage: null });
+          // Auto-trigger the AI reviewer so the user doesn't have to click
+          // "Run AI Review" manually. The prompt already told the agent
+          // "we will re-run the review afterward" — this fulfils that promise.
+          aiReviewerService.startAiReview(workspace.id, agentRuntimeId).catch((e) => {
+            logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to auto-trigger re-review`, e);
+            // Non-fatal: workspace is completed, review is pending, user
+            // can still click "Run AI Review" themselves.
+            tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch(() => {});
+          });
+        },
+      });
 
       const cwd = executor.usesProjectRoot ? project.localPath : workspace.worktreePath;
 
-      const result = await spawnAgent(
-        workspace.id,
-        executor,
-        cwd,
-        fullPrompt,
-        {
-          onCompleted: (output) => {
-            if (fired) return;
-            fired = true;
-            const entry = activeProcesses.get(workspace.id);
-            if (entry) clearEntryTimers(entry);
-            activeProcesses.delete(workspace.id);
-
-            // Safety net: commit any changes the agent left uncommitted.
-            this.worktreeService.ensureChangesCommitted(workspace.worktreePath, {
-              taskName: workspace.taskName ?? 'task',
-              stage: 'execute',
-            });
-
-            workspacesRepository.update(workspace.id, {
-              status: 'completed',
-              output,
-              completedAt: new Date().toISOString(),
-              currentStage: null,
-            });
-            activityLogService.log({
-              projectId: workspace.projectId,
-              taskId: workspace.taskId,
-              workspaceId,
-              agentId: workspace.agentId,
-              eventType: 'agent_completed',
-              description: 'Agent completed applying reviewer fixes — triggering AI re-review',
-              metadata: {},
-            });
-            // Auto-trigger the AI reviewer so the user doesn't have to click
-            // "Run AI Review" manually after the implementer finishes. The
-            // prompt already told the agent "we will re-run the review
-            // afterward" — this fulfils that promise.
-            aiReviewerService.startAiReview(workspace.id, agentRuntimeId).catch((e) => {
-              logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to auto-trigger re-review`, e);
-              // Non-fatal: workspace is completed, review is pending, user
-              // can still click "Run AI Review" themselves.
-              tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch(() => {});
-            });
-          },
-          onFailed,
-        },
-        spawnOpts,
-      );
+      const result = await spawnAgent(workspace.id, executor, cwd, fullPrompt, { onCompleted, onFailed }, spawnOpts);
 
       if (isShuttingDown()) {
         const proc = result.process;

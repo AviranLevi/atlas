@@ -7,6 +7,7 @@ import { workspacesRepository } from '../../../db/repositories/index.js';
 
 // Services
 import { activityLogService, projectsService, tasksService } from '../../index.js';
+import { createTerminalCallbacks } from '../spawn/index.js';
 
 // Executors
 import { executorRegistry } from '../../../executors/index.js';
@@ -16,7 +17,7 @@ import { spawnAgent } from '../../../executors/spawn-agent.js';
 import { WorktreeService } from '../../worktree/index.js';
 
 // Lib
-import { activeProcesses, clearEntryTimers, isShuttingDown } from '../shared/active-processes.js';
+import { activeProcesses, isShuttingDown } from '../shared/active-processes.js';
 import type { ActiveProcessEntry } from '../shared/active-processes.js';
 import { AppError } from '../../../lib/errors.js';
 import { logger } from '../../../lib/logger.js';
@@ -74,82 +75,27 @@ export class RequestChangesService {
       // Resolve model/provider from workspace's recorded model + agent's provider
       const { spawnOpts } = await resolveSpawnOptions(executor, workspace.agentId, workspace.model ?? undefined);
 
-      let requestChangesFired = false;
-      const onFailedCallback = (output: string, error?: string) => {
-        if (requestChangesFired) return;
-        requestChangesFired = true;
-        const entry = activeProcesses.get(workspace.id);
-        if (entry) clearEntryTimers(entry);
-        activeProcesses.delete(workspace.id);
-        // Deliberate retry semantics: requestChanges runs on top of an already-
-        // completed workspace. If the review agent's re-run fails, we roll the
-        // workspace status back to 'completed' (its prior state) and put the
-        // task back in In Review so the user can click "Request Changes" again
-        // without losing the prior diff. The activity_log below records the
-        // real failure so history isn't a lie.
-        workspacesRepository.update(workspace.id, {
-          status: 'completed',
-          output,
-          completedAt: new Date().toISOString(),
-        });
-        tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
-          logger.warn(`${FILE_PATH} :: requestChanges - failed to reset task to In Review`, e);
-        });
-        activityLogService.log({
-          projectId: workspace.projectId,
-          taskId: workspace.taskId,
-          workspaceId,
-          agentId: workspace.agentId,
-          eventType: 'agent_failed',
-          description: `Agent failed during review changes: ${error ?? 'unknown error'}`,
-          metadata: { error },
-        });
-      };
+      const { onCompleted, onFailed } = createTerminalCallbacks({
+        workspace,
+        worktreeService: this.worktreeService,
+        taskName: workspace.taskName ?? 'task',
+        // Roll workspace back to 'completed' on failure (it was already completed
+        // before this re-run, so the diff and context remain intact for a retry).
+        failedStatus: 'completed',
+        failedTaskStatus: TASK_STATUS.IN_REVIEW,
+        failedDescriptionPrefix: 'Agent failed during review changes',
+        commitStage: 'execute',
+        completedTaskStatus: TASK_STATUS.IN_REVIEW,
+        completedDescription: 'Agent completed review changes',
+        onAfterCompleted: () => {
+          // Clear inline diff comments now that the agent has addressed them.
+          workspacesRepository.update(workspace.id, { diffComments: JSON.stringify([]) });
+        },
+      });
 
       // Re-spawn the agent on the SAME worktree (not a new one)
       const cwd = executor.usesProjectRoot ? project.localPath : workspace.worktreePath;
-      const result = await spawnAgent(
-        workspace.id,
-        executor,
-        cwd,
-        fullPrompt,
-        {
-          onCompleted: (output) => {
-            if (requestChangesFired) return;
-            requestChangesFired = true;
-            const entry = activeProcesses.get(workspace.id);
-            if (entry) clearEntryTimers(entry);
-            activeProcesses.delete(workspace.id);
-
-            // Safety net: commit any changes the agent left uncommitted.
-            this.worktreeService.ensureChangesCommitted(workspace.worktreePath, {
-              taskName: workspace.taskName ?? 'task',
-              stage: 'execute',
-            });
-
-            workspacesRepository.update(workspace.id, {
-              status: 'completed',
-              output,
-              completedAt: new Date().toISOString(),
-              diffComments: JSON.stringify([]),
-            });
-            tasksService.update(workspace.taskId, { status: TASK_STATUS.IN_REVIEW }).catch((e) => {
-              logger.warn(`${FILE_PATH} :: requestChanges - failed to move task to In Review`, e);
-            });
-            activityLogService.log({
-              projectId: workspace.projectId,
-              taskId: workspace.taskId,
-              workspaceId,
-              agentId: workspace.agentId,
-              eventType: 'agent_completed',
-              description: 'Agent completed review changes',
-              metadata: {},
-            });
-          },
-          onFailed: onFailedCallback,
-        },
-        spawnOpts,
-      );
+      const result = await spawnAgent(workspace.id, executor, cwd, fullPrompt, { onCompleted, onFailed }, spawnOpts);
 
       // Race mitigation: shutdown signal may have arrived between the gate
       // check at the top and now. Kill any child we just spawned to prevent
@@ -172,11 +118,11 @@ export class RequestChangesService {
 
       const entry: ActiveProcessEntry = {
         process: result.process,
-        onFailed: onFailedCallback,
+        onFailed,
         startedAt: Date.now(),
         stage: 'review',
       };
-      attachWatchdog(entry, workspace.id, workspace.projectId, workspace.taskId, workspace.agentId, onFailedCallback);
+      attachWatchdog(entry, workspace.id, workspace.projectId, workspace.taskId, workspace.agentId, onFailed);
       activeProcesses.set(workspace.id, entry);
 
       // Mark as running (don't clear comments yet — cleared on success only)
