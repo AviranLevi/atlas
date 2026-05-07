@@ -80,5 +80,5 @@ export type { RuleDetail } from './rules/rules.types.js';
 export type { SearchResult } from './search/search.types.js';
 export type { SkillDetail } from './skills/skills.types.js';
 export type { ObsidianSyncResult } from './integrations/obsidian.service.js';
-export type { SystemInfo, UpdateCheckResult } from './system/system.service.js';
+export type { SystemInfo, UpdateCheckResult, UpdateProgress } from '@atlas/shared';
 export type { DiffFile } from './worktree/index.js';
