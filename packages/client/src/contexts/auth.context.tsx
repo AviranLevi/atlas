@@ -68,6 +68,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrapAttempted.current = true;
 
     let cancelled = false;
+    // Track whether the fetch reached a terminal state (success, 409, 403, error).
+    // If cleanup fires before completion (React 19 StrictMode unmounts the effect
+    // on first mount then remounts it), we reset bootstrapAttempted so the second
+    // mount can retry — otherwise apiKey stays null forever.
+    let completed = false;
+
     (async () => {
       try {
         const res = await fetch('/api/v1/auth/bootstrap', {
@@ -81,30 +87,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setKey(body.rawKey);
             setJustBootstrapped(true);
           }
+          completed = true;
           return;
         }
         if (res.status === 409) {
-          // Another tab may have won the bootstrap race and already written
-          // the key to localStorage. Re-read before declaring lockout.
+          // Defensive: the server currently always mints a fresh key (201),
+          // but if the endpoint is ever tightened to reject duplicates again
+          // (e.g. remote-access mode), this branch recovers gracefully.
           const stored = localStorage.getItem(STORAGE_KEY);
           if (stored) {
             setKey(stored);
           } else {
             setNeedsRecovery(true);
           }
+          completed = true;
           return;
         }
-        // 403 (origin rejected), 500, network — leave key null so the rest of
-        // the app behaves as it always did when unauthenticated. The user can
-        // still hit Settings → API Keys once a key exists, and `localOnly`
+        // 403 (origin rejected), 500, network — terminal; leave key null so the
+        // rest of the app behaves as it always did when unauthenticated. The user
+        // can still hit Settings → API Keys once a key exists, and `localOnly`
         // misconfiguration surfaces as a hard 403 the dev will see in Network.
+        completed = true;
       } catch {
-        // Network error — same fallback.
+        // Network error — terminal fallback.
+        completed = true;
       }
     })();
 
     return () => {
       cancelled = true;
+      // If the fetch didn't finish before cleanup ran, allow the next mount to retry.
+      if (!completed) bootstrapAttempted.current = false;
     };
   }, [apiKey, setKey]);
 

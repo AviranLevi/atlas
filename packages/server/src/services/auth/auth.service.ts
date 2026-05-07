@@ -93,13 +93,11 @@ export class AuthService {
   async bootstrapKey(): Promise<{ apiKey: ApiKey; rawKey: string }> {
     const FUNCTION_NAME = 'bootstrapKey';
     try {
-      const existing = apiKeysRepository.findAll();
-      if (existing.length > 0) {
-        throw new AppError('Atlas is already initialized — keys exist', {
-          status: 409,
-          cause: { code: 'ALREADY_INITIALIZED' },
-        });
-      }
+      // Always mint a fresh key. A browser that lost its localStorage (cleared
+      // cache, new incognito window, different browser) is indistinguishable
+      // from a first-time install. Since the endpoint is already gated by the
+      // `localOnly` middleware (localhost-only origin + host), the security
+      // boundary is the network check, not key scarcity.
       return this.generateKey('Browser default');
     } catch (error: unknown) {
       if (error instanceof AppError) throw error;
