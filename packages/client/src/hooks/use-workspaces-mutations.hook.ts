@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 // Hooks
+import { PIPELINES_KEY } from '@/hooks/use-pipelines.hook';
 import { REVIEWS_KEY } from '@/hooks/use-reviews.hook';
 import { RUNTIMES_KEY, WORKSPACES_KEY } from '@/hooks/use-workspaces-queries.hook';
 
@@ -61,6 +62,7 @@ export function useAdvanceWorkflow() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
   });
 }
@@ -77,6 +79,7 @@ export function useRejectWorkflow() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
   });
 }
@@ -130,6 +133,7 @@ export function useStopWork() {
     mutationFn: (id: string) => api.post<Workspace>(`/workspaces/${id}/stop`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
+      queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
   });
 }
@@ -151,6 +155,7 @@ export function useMergeWorkspace() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
   });
 }
@@ -162,6 +167,7 @@ export function useCompleteWorkspace() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
   });
 }
@@ -177,6 +183,7 @@ export function useRerunWorkspace() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
   });
 }

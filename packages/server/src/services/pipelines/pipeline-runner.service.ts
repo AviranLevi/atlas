@@ -2,7 +2,12 @@
 import type { Pipeline, PipelineWithTasks } from '@atlas/shared';
 
 // Repositories
-import { pipelinesRepository, workspacesRepository } from '../../db/repositories/index.js';
+import {
+  agentsRepository,
+  pipelinesRepository,
+  tasksRepository,
+  workspacesRepository,
+} from '../../db/repositories/index.js';
 
 // Lib
 import { AppError } from '../../lib/errors.js';
@@ -13,9 +18,9 @@ const FILE_PATH = 'services/pipelines/pipeline-runner.service.ts';
 export class PipelineRunnerService {
   /**
    * Starts a pipeline: validates state and spawns the first queued task.
-   * `agentRuntimeId` is stored on the pipeline so `advance()` can reuse it.
+   * Runtime is resolved per-task from agent.defaultRuntimeId; fallback to explicit override.
    */
-  async start(pipelineId: string, agentRuntimeId: string): Promise<PipelineWithTasks> {
+  async start(pipelineId: string, agentRuntimeId?: string): Promise<PipelineWithTasks> {
     const FUNCTION_NAME = 'start';
     try {
       const pipeline = pipelinesRepository.findWithTasks(pipelineId);
@@ -67,7 +72,7 @@ export class PipelineRunnerService {
   /**
    * Resumes a paused pipeline by spawning the next queued task.
    */
-  async resume(pipelineId: string, agentRuntimeId: string): Promise<PipelineWithTasks> {
+  async resume(pipelineId: string, agentRuntimeId?: string): Promise<PipelineWithTasks> {
     const FUNCTION_NAME = 'resume';
     try {
       const pipeline = pipelinesRepository.findByIdOrThrow(pipelineId);
@@ -138,7 +143,7 @@ export class PipelineRunnerService {
    */
   async onWorkspaceTransition(
     workspaceId: string,
-    newStatus: 'completed' | 'approved' | 'failed',
+    newStatus: 'completed' | 'approved' | 'failed' | 'stopped',
     agentRuntimeId?: string,
   ): Promise<void> {
     const FUNCTION_NAME = 'onWorkspaceTransition';
@@ -150,7 +155,15 @@ export class PipelineRunnerService {
       if (!pipeline) return;
 
       // Respect paused state — don't advance
-      if (pipeline.status === 'paused' && newStatus !== 'failed') return;
+      if (pipeline.status === 'paused' && newStatus !== 'failed' && newStatus !== 'stopped') return;
+
+      if (newStatus === 'stopped') {
+        // User manually stopped — pause pipeline, mark task queued so it can be re-run
+        pipelinesRepository.updateTask(pipeline.id, pipelineTask.taskId, { status: 'queued' });
+        pipelinesRepository.update(pipeline.id, { status: 'paused', currentTaskId: null });
+        logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - pipeline ${pipeline.id} paused after manual stop`);
+        return;
+      }
 
       if (newStatus === 'failed') {
         // Mark this task failed, pause the pipeline so the user can intervene
@@ -164,15 +177,16 @@ export class PipelineRunnerService {
       }
 
       if (newStatus === 'completed') {
-        if (pipelineTask.autoReview) {
-          // Trigger AI reviewer automatically — the reviewer's completion will
-          // eventually call onWorkspaceTransition again (via submitAiReview or decide)
-          // with 'approved' if autoAccept is also on. Nothing more to do here.
+        const ws = workspacesRepository.findById(workspaceId);
+        const isWorkflowStage = ws?.workflowStage === 'brainstorm' || ws?.workflowStage === 'plan';
+
+        // Only auto-review after execute stage (or non-workflow tasks).
+        // Brainstorm/plan stage progression is handled by the orchestrator's
+        // advanceWorkflow, not the pipeline runner.
+        if (pipelineTask.autoReview && !isWorkflowStage) {
           try {
             const { orchestratorService } = await import('../index.js');
-            const ws = workspacesRepository.findById(workspaceId);
             if (ws) {
-              // agentRuntimeId stored on workspace row
               await orchestratorService.startAiReview(workspaceId, ws.agentRuntime);
             }
           } catch (e) {
@@ -190,13 +204,7 @@ export class PipelineRunnerService {
           completedAt: new Date().toISOString(),
         });
 
-        if (!agentRuntimeId) {
-          // No runtime provided — pause so the user can resume manually
-          pipelinesRepository.update(pipeline.id, { status: 'paused', currentTaskId: null });
-          return;
-        }
-
-        // Advance to the next task
+        // Advance to the next task — runtime resolved per-task from agent.defaultRuntimeId
         await this.advance(pipeline.id, agentRuntimeId);
       }
     } catch (error: unknown) {
@@ -209,9 +217,9 @@ export class PipelineRunnerService {
 
   /**
    * Finds the next queued task in the pipeline and spawns a workspace for it.
-   * Marks pipeline complete when no queued tasks remain.
+   * Resolves runtime per-task: agent.defaultRuntimeId → fallback override → error.
    */
-  private async advance(pipelineId: string, agentRuntimeId: string): Promise<void> {
+  private async advance(pipelineId: string, fallbackRuntimeId?: string): Promise<void> {
     const FUNCTION_NAME = 'advance';
 
     const pipeline = pipelinesRepository.findWithTasks(pipelineId);
@@ -223,6 +231,29 @@ export class PipelineRunnerService {
       // All tasks done — mark pipeline complete
       pipelinesRepository.update(pipelineId, { status: 'completed', currentTaskId: null });
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - pipeline ${pipelineId} completed`);
+      return;
+    }
+
+    // Resolve runtime: task.agent.defaultRuntimeId → fallback → error
+    const resolvedRuntimeId = this.resolveRuntime(nextTask.taskId, fallbackRuntimeId);
+    if (!resolvedRuntimeId) {
+      const reason = `Task "${nextTask.taskName ?? nextTask.taskId}" has no agent with a default runtime configured`;
+      logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - ${reason}`);
+      pipelinesRepository.update(pipelineId, { status: 'paused', currentTaskId: null });
+
+      // Log so the user can see why the pipeline paused
+      try {
+        const { activityLogService } = await import('../index.js');
+        activityLogService.log({
+          projectId: pipeline.projectId,
+          taskId: nextTask.taskId,
+          eventType: 'pipeline_paused',
+          description: `Pipeline paused: ${reason}`,
+          metadata: { pipelineId },
+        });
+      } catch (e) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to log pipeline pause activity`, e);
+      }
       return;
     }
 
@@ -245,7 +276,7 @@ export class PipelineRunnerService {
 
     try {
       const { orchestratorService } = await import('../index.js');
-      const workspace = await orchestratorService.startWork(nextTask.taskId, agentRuntimeId, baseBranch);
+      const workspace = await orchestratorService.startWork(nextTask.taskId, resolvedRuntimeId, baseBranch);
 
       logger.info(
         `${FILE_PATH} :: ${FUNCTION_NAME} - workspace spawned: id=${workspace.id} for task ${nextTask.taskId}`,
@@ -274,5 +305,24 @@ export class PipelineRunnerService {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to spawn next task`, error);
       pipelinesRepository.update(pipelineId, { status: 'paused', currentTaskId: null });
     }
+  }
+
+  /**
+   * Resolves the executor runtime for a task:
+   *   1. task.agent.defaultRuntimeId (if task has an agent with a default runtime)
+   *   2. fallback (explicit override from caller)
+   *   3. null (no runtime available)
+   */
+  private resolveRuntime(taskId: string, fallback?: string): string | null {
+    try {
+      const task = tasksRepository.findById(taskId);
+      if (task?.agentId) {
+        const agent = agentsRepository.findById(task.agentId);
+        if (agent?.defaultRuntimeId) return agent.defaultRuntimeId;
+      }
+    } catch (e) {
+      logger.warn(`${FILE_PATH} :: resolveRuntime - failed to look up agent for task ${taskId}`, e);
+    }
+    return fallback ?? null;
   }
 }

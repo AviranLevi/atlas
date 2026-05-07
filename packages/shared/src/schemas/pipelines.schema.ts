@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { WorkflowStageEnum } from './tasks.schema';
 
 // ── Enums ──────────────────────────────────────────────────────────────────
 
@@ -31,9 +32,17 @@ export const PipelineTaskSchema = z.object({
   workspaceId: z.string().uuid().nullable(),
   startedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
-  // Enriched join fields
+  // Enriched join fields (from tasks, agents, workspaces)
   taskName: z.string().optional(),
   taskStatus: z.string().optional(),
+  agentId: z.string().uuid().nullable().optional(),
+  agentName: z.string().optional(),
+  workflowEnabled: z.boolean().optional(),
+  workflowStage: WorkflowStageEnum.nullable().optional(),
+  workspaceRuntime: z.string().nullable().optional(),
+  workspaceModel: z.string().nullable().optional(),
+  workspaceStage: WorkflowStageEnum.nullable().optional(),
+  workspaceStatus: z.string().nullable().optional(),
 });
 
 export const PipelineWithTasksSchema = PipelineSchema.extend({
@@ -87,7 +96,7 @@ export const ReorderPipelineTasksSchema = z.object({
 });
 
 export const StartPipelineSchema = z.object({
-  agentRuntimeId: z.string().min(1),
+  agentRuntimeId: z.string().min(1).optional(),
 });
 
 // ── Inferred types ─────────────────────────────────────────────────────────

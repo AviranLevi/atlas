@@ -6,7 +6,7 @@ import type { Pipeline, PipelineTask, PipelineWithTasks } from '@atlas/shared';
 
 // DB
 import type { DB } from '../../index.js';
-import { pipelines, pipelineTasks, tasks } from '../../schema/index.js';
+import { agents, pipelines, pipelineTasks, tasks, workspaces } from '../../schema/index.js';
 
 // Lib
 import { NotFoundError } from '../../../lib/errors.js';
@@ -35,6 +35,14 @@ export class PipelinesRepository {
       ...(row.pipeline_tasks as unknown as PipelineTask),
       taskName: row.tasks?.name ?? undefined,
       taskStatus: row.tasks?.status ?? undefined,
+      agentId: row.tasks?.agentId ?? undefined,
+      agentName: row.agents?.name ?? undefined,
+      workflowEnabled: row.tasks?.workflowEnabled ?? undefined,
+      workflowStage: row.tasks?.workflowStage ?? undefined,
+      workspaceRuntime: row.workspaces?.agentRuntime ?? undefined,
+      workspaceModel: row.workspaces?.model ?? undefined,
+      workspaceStage: row.workspaces?.workflowStage ?? undefined,
+      workspaceStatus: row.workspaces?.status ?? undefined,
     };
   }
 
@@ -71,7 +79,7 @@ export class PipelinesRepository {
     return pipeline;
   }
 
-  /** Returns all pipeline tasks for a pipeline, ordered by position, enriched with task name. */
+  /** Returns all pipeline tasks for a pipeline, ordered by position, enriched with task/agent/workspace data. */
   findTasks(pipelineId: string): PipelineTask[] {
     return withAppErrorSync(
       () =>
@@ -79,6 +87,8 @@ export class PipelinesRepository {
           .select()
           .from(pipelineTasks)
           .leftJoin(tasks, eq(pipelineTasks.taskId, tasks.id))
+          .leftJoin(agents, eq(tasks.agentId, agents.id))
+          .leftJoin(workspaces, eq(pipelineTasks.workspaceId, workspaces.id))
           .where(eq(pipelineTasks.pipelineId, pipelineId))
           .orderBy(asc(pipelineTasks.position))
           .all()
@@ -103,6 +113,8 @@ export class PipelinesRepository {
           .select()
           .from(pipelineTasks)
           .leftJoin(tasks, eq(pipelineTasks.taskId, tasks.id))
+          .leftJoin(agents, eq(tasks.agentId, agents.id))
+          .leftJoin(workspaces, eq(pipelineTasks.workspaceId, workspaces.id))
           .where(eq(pipelineTasks.pipelineId, pipelineId))
           .all()
           .find((r) => r.pipeline_tasks.taskId === taskId);
@@ -120,6 +132,8 @@ export class PipelinesRepository {
           .select()
           .from(pipelineTasks)
           .leftJoin(tasks, eq(pipelineTasks.taskId, tasks.id))
+          .leftJoin(agents, eq(tasks.agentId, agents.id))
+          .leftJoin(workspaces, eq(pipelineTasks.workspaceId, workspaces.id))
           .where(eq(pipelineTasks.workspaceId, workspaceId))
           .get();
         return row ? this.taskRowToTask(row as PipelineTaskJoinRow) : null;

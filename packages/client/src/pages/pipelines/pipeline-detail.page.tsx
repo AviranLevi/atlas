@@ -1,6 +1,18 @@
 // React / library
-import { ArrowLeft, ExternalLink, GitBranch, Loader2, Pause, Play, Square, StepForward } from 'lucide-react';
-import { useState } from 'react';
+import {
+  ArrowLeft,
+  Bot,
+  Cpu,
+  ExternalLink,
+  GitBranch,
+  ListChecks,
+  Loader2,
+  Pause,
+  Play,
+  Sparkles,
+  Square,
+  StepForward,
+} from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 // Components
@@ -10,7 +22,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 
 // Hooks
-import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 import {
   useCancelPipeline,
   usePausePipeline,
@@ -21,25 +32,18 @@ import {
 } from '@/hooks/use-pipelines.hook';
 
 // Constants
-import { PIPELINE_STATUS_META, TASK_STATUS_META } from './pipelines.constants';
-
-// Components (local)
-import { StartPipelineDialog } from './components/StartPipelineDialog';
+import { PIPELINE_STATUS_META, TASK_STATUS_META, WORKFLOW_STAGE_META } from './pipelines.constants';
 
 export function PipelineDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: pipeline, isLoading } = usePipeline(id);
-  const { data: runtimes = [] } = useAgentRuntimes();
 
   const start = useStartPipeline();
   const pause = usePausePipeline();
   const resume = useResumePipeline();
   const cancel = useCancelPipeline();
   const updateTask = useUpdatePipelineTask();
-
-  const [startOpen, setStartOpen] = useState(false);
-  const [resumeOpen, setResumeOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -67,6 +71,8 @@ export function PipelineDetailPage() {
   const isPaused = pipeline.status === 'paused';
   const isIdle = pipeline.status === 'idle';
   const isDone = pipeline.status === 'completed' || pipeline.status === 'failed';
+  const tasksWithoutAgent = pipeline.tasks.filter((t) => !t.agentId);
+  const canStart = pipeline.tasks.length > 0 && tasksWithoutAgent.length === 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,9 +102,9 @@ export function PipelineDetailPage() {
         {/* Actions */}
         <div className="flex items-center gap-2">
           {isIdle && (
-            <Button size="sm" onClick={() => setStartOpen(true)} disabled={pipeline.tasks.length === 0}>
+            <Button size="sm" onClick={() => start.mutate(pipeline.id)} disabled={!canStart || start.isPending}>
               <Play className="mr-1.5 h-3.5 w-3.5" />
-              Start
+              {start.isPending ? 'Starting...' : 'Start'}
             </Button>
           )}
           {isRunning && (
@@ -121,9 +127,9 @@ export function PipelineDetailPage() {
           )}
           {isPaused && (
             <>
-              <Button size="sm" onClick={() => setResumeOpen(true)}>
+              <Button size="sm" onClick={() => resume.mutate(pipeline.id)} disabled={resume.isPending}>
                 <StepForward className="mr-1.5 h-3.5 w-3.5" />
-                Resume
+                {resume.isPending ? 'Resuming...' : 'Resume'}
               </Button>
               <Button
                 variant="outline"
@@ -138,13 +144,27 @@ export function PipelineDetailPage() {
             </>
           )}
           {isDone && (
-            <Button variant="outline" size="sm" onClick={() => setStartOpen(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => start.mutate(pipeline.id)}
+              disabled={!canStart || start.isPending}
+            >
               <Play className="mr-1.5 h-3.5 w-3.5" />
-              Re-run
+              {start.isPending ? 'Starting...' : 'Re-run'}
             </Button>
           )}
         </div>
       </div>
+
+      {/* Warning: tasks without agent */}
+      {tasksWithoutAgent.length > 0 && !isRunning && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+          {tasksWithoutAgent.length === 1
+            ? `Task "${tasksWithoutAgent[0].taskName ?? tasksWithoutAgent[0].taskId}" has no agent assigned. Assign an agent with a default runtime before starting.`
+            : `${tasksWithoutAgent.length} tasks have no agent assigned. Assign agents with default runtimes before starting.`}
+        </div>
+      )}
 
       {/* Task list */}
       <Card>
@@ -174,9 +194,41 @@ export function PipelineDetailPage() {
                         {task.position + 1}.
                       </span>
 
-                      {/* Task name */}
-                      <div className="flex-1 min-w-0">
+                      {/* Task name + metadata */}
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
                         <p className="truncate text-sm font-medium">{task.taskName ?? task.taskId}</p>
+                        {task.agentName && (
+                          <Badge variant="secondary" className="shrink-0 gap-1 text-[10px] px-1.5 py-0">
+                            <Bot className="h-2.5 w-2.5" />
+                            {task.agentName}
+                          </Badge>
+                        )}
+                        {task.workspaceRuntime && (
+                          <Badge variant="secondary" className="shrink-0 gap-1 text-[10px] px-1.5 py-0">
+                            <Cpu className="h-2.5 w-2.5" />
+                            {task.workspaceRuntime}
+                          </Badge>
+                        )}
+                        {task.workspaceModel && (
+                          <span className="shrink-0 text-[10px] text-muted-foreground">{task.workspaceModel}</span>
+                        )}
+                        {task.workflowEnabled &&
+                          (() => {
+                            const stageMeta = task.workspaceStage ? WORKFLOW_STAGE_META[task.workspaceStage] : null;
+                            const StageIcon = stageMeta?.icon;
+                            return (
+                              <Badge
+                                variant="outline"
+                                className={`shrink-0 gap-1 text-[10px] px-1.5 py-0 ${
+                                  stageMeta?.badgeClass ??
+                                  'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                }`}
+                              >
+                                {StageIcon && <StageIcon className="h-2.5 w-2.5" />}
+                                {stageMeta?.label ?? 'Workflow'}
+                              </Badge>
+                            );
+                          })()}
                       </div>
 
                       {/* Auto-review / auto-accept toggles */}
@@ -237,30 +289,6 @@ export function PipelineDetailPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Dialogs */}
-      <StartPipelineDialog
-        open={startOpen}
-        onOpenChange={setStartOpen}
-        runtimes={runtimes}
-        title="Start Pipeline"
-        description="Choose which agent runtime will execute each task in this pipeline."
-        isPending={start.isPending}
-        onConfirm={(agentRuntimeId) =>
-          start.mutate({ id: pipeline.id, data: { agentRuntimeId } }, { onSuccess: () => setStartOpen(false) })
-        }
-      />
-      <StartPipelineDialog
-        open={resumeOpen}
-        onOpenChange={setResumeOpen}
-        runtimes={runtimes}
-        title="Resume Pipeline"
-        description="Choose which agent runtime will execute the next task."
-        isPending={resume.isPending}
-        onConfirm={(agentRuntimeId) =>
-          resume.mutate({ id: pipeline.id, data: { agentRuntimeId } }, { onSuccess: () => setResumeOpen(false) })
-        }
-      />
     </div>
   );
 }

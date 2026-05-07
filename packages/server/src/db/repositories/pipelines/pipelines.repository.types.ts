@@ -1,5 +1,5 @@
 // DB
-import type { pipelines, pipelineTasks, tasks } from '../../schema/index.js';
+import type { agents, pipelines, pipelineTasks, tasks, workspaces } from '../../schema/index.js';
 
 export type PipelineRow = typeof pipelines.$inferSelect;
 export type PipelineTaskRow = typeof pipelineTasks.$inferSelect;
@@ -7,6 +7,8 @@ export type PipelineTaskRow = typeof pipelineTasks.$inferSelect;
 export type PipelineTaskJoinRow = {
   pipeline_tasks: PipelineTaskRow;
   tasks: typeof tasks.$inferSelect | null;
+  agents: typeof agents.$inferSelect | null;
+  workspaces: typeof workspaces.$inferSelect | null;
 };
 
 export type InsertPipeline = {

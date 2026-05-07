@@ -242,7 +242,7 @@ export class PipelinesService {
   // ── Runner delegates ────────────────────────────────────────────────────
 
   /** Starts a pipeline, spawning the first queued task. */
-  async start(pipelineId: string, agentRuntimeId: string): Promise<PipelineWithTasks> {
+  async start(pipelineId: string, agentRuntimeId?: string): Promise<PipelineWithTasks> {
     return this.runner.start(pipelineId, agentRuntimeId);
   }
 
@@ -252,7 +252,7 @@ export class PipelinesService {
   }
 
   /** Resumes a paused pipeline. */
-  async resume(pipelineId: string, agentRuntimeId: string): Promise<PipelineWithTasks> {
+  async resume(pipelineId: string, agentRuntimeId?: string): Promise<PipelineWithTasks> {
     return this.runner.resume(pipelineId, agentRuntimeId);
   }
 
@@ -267,7 +267,7 @@ export class PipelinesService {
    */
   async onWorkspaceTransition(
     workspaceId: string,
-    newStatus: 'completed' | 'approved' | 'failed',
+    newStatus: 'completed' | 'approved' | 'failed' | 'stopped',
     agentRuntimeId?: string,
   ): Promise<void> {
     return this.runner.onWorkspaceTransition(workspaceId, newStatus, agentRuntimeId);

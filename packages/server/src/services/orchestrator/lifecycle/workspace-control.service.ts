@@ -101,6 +101,17 @@ export class WorkspaceControlService {
         metadata: {},
       });
 
+      // Notify pipeline runner so it can pause the pipeline on manual stop
+      import('../../index.js')
+        .then(({ pipelinesService }) =>
+          pipelinesService.onWorkspaceTransition(workspaceId, 'stopped').catch((e) => {
+            logger.warn(`${FILE_PATH} :: stopWork - pipeline transition notification failed`, e);
+          }),
+        )
+        .catch((e) => {
+          logger.warn(`${FILE_PATH} :: stopWork - failed to import pipelinesService`, e);
+        });
+
       return updated;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

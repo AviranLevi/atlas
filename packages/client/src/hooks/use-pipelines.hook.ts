@@ -12,12 +12,11 @@ import type {
   PipelineTask,
   PipelineWithTasks,
   ReorderPipelineTasks,
-  StartPipeline,
   UpdatePipeline,
   UpdatePipelineTask,
 } from '@atlas/shared';
 
-const PIPELINES_KEY = ['pipelines'] as const;
+export const PIPELINES_KEY = ['pipelines'] as const;
 
 // ── Queries ────────────────────────────────────────────────────────────────
 
@@ -116,12 +115,11 @@ export function useReorderPipelineTasks() {
 
 // ── Lifecycle mutations ────────────────────────────────────────────────────
 
-/** Starts a pipeline. */
+/** Starts a pipeline. Runtime resolved per-task from agent.defaultRuntimeId. */
 export function useStartPipeline() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: StartPipeline }) =>
-      api.post<PipelineWithTasks>(`/pipelines/${id}/start`, data),
+    mutationFn: (id: string) => api.post<PipelineWithTasks>(`/pipelines/${id}/start`, {}),
     onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
   });
 }
@@ -135,12 +133,11 @@ export function usePausePipeline() {
   });
 }
 
-/** Resumes a paused pipeline. */
+/** Resumes a paused pipeline. Runtime resolved per-task from agent.defaultRuntimeId. */
 export function useResumePipeline() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: StartPipeline }) =>
-      api.post<PipelineWithTasks>(`/pipelines/${id}/resume`, data),
+    mutationFn: (id: string) => api.post<PipelineWithTasks>(`/pipelines/${id}/resume`, {}),
     onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
   });
 }
