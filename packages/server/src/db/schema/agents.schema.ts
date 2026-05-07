@@ -13,6 +13,7 @@ export const agents = sqliteTable('agents', {
   unbreakableRules: text('unbreakable_rules'),
   providerId: text('provider_id').references(() => agentProviders.id, { onDelete: 'set null' }),
   defaultModel: text('default_model'),
+  defaultRuntimeId: text('default_runtime_id'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

@@ -11,6 +11,7 @@ import { EditableCard } from '@/components/ui/editable-card';
 import { AssignedProjectsSection } from './components/AssignedProjectsSection';
 import { AttachableItemsSection } from './components/AttachableItemsSection';
 import { DefaultModelSelector } from './components/DefaultModelSelector';
+import { DefaultRuntimeSelector } from './components/DefaultRuntimeSelector';
 import { HeartbeatSection } from './components/HeartbeatSection';
 
 // Hooks
@@ -146,6 +147,11 @@ export function AgentDetailPage() {
           provider={provider}
           isPending={updateAgent.isPending}
           onSave={(val) => updateAgent.mutate({ id: agent.id, data: { defaultModel: val } })}
+        />
+        <DefaultRuntimeSelector
+          value={agent.defaultRuntimeId}
+          isPending={updateAgent.isPending}
+          onSave={(val) => updateAgent.mutate({ id: agent.id, data: { defaultRuntimeId: val } })}
         />
       </div>
 

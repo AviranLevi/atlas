@@ -52,7 +52,7 @@ export function AgentDialog({ open, onOpenChange, agent, onCreated }: AgentDialo
       updateAgent.mutate({ id: agent.id, data }, { onSuccess: () => onOpenChange(false) });
     } else {
       createAgent.mutate(
-        { ...data, personality: null, unbreakableRules: null, defaultModel: null },
+        { ...data, personality: null, unbreakableRules: null, defaultModel: null, defaultRuntimeId: null },
         {
           onSuccess: (created) => {
             if (onCreated) onCreated(created);
