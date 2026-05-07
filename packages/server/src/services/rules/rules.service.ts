@@ -51,12 +51,19 @@ export class RulesService {
     return this.crud.remove(id);
   }
 
-  /** Bulk-imports detected AI config files as rules linked to a project. */
+  /** Returns the set of filePaths that have already been imported as rules for a project. */
+  getImportedFilePaths(projectId: string): Set<string> {
+    return this.repo.findImportedFilePaths(projectId);
+  }
+
+  /** Bulk-imports detected AI config files as rules linked to a project, skipping already-imported paths. */
   bulkImportRules(projectId: string, items: AiConfig[]): Promise<{ imported: number; ids: string[] }> {
     return withAppError(
       () => {
+        const alreadyImported = this.repo.findImportedFilePaths(projectId);
         const ids: string[] = [];
         for (const item of items) {
+          if (alreadyImported.has(item.filePath)) continue;
           const rule = this.repo.insert({
             name: item.name,
             type: item.type ?? 'General',

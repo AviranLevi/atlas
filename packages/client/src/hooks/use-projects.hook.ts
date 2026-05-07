@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/auth.context';
 import { api } from '@/lib/api';
 
 // Types
-import type { CreateProject, Project, ScaffoldProject, UpdateProject } from '@atlas/shared';
+import type { CreateProject, GitPullResult, GitStatus, Project, ScaffoldProject, UpdateProject } from '@atlas/shared';
 import type { UseMutationResult } from '@tanstack/react-query';
 import type { BrowseResponse, ScanResult } from '@/components/projects/projects.types';
 import type { ProjectContext, ProjectWithSummary } from '@/pages/projects/projects.types';
@@ -99,7 +99,28 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateProject) => api.post<Project>('/projects', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: (project) => {
+      // Write synchronously so ProjectContext and RouteGuard see the new project
+      // before navigate() fires — without this the cache stays [] and the shell
+      // collapses to firstRun, bouncing the user back to /welcome.
+      queryClient.setQueryData<Project[]>(PROJECTS_KEY, (old = []) =>
+        old.some((p) => p.id === project.id) ? old : [...old, project],
+      );
+      // Also update the summary cache so ProjectsPage renders the new project
+      // without waiting for its own refetch.
+      queryClient.setQueryData<ProjectWithSummary[]>([...PROJECTS_KEY, 'summary'], (old = []) =>
+        old.some((p) => p.id === project.id)
+          ? old
+          : [
+              ...old,
+              { ...project, taskCounts: { todo: 0, inProgress: 0, inReview: 0, done: 0, total: 0 }, agentCount: 0 },
+            ],
+      );
+      // Mark stale without refetching now — a background refetch during navigation
+      // can return [] and clobber our synchronous write, collapsing the shell back
+      // to firstRun. Queries will refetch naturally on next mount/focus.
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY, refetchType: 'none' });
+    },
   });
 }
 
@@ -108,7 +129,20 @@ export function useScaffoldProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: ScaffoldProject) => api.post<Project>('/projects/scaffold', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: (project) => {
+      queryClient.setQueryData<Project[]>(PROJECTS_KEY, (old = []) =>
+        old.some((p) => p.id === project.id) ? old : [...old, project],
+      );
+      queryClient.setQueryData<ProjectWithSummary[]>([...PROJECTS_KEY, 'summary'], (old = []) =>
+        old.some((p) => p.id === project.id)
+          ? old
+          : [
+              ...old,
+              { ...project, taskCounts: { todo: 0, inProgress: 0, inReview: 0, done: 0, total: 0 }, agentCount: 0 },
+            ],
+      );
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY, refetchType: 'none' });
+    },
   });
 }
 
@@ -154,6 +188,39 @@ export function useGenerateDesignContext() {
 }
 
 const FILESYSTEM_KEY = ['filesystem'] as const;
+
+/**
+ * Polls origin for new commits and returns how many the local HEAD is behind.
+ * Only active when `enabled` is true (i.e. project has a localPath).
+ */
+export function useGitStatus(projectId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: [...PROJECTS_KEY, projectId, 'git-status'],
+    queryFn: () => api.get<GitStatus>(`/projects/${projectId}/git-status`),
+    enabled: !!projectId && enabled,
+    refetchInterval: 120_000,
+    staleTime: 60_000,
+  });
+}
+
+/** Pulls origin/<defaultBranch> into the project's local repository. */
+export function useGitPull() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (projectId: string) => api.post<GitPullResult>(`/projects/${projectId}/git-pull`, {}),
+    onSuccess: (data, projectId) => {
+      queryClient.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'git-status'] });
+      if (data.status === 'up-to-date') {
+        toast.info('Already up to date');
+      } else if (data.status === 'conflict') {
+        toast.error(`Merge conflict — resolve manually`);
+      } else {
+        toast.success('Pulled latest changes');
+      }
+    },
+    onError: () => toast.error('Pull failed — check the terminal for details'),
+  });
+}
 
 /** Opens the project's local path in the first available editor (Cursor → VS Code → Windsurf). */
 export function useOpenProjectInEditor() {

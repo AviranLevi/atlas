@@ -110,6 +110,18 @@ export const ScaffoldProjectSchema = z.object({
   color: z.string().nullable().optional(),
 });
 
+export const GitStatusSchema = z.object({
+  commitsBehind: z.number().int().min(0),
+  lastChecked: z.string().datetime(),
+});
+
+export const GitPullResultSchema = z.object({
+  status: z.enum(['ok', 'up-to-date', 'conflict']),
+  message: z.string(),
+});
+
+export type GitStatus = z.infer<typeof GitStatusSchema>;
+export type GitPullResult = z.infer<typeof GitPullResultSchema>;
 export type AgentBehavior = z.infer<typeof AgentBehaviorSchema>;
 export type ApprovalGates = z.infer<typeof ApprovalGatesSchema>;
 export type AiConfig = z.infer<typeof AiConfigSchema>;

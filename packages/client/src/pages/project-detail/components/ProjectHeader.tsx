@@ -1,13 +1,14 @@
 // React / library
-import { ArrowLeft, ExternalLink, FolderOpen, Pencil, GitBranch, ScanSearch } from 'lucide-react';
+import { ArrowDownToLine, ArrowLeft, ExternalLink, FolderOpen, Pencil, GitBranch, ScanSearch } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Hooks
-import { useOpenProjectInEditor } from '@/hooks/use-projects.hook';
+import { useGitPull, useGitStatus, useOpenProjectInEditor } from '@/hooks/use-projects.hook';
 
 // Types
 import type { ProjectHeaderProps } from '../project-detail.types';
@@ -15,6 +16,9 @@ import type { ProjectHeaderProps } from '../project-detail.types';
 export function ProjectHeader({ project, statusConfig: status, scanProject, onEdit }: ProjectHeaderProps) {
   const navigate = useNavigate();
   const openInEditor = useOpenProjectInEditor();
+  const gitPull = useGitPull();
+  const { data: gitStatus } = useGitStatus(project.id, !!project.localPath);
+  const commitsBehind = gitStatus?.commitsBehind ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -58,6 +62,24 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
                   {project.defaultBranch}
                 </Badge>
               )}
+              {commitsBehind > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => gitPull.mutate(project.id)}
+                      disabled={gitPull.isPending}
+                      className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
+                    >
+                      <ArrowDownToLine className="h-3 w-3" />
+                      {commitsBehind} behind
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {commitsBehind} commit{commitsBehind !== 1 ? 's' : ''} ahead on origin — click to pull
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {project.repositoryUrl && (
                 <a
                   href={project.repositoryUrl}
@@ -90,6 +112,16 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
                   <ScanSearch className={`mr-1.5 h-4 w-4 ${scanProject.isPending ? 'animate-pulse' : ''}`} />
                   {scanProject.isPending ? 'Scanning...' : project.scanData ? 'Re-scan' : 'Scan Project'}
                 </button>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => gitPull.mutate(project.id)}
+                disabled={gitPull.isPending}
+                title={`Pull origin/${project.defaultBranch ?? 'main'}`}
+              >
+                <ArrowDownToLine className={`mr-1.5 h-4 w-4 ${gitPull.isPending ? 'animate-bounce' : ''}`} />
+                {gitPull.isPending ? 'Pulling...' : 'Pull'}
               </Button>
             </>
           )}

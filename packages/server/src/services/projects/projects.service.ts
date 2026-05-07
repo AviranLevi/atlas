@@ -2,7 +2,7 @@
 import { execSync } from 'node:child_process';
 
 // Shared
-import type { CreateProject, Project, UpdateProject } from '@atlas/shared';
+import type { CreateProject, GitPullResult, GitStatus, Project, UpdateProject } from '@atlas/shared';
 import { TASK_STATUS } from '@atlas/shared';
 
 // Repositories
@@ -179,6 +179,79 @@ export class ProjectsService {
         throw new AppError(`Branch "${branchName}" already exists`, { status: 409 });
       }
       throw new AppError(`Failed to create branch: ${msg}`, { status: 500, cause: error });
+    }
+  }
+
+  /** Pulls the latest changes from origin into the project's local repository. */
+  async gitPull(projectId: string): Promise<GitPullResult> {
+    const FUNCTION_NAME = 'gitPull';
+    try {
+      const project = await this.getById(projectId);
+      if (!project.localPath) {
+        throw new AppError('Project has no local path configured', { status: 400 });
+      }
+      const branch = project.defaultBranch ?? 'main';
+      const opts = {
+        cwd: project.localPath,
+        encoding: 'utf-8' as const,
+        stdio: ['pipe', 'pipe', 'pipe'] as const,
+        timeout: 30_000,
+      };
+      let output: string;
+      try {
+        output = execSync(`git pull origin ${branch}`, opts).trim();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.toLowerCase().includes('conflict')) {
+          return { status: 'conflict', message: 'Merge conflict — resolve manually.' };
+        }
+        throw err;
+      }
+      const upToDate = output.toLowerCase().includes('already up to date');
+      return {
+        status: upToDate ? 'up-to-date' : 'ok',
+        message: output.split('\n')[0] ?? output,
+      };
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to pull from remote', { cause: error });
+    }
+  }
+
+  /**
+   * Fetches remote ref updates and returns how many commits the local HEAD is behind
+   * origin's default branch. Safe to poll — fetch only downloads metadata, not objects,
+   * when the remote is up to date.
+   */
+  async getGitStatus(projectId: string): Promise<GitStatus> {
+    const FUNCTION_NAME = 'getGitStatus';
+    const now = new Date().toISOString();
+    try {
+      const project = await this.getById(projectId);
+      if (!project.localPath) {
+        return { commitsBehind: 0, lastChecked: now };
+      }
+      const branch = project.defaultBranch ?? 'main';
+      const opts = {
+        cwd: project.localPath,
+        encoding: 'utf-8' as const,
+        stdio: ['pipe', 'pipe', 'pipe'] as const,
+        timeout: 15_000,
+      };
+      try {
+        execSync('git fetch origin', opts);
+      } catch {
+        // Network unavailable or no remote — not an error, just return 0
+        return { commitsBehind: 0, lastChecked: now };
+      }
+      const countStr = execSync(`git rev-list HEAD..origin/${branch} --count`, opts).trim();
+      const commitsBehind = parseInt(countStr, 10) || 0;
+      return { commitsBehind, lastChecked: new Date().toISOString() };
+    } catch (error: unknown) {
+      // Non-fatal — polling must not break the UI
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      return { commitsBehind: 0, lastChecked: now };
     }
   }
 

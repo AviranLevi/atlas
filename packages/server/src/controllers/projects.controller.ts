@@ -7,6 +7,7 @@ import type {
   CreateBranch,
   CreateProject,
   ImportRules,
+  Project,
   ScaffoldProject,
   UpdateProject,
 } from '@atlas/shared';
@@ -25,6 +26,15 @@ import {
 import { AppError, NotFoundError } from '../lib/errors.js';
 import { getValidatedBody } from '../lib/hono-helpers.js';
 import { openInEditor } from '../lib/open-in-editor.js';
+
+/** Removes already-imported filePaths from scanData.aiConfigs so the UI won't offer to re-import them. */
+function withFilteredAiConfigs(project: Project): Project {
+  if (!project.scanData?.aiConfigs?.length) return project;
+  const imported = rulesService.getImportedFilePaths(project.id);
+  if (imported.size === 0) return project;
+  const filtered = project.scanData.aiConfigs.filter((c) => !imported.has(c.filePath));
+  return { ...project, scanData: { ...project.scanData, aiConfigs: filtered } };
+}
 
 /** Lists all projects. Pass include=summary for task/agent counts. */
 export async function listProjects(c: Context) {
@@ -61,13 +71,13 @@ export async function createProjectBranch(c: Context) {
 /** Returns the full context for a project (agents, tasks, memories). */
 export async function getProjectContext(c: Context) {
   const ctx = await projectsService.getContext(c.req.param('id')!);
-  return c.json(ctx);
+  return c.json({ ...ctx, project: withFilteredAiConfigs(ctx.project) });
 }
 
 /** Returns a project by ID. */
 export async function getProject(c: Context) {
   const project = await projectsService.getById(c.req.param('id')!);
-  return c.json(project);
+  return c.json(withFilteredAiConfigs(project));
 }
 
 /** Creates a new project. */
@@ -90,7 +100,7 @@ export async function scanProject(c: Context) {
   const _project = await projectsService.scanAndUpdate(projectId);
   await briefGeneratorService.generateAndSave(projectId);
   const final = await projectsService.getById(projectId);
-  return c.json(final);
+  return c.json(withFilteredAiConfigs(final));
 }
 
 /** Regenerates the AI project brief from scan data and memories. */
@@ -135,6 +145,18 @@ export async function assignProjectAgent(c: Context) {
 export async function unassignProjectAgent(c: Context) {
   await agentsService.unassignFromProject(c.req.param('agentId')!, c.req.param('id')!);
   return c.body(null, 204);
+}
+
+/** Returns the git sync status (commits behind origin) for a project's local repository. */
+export async function getProjectGitStatus(c: Context) {
+  const status = await projectsService.getGitStatus(c.req.param('id')!);
+  return c.json(status);
+}
+
+/** Pulls the latest changes from origin into a project's local repository. */
+export async function gitPullProject(c: Context) {
+  const result = await projectsService.gitPull(c.req.param('id')!);
+  return c.json(result);
 }
 
 /** Opens the project's local path in the first available editor (Cursor → VS Code → Windsurf). */

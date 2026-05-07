@@ -23,6 +23,8 @@ import {
   getProject,
   getProjectBranches,
   getProjectContext,
+  getProjectGitStatus,
+  gitPullProject,
   importProjectRules,
   listProjectAgents,
   listProjects,
@@ -50,4 +52,6 @@ export const projectsRoute = new Hono()
   .get('/:id/agents', listProjectAgents)
   .post('/:id/agents', zValidator('json', AssignAgentSchema), assignProjectAgent)
   .delete('/:id/agents/:agentId', unassignProjectAgent)
-  .post('/:id/open-in-editor', openProjectInEditor);
+  .post('/:id/open-in-editor', openProjectInEditor)
+  .get('/:id/git-status', getProjectGitStatus)
+  .post('/:id/git-pull', gitPullProject);

@@ -132,6 +132,32 @@ export class RulesRepository {
     }
   }
 
+  /**
+   * Returns the set of filePaths that have already been imported for a project.
+   * Tags for imported rules are stored as JSON arrays `[source, filePath]`.
+   */
+  findImportedFilePaths(projectId: string): Set<string> {
+    const FUNCTION_NAME = 'findImportedFilePaths';
+    try {
+      const rows = this.db.select({ tags: rules.tags }).from(rules).where(eq(rules.projectId, projectId)).all();
+      const paths = new Set<string>();
+      for (const row of rows) {
+        try {
+          const parsed = JSON.parse(row.tags ?? '[]') as unknown[];
+          if (Array.isArray(parsed) && parsed.length >= 2 && typeof parsed[1] === 'string') {
+            paths.add(parsed[1]);
+          }
+        } catch {
+          // Unparseable tags are skipped.
+        }
+      }
+      return paths;
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw new AppError('Failed to query imported file paths', { cause: error });
+    }
+  }
+
   /** Returns agents that use this rule. */
   findAgentsByRuleId(ruleId: string): { id: string; name: string }[] {
     const FUNCTION_NAME = 'findAgentsByRuleId';
