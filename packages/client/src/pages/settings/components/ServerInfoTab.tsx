@@ -1,8 +1,10 @@
 // React / library
-import { CheckCircle2, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowUpCircle, CheckCircle2, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
+import { UpdateDialog } from '@/components/layout/app-shell/UpdateDialog';
 
 // Hooks
 import { useSystemInfo, useUpdateCheck } from '@/hooks/use-system.hook';
@@ -41,6 +43,7 @@ function InfoCard({ label, value }: InfoRowProps) {
 export function ServerInfoTab() {
   const { data, isLoading, isError, error, refetch } = useSystemInfo();
   const updateCheck = useUpdateCheck();
+  const [updateOpen, setUpdateOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -80,15 +83,15 @@ export function ServerInfoTab() {
         ))}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button
           type="button"
           variant="outline"
           size="sm"
-          disabled={updateCheck.isPending}
-          onClick={() => updateCheck.mutate()}
+          disabled={updateCheck.isFetching}
+          onClick={() => updateCheck.refetch()}
         >
-          {updateCheck.isPending ? (
+          {updateCheck.isFetching ? (
             <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
           ) : (
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
@@ -108,23 +111,31 @@ export function ServerInfoTab() {
         )}
 
         {result?.hasUpdate && (
-          <span className="flex items-center gap-1.5 text-sm text-yellow-500">
-            v{result.latest} available —{' '}
-            {result.releaseUrl ? (
-              <a
-                href={result.releaseUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-yellow-400"
-              >
-                Release notes <ExternalLink className="h-3 w-3" />
-              </a>
-            ) : (
-              'check GitHub for details'
-            )}
-          </span>
+          <>
+            <span className="flex items-center gap-1.5 text-sm text-yellow-500">
+              v{result.latest} available —{' '}
+              {result.releaseUrl ? (
+                <a
+                  href={result.releaseUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-yellow-400"
+                >
+                  Release notes <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : (
+                'check GitHub for details'
+              )}
+            </span>
+            <Button type="button" size="sm" onClick={() => setUpdateOpen(true)}>
+              <ArrowUpCircle className="mr-2 h-3.5 w-3.5" />
+              Update now
+            </Button>
+          </>
         )}
       </div>
+
+      <UpdateDialog open={updateOpen} onOpenChange={setUpdateOpen} />
     </div>
   );
 }

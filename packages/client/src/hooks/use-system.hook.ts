@@ -1,27 +1,18 @@
 // React / library
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Lib
 import { api } from '@/lib/api';
 
-type SystemInfo = {
-  version: string;
-  apiUrl: string;
-  dbPath: string;
-  dbSizeBytes: number;
-  uptimeSeconds: number;
-  nodeVersion: string;
-};
-
-export type UpdateCheckResult = {
-  current: string;
-  latest: string;
-  hasUpdate: boolean;
-  releaseUrl: string | null;
-};
+// Types
+import type { SystemInfo, UpdateCheckResult, UpdateProgress } from '@atlas/shared';
 
 const SYSTEM_KEY = ['system-info'] as const;
+const UPDATE_CHECK_KEY = ['update-check'] as const;
+const UPDATE_PROGRESS_KEY = ['update-progress'] as const;
 
+/** Returns server metadata and database file stats. */
 export function useSystemInfo() {
   return useQuery({
     queryKey: [...SYSTEM_KEY],
@@ -30,12 +21,84 @@ export function useSystemInfo() {
   });
 }
 
+/** Checks GitHub for newer version. Auto-fetches, cached 1 hour. */
 export function useUpdateCheck() {
-  return useMutation({
-    mutationFn: () => api.get<UpdateCheckResult>('/system/update-check'),
+  return useQuery({
+    queryKey: [...UPDATE_CHECK_KEY],
+    queryFn: () => api.get<UpdateCheckResult>('/system/update-check'),
+    staleTime: 60 * 60 * 1000, // 1 hour
+    retry: 1,
   });
 }
 
+/** Triggers server self-update. Returns 202 immediately. */
+export function useTriggerUpdate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<{ status: string; startedAt: string }>('/system/update', {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: UPDATE_PROGRESS_KEY });
+    },
+  });
+}
+
+/** Polls update progress while status is 'updating'. */
+export function useUpdateProgress(enabled: boolean) {
+  return useQuery({
+    queryKey: [...UPDATE_PROGRESS_KEY],
+    queryFn: () => api.get<UpdateProgress>('/system/update-progress'),
+    enabled,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === 'updating') return 2_000;
+      return false;
+    },
+    retry: false,
+  });
+}
+
+/**
+ * Polls server health after update completes or server goes down.
+ * Returns `true` once server responds, `false` while unreachable.
+ */
+export function useServerHealthPoll(enabled: boolean) {
+  const [healthy, setHealthy] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const qc = useQueryClient();
+
+  const stop = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) {
+      stop();
+      setHealthy(false);
+      return;
+    }
+
+    intervalRef.current = setInterval(async () => {
+      try {
+        await api.get<SystemInfo>('/system/info');
+        setHealthy(true);
+        stop();
+        // Refresh all cached data — server restarted with new code
+        qc.invalidateQueries();
+      } catch {
+        // Server still down, keep polling
+      }
+    }, 3_000);
+
+    return stop;
+  }, [enabled, stop, qc]);
+
+  return healthy;
+}
+
+/** Resets all application data. Requires confirm: true. */
 export function useResetAllData() {
   return useMutation({
     mutationFn: () => api.post<unknown>('/system/reset', { confirm: true }),
