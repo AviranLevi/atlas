@@ -1,7 +1,7 @@
 // React / library
 import { ArrowRight } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 // Components
 import { AtlasLogo } from '@/components/icons/AtlasLogo.icon';
@@ -12,6 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 // Context
 import { useActiveProject } from '@/contexts/ProjectContext';
+
+// Hooks
+import { useShellMode } from '@/hooks/use-shell-mode.hook';
 
 const STEPS = [
   { id: 'project', label: 'First project' },
@@ -30,9 +33,33 @@ const STEPS = [
  */
 export function WelcomePage() {
   const navigate = useNavigate();
-  const { setActiveProjectId } = useActiveProject();
+  const { setActiveProjectId, projects } = useActiveProject();
+  const { mode } = useShellMode();
   const [step, setStep] = useState<number>(0);
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+
+  const handleCreated = useCallback(
+    (p: { id: string }) => {
+      setActiveProjectId(p.id);
+      setCreatedProjectId(p.id);
+      setStep(1);
+    },
+    [setActiveProjectId],
+  );
+
+  const handleNavigate = useCallback(
+    (path: string) => {
+      navigate(path);
+    },
+    [navigate],
+  );
+
+  // Already-onboarded user visiting /welcome directly → send to dashboard.
+  // Guard on mode !== 'firstRun': if the cache has projects but auth hasn't resolved yet,
+  // firing Navigate would send RouteGuard into a bounce loop.
+  if (mode !== 'firstRun' && projects.length > 0 && step === 0 && !createdProjectId) {
+    return <Navigate to="/projects" replace />;
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
@@ -59,14 +86,7 @@ export function WelcomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ProjectCreateBody
-                hideCancel
-                onCreated={(p) => {
-                  setActiveProjectId(p.id);
-                  setCreatedProjectId(p.id);
-                  setStep(1);
-                }}
-              />
+              <ProjectCreateBody hideCancel onCreated={handleCreated} />
             </CardContent>
           </Card>
         )}
@@ -80,11 +100,11 @@ export function WelcomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <Button onClick={() => navigate(createdProjectId ? `/projects/${createdProjectId}` : '/projects')}>
+              <Button onClick={() => handleNavigate(createdProjectId ? `/projects/${createdProjectId}` : '/projects')}>
                 Open project workspace
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
-              <Button variant="outline" onClick={() => navigate('/agents')}>
+              <Button variant="outline" onClick={() => handleNavigate('/agents')}>
                 Add an agent
               </Button>
             </CardContent>

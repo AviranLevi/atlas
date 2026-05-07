@@ -16,21 +16,14 @@ function ShellSwitcher() {
   useFirstTimeStateBToast();
   usePageTour();
 
-  if (mode === 'firstRun') {
-    return (
-      <>
-        <BootstrapNotifications />
-        <RouteGuard>
-          <AppRoutes />
-        </RouteGuard>
-      </>
-    );
-  }
-
+  // Always render through AppShell so the component tree is stable across mode
+  // transitions. Previously, firstRun used a bare Fragment while other modes
+  // used <AppShell>, causing React to unmount the entire child tree (including
+  // page-level state like the WelcomePage stepper) whenever mode changed.
   return (
     <AppShell mode={mode}>
       <BootstrapNotifications />
-      <WorkspaceNotifications />
+      {mode !== 'firstRun' && <WorkspaceNotifications />}
       <RouteGuard>
         <AppRoutes />
       </RouteGuard>

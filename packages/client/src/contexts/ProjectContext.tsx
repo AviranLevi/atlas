@@ -46,7 +46,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<ProjectContextValue>(
     () => ({
-      activeProjectId: activeProject ? activeProjectId : null,
+      // Expose raw local state — not masked by whether projects has settled yet.
+      // The useEffect above cleans up genuinely stale ids once projects loads;
+      // masking here caused firstRun bounce during the cache-empty window after
+      // creating a project.
+      activeProjectId,
       activeProject,
       projects,
       setActiveProjectId,

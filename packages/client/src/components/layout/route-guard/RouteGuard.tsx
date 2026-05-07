@@ -96,6 +96,10 @@ export function RouteGuard({ children }: RouteGuardProps) {
   }
 
   // mode === 'activeProject'
-  if (path === '/welcome') return <Navigate to="/" replace />;
+  // Note: /welcome is NOT redirected here — the WelcomePage component handles
+  // its own redirect when the user visits it outside of the onboarding flow.
+  // Redirecting here caused a race: creating a project triggers a projects
+  // refetch → mode becomes activeProject → guard boots the user off /welcome
+  // before step 2 ("You're all set") renders.
   return <>{children}</>;
 }
