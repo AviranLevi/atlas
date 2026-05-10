@@ -1,5 +1,17 @@
 // React / library
-import { Plus, Trash2, MessageSquare, Loader2, Terminal, Cloud, Search, X, Unplug, Bot } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  MessageSquare,
+  Loader2,
+  Terminal,
+  Cloud,
+  Search,
+  X,
+  Unplug,
+  Bot,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { useState } from 'react';
 
 // Components
@@ -7,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ExecutionModeToggle } from './ExecutionModeToggle';
 
 // Lib
 import { cn } from '@/lib/utils';
@@ -39,6 +52,8 @@ export function ConversationSidebar({
     agents,
     selectedAgentId,
     onAgentChange,
+    executionMode,
+    onExecutionModeChange,
   } = config;
 
   const agentOptions = agents.map((a) => ({ value: a.id, label: a.name }));
@@ -273,6 +288,15 @@ export function ConversationSidebar({
             )}
           </div>
         )}
+
+        {/* Execution mode toggle — always visible */}
+        <div className="space-y-1 pt-1 border-t border-border">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <SlidersHorizontal className="h-3 w-3" />
+            Mode
+          </span>
+          <ExecutionModeToggle mode={executionMode} onChange={onExecutionModeChange} />
+        </div>
       </div>
     </div>
   );
