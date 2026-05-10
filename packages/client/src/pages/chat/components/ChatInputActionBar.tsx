@@ -121,10 +121,10 @@ export function ChatInputActionBar({
       {executionMode && onExecutionModeChange && (
         <Select value={executionMode} onValueChange={(v) => onExecutionModeChange(v as ExecutionMode)}>
           <SelectTrigger className="h-7 w-auto gap-1 border-0 bg-transparent px-2 text-xs font-medium text-muted-foreground shadow-none hover:bg-muted focus:ring-0 shrink-0">
-            <span className="flex items-center gap-1">
+            <div className="flex items-center gap-1">
               {activeMode?.icon}
               {activeMode?.label ?? 'Mode'}
-            </span>
+            </div>
           </SelectTrigger>
           <SelectContent align="start">
             {EXEC_MODES.map((m) => (
