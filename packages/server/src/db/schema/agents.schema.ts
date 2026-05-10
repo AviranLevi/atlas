@@ -14,6 +14,7 @@ export const agents = sqliteTable('agents', {
   providerId: text('provider_id').references(() => agentProviders.id, { onDelete: 'set null' }),
   defaultModel: text('default_model'),
   defaultRuntimeId: text('default_runtime_id'),
+  executionMode: text('execution_mode'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });

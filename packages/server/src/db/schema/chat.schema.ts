@@ -16,6 +16,7 @@ export const chatConversations = sqliteTable('chat_conversations', {
   providerId: text('provider_id').references(() => agentProviders.id, { onDelete: 'set null' }),
   executorId: text('executor_id'),
   model: text('model'),
+  executionMode: text('execution_mode'),
   createdAt: text('created_at').notNull().$defaultFn(timestampDefault),
   updatedAt: text('updated_at').notNull().$defaultFn(timestampDefault),
 });
