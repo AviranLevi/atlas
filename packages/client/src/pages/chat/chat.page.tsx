@@ -17,7 +17,6 @@ import { useChatActions } from './hooks/use-chat-actions.hook';
 
 // Context
 import { useActiveProject } from '@/contexts/ProjectContext';
-import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 export function ChatPage() {
   const { id: conversationId } = useParams<{ id: string }>();
@@ -79,14 +78,13 @@ export function ChatPage() {
 
   return (
     <div className="flex flex-1 min-h-0 -m-6">
-      <div data-tour={TOUR_TARGETS.chatSidebar} className="w-[280px] shrink-0">
+      <div className="w-[280px] shrink-0">
         <ConversationSidebar
           conversations={conversations}
           activeId={conversationId}
           onSelect={handleSelectConversation}
           onNewChat={handleNewChat}
           onDelete={handleDeleteConversation}
-          config={config}
         />
       </div>
 
@@ -145,12 +143,22 @@ export function ChatPage() {
           onAbort={abort}
           isNewChat={isNewChat}
           backendType={config.backendType}
+          showBackendToggle={config.providers.length > 0 && config.installedExecutors.length > 0}
+          onBackendTypeChange={config.onBackendTypeChange}
+          providers={config.providers}
+          selectedProviderId={config.selectedProviderId}
+          onProviderChange={config.onProviderChange}
           models={config.chatModels}
           selectedModel={config.selectedModel}
           onModelChange={config.onModelChange}
           executors={config.installedExecutors}
           selectedExecutorId={config.selectedExecutorId}
           onExecutorChange={config.onExecutorChange}
+          agents={config.agents}
+          selectedAgentId={config.selectedAgentId}
+          onAgentChange={config.onAgentChange}
+          executionMode={config.executionMode}
+          onExecutionModeChange={config.onExecutionModeChange}
         />
       </div>
     </div>

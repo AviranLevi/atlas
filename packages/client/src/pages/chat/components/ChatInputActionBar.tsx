@@ -1,50 +1,86 @@
 // React / library
-import { Paperclip, Send, Square, Terminal } from 'lucide-react';
+import { Bot, CheckCheck, Cloud, FileText, Paperclip, Send, Square, Terminal, Zap } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+// Lib
+import { cn } from '@/lib/utils';
 
 // Types
-import type { ChatBackendType, ExecutorStatus, ProviderModel } from '@atlas/shared';
+import type {
+  Agent,
+  AgentProvider,
+  ChatBackendType,
+  ExecutionMode,
+  ExecutorStatus,
+  ProviderModel,
+} from '@atlas/shared';
 
 // Constants
 import { ATTACHMENT_MAX_COUNT } from '@atlas/shared';
 
 type ChatInputActionBarProps = {
-  /** Whether this is a new (unsaved) conversation — controls whether pickers are interactive. */
   isNewChat?: boolean;
   backendType?: ChatBackendType;
-  /** API mode: available models. */
+  showBackendToggle?: boolean;
+  onBackendTypeChange?: (type: ChatBackendType) => void;
+  providers?: AgentProvider[];
+  selectedProviderId?: string;
+  onProviderChange?: (id: string) => void;
   models?: ProviderModel[];
   selectedModel?: string;
   onModelChange?: (model: string) => void;
-  /** CLI mode: available installed executors. */
   executors?: ExecutorStatus[];
   selectedExecutorId?: string;
   onExecutorChange?: (id: string) => void;
-  /** Mirrors ChatInput's disabled prop — disables the attach button too. */
+  agents?: Agent[];
+  selectedAgentId?: string;
+  onAgentChange?: (id: string) => void;
+  executionMode?: ExecutionMode;
+  onExecutionModeChange?: (mode: ExecutionMode) => void;
   disabled?: boolean;
-  /** Whether the send button should be enabled. */
   canSend: boolean;
   isStreaming?: boolean;
   onSend: () => void;
   onAbort?: () => void;
   onAttachClick: () => void;
   attachCount: number;
-  isCli: boolean;
 };
 
-/** Bottom action bar inside the chat input box: pickers, attach button, send/stop. */
+const EXEC_MODES: { value: ExecutionMode; label: string; icon: React.ReactNode; tooltip: string }[] = [
+  { value: 'auto', label: 'Auto', icon: <Zap className="h-3 w-3" />, tooltip: 'Execute actions immediately' },
+  {
+    value: 'confirm',
+    label: 'Confirm',
+    icon: <CheckCheck className="h-3 w-3" />,
+    tooltip: 'Propose actions and wait for approval',
+  },
+  { value: 'plan-only', label: 'Plan', icon: <FileText className="h-3 w-3" />, tooltip: 'Create plans only' },
+];
+
+/** Bottom action bar: backend/provider/model/agent/mode selectors on the left, attach + send on the right. */
 export function ChatInputActionBar({
   isNewChat,
   backendType,
+  showBackendToggle,
+  onBackendTypeChange,
+  providers = [],
+  selectedProviderId,
+  onProviderChange,
   models = [],
   selectedModel,
   onModelChange,
   executors = [],
   selectedExecutorId,
   onExecutorChange,
+  agents = [],
+  selectedAgentId,
+  onAgentChange,
+  executionMode,
+  onExecutionModeChange,
   disabled,
   canSend,
   isStreaming,
@@ -52,13 +88,16 @@ export function ChatInputActionBar({
   onAbort,
   onAttachClick,
   attachCount,
-  isCli,
 }: ChatInputActionBarProps) {
-  // Read-only labels for existing (locked) conversations
+  const isCli = backendType === 'cli';
+
+  // Read-only label for locked (existing) conversations
   const readOnlyLabel = (() => {
     if (isNewChat) return null;
     if (backendType === 'api' && selectedModel) {
-      return models.find((m) => m.value === selectedModel)?.label ?? selectedModel;
+      const modelLabel = models.find((m) => m.value === selectedModel)?.label ?? selectedModel;
+      const providerName = providers.find((p) => p.id === selectedProviderId)?.name;
+      return providerName ? `${providerName} · ${modelLabel}` : modelLabel;
     }
     if (backendType === 'cli' && selectedExecutorId) {
       const exec = executors.find((e) => e.id === selectedExecutorId);
@@ -72,12 +111,62 @@ export function ChatInputActionBar({
   })();
 
   return (
-    <div className="flex items-center gap-1.5 px-2 pb-2">
-      {/* Executor Select — CLI new chats */}
+    <div className="flex items-center gap-1.5 px-2 pb-2 flex-wrap">
+      {/* ── Left cluster: all config controls ── */}
+
+      {/* Backend toggle — only when both backends configured */}
+      {showBackendToggle && onBackendTypeChange && isNewChat && (
+        <div className="flex rounded-md border border-border overflow-hidden shrink-0">
+          <button
+            type="button"
+            onClick={() => onBackendTypeChange('api')}
+            className={cn(
+              'flex items-center gap-1 px-2 py-1 text-[11px] font-medium transition-colors',
+              backendType === 'api'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-transparent text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Cloud className="h-3 w-3" />
+            API
+          </button>
+          <button
+            type="button"
+            onClick={() => onBackendTypeChange('cli')}
+            className={cn(
+              'flex items-center gap-1 px-2 py-1 text-[11px] font-medium transition-colors',
+              backendType === 'cli'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-transparent text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Terminal className="h-3 w-3" />
+            CLI
+          </button>
+        </div>
+      )}
+
+      {/* Provider select — API new chats */}
+      {isNewChat && backendType === 'api' && providers.length > 0 && onProviderChange && (
+        <Select value={selectedProviderId} onValueChange={onProviderChange}>
+          <SelectTrigger className="h-7 w-auto max-w-[160px] gap-1 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-muted focus:ring-0">
+            <SelectValue placeholder="Provider" />
+          </SelectTrigger>
+          <SelectContent>
+            {providers.map((p) => (
+              <SelectItem key={p.id} value={p.id} className="text-xs">
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Executor select — CLI new chats */}
       {isNewChat && backendType === 'cli' && executors.length > 0 && onExecutorChange && (
         <Select value={selectedExecutorId} onValueChange={onExecutorChange}>
-          <SelectTrigger className="h-7 w-auto max-w-[180px] gap-1 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-muted focus:ring-0">
-            <SelectValue placeholder="Select agent" />
+          <SelectTrigger className="h-7 w-auto max-w-[160px] gap-1 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-muted focus:ring-0">
+            <SelectValue placeholder="CLI Agent" />
           </SelectTrigger>
           <SelectContent>
             {executors.map((ex) => (
@@ -89,11 +178,11 @@ export function ChatInputActionBar({
         </Select>
       )}
 
-      {/* Model Select — API and CLI new chats (when models available) */}
+      {/* Model select — new chats with models available */}
       {isNewChat && models.length > 0 && onModelChange && (
         <Select value={selectedModel} onValueChange={onModelChange}>
-          <SelectTrigger className="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-muted focus:ring-0">
-            <SelectValue placeholder="Select model" />
+          <SelectTrigger className="h-7 w-auto max-w-[200px] gap-1 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-muted focus:ring-0">
+            <SelectValue placeholder="Model" />
           </SelectTrigger>
           <SelectContent>
             {models.map((m) => (
@@ -105,14 +194,65 @@ export function ChatInputActionBar({
         </Select>
       )}
 
-      {/* Existing conversation — read-only label */}
-      {readOnlyLabel && <span className="px-2 text-xs text-muted-foreground">{readOnlyLabel}</span>}
+      {/* Read-only label — existing conversations */}
+      {readOnlyLabel && <span className="px-1 text-xs text-muted-foreground/70 shrink-0">{readOnlyLabel}</span>}
 
-      {/* CLI slowness hint */}
+      {/* Separator between locked config and editable controls */}
+      {(readOnlyLabel || (!isNewChat && isCli)) && (agents.length > 0 || executionMode) && (
+        <span className="text-border shrink-0">·</span>
+      )}
+
+      {/* Agent picker — shown when agents exist */}
+      {agents.length > 0 && onAgentChange && (
+        <Select value={selectedAgentId ?? ''} onValueChange={onAgentChange}>
+          <SelectTrigger className="h-7 w-auto max-w-[160px] gap-1 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-muted focus:ring-0">
+            <Bot className="h-3 w-3 shrink-0" />
+            <SelectValue placeholder="No agent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="" className="text-xs">
+              No agent
+            </SelectItem>
+            {agents.map((a) => (
+              <SelectItem key={a.id} value={a.id} className="text-xs">
+                {a.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Execution mode toggle */}
+      {executionMode && onExecutionModeChange && (
+        <div className="flex rounded-md border border-border overflow-hidden shrink-0">
+          {EXEC_MODES.map((m) => (
+            <Tooltip key={m.value}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => onExecutionModeChange(m.value)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 text-[11px] font-medium transition-colors',
+                    executionMode === m.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-transparent text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {m.icon}
+                  {m.label}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{m.tooltip}</TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      )}
+
+      {/* CLI hint */}
       {isCli && (
-        <span className="flex items-center gap-1 text-xs text-muted-foreground/70">
-          <Terminal className="h-3 w-3 shrink-0" />
-          CLI · responses may take a while
+        <span className="flex items-center gap-1 text-xs text-muted-foreground/50 shrink-0">
+          <Terminal className="h-3 w-3" />
+          CLI
         </span>
       )}
 

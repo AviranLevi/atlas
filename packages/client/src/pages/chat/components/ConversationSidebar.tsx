@@ -1,25 +1,10 @@
 // React / library
-import {
-  Plus,
-  Trash2,
-  MessageSquare,
-  Loader2,
-  Terminal,
-  Cloud,
-  Search,
-  X,
-  Unplug,
-  Bot,
-  SlidersHorizontal,
-} from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Search, X, Unplug } from 'lucide-react';
 import { useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
-import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExecutionModeToggle } from './ExecutionModeToggle';
 
 // Lib
 import { cn } from '@/lib/utils';
@@ -34,32 +19,8 @@ export function ConversationSidebar({
   onSelect,
   onNewChat,
   onDelete,
-  config,
 }: ConversationSidebarProps) {
-  const {
-    backendType,
-    onBackendTypeChange,
-    providers,
-    selectedProviderId,
-    onProviderChange,
-    selectedModel,
-    onModelChange,
-    models,
-    modelsLoading,
-    installedExecutors,
-    selectedExecutorId,
-    onExecutorChange,
-    agents,
-    selectedAgentId,
-    onAgentChange,
-    executionMode,
-    onExecutionModeChange,
-  } = config;
-
-  const agentOptions = agents.map((a) => ({ value: a.id, label: a.name }));
-
   const [searchQuery, setSearchQuery] = useState('');
-  const cliModelPresets = installedExecutors.find((e) => e.id === selectedExecutorId)?.modelPresets ?? [];
 
   const filteredConversations = searchQuery.trim()
     ? conversations.filter((c) => (c.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase()))
@@ -96,7 +57,7 @@ export function ConversationSidebar({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div data-tour={TOUR_TARGETS.chatSidebar} className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
           <div className="flex flex-col items-center gap-2 p-6 text-center">
             <MessageSquare className="h-8 w-8 text-muted-foreground/40" />
@@ -127,9 +88,6 @@ export function ConversationSidebar({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <p className="truncate text-sm">{conv.title || 'New Chat'}</p>
-                    {/* Provider was deleted (FK ON DELETE SET NULL): the chat
-                        history survives but the conversation can't continue
-                        until the user picks a new provider. */}
                     {conv.backendType === 'api' && conv.providerId === null && (
                       <Unplug
                         className="h-3 w-3 shrink-0 text-amber-500"
@@ -152,151 +110,6 @@ export function ConversationSidebar({
             </div>
           ))
         )}
-      </div>
-
-      <div className="border-t border-border p-3 space-y-2">
-        {/* Mode toggle -- only show if both options are available */}
-        {providers.length > 0 && installedExecutors.length > 0 && (
-          <div
-            data-tour={TOUR_TARGETS.chatBackendSwitch}
-            className="flex rounded-md border border-border overflow-hidden"
-          >
-            <button
-              type="button"
-              onClick={() => onBackendTypeChange('api')}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition-colors',
-                backendType === 'api'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-transparent text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <Cloud className="h-3 w-3" />
-              API
-            </button>
-            <button
-              type="button"
-              onClick={() => onBackendTypeChange('cli')}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium transition-colors',
-                backendType === 'cli'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-transparent text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <Terminal className="h-3 w-3" />
-              CLI
-            </button>
-          </div>
-        )}
-
-        {backendType === 'api' ? (
-          <>
-            <div data-tour={TOUR_TARGETS.chatProviderSelect} className="space-y-1">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Provider</span>
-              <Select value={selectedProviderId} onValueChange={onProviderChange}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Select provider" />
-                </SelectTrigger>
-                <SelectContent>
-                  {providers.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} ({p.type})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Model
-                {modelsLoading && <Loader2 className="inline ml-1 h-3 w-3 animate-spin" />}
-              </span>
-              <Combobox
-                options={models}
-                value={selectedModel}
-                onValueChange={onModelChange}
-                placeholder={
-                  !selectedProviderId ? 'Select provider first' : modelsLoading ? 'Loading...' : 'Select model'
-                }
-                searchPlaceholder="Search models..."
-                emptyText="No models found."
-                disabled={!selectedProviderId || modelsLoading}
-                className="h-8 text-xs"
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div data-tour={TOUR_TARGETS.chatProviderSelect} className="space-y-1">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">CLI Agent</span>
-              <Select value={selectedExecutorId} onValueChange={onExecutorChange}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Select CLI" />
-                </SelectTrigger>
-                <SelectContent>
-                  {installedExecutors.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {cliModelPresets.length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Model</span>
-                <Select value={selectedModel} onValueChange={onModelChange}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cliModelPresets.map((p) => (
-                      <SelectItem key={p.value} value={p.value} className="text-xs">
-                        {p.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Agent picker — always visible when agents exist */}
-        {agentOptions.length > 0 && (
-          <div className="space-y-1 pt-1 border-t border-border">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-              <Bot className="h-3 w-3" />
-              Agent
-            </span>
-            <Combobox
-              options={[{ value: '', label: 'None (default)' }, ...agentOptions]}
-              value={selectedAgentId}
-              onValueChange={onAgentChange}
-              placeholder="No agent selected"
-              searchPlaceholder="Search agents..."
-              emptyText="No agents found."
-              className="h-8 text-xs"
-            />
-            {selectedAgentId && (
-              <p className="text-[10px] text-muted-foreground/70 leading-tight">
-                Rules, skills &amp; memories injected. @mention overrides per message.
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Execution mode toggle — always visible */}
-        <div className="space-y-1 pt-1 border-t border-border">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-            <SlidersHorizontal className="h-3 w-3" />
-            Mode
-          </span>
-          <ExecutionModeToggle mode={executionMode} onChange={onExecutionModeChange} />
-        </div>
       </div>
     </div>
   );

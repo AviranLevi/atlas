@@ -52,15 +52,28 @@ export type ChatInputProps = {
   onAbort?: () => void;
   /** Whether this is a new (unsaved) conversation — controls whether model picker is interactive. */
   isNewChat?: boolean;
+  // Backend
   backendType?: ChatBackendType;
-  /** API mode: available models for the selected provider. */
+  /** Show the API/CLI backend toggle (only when both backends are configured). */
+  showBackendToggle?: boolean;
+  onBackendTypeChange?: (type: ChatBackendType) => void;
+  // API mode
+  providers?: AgentProvider[];
+  selectedProviderId?: string;
+  onProviderChange?: (id: string) => void;
   models?: ProviderModel[];
   selectedModel?: string;
   onModelChange?: (model: string) => void;
-  /** CLI mode: available installed executors. */
+  // CLI mode
   executors?: ExecutorStatus[];
   selectedExecutorId?: string;
   onExecutorChange?: (id: string) => void;
+  // Agent + execution mode (always available)
+  agents?: Agent[];
+  selectedAgentId?: string;
+  onAgentChange?: (id: string) => void;
+  executionMode?: ExecutionMode;
+  onExecutionModeChange?: (mode: ExecutionMode) => void;
 };
 
 export type MessageBubbleProps = {
@@ -107,5 +120,4 @@ export type ConversationSidebarProps = {
   onSelect: (id: string) => void;
   onNewChat: () => void;
   onDelete: (id: string) => void;
-  config: ChatConfigState;
 };

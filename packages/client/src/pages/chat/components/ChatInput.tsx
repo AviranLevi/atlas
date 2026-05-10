@@ -50,12 +50,22 @@ export function ChatInput({
   onAbort,
   isNewChat,
   backendType,
+  showBackendToggle,
+  onBackendTypeChange,
+  providers = [],
+  selectedProviderId,
+  onProviderChange,
   models = [],
   selectedModel,
   onModelChange,
   executors = [],
   selectedExecutorId,
   onExecutorChange,
+  agents = [],
+  selectedAgentId,
+  onAgentChange,
+  executionMode,
+  onExecutionModeChange,
 }: ChatInputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -125,7 +135,6 @@ export function ChatInput({
   };
 
   const canSend = (value.trim().length > 0 || attachedFiles.length > 0) && !disabled;
-  const isCli = backendType === 'cli';
 
   return (
     <div data-tour={TOUR_TARGETS.chatInput} className="border-t border-border bg-background p-4">
@@ -192,12 +201,22 @@ export function ChatInput({
           <ChatInputActionBar
             isNewChat={isNewChat}
             backendType={backendType}
+            showBackendToggle={showBackendToggle}
+            onBackendTypeChange={onBackendTypeChange}
+            providers={providers}
+            selectedProviderId={selectedProviderId}
+            onProviderChange={onProviderChange}
             models={models}
             selectedModel={selectedModel}
             onModelChange={onModelChange}
             executors={executors}
             selectedExecutorId={selectedExecutorId}
             onExecutorChange={onExecutorChange}
+            agents={agents}
+            selectedAgentId={selectedAgentId}
+            onAgentChange={onAgentChange}
+            executionMode={executionMode}
+            onExecutionModeChange={onExecutionModeChange}
             disabled={disabled}
             canSend={canSend}
             isStreaming={isStreaming}
@@ -205,7 +224,6 @@ export function ChatInput({
             onAbort={onAbort}
             onAttachClick={() => fileInputRef.current?.click()}
             attachCount={attachedFiles.length}
-            isCli={isCli}
           />
         </div>
       </div>
