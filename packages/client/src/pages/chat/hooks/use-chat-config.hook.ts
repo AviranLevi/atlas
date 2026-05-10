@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 // Hooks
 import { useAgents } from '@/hooks/use-agents.hook';
 import { useAgentProviders, useProviderModels } from '@/hooks/use-agent-providers.hook';
-import { useConversation } from '@/hooks/use-chat.hook';
+import { useConversation, useUpdateConversationMode } from '@/hooks/use-chat.hook';
 import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
 
 // Types
-import type { ChatBackendType } from '@atlas/shared';
+import type { ChatBackendType, ExecutionMode } from '@atlas/shared';
 import type { ChatConfigState } from '../chat.types';
 
 /** Manages backend/provider/model/executor selection state and all auto-defaulting effects. */
@@ -16,12 +16,14 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
   const { data: providers = [], isLoading: providersLoading } = useAgentProviders();
   const { data: executors = [], isLoading: executorsLoading } = useAgentRuntimes();
   const { data: activeConversation } = useConversation(conversationId);
+  const updateMode = useUpdateConversationMode();
 
   const [backendType, setBackendType] = useState<ChatBackendType>('api');
   const [selectedProviderId, setSelectedProviderId] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedExecutorId, setSelectedExecutorId] = useState('');
   const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [executionMode, setExecutionMode] = useState<ExecutionMode>('confirm');
 
   const { data: agents = [] } = useAgents();
 
@@ -82,6 +84,11 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
       if (activeConversation.providerId) setSelectedProviderId(activeConversation.providerId);
       if (activeConversation.model) setSelectedModel(activeConversation.model);
       if (activeConversation.executorId) setSelectedExecutorId(activeConversation.executorId);
+      if (activeConversation.executionMode) {
+        setExecutionMode(activeConversation.executionMode as ExecutionMode);
+      } else {
+        setExecutionMode('confirm');
+      }
     }
   }, [activeConversation]);
 
@@ -98,6 +105,16 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
   const onAgentChange = useCallback((id: string) => {
     setSelectedAgentId(id);
   }, []);
+
+  const onExecutionModeChange = useCallback(
+    (mode: ExecutionMode) => {
+      setExecutionMode(mode);
+      if (conversationId) {
+        updateMode.mutate({ id: conversationId, executionMode: mode });
+      }
+    },
+    [conversationId, updateMode],
+  );
 
   const onBackendTypeChange = useCallback((type: ChatBackendType) => {
     setBackendType(type);
@@ -127,7 +144,9 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
     selectedExecutorId,
     agents,
     selectedAgentId,
+    executionMode,
     onAgentChange,
+    onExecutionModeChange,
     onBackendTypeChange,
     onProviderChange,
     onModelChange: setSelectedModel,

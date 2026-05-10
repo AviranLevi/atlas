@@ -6,6 +6,7 @@ import type {
   ChatBackendType,
   ChatConversation,
   ChatMessage,
+  ExecutionMode,
   ExecutorStatus,
   ProviderModel,
 } from '@atlas/shared';
@@ -86,7 +87,10 @@ export type ChatConfigState = {
   /** Persistent agent selection — applies to all messages unless overridden by an @mention. */
   agents: Agent[];
   selectedAgentId: string;
+  /** Controls how assertive the chat agent is: auto executes, confirm proposes first, plan-only never executes. */
+  executionMode: ExecutionMode;
   onAgentChange: (id: string) => void;
+  onExecutionModeChange: (mode: ExecutionMode) => void;
   onBackendTypeChange: (type: ChatBackendType) => void;
   onProviderChange: (id: string) => void;
   onModelChange: (model: string) => void;

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 
 // Types
-import type { ChatAttachment, ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
+import type { ChatAttachment, ChatConversation, ChatMessage, CreateConversation, ExecutionMode } from '@atlas/shared';
 import type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat.types';
 
 export type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat.types';
@@ -75,6 +75,18 @@ export function useDeleteConversation() {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/chat/conversations/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY }),
+  });
+}
+
+/** Updates the execution mode for a conversation. */
+export function useUpdateConversationMode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, executionMode }: { id: string; executionMode: ExecutionMode | null }) =>
+      api.patch<ChatConversation>(`/chat/conversations/${id}/mode`, { executionMode }),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: [...CONVERSATIONS_KEY, id] });
+    },
   });
 }
 

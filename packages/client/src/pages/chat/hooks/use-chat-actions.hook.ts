@@ -14,7 +14,7 @@ type ChatActionsParams = {
   activeProjectId: string | null | undefined;
   config: Pick<
     ChatConfigState,
-    'backendType' | 'selectedProviderId' | 'selectedModel' | 'selectedExecutorId' | 'selectedAgentId'
+    'backendType' | 'selectedProviderId' | 'selectedModel' | 'selectedExecutorId' | 'selectedAgentId' | 'executionMode'
   >;
   send: (content: string, attachments?: ChatAttachment[], mentionedAgentId?: string) => void;
   streamState: ChatStreamState;
@@ -75,7 +75,7 @@ export function useChatActions({ conversationId, activeProjectId, config, send, 
         return;
       }
 
-      const { backendType, selectedProviderId, selectedModel, selectedExecutorId } = config;
+      const { backendType, selectedProviderId, selectedModel, selectedExecutorId, executionMode } = config;
 
       if (backendType === 'api') {
         if (!selectedProviderId || !selectedModel) return;
@@ -86,6 +86,7 @@ export function useChatActions({ conversationId, activeProjectId, config, send, 
           backendType: 'api',
           providerId: selectedProviderId,
           model: selectedModel,
+          executionMode: executionMode ?? null,
         });
         navigate(`/chat/${result.id}`);
       } else {
@@ -98,6 +99,7 @@ export function useChatActions({ conversationId, activeProjectId, config, send, 
           executorId: selectedExecutorId,
           providerId: null,
           model: selectedModel || null,
+          executionMode: executionMode ?? null,
         });
         navigate(`/chat/${result.id}`);
       }
