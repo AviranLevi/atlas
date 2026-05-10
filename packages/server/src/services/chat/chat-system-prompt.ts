@@ -1,3 +1,6 @@
+// Shared
+import type { ExecutionMode } from '@atlas/shared';
+
 // Services
 import { agentsService, memoryService, projectsService, settingsService } from '../index.js';
 
@@ -8,10 +11,39 @@ import { formatRuleList, formatSkillList } from '../prompt-builder/prompt-sectio
 const FILE_PATH = 'services/chat/chat-system-prompt.ts';
 const MAX_RECENT_MEMORIES = 5;
 
+function getExecutionModePrompt(mode: ExecutionMode): string | null {
+  if (mode === 'confirm') {
+    return (
+      '## Execution Mode: Confirm\n\n' +
+      'Before executing any action that creates or modifies data (creating tasks, agents, rules, skills, or memories), you MUST:\n' +
+      '1. First describe what you plan to do in a clear, numbered list\n' +
+      '2. Ask the user for explicit confirmation before proceeding\n' +
+      '3. Only execute the actions after the user approves\n\n' +
+      'For read-only operations (listing, searching, browsing files), proceed without confirmation.\n' +
+      'If the user says "yes", "go ahead", "do it", or similar affirmative, proceed with the planned actions.'
+    );
+  }
+  if (mode === 'plan-only') {
+    return (
+      '## Execution Mode: Plan Only\n\n' +
+      'You are in plan-only mode. You must NEVER execute actions directly. Instead:\n' +
+      "1. Analyze the user's request thoroughly\n" +
+      '2. Create a detailed action plan describing exactly what would need to be done\n' +
+      '3. Structure the plan as a numbered list of concrete steps\n' +
+      '4. Include specific details (task names, descriptions, assignments, etc.)\n' +
+      '5. Present the plan to the user for review\n\n' +
+      'You do NOT have access to tools that create or modify data. You can only read and search existing data to inform your plans.\n' +
+      'When presenting plans, use clear markdown formatting with headers and bullet points.'
+    );
+  }
+  return null; // auto — no extra instructions
+}
+
 /** Assembles the API/CLI system prompt: base instructions, global settings, project scan, memories, tagged agent. */
 export async function buildChatSystemPrompt(
   projectId: string | null,
   mentionedAgent?: { id: string; name: string } | null,
+  executionMode?: ExecutionMode,
 ): Promise<string> {
   const sections: string[] = [];
 
@@ -20,6 +52,11 @@ export async function buildChatSystemPrompt(
       'You can answer questions about the project, create tasks, agents, rules, skills, and memories using the available tools. ' +
       'Be concise and direct. When creating entities, confirm what you created.',
   );
+
+  if (executionMode) {
+    const modePrompt = getExecutionModePrompt(executionMode);
+    if (modePrompt) sections.push(modePrompt);
+  }
 
   const globalInstructions = await settingsService.listGlobalInstructions();
   if (globalInstructions.length > 0) {
