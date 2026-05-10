@@ -3,7 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // Shared
-import type { CreateAgent, CreateMemory, CreateRule, CreateSkill, CreateTask, UpdateTask } from '@atlas/shared';
+import type {
+  CreateAgent,
+  CreateMemory,
+  CreateRule,
+  CreateSkill,
+  CreateTask,
+  ExecutionMode,
+  UpdateTask,
+} from '@atlas/shared';
 
 // Repositories
 import { projectDocsRepository } from '../../db/repositories/index.js';
@@ -25,6 +33,24 @@ import type { ToolContext, ToolDefinition } from './chat.types.js';
 import { logger } from '../logger.js';
 
 const FILE_PATH = 'lib/chat/chat-tools.ts';
+
+/** Tool names that create or modify data — stripped in plan-only mode. */
+const MUTATING_TOOL_NAMES = new Set([
+  'create_task',
+  'update_task',
+  'create_agent',
+  'create_rule',
+  'create_skill',
+  'create_memory',
+]);
+
+/** Returns the tool list filtered for the given execution mode. */
+export function getToolsForMode(mode: ExecutionMode): ToolDefinition[] {
+  if (mode === 'plan-only') {
+    return CHAT_TOOLS.filter((t) => !MUTATING_TOOL_NAMES.has(t.name));
+  }
+  return CHAT_TOOLS;
+}
 
 export const CHAT_TOOLS: ToolDefinition[] = [
   {
