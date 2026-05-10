@@ -4,7 +4,6 @@ import { Bot, CheckCheck, Cloud, FileText, Paperclip, Send, Square, Terminal, Za
 // Components
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Lib
 import { cn } from '@/lib/utils';
@@ -50,18 +49,23 @@ type ChatInputActionBarProps = {
   attachCount: number;
 };
 
-const EXEC_MODES: { value: ExecutionMode; label: string; icon: React.ReactNode; tooltip: string }[] = [
-  { value: 'auto', label: 'Auto', icon: <Zap className="h-3 w-3" />, tooltip: 'Execute actions immediately' },
+const EXEC_MODES: { value: ExecutionMode; label: string; icon: React.ReactNode; description: string }[] = [
+  { value: 'auto', label: 'Auto', icon: <Zap className="h-3 w-3" />, description: 'Execute actions immediately' },
   {
     value: 'confirm',
     label: 'Confirm',
     icon: <CheckCheck className="h-3 w-3" />,
-    tooltip: 'Propose actions and wait for approval',
+    description: 'Propose actions and wait for approval',
   },
-  { value: 'plan-only', label: 'Plan', icon: <FileText className="h-3 w-3" />, tooltip: 'Create plans only' },
+  {
+    value: 'plan-only',
+    label: 'Plan',
+    icon: <FileText className="h-3 w-3" />,
+    description: 'Plans only, no execution',
+  },
 ];
 
-/** Bottom action bar: backend/provider/model/agent/mode selectors on the left, attach + send on the right. */
+/** Bottom action bar: mode dropdown on far left, then backend/provider/model/agent, attach + send on right. */
 export function ChatInputActionBar({
   isNewChat,
   backendType,
@@ -90,6 +94,7 @@ export function ChatInputActionBar({
   attachCount,
 }: ChatInputActionBarProps) {
   const isCli = backendType === 'cli';
+  const activeMode = EXEC_MODES.find((m) => m.value === executionMode);
 
   // Read-only label for locked (existing) conversations
   const readOnlyLabel = (() => {
@@ -111,10 +116,38 @@ export function ChatInputActionBar({
   })();
 
   return (
-    <div className="flex items-center gap-1.5 px-2 pb-2 flex-wrap">
-      {/* ── Left cluster: all config controls ── */}
+    <div className="flex items-center gap-1 px-2 pb-2 flex-wrap">
+      {/* ── Execution mode dropdown — always leftmost ── */}
+      {executionMode && onExecutionModeChange && (
+        <Select value={executionMode} onValueChange={(v) => onExecutionModeChange(v as ExecutionMode)}>
+          <SelectTrigger className="h-7 w-auto gap-1 border-0 bg-transparent px-2 text-xs font-medium text-muted-foreground shadow-none hover:bg-muted focus:ring-0 shrink-0">
+            <span className="flex items-center gap-1">
+              {activeMode?.icon}
+              {activeMode?.label ?? 'Mode'}
+            </span>
+          </SelectTrigger>
+          <SelectContent align="start">
+            {EXEC_MODES.map((m) => (
+              <SelectItem key={m.value} value={m.value} className="text-xs">
+                <div className="flex flex-col gap-0.5 py-0.5">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    {m.icon}
+                    {m.label}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground leading-tight">{m.description}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
-      {/* Backend toggle — only when both backends configured */}
+      {/* Divider after mode */}
+      {executionMode && (readOnlyLabel || isNewChat || agents.length > 0) && (
+        <span className="text-border/60 text-xs shrink-0 select-none">|</span>
+      )}
+
+      {/* Backend toggle — only when both backends configured, new chat only */}
       {showBackendToggle && onBackendTypeChange && isNewChat && (
         <div className="flex rounded-md border border-border overflow-hidden shrink-0">
           <button
@@ -197,11 +230,6 @@ export function ChatInputActionBar({
       {/* Read-only label — existing conversations */}
       {readOnlyLabel && <span className="px-1 text-xs text-muted-foreground/70 shrink-0">{readOnlyLabel}</span>}
 
-      {/* Separator between locked config and editable controls */}
-      {(readOnlyLabel || (!isNewChat && isCli)) && (agents.length > 0 || executionMode) && (
-        <span className="text-border shrink-0">·</span>
-      )}
-
       {/* Agent picker — shown when agents exist */}
       {agents.length > 0 && onAgentChange && (
         <Select value={selectedAgentId ?? ''} onValueChange={onAgentChange}>
@@ -220,32 +248,6 @@ export function ChatInputActionBar({
             ))}
           </SelectContent>
         </Select>
-      )}
-
-      {/* Execution mode toggle */}
-      {executionMode && onExecutionModeChange && (
-        <div className="flex rounded-md border border-border overflow-hidden shrink-0">
-          {EXEC_MODES.map((m) => (
-            <Tooltip key={m.value}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => onExecutionModeChange(m.value)}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-1 text-[11px] font-medium transition-colors',
-                    executionMode === m.value
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-transparent text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {m.icon}
-                  {m.label}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">{m.tooltip}</TooltipContent>
-            </Tooltip>
-          ))}
-        </div>
       )}
 
       {/* CLI hint */}
