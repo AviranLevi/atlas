@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const ExecutionModeEnum = z.enum(['auto', 'confirm', 'plan-only']);
+
 export const AgentSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100),
@@ -9,6 +11,7 @@ export const AgentSchema = z.object({
   providerId: z.string().uuid().nullable(),
   defaultModel: z.string().nullable(),
   defaultRuntimeId: z.string().nullable(),
+  executionMode: ExecutionModeEnum.nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -21,6 +24,7 @@ export const CreateAgentSchema = AgentSchema.pick({
   providerId: true,
   defaultModel: true,
   defaultRuntimeId: true,
+  executionMode: true,
 });
 
 export const UpdateAgentSchema = CreateAgentSchema.partial();
@@ -36,6 +40,7 @@ export const AssignAgentSchema = z.object({
   role: z.string().nullable().optional(),
 });
 
+export type ExecutionMode = z.infer<typeof ExecutionModeEnum>;
 export type Agent = z.infer<typeof AgentSchema>;
 export type CreateAgent = z.infer<typeof CreateAgentSchema>;
 export type UpdateAgent = z.infer<typeof UpdateAgentSchema>;

@@ -57,6 +57,7 @@ export const ChatConversationSchema = z.object({
   providerId: z.string().uuid().nullable(),
   executorId: z.string().nullable(),
   model: z.string().nullable(),
+  executionMode: z.enum(['auto', 'confirm', 'plan-only']).nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -78,6 +79,11 @@ export const CreateConversationSchema = z.object({
   providerId: z.string().uuid().nullable().optional(),
   executorId: z.string().nullable().optional(),
   model: z.string().nullable().optional(),
+  executionMode: z.enum(['auto', 'confirm', 'plan-only']).nullable().optional(),
+});
+
+export const UpdateConversationModeSchema = z.object({
+  executionMode: z.enum(['auto', 'confirm', 'plan-only']).nullable(),
 });
 
 export const SendMessageSchema = z
@@ -99,4 +105,5 @@ export type ChatAttachment = z.infer<typeof ChatAttachmentSchema>;
 export type ChatConversation = z.infer<typeof ChatConversationSchema>;
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 export type CreateConversation = z.infer<typeof CreateConversationSchema>;
+export type UpdateConversationMode = z.infer<typeof UpdateConversationModeSchema>;
 export type SendMessage = z.infer<typeof SendMessageSchema>;
