@@ -5,7 +5,14 @@
  */
 
 // Shared
-import type { AgentProvider, ChatAttachment, ChatConversation, ChatMessage, CreateConversation } from '@atlas/shared';
+import type {
+  AgentProvider,
+  ChatAttachment,
+  ChatConversation,
+  ChatMessage,
+  CreateConversation,
+  ExecutionMode,
+} from '@atlas/shared';
 
 // Services
 import { agentProvidersService, agentsService, projectsService, usageService } from '../index.js';
@@ -22,6 +29,7 @@ import {
   CHAT_TOOLS,
   executeTool,
   formatCliPrompt,
+  getToolsForMode,
   streamChat,
   streamCliChat,
 } from '../../lib/chat/index.js';
@@ -58,6 +66,12 @@ export class ChatService {
   async deleteConversation(id: string): Promise<void> {
     this.abortStream(id);
     this.repo.removeConversation(id);
+  }
+
+  /** Updates the execution mode override for a conversation. */
+  async updateConversationMode(id: string, executionMode: string | null): Promise<ChatConversation> {
+    this.repo.findConversationByIdOrThrow(id);
+    return this.repo.updateConversation(id, { executionMode });
   }
 
   async getMessages(conversationId: string): Promise<ChatMessage[]> {
@@ -100,6 +114,25 @@ export class ChatService {
     }
   }
 
+  /** Resolves effective execution mode: conversation override → agent default → system default (confirm). */
+  private async resolveExecutionMode(
+    conversation: ChatConversation,
+    mentionedAgentId?: string | null,
+  ): Promise<ExecutionMode> {
+    if (conversation.executionMode) {
+      return conversation.executionMode as ExecutionMode;
+    }
+    if (mentionedAgentId) {
+      try {
+        const agent = await agentsService.getById(mentionedAgentId);
+        if (agent.executionMode) return agent.executionMode as ExecutionMode;
+      } catch {
+        /* agent not found — fall through */
+      }
+    }
+    return 'confirm';
+  }
+
   private async sendMessageApi(
     conversation: ChatConversation,
     emit: StreamCallback,
@@ -122,7 +155,8 @@ export class ChatService {
     try {
       const startMs = Date.now();
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}]`);
-      const systemPrompt = await buildChatSystemPrompt(conversation.projectId, mentionedAgent);
+      const executionMode = await this.resolveExecutionMode(conversation, mentionedAgent?.id);
+      const systemPrompt = await buildChatSystemPrompt(conversation.projectId, mentionedAgent, executionMode);
       let messages = toInternalMessages(this.repo.findMessagesByConversation(conversationId));
 
       let toolRound = 0;
@@ -137,6 +171,7 @@ export class ChatService {
             provider,
             systemPrompt,
             messages,
+            executionMode,
             signal: abortController.signal,
             emit,
           });
@@ -214,6 +249,7 @@ export class ChatService {
     provider: AgentProvider;
     systemPrompt: string;
     messages: InternalMessage[];
+    executionMode: ExecutionMode;
     signal: AbortSignal;
     emit: StreamCallback;
   }): Promise<{
@@ -222,13 +258,14 @@ export class ChatService {
     roundInputTokens: number;
     roundOutputTokens: number;
   }> {
-    const { conversation, provider, systemPrompt, messages, signal, emit } = params;
+    const { conversation, provider, systemPrompt, messages, executionMode, signal, emit } = params;
     const pendingToolCalls: PendingToolCall[] = [];
     let assistantText = '';
     let roundInputTokens = 0;
     let roundOutputTokens = 0;
 
-    const stream = streamChat(provider, conversation.model ?? 'default', systemPrompt, messages, CHAT_TOOLS, signal);
+    const tools = getToolsForMode(executionMode);
+    const stream = streamChat(provider, conversation.model ?? 'default', systemPrompt, messages, tools, signal);
 
     for await (const event of stream) {
       if (signal.aborted) break;
@@ -314,7 +351,8 @@ export class ChatService {
       logger.info(
         `${FILE_PATH} :: ${FUNCTION_NAME} - start [conv=${conversationId}, executor=${conversation.executorId}]`,
       );
-      const systemPrompt = await buildChatSystemPrompt(conversation.projectId, mentionedAgent);
+      const executionMode = await this.resolveExecutionMode(conversation, mentionedAgent?.id);
+      const systemPrompt = await buildChatSystemPrompt(conversation.projectId, mentionedAgent, executionMode);
       const history = this.repo.findMessagesByConversation(conversationId);
       const previousMessages = history
         .filter((m) => m.role !== 'tool')
