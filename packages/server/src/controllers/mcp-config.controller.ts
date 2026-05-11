@@ -11,6 +11,9 @@ export async function getMcpConnectionInfo(c: Context) {
     mcpServers: {
       atlas: {
         url: MCP_SSE_URL,
+        headers: {
+          Authorization: 'Bearer YOUR_ATLAS_API_KEY',
+        },
       },
     },
   };
@@ -20,6 +23,9 @@ export async function getMcpConnectionInfo(c: Context) {
       atlas: {
         transport: 'sse',
         url: MCP_SSE_URL,
+        headers: {
+          Authorization: 'Bearer YOUR_ATLAS_API_KEY',
+        },
       },
     },
   };
@@ -40,8 +46,9 @@ export async function getMcpConnectionInfo(c: Context) {
     claudeDesktopConfig,
     stdioConfig,
     instructions: {
-      cursor: 'Add the cursorConfig to your ~/.cursor/mcp.json file (or merge with existing)',
-      claude: 'In Claude Desktop, go to Settings > Developer > Edit Config and add the claudeDesktopConfig',
+      cursor: 'Add to ~/.cursor/mcp.json. Replace YOUR_ATLAS_API_KEY with a key from Atlas → Settings → API Keys.',
+      claude:
+        'In Claude Desktop → Settings → Developer → Edit Config. Replace YOUR_ATLAS_API_KEY with a key from Atlas → Settings → API Keys.',
       stdio: 'For Claude Code CLI or other stdio-based tools, use the stdioConfig',
     },
   });

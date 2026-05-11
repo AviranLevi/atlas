@@ -5,10 +5,46 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 
 import { registerAllTools } from './mcp/register-all.js';
 
+// Services
+import { authService, preferencesService } from './services/index.js';
+
 // Lib
 import { logger } from './lib/logger.js';
 
 const MCP_HTTP_PORT = parseInt(process.env.MCP_PORT || '3101', 10);
+const DEV_BYPASS = process.env.ATLAS_AUTH_BYPASS === 'true';
+
+/** Preference key controlling whether the MCP server accepts connections. */
+export const MCP_ENABLED_PREF = 'mcp.server.enabled';
+
+/** Extracts and validates the Bearer token from a raw HTTP request. Returns false if invalid. */
+async function checkAuth(req: http.IncomingMessage, res: http.ServerResponse): Promise<boolean> {
+  if (DEV_BYPASS) return true;
+
+  const enabled = await preferencesService.get(MCP_ENABLED_PREF);
+  if (enabled !== 'true') {
+    res.writeHead(503, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'MCP server is disabled. Enable it in Atlas Settings.' }));
+    return false;
+  }
+
+  const header = req.headers['authorization'] ?? '';
+  const raw = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!raw) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    return false;
+  }
+
+  const apiKey = await authService.validateKey(raw);
+  if (!apiKey) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    return false;
+  }
+
+  return true;
+}
 
 export function startMcpHttpServer() {
   const mcpServer = new McpServer({
@@ -35,6 +71,8 @@ export function startMcpHttpServer() {
     const url = new URL(req.url ?? '/', `http://localhost:${MCP_HTTP_PORT}`);
 
     if (req.method === 'GET' && url.pathname === '/sse') {
+      if (!(await checkAuth(req, res))) return;
+
       const transport = new SSEServerTransport('/messages', res);
       sessions.set(transport.sessionId, transport);
 
