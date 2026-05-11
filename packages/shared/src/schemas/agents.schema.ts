@@ -25,6 +25,9 @@ export const CreateAgentSchema = AgentSchema.pick({
   defaultModel: true,
   defaultRuntimeId: true,
   executionMode: true,
+}).extend({
+  defaultRuntimeId: z.string().nullable().optional(),
+  executionMode: ExecutionModeEnum.nullable().optional(),
 });
 
 export const UpdateAgentSchema = CreateAgentSchema.partial();
