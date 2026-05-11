@@ -22,7 +22,7 @@ async function checkAuth(req: http.IncomingMessage, res: http.ServerResponse): P
   if (DEV_BYPASS) return true;
 
   const enabled = await preferencesService.get(MCP_ENABLED_PREF);
-  if (enabled !== 'true') {
+  if (enabled === 'false') {
     res.writeHead(503, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'MCP server is disabled. Enable it in Atlas Settings.' }));
     return false;

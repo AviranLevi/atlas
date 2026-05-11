@@ -74,7 +74,8 @@ export function McpConnectionPanel() {
   const { data: prefs } = usePreferences();
   const updatePreferences = useUpdatePreferences();
 
-  const isEnabled = prefs?.[MCP_ENABLED_PREF] === 'true';
+  // Default on: unset (new install) or explicitly 'true' → enabled
+  const isEnabled = prefs?.[MCP_ENABLED_PREF] !== 'false';
 
   function handleToggle(checked: boolean) {
     updatePreferences.mutate({ [MCP_ENABLED_PREF]: checked ? 'true' : 'false' });
