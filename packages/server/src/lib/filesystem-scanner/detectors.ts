@@ -147,7 +147,43 @@ export function detectCICD(dirPath: string): string | null {
   return ciSystems.length > 0 ? ciSystems.join(', ') : null;
 }
 
-/** Returns true if the directory is a monorepo (pnpm workspace, Lerna, Nx, etc.). */
+/** File names that indicate a directory is the root of a standalone project. */
+export const PROJECT_ROOT_MARKERS = [
+  'package.json',
+  'go.mod',
+  'Cargo.toml',
+  'requirements.txt',
+  'pyproject.toml',
+  'setup.py',
+  'pom.xml',
+  'build.gradle',
+  'build.gradle.kts',
+  'Gemfile',
+  'pubspec.yaml',
+  'Package.swift',
+];
+
+const SKIP_DIRS = new Set(['.git', 'node_modules', 'vendor', '__pycache__', 'dist', 'build', '.next', '.nuxt']);
+
+/** Returns true if a subdirectory contains at least one project root marker. */
+export function hasProjectMarker(dirPath: string): boolean {
+  return PROJECT_ROOT_MARKERS.some((m) => fs.existsSync(path.join(dirPath, m))) || hasCSharpProject(dirPath);
+}
+
+/** Lists immediate subdirectories that contain a project root marker. */
+export function findSubProjectDirs(rootPath: string): string[] {
+  try {
+    return fs
+      .readdirSync(rootPath, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && !e.name.startsWith('.') && !SKIP_DIRS.has(e.name))
+      .map((e) => e.name)
+      .filter((name) => hasProjectMarker(path.join(rootPath, name)));
+  } catch {
+    return [];
+  }
+}
+
+/** Returns true if the directory is a monorepo (JS workspace configs OR ≥2 sub-projects with root markers). */
 export function detectMonorepo(dirPath: string): boolean {
   const pkg = readJsonFile(path.join(dirPath, 'package.json'));
   if (pkg?.workspaces) return true;
@@ -156,5 +192,7 @@ export function detectMonorepo(dirPath: string): boolean {
   if (exists('lerna.json')) return true;
   if (exists('nx.json')) return true;
   if (exists('turbo.json')) return true;
-  return false;
+
+  // Non-JS monorepos: ≥2 subdirs with project root markers
+  return findSubProjectDirs(dirPath).length >= 2;
 }

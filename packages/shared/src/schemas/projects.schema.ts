@@ -33,6 +33,18 @@ export const AgentBehaviorSchema = z.object({
   approvalGates: ApprovalGatesSchema.optional(),
 });
 
+export const SubProjectSchema = z.object({
+  name: z.string(),
+  path: z.string(),
+  projectType: ProjectTypeEnum.nullable().optional(),
+  languages: z.array(z.string()).optional(),
+  dependencies: z.array(z.string()).optional(),
+  devDependencies: z.array(z.string()).optional(),
+  keyDirectories: z.record(z.string()).optional(),
+  scripts: z.record(z.string()).optional(),
+  packageManager: z.string().nullable().optional(),
+});
+
 export const ProjectScanDataSchema = z.object({
   projectType: ProjectTypeEnum.nullable().optional(),
   languages: z.array(z.string()).optional(),
@@ -57,6 +69,7 @@ export const ProjectScanDataSchema = z.object({
   githubRepo: z.string().nullable().optional(),
   scripts: z.record(z.string()).optional(),
   aiConfigs: z.array(AiConfigSchema).optional(),
+  subProjects: z.array(SubProjectSchema).optional(),
   scannedAt: z.string().optional(),
 });
 
@@ -129,6 +142,7 @@ export type CreateBranch = z.infer<typeof CreateBranchSchema>;
 export type ImportRules = z.infer<typeof ImportRulesSchema>;
 export type ProjectStatus = z.infer<typeof ProjectStatusEnum>;
 export type ProjectType = z.infer<typeof ProjectTypeEnum>;
+export type SubProject = z.infer<typeof SubProjectSchema>;
 export type ProjectScanData = z.infer<typeof ProjectScanDataSchema>;
 export type Project = z.infer<typeof ProjectSchema>;
 export type CreateProject = z.infer<typeof CreateProjectSchema>;

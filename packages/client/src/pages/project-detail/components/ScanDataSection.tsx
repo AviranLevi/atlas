@@ -1,5 +1,5 @@
 // React / library
-import { FileCode, FolderTree, Package, Terminal, Settings2 } from 'lucide-react';
+import { FileCode, FolderOpen, FolderTree, Package, Terminal, Settings2 } from 'lucide-react';
 
 // Components
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,39 @@ export function ScanDataSection({ scanData }: ScanDataSectionProps) {
           </div>
         )}
       </Card>
+
+      {/* Sub-Projects */}
+      {scanData.subProjects && scanData.subProjects.length > 0 && (
+        <Card className="p-4 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+            Sub-Projects ({scanData.subProjects.length})
+          </div>
+          <div className="space-y-2">
+            {scanData.subProjects.map((sp) => (
+              <div key={sp.path} className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-[11px]">{sp.path}/</code>
+                  {sp.projectType && (
+                    <Badge variant="secondary" className="text-[10px] capitalize">
+                      {sp.projectType}
+                    </Badge>
+                  )}
+                </div>
+                {sp.languages && sp.languages.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {sp.languages.map((lang) => (
+                      <Badge key={lang} variant="outline" className="text-[10px]">
+                        {lang}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Key Directories */}
       {scanData.keyDirectories && Object.keys(scanData.keyDirectories).length > 0 && (

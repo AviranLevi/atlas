@@ -3,11 +3,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // Shared
-import type { ProjectScanData } from '@atlas/shared';
+import type { ProjectScanData, SubProject } from '@atlas/shared';
 
 // Lib
 import { logger } from '../logger.js';
-import { detectCICD, detectMonorepo, detectPackageManager, readJsonFile } from './detectors.js';
+import {
+  detectCICD,
+  detectMonorepo,
+  detectName,
+  detectPackageManager,
+  findSubProjectDirs,
+  readJsonFile,
+} from './detectors.js';
 import { detectRepoUrl, parseGitHubInfo } from './git.js';
 
 function detectProjectType(dirPath: string): ProjectScanData['projectType'] {
@@ -340,13 +347,64 @@ function detectAiConfigs(dirPath: string): AiConfigFile[] {
   return configs;
 }
 
+function detectSubProjects(dirPath: string): SubProject[] {
+  const subDirs = findSubProjectDirs(dirPath);
+  if (subDirs.length === 0) return [];
+
+  return subDirs.map((name) => {
+    const subPath = path.join(dirPath, name);
+    const { deps, devDeps } = detectDependencies(subPath);
+    return {
+      name: detectName(subPath) ?? name,
+      path: name,
+      projectType: detectProjectType(subPath),
+      languages: detectLanguages(subPath),
+      dependencies: deps,
+      devDependencies: devDeps,
+      keyDirectories: detectKeyDirectories(subPath),
+      scripts: detectScripts(subPath),
+      packageManager: detectPackageManager(subPath),
+    };
+  });
+}
+
+function mergeSubProjectData(scan: ProjectScanData, subProjects: SubProject[]): void {
+  // Merge languages (deduplicated)
+  const allLangs = new Set(scan.languages ?? []);
+  for (const sp of subProjects) {
+    for (const lang of sp.languages ?? []) allLangs.add(lang);
+  }
+  scan.languages = [...allLangs];
+
+  // Adjust project type: backend + frontend sub = fullstack, etc.
+  const rootType = scan.projectType;
+  const subTypes = new Set(subProjects.map((sp) => sp.projectType).filter(Boolean));
+  if (rootType === 'backend' && subTypes.has('frontend')) scan.projectType = 'fullstack';
+  else if (rootType === 'frontend' && subTypes.has('backend')) scan.projectType = 'fullstack';
+  else if (rootType === 'other' && (subTypes.has('frontend') || subTypes.has('backend'))) {
+    if (subTypes.has('frontend') && subTypes.has('backend')) scan.projectType = 'fullstack';
+    else if (subTypes.has('frontend')) scan.projectType = 'frontend';
+    else if (subTypes.has('backend')) scan.projectType = 'backend';
+  }
+
+  // Merge key directories — prefix with sub-project path
+  const dirs = scan.keyDirectories ?? {};
+  for (const sp of subProjects) {
+    for (const [label, dir] of Object.entries(sp.keyDirectories ?? {})) {
+      const prefixedKey = `${label} (${sp.name})`;
+      dirs[prefixedKey] = `${sp.path}/${dir}`;
+    }
+  }
+  scan.keyDirectories = dirs;
+}
+
 /** Performs a deep scan of a project directory and returns the full ProjectScanData. */
 export function deepScanProject(dirPath: string): ProjectScanData {
   const repositoryUrl = detectRepoUrl(dirPath);
   const { owner: githubOwner, repo: githubRepo } = parseGitHubInfo(repositoryUrl);
   const { deps, devDeps } = detectDependencies(dirPath);
 
-  return {
+  const scan: ProjectScanData = {
     projectType: detectProjectType(dirPath),
     languages: detectLanguages(dirPath),
     dependencies: deps,
@@ -364,4 +422,14 @@ export function deepScanProject(dirPath: string): ProjectScanData {
     aiConfigs: detectAiConfigs(dirPath),
     scannedAt: new Date().toISOString(),
   };
+
+  // Sub-project scanning for monorepos and multi-project directories
+  const subProjects = detectSubProjects(dirPath);
+  if (subProjects.length > 0) {
+    scan.subProjects = subProjects;
+    scan.monorepo = true;
+    mergeSubProjectData(scan, subProjects);
+  }
+
+  return scan;
 }

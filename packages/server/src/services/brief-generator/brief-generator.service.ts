@@ -60,6 +60,7 @@ export class BriefGeneratorService {
     // Order matches the intended reading flow: identity → layout → how to run → tooling → knowledge → stack signal.
     const lines: string[] = [
       ...this.buildTitleAndMetaLines(project),
+      ...this.buildSubProjectsLines(sd),
       ...this.buildStructureLines(sd),
       ...this.buildScriptsLines(sd),
       ...this.buildEnvironmentLines(sd),
@@ -85,6 +86,20 @@ export class BriefGeneratorService {
 
     if (project.description) lines.push(`\n${project.description}`);
 
+    return lines;
+  }
+
+  /** Sub-projects discovered in the repo (monorepo children). */
+  private buildSubProjectsLines(sd: BriefProjectScanData): string[] {
+    if (!sd?.subProjects?.length) return [];
+    const lines: string[] = ['\n## Sub-Projects'];
+    for (const sp of sd.subProjects) {
+      const parts: string[] = [];
+      if (sp.projectType) parts.push(sp.projectType);
+      if (sp.languages?.length) parts.push(sp.languages.join(', '));
+      if (sp.packageManager) parts.push(sp.packageManager);
+      lines.push(`- **${sp.name}** (\`${sp.path}/\`): ${parts.join(' | ')}`);
+    }
     return lines;
   }
 
