@@ -80,8 +80,8 @@ export function startMcpHttpServer() {
         sessions.delete(transport.sessionId);
       };
 
+      // McpServer.connect() calls transport.start() internally — do not call again
       await mcpServer.connect(transport);
-      await transport.start();
       return;
     }
 
