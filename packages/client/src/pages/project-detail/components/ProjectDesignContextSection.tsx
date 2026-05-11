@@ -1,5 +1,5 @@
 // React / library
-import { Palette, Pencil, X, Save, Sparkles } from 'lucide-react';
+import { Palette, Pencil, TriangleAlert, X, Save, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -121,33 +121,34 @@ export function ProjectDesignContextSection({ project }: ProjectDesignContextSec
                 Let AI analyze your project and generate a DESIGN.md, or write one manually.
               </p>
             </div>
-            <div className="flex shrink-0 gap-2">
-              <Button size="sm" disabled={isBusy || !hasProviders} asChild>
-                <button type="button" onClick={handleGenerate} disabled={isBusy || !hasProviders}>
-                  <Sparkles
-                    className={`mr-1.5 h-3.5 w-3.5 ${generateDesignContext.isPending ? 'animate-pulse' : ''}`}
-                  />
-                  {generateDesignContext.isPending ? 'Generating...' : 'Generate with AI'}
-                </button>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <button type="button" onClick={handleEdit} disabled={isBusy}>
-                  <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                  Write manually
-                </button>
-              </Button>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <div className="flex gap-2">
+                <Button size="sm" disabled={isBusy || !hasProviders} asChild>
+                  <button type="button" onClick={handleGenerate} disabled={isBusy || !hasProviders}>
+                    <Sparkles
+                      className={`mr-1.5 h-3.5 w-3.5 ${generateDesignContext.isPending ? 'animate-pulse' : ''}`}
+                    />
+                    {generateDesignContext.isPending ? 'Generating...' : 'Generate with AI'}
+                  </button>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <button type="button" onClick={handleEdit} disabled={isBusy}>
+                    <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                    Write manually
+                  </button>
+                </Button>
+              </div>
+              {!hasProviders && providers !== undefined && (
+                <p className="flex items-center gap-1 text-[11px] text-amber-500">
+                  <TriangleAlert className="h-3 w-3 shrink-0" />
+                  No AI providers configured.{' '}
+                  <Link to="/agents" className="underline underline-offset-2 hover:opacity-80">
+                    Add one in Agents
+                  </Link>
+                </p>
+              )}
             </div>
           </div>
-
-          {!hasProviders && providers !== undefined && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              No AI providers configured.{' '}
-              <Link to="/agents" className="text-primary underline-offset-2 hover:underline">
-                Add one in Agents
-              </Link>{' '}
-              to use AI generation.
-            </p>
-          )}
         </>
       )}
 
