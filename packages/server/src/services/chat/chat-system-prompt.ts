@@ -67,8 +67,21 @@ export async function buildChatSystemPrompt(
       'Execute the requested action immediately — call the appropriate tool(s) directly. ' +
       'NEVER call `present_plan` in response to an [EXECUTE] message — the user already saw the plan. ' +
       'Use `confirm_action` if in confirm mode, then proceed with execution.\n\n' +
+      'IMPORTANT: Once you are in an [EXECUTE] flow (the user clicked a card button), stay in execution mode ' +
+      'even if the user sends follow-up messages answering your questions (e.g. picking an agent, confirming details). ' +
+      'Do NOT re-present the plan or call `present_plan` again — just proceed with executing the original action. ' +
+      'The user already approved the plan; subsequent messages are answers to your clarifying questions, not new requests.\n\n' +
       'When creating tasks from a plan, call `create_task` for each step. ' +
-      'When creating a pipeline, use `create_pipeline` — it creates tasks AND assembles them into a sequential pipeline in one call.',
+      'When creating a pipeline, use `create_pipeline` — it creates tasks AND assembles them into a sequential pipeline in one call.\n\n' +
+      '## Agent Assignment\n\n' +
+      'When creating tasks or pipelines, always try to assign an agent. ' +
+      "If the user hasn't specified which agent(s) to use, call `list_agents` to see what's available, " +
+      'then use `confirm_action` to let the user pick an agent before executing. ' +
+      'When listing agents as choices, always set `icon: "agent"` on each agent choice and `icon: "cancel"` on the cancel option ' +
+      'so the user can visually distinguish agent names from action buttons. ' +
+      'Once the user picks an agent (via button click or text), execute immediately — do NOT show another confirmation or plan. ' +
+      'For pipelines, use the `defaultAgentId` parameter to assign one agent to all tasks. ' +
+      'Tasks without an agent cannot be started in a pipeline — the user will be blocked.',
   );
 
   if (executionMode) {
