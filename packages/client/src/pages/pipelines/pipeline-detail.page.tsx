@@ -1,25 +1,11 @@
 // React / library
-import {
-  ArrowLeft,
-  Bot,
-  Cpu,
-  ExternalLink,
-  GitBranch,
-  ListChecks,
-  Loader2,
-  Pause,
-  Play,
-  Sparkles,
-  Square,
-  StepForward,
-} from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, GitBranch, Loader2, Pause, Play, Square, StepForward } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Components
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
+import { PipelineFlow } from './components/PipelineFlow';
 
 // Hooks
 import {
@@ -32,7 +18,7 @@ import {
 } from '@/hooks/use-pipelines.hook';
 
 // Constants
-import { PIPELINE_STATUS_META, TASK_STATUS_META, WORKFLOW_STAGE_META } from './pipelines.constants';
+import { PIPELINE_STATUS_META } from './pipelines.constants';
 
 export function PipelineDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -166,129 +152,11 @@ export function PipelineDetailPage() {
         </div>
       )}
 
-      {/* Task list */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Tasks</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {pipeline.tasks.length === 0 ? (
-            <p className="px-6 pb-6 text-sm text-muted-foreground">No tasks in this pipeline.</p>
-          ) : (
-            <div className="divide-y">
-              {pipeline.tasks
-                .slice()
-                .sort((a, b) => a.position - b.position)
-                .map((task) => {
-                  const taskMeta =
-                    TASK_STATUS_META[task.status as keyof typeof TASK_STATUS_META] ?? TASK_STATUS_META.queued;
-                  const isCurrent = pipeline.currentTaskId === task.taskId;
-
-                  return (
-                    <div
-                      key={task.taskId}
-                      className={`flex items-center gap-4 px-6 py-3 ${isCurrent ? 'bg-blue-50/50 dark:bg-blue-950/20' : ''}`}
-                    >
-                      {/* Position */}
-                      <span className="w-5 shrink-0 text-xs text-muted-foreground text-right">
-                        {task.position + 1}.
-                      </span>
-
-                      {/* Task name + metadata */}
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
-                        <p className="truncate text-sm font-medium">{task.taskName ?? task.taskId}</p>
-                        {task.agentName && (
-                          <Badge variant="secondary" className="shrink-0 gap-1 text-[10px] px-1.5 py-0">
-                            <Bot className="h-2.5 w-2.5" />
-                            {task.agentName}
-                          </Badge>
-                        )}
-                        {task.workspaceRuntime && (
-                          <Badge variant="secondary" className="shrink-0 gap-1 text-[10px] px-1.5 py-0">
-                            <Cpu className="h-2.5 w-2.5" />
-                            {task.workspaceRuntime}
-                          </Badge>
-                        )}
-                        {task.workspaceModel && (
-                          <span className="shrink-0 text-[10px] text-muted-foreground">{task.workspaceModel}</span>
-                        )}
-                        {task.workflowEnabled &&
-                          (() => {
-                            const stageMeta = task.workspaceStage ? WORKFLOW_STAGE_META[task.workspaceStage] : null;
-                            const StageIcon = stageMeta?.icon;
-                            return (
-                              <Badge
-                                variant="outline"
-                                className={`shrink-0 gap-1 text-[10px] px-1.5 py-0 ${
-                                  stageMeta?.badgeClass ??
-                                  'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                                }`}
-                              >
-                                {StageIcon && <StageIcon className="h-2.5 w-2.5" />}
-                                {stageMeta?.label ?? 'Workflow'}
-                              </Badge>
-                            );
-                          })()}
-                      </div>
-
-                      {/* Auto-review / auto-accept toggles */}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <Switch
-                            checked={task.autoReview}
-                            disabled={isRunning || task.status !== 'queued'}
-                            onCheckedChange={(checked) =>
-                              updateTask.mutate({
-                                id: pipeline.id,
-                                taskId: task.taskId,
-                                data: {
-                                  autoReview: checked,
-                                  autoAccept: checked ? task.autoAccept : false,
-                                },
-                              })
-                            }
-                            className="scale-75"
-                          />
-                          Auto-review
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <Switch
-                            checked={task.autoAccept}
-                            disabled={isRunning || task.status !== 'queued' || !task.autoReview}
-                            onCheckedChange={(checked) =>
-                              updateTask.mutate({
-                                id: pipeline.id,
-                                taskId: task.taskId,
-                                data: { autoAccept: checked },
-                              })
-                            }
-                            className="scale-75"
-                          />
-                          Auto-accept
-                        </label>
-                      </div>
-
-                      {/* Workspace link */}
-                      {task.workspaceId && (
-                        <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-muted-foreground" asChild>
-                          <Link to={`/workspaces/${task.workspaceId}`}>
-                            <ExternalLink className="h-3 w-3" />
-                            Workspace
-                          </Link>
-                        </Button>
-                      )}
-
-                      {/* Status badge */}
-                      <Badge variant="outline" className={`shrink-0 ${taskMeta.badgeClass}`}>
-                        {taskMeta.label}
-                      </Badge>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Pipeline flow visualization */}
+      <PipelineFlow
+        pipeline={pipeline}
+        onUpdateTask={(taskId, data) => updateTask.mutate({ id: pipeline.id, taskId, data })}
+      />
     </div>
   );
 }
