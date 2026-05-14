@@ -1,6 +1,6 @@
 // React / library
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Bot, Cpu, ExternalLink } from 'lucide-react';
+import { ArrowDown, ArrowUp, Bot, Cpu, ExternalLink, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Components
@@ -31,6 +31,7 @@ export function PipelineTaskNode({ data }: PipelineTaskNodeProps) {
 
   const isCurrent = data.isCurrent;
   const isRunning = data.pipelineRunning;
+  const isIdle = data.pipelineIdle;
   const isQueued = status === 'queued';
 
   return (
@@ -52,11 +53,62 @@ export function PipelineTaskNode({ data }: PipelineTaskNodeProps) {
           <span className="shrink-0 w-5 text-right text-[10px] font-mono text-muted-foreground">
             {data.task.position + 1}.
           </span>
-          <p className="truncate text-sm font-medium">{data.task.taskName ?? data.task.taskId}</p>
+          <Link
+            to={`/tasks/${data.task.taskId}`}
+            className="truncate text-sm font-medium hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {data.task.taskName ?? data.task.taskId}
+          </Link>
         </div>
-        <Badge variant="outline" className={cn('shrink-0 text-[10px]', meta.badgeClass)}>
-          {meta.label}
-        </Badge>
+        <div className="flex items-center gap-1">
+          <Badge variant="outline" className={cn('shrink-0 text-[10px]', meta.badgeClass)}>
+            {meta.label}
+          </Badge>
+          {/* Reorder + remove buttons when idle */}
+          {isIdle && (
+            <div className="flex items-center gap-0.5 ml-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onMoveUp();
+                }}
+                disabled={data.isFirst}
+              >
+                <ArrowUp className="h-3 w-3" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onMoveDown();
+                }}
+                disabled={data.isLast}
+              >
+                <ArrowDown className="h-3 w-3" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  data.onRemove();
+                }}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Meta row: agent, runtime, model, workflow stage */}

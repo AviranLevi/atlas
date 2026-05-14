@@ -13,6 +13,12 @@ export interface PipelineTaskNodeData {
   task: PipelineTask;
   isCurrent: boolean;
   pipelineRunning: boolean;
+  pipelineIdle: boolean;
+  isFirst: boolean;
+  isLast: boolean;
   onUpdateTask: (data: UpdatePipelineTask) => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onRemove: () => void;
   [key: string]: unknown; // React Flow requires index signature
 }

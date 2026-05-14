@@ -1,10 +1,13 @@
 // React / library
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ReactFlow, Background, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 // Components
 import { PipelineTaskNode } from './PipelineTaskNode';
+
+// Hooks
+import { useReorderPipelineTasks, useRemovePipelineTask } from '@/hooks/use-pipelines.hook';
 
 // Constants
 import { EDGE_STYLE, PIPELINE_FLOW } from '../pipelines.constants';
@@ -24,10 +27,40 @@ interface PipelineFlowProps {
 /** Renders pipeline tasks as a vertical React Flow chain with animated edges. */
 export function PipelineFlow({ pipeline, onUpdateTask, onNodeClick }: PipelineFlowProps) {
   const isPipelineRunning = pipeline.status === 'running';
+  const isPipelineIdle = pipeline.status === 'idle';
+  const reorder = useReorderPipelineTasks();
+  const removeTask = useRemovePipelineTask();
+
+  const sorted = useMemo(() => pipeline.tasks.slice().sort((a, b) => a.position - b.position), [pipeline.tasks]);
+
+  const handleMoveUp = useCallback(
+    (idx: number) => {
+      if (idx === 0) return;
+      const newOrder = sorted.map((t) => t.taskId);
+      [newOrder[idx - 1], newOrder[idx]] = [newOrder[idx], newOrder[idx - 1]];
+      reorder.mutate({ id: pipeline.id, data: { taskIds: newOrder } });
+    },
+    [sorted, pipeline.id, reorder],
+  );
+
+  const handleMoveDown = useCallback(
+    (idx: number) => {
+      if (idx >= sorted.length - 1) return;
+      const newOrder = sorted.map((t) => t.taskId);
+      [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
+      reorder.mutate({ id: pipeline.id, data: { taskIds: newOrder } });
+    },
+    [sorted, pipeline.id, reorder],
+  );
+
+  const handleRemove = useCallback(
+    (taskId: string) => {
+      removeTask.mutate({ id: pipeline.id, taskId });
+    },
+    [pipeline.id, removeTask],
+  );
 
   const { nodes, edges } = useMemo(() => {
-    const sorted = pipeline.tasks.slice().sort((a, b) => a.position - b.position);
-
     const nodes: Node<PipelineTaskNodeData>[] = sorted.map((task, idx) => ({
       id: task.taskId,
       type: 'pipelineTask',
@@ -36,7 +69,13 @@ export function PipelineFlow({ pipeline, onUpdateTask, onNodeClick }: PipelineFl
         task,
         isCurrent: pipeline.currentTaskId === task.taskId,
         pipelineRunning: isPipelineRunning,
+        pipelineIdle: isPipelineIdle,
+        isFirst: idx === 0,
+        isLast: idx === sorted.length - 1,
         onUpdateTask: (data: UpdatePipelineTask) => onUpdateTask(task.taskId, data),
+        onMoveUp: () => handleMoveUp(idx),
+        onMoveDown: () => handleMoveDown(idx),
+        onRemove: () => handleRemove(task.taskId),
       },
       draggable: false,
       selectable: true,
@@ -60,7 +99,16 @@ export function PipelineFlow({ pipeline, onUpdateTask, onNodeClick }: PipelineFl
     }
 
     return { nodes, edges };
-  }, [pipeline.tasks, pipeline.currentTaskId, isPipelineRunning, onUpdateTask]);
+  }, [
+    sorted,
+    pipeline.currentTaskId,
+    isPipelineRunning,
+    isPipelineIdle,
+    onUpdateTask,
+    handleMoveUp,
+    handleMoveDown,
+    handleRemove,
+  ]);
 
   const canvasHeight = Math.max(
     PIPELINE_FLOW.canvasMinHeight,
