@@ -42,6 +42,7 @@ export function CreatePipelineDialog({
 }: CreatePipelineDialogProps) {
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<TaskEntry[]>([]);
+  const [touched, setTouched] = useState(false);
   const create = useCreatePipeline();
 
   // Seed selection + default name from initialTasks when dialog opens
@@ -56,6 +57,7 @@ export function CreatePipelineDialog({
     if (!open) {
       setName('');
       setSelected([]);
+      setTouched(false);
     }
   }, [open]);
 
@@ -140,7 +142,9 @@ export function CreatePipelineDialog({
               placeholder="e.g. Backend bootstrap"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onBlur={() => setTouched(true)}
             />
+            {touched && !name.trim() && <p className="text-xs text-destructive">Pipeline name is required</p>}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -233,11 +237,18 @@ export function CreatePipelineDialog({
 
           {create.isError && <p className="text-sm text-destructive">{create.error.message}</p>}
 
-          <DialogFooter>
+          <DialogFooter className="flex items-center gap-2">
+            {touched && selected.length === 0 && (
+              <p className="text-xs text-destructive mr-auto">Add at least one task</p>
+            )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={create.isPending || !name.trim() || selected.length === 0}>
+            <Button
+              type="submit"
+              disabled={create.isPending || !name.trim() || selected.length === 0}
+              onClick={() => setTouched(true)}
+            >
               {create.isPending ? 'Creating...' : 'Create Pipeline'}
             </Button>
           </DialogFooter>
