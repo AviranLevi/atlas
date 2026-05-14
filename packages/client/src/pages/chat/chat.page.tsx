@@ -1,17 +1,23 @@
 // React / library
 import { useQueryClient } from '@tanstack/react-query';
-import { MessageSquare, Settings, Terminal, Loader2, Unplug } from 'lucide-react';
-import { useEffect } from 'react';
+import { MessageSquare, Settings, Terminal, Loader2, Unplug, Square } from 'lucide-react';
+import { useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // Components
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/empty-state/EmptyState';
 import { ChatInput } from './components/ChatInput';
 import { ConversationSidebar } from './components/ConversationSidebar';
 import { MessageList } from './components/MessageList';
 
 // Hooks
-import { useConversations, useConversationMessages, useChatStream } from '@/hooks/use-chat.hook';
+import {
+  useConversations,
+  useConversationMessages,
+  useChatStream,
+  useUpdateConversationMode,
+} from '@/hooks/use-chat.hook';
 import { useChatConfig } from './hooks/use-chat-config.hook';
 import { useChatActions } from './hooks/use-chat-actions.hook';
 
@@ -36,7 +42,7 @@ export function ChatPage() {
   const config = useChatConfig(conversationId);
   const { data: conversations = [] } = useConversations(activeProjectId);
   const { data: messages = [] } = useConversationMessages(conversationId);
-  const { state, streamingText, toolCalls, error, send, abort, clearError, pendingUserMessage } =
+  const { state, streamingText, toolCalls, uiResources, error, send, abort, clearError, pendingUserMessage } =
     useChatStream(conversationId);
 
   const { creatingChat, handleSend, handleNewChat, handleDeleteConversation, handleSelectConversation } =
@@ -47,6 +53,19 @@ export function ChatPage() {
       send,
       streamState: state,
     });
+
+  // Execute action: switch to confirm mode (so AI can act) then send the prompt.
+  const updateMode = useUpdateConversationMode();
+  const handleExecute = useCallback(
+    async (text: string) => {
+      if (config.executionMode === 'plan-only' && conversationId) {
+        config.onExecutionModeChange('confirm');
+        await updateMode.mutateAsync({ id: conversationId, executionMode: 'confirm' });
+      }
+      send(text);
+    },
+    [config, conversationId, updateMode, send],
+  );
 
   // True when the server is still processing a response (e.g. user navigated away mid-stream and back)
   const isAwaitingResponse = state === 'idle' && messages.length > 0 && messages[messages.length - 1]?.role === 'user';
@@ -103,9 +122,21 @@ export function ChatPage() {
             messages={messages}
             streamingText={streamingText}
             streamingToolCalls={toolCalls}
+            streamingUIResources={uiResources}
             isStreaming={state === 'streaming' || isAwaitingResponse}
             pendingUserMessage={pendingUserMessage}
+            onPrompt={(text) => send(text)}
+            onExecute={handleExecute}
           />
+        )}
+
+        {state === 'streaming' && (
+          <div className="flex justify-center py-2 border-t border-border/30">
+            <Button size="sm" variant="outline" onClick={abort} className="gap-1.5 text-xs h-7">
+              <Square className="h-3 w-3 fill-current" />
+              Stop generating
+            </Button>
+          </div>
         )}
 
         {error && (
