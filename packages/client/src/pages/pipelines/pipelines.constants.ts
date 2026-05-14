@@ -5,6 +5,38 @@ import { ListChecks, Play, Sparkles } from 'lucide-react';
 import type { PipelineStatus, PipelineTaskStatus, WorkflowStage } from '@atlas/shared';
 import type { PipelineStatusMeta } from './pipelines.types';
 
+// ── Flow layout constants ──────────────────────────────────────────────────
+
+export const PIPELINE_FLOW = {
+  nodeWidth: 320,
+  nodeHeight: 110,
+  xGap: 0, // sequential, single column
+  yGap: 160, // vertical spacing between nodes
+  paddingY: 40,
+  canvasMinHeight: 400,
+} as const;
+
+/** Border + bg per pipeline-task status, for the custom node. */
+export const NODE_STATUS_STYLE: Record<PipelineTaskStatus, { border: string; bg: string; ring: string }> = {
+  queued: { border: 'border-border', bg: 'bg-card', ring: '' },
+  running: {
+    border: 'border-blue-300',
+    bg: 'bg-blue-50/60 dark:bg-blue-950/30',
+    ring: 'ring-2 ring-blue-300/50',
+  },
+  completed: { border: 'border-green-300', bg: 'bg-green-50/60 dark:bg-green-950/30', ring: '' },
+  failed: { border: 'border-red-300', bg: 'bg-red-50/60 dark:bg-red-950/30', ring: '' },
+  skipped: { border: 'border-border/60', bg: 'bg-muted/30', ring: '' },
+};
+
+/** Edge stroke color per state. */
+export const EDGE_STYLE = {
+  pending: { stroke: 'hsl(var(--border))', width: 1.5, animated: false },
+  active: { stroke: '#3b82f6', width: 2, animated: true },
+  done: { stroke: '#22c55e', width: 2, animated: false },
+  failed: { stroke: '#ef4444', width: 2, animated: false },
+} as const;
+
 export const PIPELINE_STATUS_META: Record<PipelineStatus, PipelineStatusMeta> = {
   idle: {
     label: 'Idle',
