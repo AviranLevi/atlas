@@ -103,6 +103,16 @@ export class WorkspaceCompletionService {
         metadata: { branchName: workspace.branchName, archivedLogPath },
       });
 
+      // Notify pipeline runner so it can advance to next task
+      try {
+        const { pipelinesService } = await import('../../index.js');
+        pipelinesService
+          .onWorkspaceTransition(workspaceId, 'approved', workspace.agentRuntime)
+          .catch((e) => logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - pipeline transition failed`, e));
+      } catch {
+        // Not part of a pipeline — ignore
+      }
+
       return merged;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
@@ -167,6 +177,16 @@ export class WorkspaceCompletionService {
         description: 'Task completed (no code changes)',
         metadata: { branchName: workspace.branchName, archivedLogPath },
       });
+
+      // Notify pipeline runner so it can advance to next task
+      try {
+        const { pipelinesService } = await import('../../index.js');
+        pipelinesService
+          .onWorkspaceTransition(workspaceId, 'approved', workspace.agentRuntime)
+          .catch((e) => logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - pipeline transition failed`, e));
+      } catch {
+        // Not part of a pipeline — ignore
+      }
 
       return completed;
     } catch (error: unknown) {
