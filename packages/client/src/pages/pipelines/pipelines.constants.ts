@@ -31,7 +31,7 @@ export const NODE_STATUS_STYLE: Record<PipelineTaskStatus, { border: string; bg:
 
 /** Edge stroke color per state. */
 export const EDGE_STYLE = {
-  pending: { stroke: 'hsl(var(--border))', width: 1.5, animated: false },
+  pending: { stroke: '#6b7280', width: 1.5, animated: false },
   active: { stroke: '#3b82f6', width: 2, animated: true },
   done: { stroke: '#22c55e', width: 2, animated: false },
   failed: { stroke: '#ef4444', width: 2, animated: false },
