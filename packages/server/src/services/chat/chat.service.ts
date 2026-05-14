@@ -33,6 +33,7 @@ import {
   streamChat,
   streamCliChat,
 } from '../../lib/chat/index.js';
+import { isUICardResult } from '../../lib/chat-ui/index.js';
 import { logger } from '../../lib/logger.js';
 
 import { buildChatSystemPrompt } from './chat-system-prompt.js';
@@ -310,14 +311,26 @@ export class ChatService {
     const projectContext = await getProjectContext(conversation.projectId, mentionedAgentId);
 
     for (const tc of pendingToolCalls) {
-      const result = await executeTool(tc.name, tc.args, projectContext);
-      await emit('tool_result', { toolCallId: tc.id, name: tc.name, result });
+      const rawResult = await executeTool(tc.name, tc.args, projectContext);
+
+      // Detect UI card results — emit extra ui_resource event and persist html alongside data.
+      let persistedResult: unknown = rawResult;
+      if (isUICardResult(rawResult)) {
+        await emit('ui_resource', { toolCallId: tc.id, toolName: tc.name, html: rawResult.html });
+        persistedResult = {
+          ...((rawResult.data as Record<string, unknown>) ?? {}),
+          __uiHtml: rawResult.html,
+          __uiToolName: tc.name,
+        };
+      }
+
+      await emit('tool_result', { toolCallId: tc.id, name: tc.name, result: persistedResult });
 
       this.repo.insertMessage({
         conversationId,
         role: 'tool',
-        content: JSON.stringify(result),
-        toolResults: [{ toolCallId: tc.id, result }],
+        content: JSON.stringify(persistedResult),
+        toolResults: [{ toolCallId: tc.id, result: persistedResult }],
       });
     }
 
