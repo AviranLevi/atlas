@@ -58,7 +58,8 @@ export function PipelineDetailPage() {
   const isIdle = pipeline.status === 'idle';
   const isDone = pipeline.status === 'completed' || pipeline.status === 'failed';
   const tasksWithoutAgent = pipeline.tasks.filter((t) => !t.agentId);
-  const canStart = pipeline.tasks.length > 0 && tasksWithoutAgent.length === 0;
+  const tasksWithoutRuntime = pipeline.tasks.filter((t) => t.agentId && !t.agentDefaultRuntimeId);
+  const canStart = pipeline.tasks.length > 0 && tasksWithoutAgent.length === 0 && tasksWithoutRuntime.length === 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -147,8 +148,17 @@ export function PipelineDetailPage() {
       {tasksWithoutAgent.length > 0 && !isRunning && (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
           {tasksWithoutAgent.length === 1
-            ? `Task "${tasksWithoutAgent[0].taskName ?? tasksWithoutAgent[0].taskId}" has no agent assigned. Assign an agent with a default runtime before starting.`
-            : `${tasksWithoutAgent.length} tasks have no agent assigned. Assign agents with default runtimes before starting.`}
+            ? `Task "${tasksWithoutAgent[0].taskName ?? tasksWithoutAgent[0].taskId}" has no agent assigned. Assign an agent before starting.`
+            : `${tasksWithoutAgent.length} tasks have no agent assigned. Assign agents before starting.`}
+        </div>
+      )}
+
+      {/* Warning: agents without default runtime */}
+      {tasksWithoutRuntime.length > 0 && tasksWithoutAgent.length === 0 && !isRunning && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
+          {tasksWithoutRuntime.length === 1
+            ? `Agent "${tasksWithoutRuntime[0].agentName}" on task "${tasksWithoutRuntime[0].taskName ?? tasksWithoutRuntime[0].taskId}" has no default runtime configured. The pipeline will pause immediately on start.`
+            : `${tasksWithoutRuntime.length} tasks have agents without a default runtime. The pipeline will pause immediately on start.`}
         </div>
       )}
 

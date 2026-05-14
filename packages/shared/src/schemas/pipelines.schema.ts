@@ -43,6 +43,7 @@ export const PipelineTaskSchema = z.object({
   workspaceModel: z.string().nullable().optional(),
   workspaceStage: WorkflowStageEnum.nullable().optional(),
   workspaceStatus: z.string().nullable().optional(),
+  agentDefaultRuntimeId: z.string().nullable().optional(),
 });
 
 export const PipelineWithTasksSchema = PipelineSchema.extend({

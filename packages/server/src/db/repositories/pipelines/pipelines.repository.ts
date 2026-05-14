@@ -43,6 +43,7 @@ export class PipelinesRepository {
       workspaceModel: row.workspaces?.model ?? undefined,
       workspaceStage: row.workspaces?.workflowStage ?? undefined,
       workspaceStatus: row.workspaces?.status ?? undefined,
+      agentDefaultRuntimeId: row.agents?.defaultRuntimeId ?? undefined,
     };
   }
 
