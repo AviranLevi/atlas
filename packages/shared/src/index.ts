@@ -1,4 +1,5 @@
 export * from './strip-cli-prompt-echo';
+export * from './schemas/chat-ui.schema';
 export * from './schemas/agent-providers.schema';
 export * from './schemas/agents.schema';
 export * from './schemas/chat.schema';
