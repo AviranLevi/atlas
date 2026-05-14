@@ -5,13 +5,14 @@ import { useEffect, useState } from 'react';
 // Components
 import { MarkdownContent } from '@/components/ui/markdown-content';
 import { AgentThinking } from './AgentThinking';
+import { ChatUICard } from './ChatUICard';
 import { parseAgentContent } from '../chat.utils';
 
 // Lib
 import { cn } from '@/lib/utils';
 
 // Types
-import type { ThinkingStep, StreamingBubbleProps } from '../chat.types';
+import type { ThinkingStep, StreamingBubbleProps, UIResourceItem } from '../chat.types';
 
 function useTypewriter(text: string, speed = 10) {
   const [pos, setPos] = useState(0);
@@ -29,7 +30,7 @@ function useTypewriter(text: string, speed = 10) {
   return { displayed: text.slice(0, pos), done: pos >= text.length };
 }
 
-export function StreamingBubble({ text, toolCalls }: StreamingBubbleProps) {
+export function StreamingBubble({ text, toolCalls, uiResources, onPrompt, onExecute }: StreamingBubbleProps) {
   const isApiMode = toolCalls.length > 0;
 
   const apiSteps: ThinkingStep[] = toolCalls.map((tc) => ({
@@ -53,6 +54,14 @@ export function StreamingBubble({ text, toolCalls }: StreamingBubbleProps) {
       </div>
       <div className={cn('flex max-w-[80%] flex-col gap-2')}>
         <AgentThinking steps={thinkingSteps} isStreaming={true} />
+
+        {uiResources && uiResources.length > 0 && (
+          <div className="flex flex-col gap-2 animate-fade-in-up">
+            {uiResources.map((r) => (
+              <ChatUICard key={r.toolCallId} resource={r} onPrompt={onPrompt} onExecute={onExecute} />
+            ))}
+          </div>
+        )}
 
         {responseText && (
           <div className="min-w-0 rounded-lg bg-muted px-3 py-2 animate-fade-in-up">
