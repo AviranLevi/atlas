@@ -167,7 +167,7 @@ export function ChatInput({
           className={cn(
             'rounded-lg border border-input bg-background ring-offset-background',
             'focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
-            disabled && 'opacity-50',
+            disabled && !isStreaming && 'opacity-50',
           )}
         >
           <input

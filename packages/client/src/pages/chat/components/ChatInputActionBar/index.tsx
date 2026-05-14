@@ -1,5 +1,5 @@
 // React / library
-import { Paperclip, Send, Square, Terminal } from 'lucide-react';
+import { Paperclip, Send, Terminal } from 'lucide-react';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -102,18 +102,8 @@ export function ChatInputActionBar({
         <Paperclip className="h-4 w-4" />
       </Button>
 
-      {/* Send / Stop */}
-      {isStreaming ? (
-        <Button
-          size="icon"
-          variant="destructive"
-          onClick={onAbort}
-          className="h-7 w-7 shrink-0"
-          aria-label="Stop generating"
-        >
-          <Square className="h-3.5 w-3.5" />
-        </Button>
-      ) : (
+      {/* Send */}
+      {!isStreaming && (
         <Button size="icon" onClick={onSend} disabled={!canSend} className="h-7 w-7 shrink-0" aria-label="Send message">
           <Send className="h-3.5 w-3.5" />
         </Button>
