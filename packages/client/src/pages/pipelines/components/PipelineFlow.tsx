@@ -1,6 +1,6 @@
 // React / library
 import { useMemo } from 'react';
-import { ReactFlow, Background, Controls, type Node, type Edge } from '@xyflow/react';
+import { ReactFlow, Background, type Node, type Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 // Components
@@ -93,7 +93,6 @@ export function PipelineFlow({ pipeline, onUpdateTask, onNodeClick }: PipelineFl
         zoomOnScroll
       >
         <Background color="hsl(var(--border))" gap={20} />
-        <Controls className="[&>button]:bg-background [&>button]:border-border" />
       </ReactFlow>
     </div>
   );
