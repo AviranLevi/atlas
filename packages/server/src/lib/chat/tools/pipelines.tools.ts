@@ -30,6 +30,11 @@ export const createPipelineTool = makeChatTool({
   mutating: true,
   inputSchema: z.object({
     name: z.string().min(1).describe('Pipeline name (e.g. "Build REST API")'),
+    defaultAgentId: z
+      .string()
+      .uuid()
+      .optional()
+      .describe('Agent assigned to ALL tasks unless overridden per-task. Use the ID from list_agents.'),
     tasks: z.array(PIPELINE_TASK_SCHEMA).min(1).describe('Ordered list of tasks — they will execute sequentially'),
   }),
   handler: async (input, context) => {
@@ -39,6 +44,7 @@ export const createPipelineTool = makeChatTool({
       input.tasks.map((t) =>
         tasksService.create({
           ...t,
+          agentId: t.agentId ?? input.defaultAgentId,
           projectId: context.projectId!,
         } as CreateTask),
       ),

@@ -15,6 +15,10 @@ const CONFIRM_CHOICE_SCHEMA = z.object({
   label: z.string().describe('Button label'),
   value: z.string().describe('Message sent when this button is clicked'),
   style: z.enum(['primary', 'secondary', 'danger']).optional().describe('Button visual style'),
+  icon: z
+    .enum(['agent', 'task', 'pipeline', 'cancel', 'check'])
+    .optional()
+    .describe('Optional icon shown before the label — use "agent" when listing agents'),
 });
 
 export const presentPlanTool = makeChatTool({
