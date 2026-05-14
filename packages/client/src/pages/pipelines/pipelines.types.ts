@@ -20,5 +20,6 @@ export interface PipelineTaskNodeData {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
+  onTaskClick: (taskId: string) => void;
   [key: string]: unknown; // React Flow requires index signature
 }

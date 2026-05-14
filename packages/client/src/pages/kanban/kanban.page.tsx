@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/empty-state/EmptyState';
 import { BacklogList } from '@/components/kanban/BacklogList';
 import { KanbanCard } from '@/components/kanban/KanbanCard';
 import { KanbanColumn } from '@/components/kanban/KanbanColumn';
+import { TaskDetailSheet } from '@/components/task-detail/TaskDetailSheet';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,8 +42,8 @@ export function KanbanPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [newTaskStatus, setNewTaskStatus] = useState<TaskStatus>(TASK_STATUS.TODO);
+  const [sheetTaskId, setSheetTaskId] = useState<string | null>(null);
   const [startWorkDialogOpen, setStartWorkDialogOpen] = useState(false);
   const [startWorkTask, setStartWorkTask] = useState<Task | null>(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
@@ -211,10 +212,7 @@ export function KanbanPage() {
                     key={status}
                     status={status}
                     tasks={tasksByStatus[status] ?? []}
-                    onEdit={(task) => {
-                      setEditingTask(task);
-                      setDialogOpen(true);
-                    }}
+                    onEdit={(task) => setSheetTaskId(task.id)}
                     onDelete={(id) => deleteTask.mutate(id)}
                     onStartWork={(task) => {
                       setStartWorkTask(task);
@@ -255,10 +253,7 @@ export function KanbanPage() {
               agentMap={agentMap}
               projectMap={projectMap}
               showProject={!projectFilter}
-              onEdit={(task) => {
-                setEditingTask(task);
-                setDialogOpen(true);
-              }}
+              onEdit={(task) => setSheetTaskId(task.id)}
               onDelete={(id) => deleteTask.mutate(id)}
               onPromote={(id) => updateTask.mutate({ id, data: { status: TASK_STATUS.TODO } })}
             />
@@ -270,15 +265,13 @@ export function KanbanPage() {
         open={dialogOpen}
         onOpenChange={(open) => {
           setDialogOpen(open);
-          if (!open) {
-            setEditingTask(null);
-            setNewTaskStatus(TASK_STATUS.TODO);
-          }
+          if (!open) setNewTaskStatus(TASK_STATUS.TODO);
         }}
-        task={editingTask}
         defaultProjectId={projectFilter}
         defaultStatus={newTaskStatus}
       />
+
+      <TaskDetailSheet taskId={sheetTaskId} onClose={() => setSheetTaskId(null)} />
 
       <StartWorkDialog
         open={startWorkDialogOpen}

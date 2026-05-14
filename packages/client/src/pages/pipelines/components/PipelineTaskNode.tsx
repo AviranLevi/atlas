@@ -53,13 +53,16 @@ export function PipelineTaskNode({ data }: PipelineTaskNodeProps) {
           <span className="shrink-0 w-5 text-right text-[10px] font-mono text-muted-foreground">
             {data.task.position + 1}.
           </span>
-          <Link
-            to={`/tasks/${data.task.taskId}`}
-            className="truncate text-sm font-medium hover:underline"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            type="button"
+            className="truncate text-sm font-medium hover:underline text-left"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onTaskClick(data.task.taskId);
+            }}
           >
             {data.task.taskName ?? data.task.taskId}
-          </Link>
+          </button>
         </div>
         <div className="flex items-center gap-1">
           <Badge variant="outline" className={cn('shrink-0 text-[10px]', meta.badgeClass)}>

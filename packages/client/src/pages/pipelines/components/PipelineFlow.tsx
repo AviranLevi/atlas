@@ -21,11 +21,12 @@ const nodeTypes = { pipelineTask: PipelineTaskNode };
 interface PipelineFlowProps {
   pipeline: PipelineWithTasks;
   onUpdateTask: (taskId: string, data: UpdatePipelineTask) => void;
+  onTaskClick: (taskId: string) => void;
   onNodeClick?: (taskId: string) => void;
 }
 
 /** Renders pipeline tasks as a vertical React Flow chain with animated edges. */
-export function PipelineFlow({ pipeline, onUpdateTask, onNodeClick }: PipelineFlowProps) {
+export function PipelineFlow({ pipeline, onUpdateTask, onTaskClick, onNodeClick }: PipelineFlowProps) {
   const isPipelineRunning = pipeline.status === 'running';
   const isPipelineIdle = pipeline.status === 'idle';
   const reorder = useReorderPipelineTasks();
@@ -76,6 +77,7 @@ export function PipelineFlow({ pipeline, onUpdateTask, onNodeClick }: PipelineFl
         onMoveUp: () => handleMoveUp(idx),
         onMoveDown: () => handleMoveDown(idx),
         onRemove: () => handleRemove(task.taskId),
+        onTaskClick: () => onTaskClick(task.taskId),
       },
       draggable: false,
       selectable: true,
@@ -108,6 +110,7 @@ export function PipelineFlow({ pipeline, onUpdateTask, onNodeClick }: PipelineFl
     handleMoveUp,
     handleMoveDown,
     handleRemove,
+    onTaskClick,
   ]);
 
   const canvasHeight = Math.max(

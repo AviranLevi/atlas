@@ -1,8 +1,10 @@
 // React / library
 import { ArrowLeft, GitBranch, Loader2, Pause, Play, Square, StepForward } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 // Components
+import { TaskDetailSheet } from '@/components/task-detail/TaskDetailSheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PipelineFlow } from './components/PipelineFlow';
@@ -26,6 +28,7 @@ export function PipelineDetailPage() {
   const navigate = useNavigate();
   const { data: pipeline, isLoading } = usePipeline(id);
   const { data: prefs } = usePreferences();
+  const [sheetTaskId, setSheetTaskId] = useState<string | null>(null);
 
   const start = useStartPipeline();
   const pause = usePausePipeline();
@@ -171,7 +174,10 @@ export function PipelineDetailPage() {
       <PipelineFlow
         pipeline={pipeline}
         onUpdateTask={(taskId, data) => updateTask.mutate({ id: pipeline.id, taskId, data })}
+        onTaskClick={(taskId) => setSheetTaskId(taskId)}
       />
+
+      <TaskDetailSheet taskId={sheetTaskId} onClose={() => setSheetTaskId(null)} />
     </div>
   );
 }
