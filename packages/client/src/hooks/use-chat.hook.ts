@@ -7,9 +7,9 @@ import { api } from '@/lib/api';
 
 // Types
 import type { ChatAttachment, ChatConversation, ChatMessage, CreateConversation, ExecutionMode } from '@atlas/shared';
-import type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat.types';
+import type { ChatStreamState, StreamingToolCall, UIResourceItem } from '@/pages/chat/chat.types';
 
-export type { ChatStreamState, StreamingToolCall } from '@/pages/chat/chat.types';
+export type { ChatStreamState, StreamingToolCall, UIResourceItem } from '@/pages/chat/chat.types';
 
 const CONVERSATIONS_KEY = ['chat-conversations'] as const;
 const MESSAGES_KEY = ['chat-messages'] as const;
@@ -95,6 +95,7 @@ export function useChatStream(conversationId: string | undefined) {
   const [state, setState] = useState<ChatStreamState>('idle');
   const [streamingText, setStreamingText] = useState('');
   const [toolCalls, setToolCalls] = useState<StreamingToolCall[]>([]);
+  const [uiResources, setUiResources] = useState<UIResourceItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -109,6 +110,7 @@ export function useChatStream(conversationId: string | undefined) {
     setState('idle');
     setStreamingText('');
     setToolCalls([]);
+    setUiResources([]);
     setError(null);
     setPendingUserMessage(null);
   }, [conversationId]);
@@ -121,6 +123,7 @@ export function useChatStream(conversationId: string | undefined) {
       setState('streaming');
       setStreamingText('');
       setToolCalls([]);
+      setUiResources([]);
       setError(null);
 
       const controller = new AbortController();
@@ -209,6 +212,16 @@ export function useChatStream(conversationId: string | undefined) {
               ),
             );
             break;
+          case 'ui_resource':
+            setUiResources((prev) => [
+              ...prev,
+              {
+                toolCallId: data.toolCallId as string,
+                toolName: data.toolName as string,
+                html: data.html as string,
+              },
+            ]);
+            break;
           case 'error':
             setError(data.message as string);
             setState('error');
@@ -216,6 +229,8 @@ export function useChatStream(conversationId: string | undefined) {
           case 'done':
             setStreamingText('');
             setToolCalls([]);
+            // uiResources intentionally NOT cleared here — cards stay visible
+            // until the user sends the next message (cleared in send()) or switches conversation.
             break;
         }
       }
@@ -238,5 +253,5 @@ export function useChatStream(conversationId: string | undefined) {
     setState('idle');
   }, []);
 
-  return { state, streamingText, toolCalls, error, send, abort, clearError, pendingUserMessage };
+  return { state, streamingText, toolCalls, uiResources, error, send, abort, clearError, pendingUserMessage };
 }

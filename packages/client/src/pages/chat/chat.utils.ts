@@ -2,7 +2,8 @@
 import { stripCliPromptEchoStreaming } from '@atlas/shared';
 
 // Types
-import type { ThinkingStep } from './chat.types';
+import type { ChatMessage } from '@atlas/shared';
+import type { ThinkingStep, UIResourceItem } from './chat.types';
 
 /**
  * Split CLI-streamed content (which may embed "▸ tool hint" lines) into
@@ -27,4 +28,23 @@ export function parseAgentContent(content: string): { steps: ThinkingStep[]; res
   }
 
   return { steps, response: responseLines.join('\n').trim() };
+}
+
+/** Extract persisted UI card resources from loaded messages (tool-role messages with __uiHtml). */
+export function extractPersistedUIResources(messages: ChatMessage[]): UIResourceItem[] {
+  const items: UIResourceItem[] = [];
+  for (const msg of messages) {
+    if (msg.role !== 'tool' || !msg.toolResults) continue;
+    for (const tr of msg.toolResults) {
+      const res = tr.result as Record<string, unknown> | undefined;
+      if (res && typeof res.__uiHtml === 'string') {
+        items.push({
+          toolCallId: tr.toolCallId,
+          toolName: (res.__uiToolName as string) ?? 'unknown',
+          html: res.__uiHtml,
+        });
+      }
+    }
+  }
+  return items;
 }

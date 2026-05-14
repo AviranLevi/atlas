@@ -33,6 +33,13 @@ export type StreamingToolCall = {
   status: 'pending' | 'done';
 };
 
+/** A rich HTML card emitted by the server alongside a tool result. */
+export type UIResourceItem = {
+  toolCallId: string;
+  toolName: string;
+  html: string;
+};
+
 export type ThinkingStep = {
   id: string;
   toolName: string;
@@ -83,6 +90,9 @@ export type MessageBubbleProps = {
 export type StreamingBubbleProps = {
   text: string;
   toolCalls: StreamingToolCall[];
+  uiResources?: UIResourceItem[];
+  onPrompt?: (text: string) => void;
+  onExecute?: (text: string) => void;
 };
 
 /** All backend/provider/model/executor/agent config managed by `useChatConfig`. */
