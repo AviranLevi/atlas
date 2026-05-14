@@ -1,6 +1,6 @@
 // Lib
 import type { ConfirmCardOptions } from '../chat-ui.types.js';
-import { CARD_ICONS } from '../chat-ui.constants.js';
+import { CARD_ICONS, CHOICE_ICONS } from '../chat-ui.constants.js';
 import { escHtml, htmlPage, POST_ACTION_SCRIPT } from '../html-shell.js';
 
 /** Renders an action confirmation card with clickable choices. */
@@ -8,10 +8,10 @@ export function buildConfirmCard(options: ConfirmCardOptions): string {
   const { question, detail, choices } = options;
 
   const buttons = choices
-    .map(
-      (c) =>
-        `<button class="btn btn-${c.style ?? 'secondary'}" data-prompt="${escHtml(c.value)}" onclick="sendAction('prompt', { prompt: this.dataset.prompt })">${escHtml(c.label)}</button>`,
-    )
+    .map((c) => {
+      const iconSvg = c.icon && CHOICE_ICONS[c.icon] ? CHOICE_ICONS[c.icon] : '';
+      return `<button class="btn btn-${c.style ?? 'secondary'}" data-prompt="${escHtml(c.value)}" onclick="sendAction('prompt', { prompt: this.dataset.prompt })">${iconSvg}${escHtml(c.label)}</button>`;
+    })
     .join('');
 
   const body = `

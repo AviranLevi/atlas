@@ -25,6 +25,8 @@ export interface ConfirmChoice {
   label: string;
   value: string;
   style?: 'primary' | 'secondary' | 'danger';
+  /** Optional icon rendered before the label. */
+  icon?: 'agent' | 'task' | 'pipeline' | 'cancel' | 'check';
 }
 
 export interface ConfirmCardOptions {
