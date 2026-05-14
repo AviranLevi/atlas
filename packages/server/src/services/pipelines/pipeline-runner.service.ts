@@ -234,8 +234,8 @@ export class PipelineRunnerService {
       return;
     }
 
-    // Resolve runtime: task.agent.defaultRuntimeId → fallback → error
-    const resolvedRuntimeId = this.resolveRuntime(nextTask.taskId, fallbackRuntimeId);
+    // Resolve runtime: task.agent.defaultRuntimeId → fallback → global default → error
+    const resolvedRuntimeId = await this.resolveRuntime(nextTask.taskId, fallbackRuntimeId);
     if (!resolvedRuntimeId) {
       const reason = `Task "${nextTask.taskName ?? nextTask.taskId}" has no agent with a default runtime configured`;
       logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - ${reason}`);
@@ -311,9 +311,10 @@ export class PipelineRunnerService {
    * Resolves the executor runtime for a task:
    *   1. task.agent.defaultRuntimeId (if task has an agent with a default runtime)
    *   2. fallback (explicit override from caller)
-   *   3. null (no runtime available)
+   *   3. global default from preferences (defaultExecutorId)
+   *   4. null (no runtime available)
    */
-  private resolveRuntime(taskId: string, fallback?: string): string | null {
+  private async resolveRuntime(taskId: string, fallback?: string): Promise<string | null> {
     try {
       const task = tasksRepository.findById(taskId);
       if (task?.agentId) {
@@ -323,6 +324,18 @@ export class PipelineRunnerService {
     } catch (e) {
       logger.warn(`${FILE_PATH} :: resolveRuntime - failed to look up agent for task ${taskId}`, e);
     }
-    return fallback ?? null;
+
+    if (fallback) return fallback;
+
+    // Fall back to global default runtime from preferences
+    try {
+      const { preferencesService } = await import('../index.js');
+      const globalDefault = await preferencesService.get('defaultExecutorId');
+      if (globalDefault) return globalDefault;
+    } catch (e) {
+      logger.warn(`${FILE_PATH} :: resolveRuntime - failed to look up global default runtime`, e);
+    }
+
+    return null;
   }
 }

@@ -16,6 +16,7 @@ import {
   useStartPipeline,
   useUpdatePipelineTask,
 } from '@/hooks/use-pipelines.hook';
+import { usePreferences } from '@/hooks/use-preferences.hook';
 
 // Constants
 import { PIPELINE_STATUS_META } from './pipelines.constants';
@@ -24,6 +25,7 @@ export function PipelineDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: pipeline, isLoading } = usePipeline(id);
+  const { data: prefs } = usePreferences();
 
   const start = useStartPipeline();
   const pause = usePausePipeline();
@@ -58,7 +60,10 @@ export function PipelineDetailPage() {
   const isIdle = pipeline.status === 'idle';
   const isDone = pipeline.status === 'completed' || pipeline.status === 'failed';
   const tasksWithoutAgent = pipeline.tasks.filter((t) => !t.agentId);
-  const tasksWithoutRuntime = pipeline.tasks.filter((t) => t.agentId && !t.agentDefaultRuntimeId);
+  const hasGlobalRuntime = !!prefs?.defaultExecutorId;
+  const tasksWithoutRuntime = hasGlobalRuntime
+    ? []
+    : pipeline.tasks.filter((t) => t.agentId && !t.agentDefaultRuntimeId);
   const canStart = pipeline.tasks.length > 0 && tasksWithoutAgent.length === 0 && tasksWithoutRuntime.length === 0;
 
   return (
