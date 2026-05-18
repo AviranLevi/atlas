@@ -2,6 +2,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+// Contexts
+import { useChatStreamContext } from '@/contexts/ChatStreamContext';
+
 // Hooks
 import { useCreateConversation, useDeleteConversation } from '@/hooks/use-chat.hook';
 
@@ -25,6 +28,7 @@ export function useChatActions({ conversationId, activeProjectId, config, send, 
   const navigate = useNavigate();
   const createConversation = useCreateConversation();
   const deleteConversation = useDeleteConversation();
+  const { abort: abortStream } = useChatStreamContext();
   const [creatingChat, setCreatingChat] = useState(false);
   const pendingMessageRef = useRef<{
     content: string;
@@ -57,12 +61,13 @@ export function useChatActions({ conversationId, activeProjectId, config, send, 
 
   const handleDeleteConversation = useCallback(
     async (id: string) => {
+      abortStream(id);
       await deleteConversation.mutateAsync(id);
       if (id === conversationId) {
         navigate('/chat');
       }
     },
-    [deleteConversation, conversationId, navigate],
+    [abortStream, deleteConversation, conversationId, navigate],
   );
 
   const handleSend = useCallback(
