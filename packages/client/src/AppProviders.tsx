@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Contexts
 import { AuthProvider } from '@/contexts/auth.context';
+import { ChatStreamProvider } from '@/contexts/ChatStreamContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 
 // Lib
@@ -32,7 +33,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <AuthProvider>
         <ProjectProvider>
           <TooltipProvider>
-            <BrowserRouter>{children}</BrowserRouter>
+            <BrowserRouter>
+              <ChatStreamProvider>{children}</ChatStreamProvider>
+            </BrowserRouter>
           </TooltipProvider>
         </ProjectProvider>
       </AuthProvider>
