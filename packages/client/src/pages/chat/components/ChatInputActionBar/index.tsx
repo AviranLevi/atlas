@@ -68,6 +68,7 @@ export function ChatInputActionBar({
         executors={executors}
         selectedExecutorId={selectedExecutorId}
         onExecutorChange={onExecutorChange}
+        isStreaming={isStreaming}
       />
 
       {/* Agent */}

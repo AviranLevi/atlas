@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 // Types
 import type { ChatBackendSelectProps } from './chat-input-action-bar.types';
 
-/** Backend toggle + provider/executor/model selects, or read-only label for existing conversations. */
+/** Backend toggle (new chats only) + provider/executor/model selects (always editable). */
 export function ChatBackendSelect({
   isNewChat,
   backendType,
@@ -25,31 +25,14 @@ export function ChatBackendSelect({
   executors = [],
   selectedExecutorId,
   onExecutorChange,
+  isStreaming,
 }: ChatBackendSelectProps) {
-  const readOnlyLabel = (() => {
-    if (isNewChat) return null;
-    if (backendType === 'api' && selectedModel) {
-      const modelLabel = models.find((m) => m.value === selectedModel)?.label ?? selectedModel;
-      const providerName = providers.find((p) => p.id === selectedProviderId)?.name;
-      return providerName ? `${providerName} · ${modelLabel}` : modelLabel;
-    }
-    if (backendType === 'cli' && selectedExecutorId) {
-      const exec = executors.find((e) => e.id === selectedExecutorId);
-      const execName = exec?.name ?? selectedExecutorId;
-      const modelLabel = selectedModel
-        ? (exec?.modelPresets?.find((m) => m.value === selectedModel)?.label ?? selectedModel)
-        : null;
-      return modelLabel ? `${execName} · ${modelLabel}` : execName;
-    }
-    return null;
-  })();
-
   const triggerCls =
     'h-7 w-auto max-w-[180px] gap-1 border-0 bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-muted focus:ring-0';
 
   return (
     <>
-      {/* API / CLI toggle — new chats only, when both backends exist */}
+      {/* API / CLI toggle — new chats only; backend type is locked once a conversation is created */}
       {showBackendToggle && onBackendTypeChange && isNewChat && (
         <div className="flex rounded-md border border-border overflow-hidden shrink-0">
           {(['api', 'cli'] as const).map((type) => (
@@ -71,9 +54,9 @@ export function ChatBackendSelect({
         </div>
       )}
 
-      {/* Provider — API new chats */}
-      {isNewChat && backendType === 'api' && providers.length > 0 && onProviderChange && (
-        <Select value={selectedProviderId} onValueChange={onProviderChange}>
+      {/* Provider — API mode */}
+      {backendType === 'api' && providers.length > 0 && onProviderChange && (
+        <Select value={selectedProviderId} onValueChange={onProviderChange} disabled={isStreaming}>
           <SelectTrigger className={triggerCls}>
             <SelectValue placeholder="Provider" />
           </SelectTrigger>
@@ -87,9 +70,9 @@ export function ChatBackendSelect({
         </Select>
       )}
 
-      {/* Executor — CLI new chats */}
-      {isNewChat && backendType === 'cli' && executors.length > 0 && onExecutorChange && (
-        <Select value={selectedExecutorId} onValueChange={onExecutorChange}>
+      {/* Executor — CLI mode */}
+      {backendType === 'cli' && executors.length > 0 && onExecutorChange && (
+        <Select value={selectedExecutorId} onValueChange={onExecutorChange} disabled={isStreaming}>
           <SelectTrigger className={triggerCls}>
             <SelectValue placeholder="CLI Agent" />
           </SelectTrigger>
@@ -103,9 +86,9 @@ export function ChatBackendSelect({
         </Select>
       )}
 
-      {/* Model — new chats */}
-      {isNewChat && models.length > 0 && onModelChange && (
-        <Select value={selectedModel} onValueChange={onModelChange}>
+      {/* Model */}
+      {models.length > 0 && onModelChange && (
+        <Select value={selectedModel} onValueChange={onModelChange} disabled={isStreaming}>
           <SelectTrigger className={cn(triggerCls, 'max-w-[220px]')}>
             <SelectValue placeholder="Model" />
           </SelectTrigger>
@@ -118,9 +101,6 @@ export function ChatBackendSelect({
           </SelectContent>
         </Select>
       )}
-
-      {/* Read-only label — existing conversations */}
-      {readOnlyLabel && <span className="px-1 text-xs text-muted-foreground/70 shrink-0">{readOnlyLabel}</span>}
     </>
   );
 }

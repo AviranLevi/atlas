@@ -4,8 +4,18 @@ import { useCallback, useEffect, useState } from 'react';
 // Hooks
 import { useAgents } from '@/hooks/use-agents.hook';
 import { useAgentProviders, useProviderModels } from '@/hooks/use-agent-providers.hook';
-import { useConversation, useUpdateConversationMode } from '@/hooks/use-chat.hook';
+import { useConversation, useUpdateConversationConfig, useUpdateConversationMode } from '@/hooks/use-chat.hook';
 import { useAgentRuntimes } from '@/hooks/use-workspaces.hook';
+
+// Lib
+import {
+  getChatPrefs,
+  rememberBackendType,
+  rememberExecutor,
+  rememberModelForExecutor,
+  rememberModelForProvider,
+  rememberProvider,
+} from '@/lib/chat-prefs';
 
 // Types
 import type { ChatBackendType, ExecutionMode } from '@atlas/shared';
@@ -17,11 +27,14 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
   const { data: executors = [], isLoading: executorsLoading } = useAgentRuntimes();
   const { data: activeConversation } = useConversation(conversationId);
   const updateMode = useUpdateConversationMode();
+  const updateConfig = useUpdateConversationConfig();
 
-  const [backendType, setBackendType] = useState<ChatBackendType>('api');
-  const [selectedProviderId, setSelectedProviderId] = useState('');
+  // Seed initial state from remembered preferences so new chats start with last-used config.
+  const initialPrefs = getChatPrefs();
+  const [backendType, setBackendType] = useState<ChatBackendType>(initialPrefs.lastBackendType ?? 'api');
+  const [selectedProviderId, setSelectedProviderId] = useState(initialPrefs.lastProviderId ?? '');
   const [selectedModel, setSelectedModel] = useState('');
-  const [selectedExecutorId, setSelectedExecutorId] = useState('');
+  const [selectedExecutorId, setSelectedExecutorId] = useState(initialPrefs.lastExecutorId ?? '');
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [executionMode, setExecutionMode] = useState<ExecutionMode>('confirm');
 
@@ -35,49 +48,55 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
   const selectedExecutorConfig = installedExecutors.find((e) => e.id === selectedExecutorId);
   const chatModels = backendType === 'api' ? providerModels : (selectedExecutorConfig?.modelPresets ?? []);
 
-  // Auto-default backend type based on what's available
+  // Auto-default backend type based on what's available — prefer remembered choice if still valid.
   useEffect(() => {
-    if (providers.length > 0) {
+    if (providers.length > 0 && installedExecutors.length === 0) {
       setBackendType('api');
-    } else if (installedExecutors.length > 0) {
+    } else if (installedExecutors.length > 0 && providers.length === 0) {
       setBackendType('cli');
     }
-    // installedExecutors is derived from executors — referencing lengths avoids array identity churn
+    // When both are available, keep the remembered choice (already set in useState initializer).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providers.length, installedExecutors.length]);
 
-  // Auto-select first provider
+  // Auto-select provider: prefer remembered if still in the list, else first available.
   useEffect(() => {
-    if (providers.length > 0 && !selectedProviderId) {
-      setSelectedProviderId(providers[0].id);
-    }
+    if (providers.length === 0 || selectedProviderId) return;
+    const prefs = getChatPrefs();
+    const preferred = prefs.lastProviderId && providers.find((p) => p.id === prefs.lastProviderId);
+    setSelectedProviderId(preferred ? preferred.id : providers[0].id);
   }, [providers, selectedProviderId]);
 
-  // Auto-select first API model
+  // Auto-select API model: prefer remembered for this provider if still in the list, else first.
   useEffect(() => {
-    if (providerModels.length > 0 && !selectedModel) {
-      setSelectedModel(providerModels[0].value);
-    }
-  }, [providerModels, selectedModel]);
+    if (providerModels.length === 0 || selectedModel) return;
+    const remembered = getChatPrefs().modelByProvider(selectedProviderId);
+    const match = remembered && providerModels.find((m) => m.value === remembered);
+    setSelectedModel(match ? match.value : providerModels[0].value);
+  }, [providerModels, selectedModel, selectedProviderId]);
 
-  // Auto-select first executor
+  // Auto-select executor: prefer remembered if still in the list, else first available.
   useEffect(() => {
-    if (installedExecutors.length > 0 && !selectedExecutorId) {
-      setSelectedExecutorId(installedExecutors[0].id);
-    }
+    if (installedExecutors.length === 0 || selectedExecutorId) return;
+    const prefs = getChatPrefs();
+    const preferred = prefs.lastExecutorId && installedExecutors.find((e) => e.id === prefs.lastExecutorId);
+    setSelectedExecutorId(preferred ? preferred.id : installedExecutors[0].id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [installedExecutors.length, selectedExecutorId]);
 
-  // Auto-select first CLI model when executor changes
+  // Auto-select CLI model when executor changes: prefer remembered, else first preset.
   useEffect(() => {
     if (backendType !== 'cli') return;
     const presets = executors.find((e) => e.id === selectedExecutorId)?.modelPresets ?? [];
-    if (presets.length > 0 && !selectedModel) {
-      setSelectedModel(presets[0].value);
-    }
+    if (presets.length === 0 || selectedModel) return;
+    const remembered = getChatPrefs().modelByExecutor(selectedExecutorId);
+    const match = remembered && presets.find((m) => m.value === remembered);
+    setSelectedModel(match ? match.value : presets[0].value);
   }, [backendType, selectedExecutorId, executors, selectedModel]);
 
-  // Sync selection when navigating to an existing conversation
+  // Sync local state when navigating to an existing conversation.
+  // Uses raw setters intentionally — these are server-driven values, not user-initiated
+  // changes, so they must NOT trigger mutation calls or overwrite preferences.
   useEffect(() => {
     if (activeConversation) {
       setBackendType(activeConversation.backendType as ChatBackendType);
@@ -92,15 +111,37 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
     }
   }, [activeConversation]);
 
-  const onProviderChange = useCallback((providerId: string) => {
-    setSelectedProviderId(providerId);
-    setSelectedModel('');
-  }, []);
+  // --- User-initiated handlers: update local state, save prefs, and PATCH server if in a conversation ---
 
-  const onExecutorChange = useCallback((id: string) => {
-    setSelectedExecutorId(id);
-    setSelectedModel('');
-  }, []);
+  const onProviderChange = useCallback(
+    (id: string) => {
+      setSelectedProviderId(id);
+      setSelectedModel('');
+      rememberProvider(id);
+      if (conversationId) updateConfig.mutate({ id: conversationId, data: { providerId: id, model: null } });
+    },
+    [conversationId, updateConfig],
+  );
+
+  const onExecutorChange = useCallback(
+    (id: string) => {
+      setSelectedExecutorId(id);
+      setSelectedModel('');
+      rememberExecutor(id);
+      if (conversationId) updateConfig.mutate({ id: conversationId, data: { executorId: id, model: null } });
+    },
+    [conversationId, updateConfig],
+  );
+
+  const onModelChange = useCallback(
+    (model: string) => {
+      setSelectedModel(model);
+      if (backendType === 'api' && selectedProviderId) rememberModelForProvider(selectedProviderId, model);
+      if (backendType === 'cli' && selectedExecutorId) rememberModelForExecutor(selectedExecutorId, model);
+      if (conversationId) updateConfig.mutate({ id: conversationId, data: { model } });
+    },
+    [conversationId, backendType, selectedProviderId, selectedExecutorId, updateConfig],
+  );
 
   const onAgentChange = useCallback((id: string) => {
     setSelectedAgentId(id);
@@ -119,6 +160,8 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
   const onBackendTypeChange = useCallback((type: ChatBackendType) => {
     setBackendType(type);
     setSelectedModel('');
+    rememberBackendType(type);
+    // No server push — backend type is immutable after conversation creation; this only applies to new chats.
   }, []);
 
   const isNewChat = !conversationId;
@@ -149,7 +192,7 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
     onExecutionModeChange,
     onBackendTypeChange,
     onProviderChange,
-    onModelChange: setSelectedModel,
+    onModelChange,
     onExecutorChange,
     canSend,
     isProviderDisconnected,

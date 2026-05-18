@@ -55,6 +55,8 @@ export type ChatBackendSelectProps = {
   executors?: ExecutorStatus[];
   selectedExecutorId?: string;
   onExecutorChange?: (id: string) => void;
+  /** When true, all selectors are disabled to prevent mid-stream configuration changes. */
+  isStreaming?: boolean;
 };
 
 export type ChatAgentSelectProps = {
