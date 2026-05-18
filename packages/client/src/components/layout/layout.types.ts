@@ -15,6 +15,11 @@ export type NavItem = {
   globalAlwaysOn?: boolean;
   /** Optional `data-tour` selector — wired through to the rendered NavLink for tour anchoring. */
   dataTour?: string;
+  /**
+   * When true, renders a pulsing dot on the icon when there are active chat streams.
+   * Reads from ChatStreamContext — only meaningful for the Chat nav item.
+   */
+  streamingIndicator?: boolean;
 };
 
 /**

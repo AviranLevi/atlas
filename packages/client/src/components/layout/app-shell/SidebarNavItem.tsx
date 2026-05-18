@@ -4,6 +4,9 @@ import { NavLink } from 'react-router-dom';
 // Components
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+// Contexts
+import { useChatStreamContext } from '@/contexts/ChatStreamContext';
+
 // Lib
 import { cn } from '@/lib/utils';
 
@@ -11,7 +14,10 @@ import { cn } from '@/lib/utils';
 import type { SidebarNavItemProps } from './app-shell.types';
 
 export function SidebarNavItem({ item, expanded }: SidebarNavItemProps) {
-  const { to, icon: Icon, label, disabled, dataTour } = item;
+  const { to, icon: Icon, label, disabled, dataTour, streamingIndicator } = item;
+  const { activeStreamingIds } = useChatStreamContext();
+  const hasActiveStreams = streamingIndicator && activeStreamingIds.size > 0;
+  const streamCount = activeStreamingIds.size;
 
   if (disabled) {
     return (
@@ -53,12 +59,22 @@ export function SidebarNavItem({ item, expanded }: SidebarNavItemProps) {
           >
             <span className="relative shrink-0">
               <Icon className="h-[18px] w-[18px]" />
+              {hasActiveStreams && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                </span>
+              )}
             </span>
             {expanded && <span>{label}</span>}
           </NavLink>
         </div>
       </TooltipTrigger>
-      {!expanded && <TooltipContent side="right">{label}</TooltipContent>}
+      {!expanded && (
+        <TooltipContent side="right">
+          {hasActiveStreams ? `${label} — ${streamCount} responding` : label}
+        </TooltipContent>
+      )}
     </Tooltip>
   );
 }

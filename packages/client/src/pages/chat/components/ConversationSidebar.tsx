@@ -1,10 +1,13 @@
 // React / library
-import { Plus, Trash2, MessageSquare, Search, X, Unplug } from 'lucide-react';
+import { Plus, Trash2, MessageSquare, Search, X, Unplug, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 // Components
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+// Contexts
+import { useChatStreamContext } from '@/contexts/ChatStreamContext';
 
 // Lib
 import { cn } from '@/lib/utils';
@@ -21,6 +24,7 @@ export function ConversationSidebar({
   onDelete,
 }: ConversationSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const { activeStreamingIds } = useChatStreamContext();
 
   const filteredConversations = searchQuery.trim()
     ? conversations.filter((c) => (c.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase()))
@@ -96,7 +100,14 @@ export function ConversationSidebar({
                       />
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{new Date(conv.updatedAt).toLocaleDateString()}</p>
+                  {activeStreamingIds.has(conv.id) ? (
+                    <div className="flex items-center gap-1 text-xs text-primary">
+                      <Loader2 className="h-2.5 w-2.5 animate-spin" aria-label="Responding" />
+                      <span>Responding…</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{new Date(conv.updatedAt).toLocaleDateString()}</p>
+                  )}
                 </div>
               </button>
               <button
