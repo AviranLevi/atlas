@@ -12,6 +12,7 @@ import type {
   ChatMessage,
   CreateConversation,
   ExecutionMode,
+  UpdateConversationConfig,
 } from '@atlas/shared';
 
 // Services
@@ -34,6 +35,7 @@ import {
   streamCliChat,
 } from '../../lib/chat/index.js';
 import { isUICardResult } from '../../lib/chat-ui/index.js';
+import { AppError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 
 import { buildChatSystemPrompt } from './chat-system-prompt.js';
@@ -73,6 +75,24 @@ export class ChatService {
   async updateConversationMode(id: string, executionMode: string | null): Promise<ChatConversation> {
     this.repo.findConversationByIdOrThrow(id);
     return this.repo.updateConversation(id, { executionMode });
+  }
+
+  /** Updates provider/executor/model for a conversation. Backend type is immutable post-creation. */
+  async updateConversationConfig(id: string, data: UpdateConversationConfig): Promise<ChatConversation> {
+    const FUNCTION_NAME = 'updateConversationConfig';
+    try {
+      const existing = this.repo.findConversationByIdOrThrow(id);
+      if (existing.backendType === 'api' && data.executorId) {
+        throw new AppError('Cannot set executorId on an API conversation', { status: 400 });
+      }
+      if (existing.backendType === 'cli' && data.providerId) {
+        throw new AppError('Cannot set providerId on a CLI conversation', { status: 400 });
+      }
+      return this.repo.updateConversation(id, data);
+    } catch (error: unknown) {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      throw error instanceof AppError ? error : new AppError('Failed to update conversation config', { cause: error });
+    }
   }
 
   async getMessages(conversationId: string): Promise<ChatMessage[]> {

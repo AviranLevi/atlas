@@ -79,10 +79,17 @@ export class ChatRepository {
     }
   }
 
-  /** Updates a conversation (title, executionMode) and bumps updatedAt. */
+  /** Updates a conversation and bumps updatedAt. */
   updateConversation(
     id: string,
-    data: Partial<{ title: string; executionMode: string | null; updatedAt: string }>,
+    data: Partial<{
+      title: string;
+      executionMode: string | null;
+      providerId: string | null;
+      executorId: string | null;
+      model: string | null;
+      updatedAt: string;
+    }>,
   ): ChatConversation {
     const FUNCTION_NAME = 'updateConversation';
     try {

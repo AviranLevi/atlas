@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import { streamSSE } from 'hono/streaming';
 
 // Shared
-import type { CreateConversation, SendMessage, UpdateConversationMode } from '@atlas/shared';
+import type { CreateConversation, SendMessage, UpdateConversationConfig, UpdateConversationMode } from '@atlas/shared';
 
 // Services
 import { chatService } from '../services/index.js';
@@ -69,5 +69,12 @@ export async function abortStream(c: Context) {
 export async function updateConversationMode(c: Context) {
   const data = getValidatedBody<UpdateConversationMode>(c);
   const conversation = await chatService.updateConversationMode(c.req.param('id')!, data.executionMode);
+  return c.json(conversation);
+}
+
+/** Updates provider/executor/model for a conversation (backend type stays locked). */
+export async function updateConversationConfig(c: Context) {
+  const data = getValidatedBody<UpdateConversationConfig>(c);
+  const conversation = await chatService.updateConversationConfig(c.req.param('id')!, data);
   return c.json(conversation);
 }

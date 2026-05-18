@@ -86,6 +86,12 @@ export const UpdateConversationModeSchema = z.object({
   executionMode: z.enum(['auto', 'confirm', 'plan-only']).nullable(),
 });
 
+export const UpdateConversationConfigSchema = z.object({
+  providerId: z.string().uuid().nullable().optional(),
+  executorId: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
+});
+
 export const SendMessageSchema = z
   .object({
     // content may be empty when attachments are present
@@ -106,4 +112,5 @@ export type ChatConversation = z.infer<typeof ChatConversationSchema>;
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 export type CreateConversation = z.infer<typeof CreateConversationSchema>;
 export type UpdateConversationMode = z.infer<typeof UpdateConversationModeSchema>;
+export type UpdateConversationConfig = z.infer<typeof UpdateConversationConfigSchema>;
 export type SendMessage = z.infer<typeof SendMessageSchema>;
