@@ -2,7 +2,7 @@
 import { db } from '../index.js';
 import { ActivityLogRepository } from './activity-log.repository.js';
 import { AgentProvidersRepository } from './agent-providers.repository.js';
-import { AutomationsRepository } from './automations.repository.js';
+import { QuickActionsRepository } from './quick-actions.repository.js';
 // Repositories
 import { AgentsRepository } from './agents/index.js';
 import { ApiKeysRepository } from './api-keys.repository.js';
@@ -26,7 +26,7 @@ import { UsageRepository } from './usage.repository.js';
 import { WorkspacesRepository } from './workspaces/index.js';
 
 export const agentsRepository = new AgentsRepository(db);
-export const automationsRepository = new AutomationsRepository(db);
+export const quickActionsRepository = new QuickActionsRepository(db);
 export const apiKeysRepository = new ApiKeysRepository(db);
 export const skillsRepository = new SkillsRepository(db);
 export const rulesRepository = new RulesRepository(db);

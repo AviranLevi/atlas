@@ -2,7 +2,7 @@ export { activityLog } from './activity-log.schema.js';
 export { apiKeys } from './api-keys.schema.js';
 export { agentProviders } from './agent-providers.schema.js';
 export { agents } from './agents.schema.js';
-export { automations } from './automations.schema.js';
+export { quickActions } from './quick-actions.schema.js';
 export { chatConversations, chatMessages } from './chat.schema.js';
 export { heartbeatConfigs, heartbeatRuns } from './heartbeats.schema.js';
 export { integrations } from './integrations.schema.js';
