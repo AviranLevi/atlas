@@ -19,6 +19,7 @@ import { executorRegistry, removeMcpConfig } from '../../../executors/index.js';
 // Lib
 import { AppError } from '../../../lib/errors.js';
 import { logger } from '../../../lib/logger.js';
+import { scanForSecrets } from '../../../lib/secrets-scanner.js';
 import { WorktreeService } from '../../worktree/index.js';
 
 const FILE_PATH = 'services/orchestrator/workspace-completion.service.ts';
@@ -54,7 +55,7 @@ export class WorkspaceCompletionService {
   }
 
   /** Merges the worktree branch, moves task to Done, and archives logs. */
-  async mergeAndClose(workspaceId: string): Promise<Workspace> {
+  async mergeAndClose(workspaceId: string, skipSecretsScan = false): Promise<Workspace> {
     const FUNCTION_NAME = 'mergeAndClose';
     try {
       const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
@@ -69,6 +70,20 @@ export class WorkspaceCompletionService {
         throw new AppError('Project has no local path', { status: 400 });
       }
 
+      // Secrets scan: check diff for accidentally committed secrets before merge
+      if (!skipSecretsScan) {
+        const diff = this.worktreeService.getDiff(workspace.worktreePath, project.localPath);
+        if (diff.files.length > 0) {
+          const scan = scanForSecrets(diff.files);
+          if (scan.hasSecrets) {
+            throw new AppError('Potential secrets detected in diff', {
+              status: 409,
+              cause: { secretsDetected: true, findings: scan.findings },
+            });
+          }
+        }
+      }
+
       // Merge the branch
       this.worktreeService.merge(workspace.worktreePath, project.localPath, workspace.branchName);
 
@@ -77,6 +92,12 @@ export class WorkspaceCompletionService {
 
       // Archive the workspace log (backup copy with descriptive name)
       const archivedLogPath = this.archiveLog(workspaceId, workspace);
+
+      // Safety check: log if dirty after merge (shouldn't happen since we merge the branch)
+      const dirty = this.worktreeService.checkDirty(workspace.worktreePath);
+      if (dirty.isDirty) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree still dirty after merge (${dirty.fileCount} files)`);
+      }
 
       // Clean up worktree + MCP config (keep log file + DB record for history)
       try {
@@ -199,7 +220,7 @@ export class WorkspaceCompletionService {
   /** Pushes the branch and creates a GitHub pull request via gh CLI. */
   async createPullRequest(
     workspaceId: string,
-    opts: { title?: string; body?: string } = {},
+    opts: { title?: string; body?: string; skipSecretsScan?: boolean } = {},
   ): Promise<{ prUrl: string; prNumber: number }> {
     const FUNCTION_NAME = 'createPullRequest';
     try {
@@ -217,6 +238,20 @@ export class WorkspaceCompletionService {
 
       if (!project.repositoryUrl?.includes('github.com')) {
         throw new AppError('Project has no GitHub repository configured', { status: 400 });
+      }
+
+      // Secrets scan: check diff for accidentally committed secrets before push
+      if (!opts.skipSecretsScan) {
+        const diff = this.worktreeService.getDiff(workspace.worktreePath, project.localPath);
+        if (diff.files.length > 0) {
+          const scan = scanForSecrets(diff.files);
+          if (scan.hasSecrets) {
+            throw new AppError('Potential secrets detected in diff', {
+              status: 409,
+              cause: { secretsDetected: true, findings: scan.findings },
+            });
+          }
+        }
       }
 
       // Push the branch to remote
