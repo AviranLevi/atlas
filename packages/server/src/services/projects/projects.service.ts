@@ -194,7 +194,7 @@ export class ProjectsService {
       const opts = {
         cwd: project.localPath,
         encoding: 'utf-8' as const,
-        stdio: ['pipe', 'pipe', 'pipe'] as const,
+        stdio: ['pipe', 'pipe', 'pipe'] as ['pipe', 'pipe', 'pipe'],
         timeout: 30_000,
       };
       let output: string;
@@ -236,7 +236,7 @@ export class ProjectsService {
       const opts = {
         cwd: project.localPath,
         encoding: 'utf-8' as const,
-        stdio: ['pipe', 'pipe', 'pipe'] as const,
+        stdio: ['pipe', 'pipe', 'pipe'] as ['pipe', 'pipe', 'pipe'],
         timeout: 15_000,
       };
       try {

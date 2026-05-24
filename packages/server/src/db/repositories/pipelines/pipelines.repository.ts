@@ -38,10 +38,10 @@ export class PipelinesRepository {
       agentId: row.tasks?.agentId ?? undefined,
       agentName: row.agents?.name ?? undefined,
       workflowEnabled: row.tasks?.workflowEnabled ?? undefined,
-      workflowStage: row.tasks?.workflowStage ?? undefined,
+      workflowStage: (row.tasks?.workflowStage as PipelineTask['workflowStage']) ?? undefined,
       workspaceRuntime: row.workspaces?.agentRuntime ?? undefined,
       workspaceModel: row.workspaces?.model ?? undefined,
-      workspaceStage: row.workspaces?.workflowStage ?? undefined,
+      workspaceStage: (row.workspaces?.workflowStage as PipelineTask['workspaceStage']) ?? undefined,
       workspaceStatus: row.workspaces?.status ?? undefined,
       agentDefaultRuntimeId: row.agents?.defaultRuntimeId ?? undefined,
     };
