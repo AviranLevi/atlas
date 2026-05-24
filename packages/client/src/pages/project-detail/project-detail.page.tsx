@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ProjectAgentsSection } from './components/ProjectAgentsSection';
 import { ProjectBriefSection } from './components/ProjectBriefSection';
 import { ProjectAgentBehaviorSection } from './components/ProjectAgentBehaviorSection';
+import { ProjectAutomationsSection } from './components/ProjectAutomationsSection';
 import { ProjectDesignContextSection } from './components/ProjectDesignContextSection';
 import { ProjectHeader } from './components/ProjectHeader';
 import { ProjectKnowledgeGraph } from './components/ProjectKnowledgeGraph';
@@ -148,6 +149,8 @@ export function ProjectDetailPage() {
           />
 
           <ProjectAgentBehaviorSection project={project} />
+
+          <ProjectAutomationsSection projectId={project.id} />
 
           <ProjectMemoriesSection memories={memories} />
         </>

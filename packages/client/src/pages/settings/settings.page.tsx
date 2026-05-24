@@ -7,6 +7,7 @@ import { HintDot } from '@/components/onboarding/HintDot';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 import { AppearanceTab } from './components/AppearanceTab';
+import { AutomationsTab } from './components/AutomationsTab';
 import { DefaultWorkspaceTab } from './components/DefaultWorkspaceTab';
 import { IntegrationsTab } from './components/IntegrationsTab';
 import { McpTab } from './components/McpTab';
@@ -14,7 +15,16 @@ import { OnboardingTab } from './components/OnboardingTab';
 import { ApiKeysTab } from './components/ApiKeysTab';
 import { SystemTab } from './components/SystemTab';
 
-const VALID_TABS = ['appearance', 'workspace', 'mcp', 'integrations', 'system', 'api-keys', 'onboarding'] as const;
+const VALID_TABS = [
+  'appearance',
+  'workspace',
+  'automations',
+  'mcp',
+  'integrations',
+  'system',
+  'api-keys',
+  'onboarding',
+] as const;
 
 type SettingsTab = (typeof VALID_TABS)[number];
 
@@ -45,6 +55,7 @@ export function SettingsPage() {
         <TabsList>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="workspace">Workspace</TabsTrigger>
+          <TabsTrigger value="automations">Automations</TabsTrigger>
           <HintDot id="mcp-config" anchor="top-right" dismissOnChildClick={false}>
             <TabsTrigger data-tour={TOUR_TARGETS.mcpConfig} value="mcp">
               MCP
@@ -62,6 +73,10 @@ export function SettingsPage() {
 
         <TabsContent value="workspace" className="mt-6">
           <DefaultWorkspaceTab />
+        </TabsContent>
+
+        <TabsContent value="automations" className="mt-6">
+          <AutomationsTab />
         </TabsContent>
 
         <TabsContent value="mcp" className="mt-6">

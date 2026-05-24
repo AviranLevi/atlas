@@ -48,6 +48,7 @@ const allNavItems: NavItem[] = [
   { to: '/pipelines', icon: GitBranch, label: 'Pipelines', section: 'project' },
   { to: '#', icon: FolderKanban, label: 'Context', section: 'project' },
   { to: '/chat', icon: MessageSquare, label: 'Chat', section: 'project', streamingIndicator: true },
+  { to: '/automations', icon: Zap, label: 'Automations', section: 'project' },
   { to: '/memory', icon: Brain, label: 'Memory', section: 'project' },
   { to: '/documents', icon: BookOpen, label: 'Documents', section: 'project' },
 

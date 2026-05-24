@@ -4,6 +4,17 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 const AgentDetailPage = lazy(() =>
   import('@/pages/agent-detail/agent-detail.page').then((m) => ({ default: m.AgentDetailPage })),
 );
+const AutomationsPage = lazy(() =>
+  import('@/pages/automations/automations.page').then((m) => ({ default: m.AutomationsPage })),
+);
+const AutomationNewPage = lazy(() =>
+  import('@/pages/automations/automation-new.page').then((m) => ({ default: m.AutomationNewPage })),
+);
+const AutomationDetailPage = lazy(() =>
+  import('@/pages/automation-detail/automation-detail.page').then((m) => ({
+    default: m.AutomationDetailPage,
+  })),
+);
 const AgentsPage = lazy(() => import('@/pages/agents/agents.page').then((m) => ({ default: m.AgentsPage })));
 const ChatPage = lazy(() => import('@/pages/chat/chat.page').then((m) => ({ default: m.ChatPage })));
 const DocumentsPage = lazy(() =>
@@ -59,6 +70,9 @@ export function AppRoutes() {
         <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="/welcome" element={<WelcomePage />} />
         <Route path="/setup" element={<Navigate to="/welcome" replace />} />
+        <Route path="/automations" element={<AutomationsPage />} />
+        <Route path="/automations/new" element={<AutomationNewPage />} />
+        <Route path="/automations/:id" element={<AutomationDetailPage />} />
         <Route path="/agents" element={<AgentsPage />} />
         <Route path="/agents/:id" element={<AgentDetailPage />} />
         <Route path="/skills" element={<SkillsPage />} />
