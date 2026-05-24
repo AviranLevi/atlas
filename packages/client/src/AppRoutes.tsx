@@ -4,15 +4,15 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 const AgentDetailPage = lazy(() =>
   import('@/pages/agent-detail/agent-detail.page').then((m) => ({ default: m.AgentDetailPage })),
 );
-const AutomationsPage = lazy(() =>
-  import('@/pages/automations/automations.page').then((m) => ({ default: m.AutomationsPage })),
+const QuickActionsPage = lazy(() =>
+  import('@/pages/quick-actions/quick-actions.page').then((m) => ({ default: m.QuickActionsPage })),
 );
-const AutomationNewPage = lazy(() =>
-  import('@/pages/automations/automation-new.page').then((m) => ({ default: m.AutomationNewPage })),
+const QuickActionNewPage = lazy(() =>
+  import('@/pages/quick-actions/quick-action-new.page').then((m) => ({ default: m.QuickActionNewPage })),
 );
-const AutomationDetailPage = lazy(() =>
-  import('@/pages/automation-detail/automation-detail.page').then((m) => ({
-    default: m.AutomationDetailPage,
+const QuickActionDetailPage = lazy(() =>
+  import('@/pages/quick-action-detail/quick-action-detail.page').then((m) => ({
+    default: m.QuickActionDetailPage,
   })),
 );
 const AgentsPage = lazy(() => import('@/pages/agents/agents.page').then((m) => ({ default: m.AgentsPage })));
@@ -70,9 +70,9 @@ export function AppRoutes() {
         <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="/welcome" element={<WelcomePage />} />
         <Route path="/setup" element={<Navigate to="/welcome" replace />} />
-        <Route path="/automations" element={<AutomationsPage />} />
-        <Route path="/automations/new" element={<AutomationNewPage />} />
-        <Route path="/automations/:id" element={<AutomationDetailPage />} />
+        <Route path="/quick-actions" element={<QuickActionsPage />} />
+        <Route path="/quick-actions/new" element={<QuickActionNewPage />} />
+        <Route path="/quick-actions/:id" element={<QuickActionDetailPage />} />
         <Route path="/agents" element={<AgentsPage />} />
         <Route path="/agents/:id" element={<AgentDetailPage />} />
         <Route path="/skills" element={<SkillsPage />} />

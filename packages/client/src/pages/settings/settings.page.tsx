@@ -7,7 +7,7 @@ import { HintDot } from '@/components/onboarding/HintDot';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 import { AppearanceTab } from './components/AppearanceTab';
-import { AutomationsTab } from './components/AutomationsTab';
+import { QuickActionsTab } from './components/QuickActionsTab';
 import { DefaultWorkspaceTab } from './components/DefaultWorkspaceTab';
 import { IntegrationsTab } from './components/IntegrationsTab';
 import { McpTab } from './components/McpTab';
@@ -18,7 +18,7 @@ import { SystemTab } from './components/SystemTab';
 const VALID_TABS = [
   'appearance',
   'workspace',
-  'automations',
+  'quick-actions',
   'mcp',
   'integrations',
   'system',
@@ -55,7 +55,7 @@ export function SettingsPage() {
         <TabsList>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="workspace">Workspace</TabsTrigger>
-          <TabsTrigger value="automations">Automations</TabsTrigger>
+          <TabsTrigger value="quick-actions">Quick Actions</TabsTrigger>
           <HintDot id="mcp-config" anchor="top-right" dismissOnChildClick={false}>
             <TabsTrigger data-tour={TOUR_TARGETS.mcpConfig} value="mcp">
               MCP
@@ -75,8 +75,8 @@ export function SettingsPage() {
           <DefaultWorkspaceTab />
         </TabsContent>
 
-        <TabsContent value="automations" className="mt-6">
-          <AutomationsTab />
+        <TabsContent value="quick-actions" className="mt-6">
+          <QuickActionsTab />
         </TabsContent>
 
         <TabsContent value="mcp" className="mt-6">
