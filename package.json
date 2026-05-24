@@ -31,6 +31,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "atlas:reset-auth": "pnpm --filter @atlas/server reset-auth",
+    "setup": "bash scripts/setup.sh",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
