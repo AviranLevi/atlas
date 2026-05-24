@@ -77,6 +77,27 @@ export class WorktreeService {
     }
   }
 
+  /** Checks whether a worktree has uncommitted changes. */
+  checkDirty(worktreePath: string): { isDirty: boolean; fileCount: number } {
+    const FUNCTION_NAME = 'checkDirty';
+    try {
+      if (!fs.existsSync(worktreePath)) {
+        return { isDirty: false, fileCount: 0 };
+      }
+      const status = execSync('git status --porcelain', {
+        cwd: worktreePath,
+        encoding: 'utf-8',
+      }).trim();
+      if (!status) return { isDirty: false, fileCount: 0 };
+      const fileCount = status.split('\n').filter(Boolean).length;
+      return { isDirty: true, fileCount };
+    } catch (error: unknown) {
+      // On error (e.g. worktree corrupted), treat as not dirty to avoid blocking cleanup
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      return { isDirty: false, fileCount: 0 };
+    }
+  }
+
   /** Removes a git worktree by path. */
   remove(worktreePath: string, projectLocalPath: string): void {
     const FUNCTION_NAME = 'remove';
