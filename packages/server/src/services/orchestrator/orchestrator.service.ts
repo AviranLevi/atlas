@@ -112,9 +112,19 @@ export class OrchestratorService {
     return workspaceControlService.stopWork(workspaceId, resetTaskStatus);
   }
 
+  /** Pre-flight check before cleanup: returns dirty + in-use status. */
+  preCleanupCheck(workspaceId: string): {
+    isDirty: boolean;
+    dirtyFileCount: number;
+    isInUse: boolean;
+    inUseBy: string | null;
+  } {
+    return workspaceControlService.preCleanupCheck(workspaceId);
+  }
+
   /** Stops the process, removes the worktree, and deletes the MCP config. */
-  cleanup(workspaceId: string): Promise<void> {
-    return workspaceControlService.cleanup(workspaceId);
+  cleanup(workspaceId: string, force = false): Promise<void> {
+    return workspaceControlService.cleanup(workspaceId, force);
   }
 
   /**
@@ -175,8 +185,8 @@ export class OrchestratorService {
   // ─── Completion ───────────────────────────────────────────────────────────
 
   /** Merges the worktree branch, moves task to Done, and archives logs. */
-  mergeAndClose(workspaceId: string): Promise<Workspace> {
-    return workspaceCompletionService.mergeAndClose(workspaceId);
+  mergeAndClose(workspaceId: string, skipSecretsScan = false): Promise<Workspace> {
+    return workspaceCompletionService.mergeAndClose(workspaceId, skipSecretsScan);
   }
 
   /** Completes a workspace without merging code changes. */
@@ -187,7 +197,7 @@ export class OrchestratorService {
   /** Pushes the branch and creates a GitHub pull request via gh CLI. */
   createPullRequest(
     workspaceId: string,
-    opts?: { title?: string; body?: string },
+    opts?: { title?: string; body?: string; skipSecretsScan?: boolean },
   ): Promise<{ prUrl: string; prNumber: number }> {
     return workspaceCompletionService.createPullRequest(workspaceId, opts);
   }

@@ -31,6 +31,7 @@ import {
   listWorkspaces,
   mergeWorkspace,
   openWorkspaceInEditor,
+  preCleanupCheck,
   refreshAgentRuntimes,
   removeWorkspaceComment,
   requestWorkspaceChanges,
@@ -71,4 +72,5 @@ export const workspacesRoute = new Hono()
   .post('/:id/reject', rejectWorkspaceWorkflow)
   .post('/:id/start-ai-review', zValidator('json', StartAiReviewSchema), startAiReviewForWorkspace)
   .post('/:id/apply-review-fix', zValidator('json', ApplyReviewFixSchema), applyReviewFixForWorkspace)
+  .get('/:id/pre-cleanup', preCleanupCheck)
   .delete('/:id', deleteWorkspace);

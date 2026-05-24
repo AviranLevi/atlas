@@ -99,7 +99,8 @@ export async function requestWorkspaceChanges(c: Context) {
 
 /** Merges the workspace branch and marks the task as Done. */
 export async function mergeWorkspace(c: Context) {
-  const workspace = await orchestratorService.mergeAndClose(c.req.param('id')!);
+  const skipSecretsScan = c.req.query('skipSecretsScan') === 'true';
+  const workspace = await orchestratorService.mergeAndClose(c.req.param('id')!, skipSecretsScan);
   return c.json(workspace);
 }
 
@@ -123,7 +124,12 @@ export async function rerunWorkspace(c: Context) {
 /** Creates a GitHub pull request for the workspace branch. */
 export async function createWorkspacePullRequest(c: Context) {
   const { title, body } = getValidatedBody<CreatePullRequest>(c);
-  const result = await orchestratorService.createPullRequest(c.req.param('id')!, { title, body });
+  const skipSecretsScan = c.req.query('skipSecretsScan') === 'true';
+  const result = await orchestratorService.createPullRequest(c.req.param('id')!, {
+    title,
+    body,
+    skipSecretsScan,
+  });
   return c.json(result, 201);
 }
 
@@ -153,9 +159,16 @@ export async function stopWorkspace(c: Context) {
   return c.json(workspace);
 }
 
+/** Pre-flight check for workspace cleanup: returns dirty + in-use status. */
+export function preCleanupCheck(c: Context) {
+  const result = orchestratorService.preCleanupCheck(c.req.param('id')!);
+  return c.json(result);
+}
+
 /** Cleans up and deletes a workspace. */
 export async function deleteWorkspace(c: Context) {
-  await orchestratorService.cleanup(c.req.param('id')!);
+  const force = c.req.query('force') === 'true';
+  await orchestratorService.cleanup(c.req.param('id')!, force);
   return c.body(null, 204);
 }
 

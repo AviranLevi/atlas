@@ -19,7 +19,7 @@ import { executorRegistry, removeMcpConfig } from '../../../executors/index.js';
 import { activeProcesses, clearEntryTimers } from '../shared/active-processes.js';
 import { AppError } from '../../../lib/errors.js';
 import { logger } from '../../../lib/logger.js';
-import { WorktreeService } from '../../worktree/index.js';
+import { WorktreeService, isWorktreeInUse } from '../../worktree/index.js';
 
 const FILE_PATH = 'services/orchestrator/workspace-control.service.ts';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'data', 'workspace-logs');
@@ -121,13 +121,35 @@ export class WorkspaceControlService {
   }
 
   /** Stops the process, removes the worktree, and deletes the MCP config. */
-  async cleanup(workspaceId: string): Promise<void> {
+  async cleanup(workspaceId: string, force = false): Promise<void> {
     const FUNCTION_NAME = 'cleanup';
     try {
       const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
 
       if (workspace.status === 'running') {
         await this.stopWork(workspaceId);
+      }
+
+      // Dirty worktree guard: block cleanup if uncommitted changes exist
+      if (!force && workspace.worktreePath) {
+        const dirty = this.worktreeService.checkDirty(workspace.worktreePath);
+        if (dirty.isDirty) {
+          throw new AppError('Workspace has uncommitted changes', {
+            status: 409,
+            cause: { isDirty: true, fileCount: dirty.fileCount },
+          });
+        }
+      }
+
+      // Live process guard: block cleanup if another workspace is using this worktree
+      if (workspace.worktreePath) {
+        const usage = isWorktreeInUse(workspace.worktreePath, workspaceId);
+        if (usage.inUse) {
+          throw new AppError('Worktree is in use by another workspace', {
+            status: 409,
+            cause: { isInUse: true, inUseBy: usage.inUseBy },
+          });
+        }
       }
 
       const task = await tasksService.getById(workspace.taskId);
@@ -200,6 +222,24 @@ export class WorkspaceControlService {
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to re-run workspace', { cause: error });
     }
+  }
+
+  /** Pre-flight check before cleanup: returns dirty + in-use status. */
+  preCleanupCheck(workspaceId: string): {
+    isDirty: boolean;
+    dirtyFileCount: number;
+    isInUse: boolean;
+    inUseBy: string | null;
+  } {
+    const workspace = workspacesRepository.findByIdOrThrow(workspaceId);
+    const dirty = this.worktreeService.checkDirty(workspace.worktreePath);
+    const usage = isWorktreeInUse(workspace.worktreePath, workspaceId);
+    return {
+      isDirty: dirty.isDirty,
+      dirtyFileCount: dirty.fileCount,
+      isInUse: usage.inUse,
+      inUseBy: usage.inUseBy,
+    };
   }
 }
 
