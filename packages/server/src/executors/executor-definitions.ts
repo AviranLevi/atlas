@@ -98,6 +98,8 @@ export const executorGeminiCli: ExecutorConfig = {
   mcpConfigFormat: 'gemini',
   outputFormat: 'stream-json',
   versionFlag: '--version',
+  authCheck: { args: ['-p', '"say ok"'], timeoutMs: 15000 },
+  authHint: 'Run: gemini (to authenticate via browser) or set GEMINI_API_KEY',
   setup: { install: 'npm install -g @google/gemini-cli', auth: 'gemini' },
   description: 'Google Gemini CLI agent (uses ~/.gemini/settings.json for MCP config)',
   docsUrl: 'https://github.com/google-gemini/gemini-cli',

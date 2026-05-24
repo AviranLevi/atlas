@@ -105,7 +105,8 @@ async function checkAuth(executor: ExecutorConfig): Promise<boolean> {
       output.includes('unauthorized') ||
       output.includes('authentication') ||
       output.includes('not logged in') ||
-      output.includes('api key')
+      output.includes('api key') ||
+      output.includes('set an auth method')
     ) {
       logger.warn(`${FILE_PATH} :: ${executor.name} auth check failed — not authenticated`);
       return false;
