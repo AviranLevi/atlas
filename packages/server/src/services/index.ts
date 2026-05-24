@@ -1,7 +1,7 @@
 // Services
 import { ActivityLogService } from './activity-log/activity-log.service.js';
 import { AgentProvidersService } from './agent-providers/agent-providers.service.js';
-import { AutomationsService } from './automations/automations.service.js';
+import { QuickActionsService } from './quick-actions/quick-actions.service.js';
 import { AgentsService } from './agents/agents.service.js';
 import { AuthService } from './auth/auth.service.js';
 import { BriefGeneratorService } from './brief-generator/brief-generator.service.js';
@@ -39,7 +39,7 @@ import { WorktreeService } from './worktree/index.js';
 
 export const activityLogService = new ActivityLogService();
 export const agentsService = new AgentsService();
-export const automationsService = new AutomationsService();
+export const quickActionsService = new QuickActionsService();
 export const authService = new AuthService();
 export const skillsService = new SkillsService();
 export const rulesService = new RulesService();

@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 // Routes
 import { agentProvidersRoute } from './agent-providers.route.js';
 import { agentsRoute } from './agents.route.js';
-import { automationsRoute } from './automations.route.js';
+import { quickActionsRoute } from './quick-actions.route.js';
 import { chatRoute } from './chat.route.js';
 import { filesystemRoute } from './filesystem.route.js';
 import { heartbeatsRoute } from './heartbeats.route.js';
@@ -32,7 +32,7 @@ import { workspacesRoute } from './workspaces.route.js';
 
 export const apiRoutes = new Hono()
   .route('/agents', agentsRoute)
-  .route('/automations', automationsRoute)
+  .route('/quick-actions', quickActionsRoute)
   .route('/skills', skillsRoute)
   .route('/rules', rulesRoute)
   .route('/memory', memoryRoute)
