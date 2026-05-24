@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import {
   Check,
   ChevronsUpDown,
-  // Curated icon set for automations
+  // Curated icon set for quick actions
   Bug,
   CheckCircle,
   Code,
