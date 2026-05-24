@@ -141,7 +141,8 @@ export function useStopWork() {
 export function useCleanupWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete(`/workspaces/${id}`),
+    mutationFn: ({ id, force }: { id: string; force?: boolean }) =>
+      api.delete(`/workspaces/${id}${force ? '?force=true' : ''}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
     },
@@ -151,7 +152,8 @@ export function useCleanupWorkspace() {
 export function useMergeWorkspace() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/merge`, {}),
+    mutationFn: ({ workspaceId, skipSecretsScan }: { workspaceId: string; skipSecretsScan?: boolean }) =>
+      api.post<Workspace>(`/workspaces/${workspaceId}/merge${skipSecretsScan ? '?skipSecretsScan=true' : ''}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -191,8 +193,21 @@ export function useRerunWorkspace() {
 export function useCreatePR() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ workspaceId, title, body }: { workspaceId: string; title?: string; body?: string }) =>
-      api.post<{ prUrl: string; prNumber: number }>(`/workspaces/${workspaceId}/create-pr`, { title, body }),
+    mutationFn: ({
+      workspaceId,
+      title,
+      body,
+      skipSecretsScan,
+    }: {
+      workspaceId: string;
+      title?: string;
+      body?: string;
+      skipSecretsScan?: boolean;
+    }) =>
+      api.post<{ prUrl: string; prNumber: number }>(
+        `/workspaces/${workspaceId}/create-pr${skipSecretsScan ? '?skipSecretsScan=true' : ''}`,
+        { title, body },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
     },
