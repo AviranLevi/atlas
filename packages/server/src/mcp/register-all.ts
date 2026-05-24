@@ -3,6 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { registerAgentProviderTools } from './agent-providers.tools.js';
 import { registerAgentTools } from './agents.tools.js';
+import { registerAutomationTools } from './automations.tools.js';
 import { registerFilesystemTools } from './filesystem.tools.js';
 import { registerMemoryTools } from './memory.tools.js';
 import { registerPhaseTools } from './phases.tools.js';
@@ -18,6 +19,7 @@ import { registerWorkspaceTools } from './workspaces.tools.js';
 export function registerAllTools(server: McpServer) {
   registerAgentTools(server);
   registerAgentProviderTools(server);
+  registerAutomationTools(server);
   registerTaskTools(server);
   registerMemoryTools(server);
   registerProjectTools(server);

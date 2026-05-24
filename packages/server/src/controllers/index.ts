@@ -1,5 +1,6 @@
 export * from './agent-providers.controller.js';
 export * from './agents.controller.js';
+export * from './automations.controller.js';
 export * from './chat.controller.js';
 export * from './filesystem.controller.js';
 export * from './heartbeats.controller.js';
