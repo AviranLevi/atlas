@@ -230,7 +230,7 @@ export class ProjectsService {
     try {
       const project = await this.getById(projectId);
       if (!project.localPath) {
-        return { commitsBehind: 0, lastChecked: now };
+        return { currentBranch: null, commitsBehind: 0, lastChecked: now };
       }
       const branch = project.defaultBranch ?? 'main';
       const opts = {
@@ -239,19 +239,28 @@ export class ProjectsService {
         stdio: ['pipe', 'pipe', 'pipe'] as ['pipe', 'pipe', 'pipe'],
         timeout: 15_000,
       };
+
+      // Detect which branch is currently checked out
+      let currentBranch: string | null = null;
+      try {
+        currentBranch = execSync('git rev-parse --abbrev-ref HEAD', opts).trim() || null;
+      } catch {
+        // Detached HEAD or not a git repo — leave null
+      }
+
       try {
         execSync('git fetch origin', opts);
       } catch {
-        // Network unavailable or no remote — not an error, just return 0
-        return { commitsBehind: 0, lastChecked: now };
+        // Network unavailable or no remote — return what we have
+        return { currentBranch, commitsBehind: 0, lastChecked: now };
       }
       const countStr = execSync(`git rev-list HEAD..origin/${branch} --count`, opts).trim();
       const commitsBehind = parseInt(countStr, 10) || 0;
-      return { commitsBehind, lastChecked: new Date().toISOString() };
+      return { currentBranch, commitsBehind, lastChecked: new Date().toISOString() };
     } catch (error: unknown) {
       // Non-fatal — polling must not break the UI
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
-      return { commitsBehind: 0, lastChecked: now };
+      return { currentBranch: null, commitsBehind: 0, lastChecked: now };
     }
   }
 

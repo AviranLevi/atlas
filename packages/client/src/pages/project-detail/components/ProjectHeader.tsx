@@ -18,6 +18,7 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
   const openInEditor = useOpenProjectInEditor();
   const gitPull = useGitPull();
   const { data: gitStatus } = useGitStatus(project.id, !!project.localPath);
+  const currentBranch = gitStatus?.currentBranch ?? null;
   const commitsBehind = gitStatus?.commitsBehind ?? 0;
 
   return (
@@ -56,11 +57,22 @@ export function ProjectHeader({ project, statusConfig: status, scanProject, onEd
                     {tech}
                   </Badge>
                 ))}
-              {project.defaultBranch && (
-                <Badge variant="outline" className="text-xs gap-1">
-                  <GitBranch className="h-3 w-3" />
-                  {project.defaultBranch}
-                </Badge>
+              {(currentBranch || project.defaultBranch) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <Badge variant="outline" className="text-xs gap-1">
+                        <GitBranch className="h-3 w-3" />
+                        {currentBranch ?? project.defaultBranch}
+                      </Badge>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {currentBranch && currentBranch !== project.defaultBranch
+                      ? `Currently on ${currentBranch} (default: ${project.defaultBranch ?? 'main'})`
+                      : `On default branch ${currentBranch ?? project.defaultBranch}`}
+                  </TooltipContent>
+                </Tooltip>
               )}
               {commitsBehind > 0 && (
                 <Tooltip>

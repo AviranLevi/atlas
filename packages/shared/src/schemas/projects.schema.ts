@@ -124,6 +124,7 @@ export const ScaffoldProjectSchema = z.object({
 });
 
 export const GitStatusSchema = z.object({
+  currentBranch: z.string().nullable(),
   commitsBehind: z.number().int().min(0),
   lastChecked: z.string().datetime(),
 });

@@ -2,30 +2,6 @@ import type { QuickActionTemplate } from '@atlas/shared';
 
 export const QUICK_ACTION_TEMPLATES: QuickActionTemplate[] = [
   {
-    key: 'commit-and-push',
-    name: 'Commit & Push',
-    description: 'Stage changes, create a commit with a descriptive message, and push to remote',
-    promptTemplate:
-      'Review the current changes in this project. Stage all relevant files, create a commit with a clear and descriptive message that explains the changes, and push to the current remote branch.',
-    icon: 'GitCommit',
-  },
-  {
-    key: 'code-review',
-    name: 'Code Review',
-    description: 'Review recent changes for bugs, style issues, and improvements',
-    promptTemplate:
-      'Review the recent code changes in this project. Look for bugs, style issues, security vulnerabilities, and performance problems. Provide a structured review with actionable suggestions.',
-    icon: 'Search',
-  },
-  {
-    key: 'create-pr',
-    name: 'Create PR',
-    description: 'Generate a pull request with a title and description from the current branch diff',
-    promptTemplate:
-      'Analyze the diff between the current branch and the base branch. Create a pull request with a concise title and a detailed description summarizing the changes, motivation, and any testing notes.',
-    icon: 'GitPullRequest',
-  },
-  {
     key: 'update-readme',
     name: 'Update README',
     description: 'Update the README and other docs to reflect recent changes',

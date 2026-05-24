@@ -59,7 +59,7 @@ export function ProjectQuickActionsSection({ projectId }: ProjectQuickActionsSec
         <EmptyState
           icon={Zap}
           title="No quick actions"
-          body="Quick actions let you run common workflows with one click — commit & push, code reviews, PR creation, and more."
+          body="Quick actions let you run common workflows with one click — write tests, fix lint errors, refactor code, and more."
           primaryCta={{ label: 'Add Quick Action', onClick: () => navigate('/quick-actions/new'), icon: Plus }}
           compact
         />
