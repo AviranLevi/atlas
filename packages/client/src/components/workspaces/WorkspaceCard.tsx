@@ -1,4 +1,5 @@
 // React / library
+import { useState } from 'react';
 import { AlertTriangle, Clock, GitBranch, Square, Terminal, Trash2 } from 'lucide-react';
 
 // Components
@@ -6,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CleanupConfirmDialog } from '@/components/workspaces/CleanupConfirmDialog';
 
 // Hooks
-import { useCleanupWorkspace, useStopWork } from '@/hooks/use-workspaces.hook';
+import { useStopWork } from '@/hooks/use-workspaces.hook';
 
 // Types
 import type { WorkspaceCardProps } from './workspaces.types';
@@ -18,7 +20,7 @@ import { runningDuration, statusConfig } from './workspaces.constants';
 
 export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
   const stopWork = useStopWork();
-  const cleanup = useCleanupWorkspace();
+  const [cleanupOpen, setCleanupOpen] = useState(false);
   const config = statusConfig[workspace.status] ?? statusConfig.pending;
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
 
@@ -75,7 +77,7 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                    <button type="button" onClick={() => cleanup.mutate(workspace.id)} disabled={cleanup.isPending}>
+                    <button type="button" onClick={() => setCleanupOpen(true)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </Button>
@@ -109,6 +111,8 @@ export function WorkspaceCard({ workspace }: WorkspaceCardProps) {
           </pre>
         )}
       </CardContent>
+
+      <CleanupConfirmDialog open={cleanupOpen} onOpenChange={setCleanupOpen} workspace={workspace} />
     </Card>
   );
 }

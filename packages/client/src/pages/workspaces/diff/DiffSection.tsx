@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 // Components
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { SecretsWarningDialog } from '@/components/workspaces/SecretsWarningDialog';
 
 // Hooks
 import {
@@ -16,6 +17,9 @@ import {
   useWorkspaceDiff,
 } from '@/hooks/use-workspaces.hook';
 
+// Lib
+import { ApiError } from '@/lib/api';
+
 // Types
 import type { DiffComment } from '@atlas/shared';
 
@@ -23,6 +27,8 @@ import type { DiffComment } from '@atlas/shared';
 import { DiffFileRow } from './DiffFileRow';
 import { DiffToolbar } from './DiffToolbar';
 import type { DiffViewMode } from './diff-parser';
+
+type SecretFinding = { filename: string; line: number; pattern: string };
 
 type DiffSectionProps = {
   workspaceId: string;
@@ -40,6 +46,19 @@ export function DiffSection({ workspaceId, comments, hasGitHub = false }: DiffSe
   const [viewMode, setViewMode] = useState<DiffViewMode>(
     () => (localStorage.getItem('diff-view-mode') as DiffViewMode) || 'unified',
   );
+  const [secretsFindings, setSecretsFindings] = useState<SecretFinding[]>([]);
+  const [secretsAction, setSecretsAction] = useState<'merge' | 'create-pr'>('merge');
+  const [secretsDialogOpen, setSecretsDialogOpen] = useState(false);
+
+  const handleSecretsError = (err: unknown, action: 'merge' | 'create-pr'): boolean => {
+    if (err instanceof ApiError && err.status === 409 && err.details?.secretsDetected) {
+      setSecretsFindings((err.details.findings as SecretFinding[]) ?? []);
+      setSecretsAction(action);
+      setSecretsDialogOpen(true);
+      return true;
+    }
+    return false;
+  };
 
   const handleViewModeChange = (mode: DiffViewMode) => {
     setViewMode(mode);
@@ -110,14 +129,19 @@ export function DiffSection({ workspaceId, comments, hasGitHub = false }: DiffSe
               onSuccess: (data) => {
                 window.open(data.prUrl, '_blank');
               },
+              onError: (err) => handleSecretsError(err, 'create-pr'),
             },
           )
         }
         isCreatingPR={createPR.isPending}
         onMerge={() =>
-          merge.mutate(workspaceId, {
-            onSuccess: () => navigate('/workspaces'),
-          })
+          merge.mutate(
+            { workspaceId },
+            {
+              onSuccess: () => navigate('/workspaces'),
+              onError: (err) => handleSecretsError(err, 'merge'),
+            },
+          )
         }
         isMerging={merge.isPending}
         onRequestChanges={() => requestChanges.mutate(workspaceId)}
@@ -166,6 +190,28 @@ export function DiffSection({ workspaceId, comments, hasGitHub = false }: DiffSe
           </a>
         </div>
       )}
+
+      <SecretsWarningDialog
+        open={secretsDialogOpen}
+        onOpenChange={setSecretsDialogOpen}
+        findings={secretsFindings}
+        action={secretsAction}
+        isPending={merge.isPending || createPR.isPending}
+        onForce={() => {
+          if (secretsAction === 'merge') {
+            merge.mutate({ workspaceId, skipSecretsScan: true }, { onSuccess: () => navigate('/workspaces') });
+          } else {
+            createPR.mutate(
+              { workspaceId, skipSecretsScan: true },
+              {
+                onSuccess: (data) => {
+                  window.open(data.prUrl, '_blank');
+                },
+              },
+            );
+          }
+        }}
+      />
     </Card>
   );
 }

@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 // Components
 import { Button } from '@/components/ui/button';
+import { CleanupConfirmDialog } from '@/components/workspaces/CleanupConfirmDialog';
 import { CliFallbackBanner } from '@/components/workspaces/CliFallbackBanner';
 import { CommitsPanel } from '@/components/workspaces/CommitsPanel';
 import { WorkspaceLineage } from '@/components/workspaces/WorkspaceLineage';
@@ -22,7 +23,6 @@ import {
   useWorkspaceLineage,
   useWorkspaceDiff,
   useStopWork,
-  useCleanupWorkspace,
   useWorkspaceLogStream,
   useOpenWorkspaceInEditor,
   useStartAiReview,
@@ -40,11 +40,11 @@ export function WorkspaceDetailPage() {
   const { data: workspace, isLoading, error } = useWorkspaceStatus(id);
   const { data: lineage = [] } = useWorkspaceLineage(workspace?.id);
   const stopWork = useStopWork();
-  const cleanup = useCleanupWorkspace();
   const openInEditor = useOpenWorkspaceInEditor();
   const [followUpOpen, setFollowUpOpen] = useState(false);
   const [aiReviewOpen, setAiReviewOpen] = useState(false);
   const [rerunOpen, setRerunOpen] = useState(false);
+  const [cleanupOpen, setCleanupOpen] = useState(false);
   const { data: project } = useProject(workspace?.projectId);
   const { data: review } = useReview(workspace?.taskId);
   const startAiReview = useStartAiReview();
@@ -90,11 +90,11 @@ export function WorkspaceDetailPage() {
         onStop={() => stopWork.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
         onRerun={() => setRerunOpen(true)}
         onFollowUp={() => setFollowUpOpen(true)}
-        onCleanup={() => cleanup.mutate(workspace.id, { onSuccess: () => navigate('/workspaces') })}
+        onCleanup={() => setCleanupOpen(true)}
         onOpenInEditor={() => openInEditor.mutate(workspace.id)}
         isStopping={stopWork.isPending}
         isRerunning={false}
-        isCleaning={cleanup.isPending}
+        isCleaning={false}
         isOpeningInEditor={openInEditor.isPending}
         isRunning={isLive}
       />
@@ -138,6 +138,13 @@ export function WorkspaceDetailPage() {
         followUpOpen={followUpOpen}
         setFollowUpOpen={setFollowUpOpen}
         onNavigate={navigate}
+      />
+
+      <CleanupConfirmDialog
+        open={cleanupOpen}
+        onOpenChange={setCleanupOpen}
+        workspace={workspace}
+        onSuccess={() => navigate('/workspaces')}
       />
     </div>
   );

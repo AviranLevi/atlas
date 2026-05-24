@@ -1,4 +1,5 @@
 // React / library
+import { useState } from 'react';
 import {
   GitBranch,
   Clock,
@@ -18,10 +19,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CleanupConfirmDialog } from '@/components/workspaces/CleanupConfirmDialog';
 import { StatusIcon } from './StatusIcon';
 
 // Hooks
-import { useStopWork, useCleanupWorkspace } from '@/hooks/use-workspaces.hook';
+import { useStopWork } from '@/hooks/use-workspaces.hook';
 
 // Lib
 import { calcDuration } from '@/lib/format';
@@ -55,7 +57,7 @@ const STAGE_META: Record<string, { label: string; icon: typeof Sparkles; classNa
 
 export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
   const stopWork = useStopWork();
-  const cleanup = useCleanupWorkspace();
+  const [cleanupOpen, setCleanupOpen] = useState(false);
 
   const meta = statusMeta[workspace.status] ?? statusMeta.stopped;
   const isActive = workspace.status === 'running' || workspace.status === 'pending';
@@ -161,9 +163,8 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
                   className="h-7 w-7 text-muted-foreground"
                   onClick={(e) => {
                     e.preventDefault();
-                    cleanup.mutate(workspace.id);
+                    setCleanupOpen(true);
                   }}
-                  disabled={cleanup.isPending}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -174,6 +175,8 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </div>
       </Link>
+
+      <CleanupConfirmDialog open={cleanupOpen} onOpenChange={setCleanupOpen} workspace={workspace} />
     </Card>
   );
 }
