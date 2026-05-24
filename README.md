@@ -22,6 +22,10 @@ You create **tasks** on a Kanban board and assign them to **agents** (Claude Cod
 
 You approve or request changes. Approved tasks move to **Done** and the worktree is left for you to merge.
 
+### Quick Actions
+
+**Quick Actions** are reusable one-click workflows — named presets that pair an agent with a prompt template. Examples: "Commit & Push", "Code Review", "Create PR", "Write Tests". They can be scoped globally (available to all projects) or per-project. Nine starter templates are included to get you going. Quick Actions are accessible from the sidebar, the project detail page, and Settings.
+
 ## Supported agents
 
 | Agent | MCP | Install |
@@ -104,8 +108,19 @@ After install, `atlas` is available on your PATH:
 
 Use this path if you want to run from source with hot-reload.
 
+**One-command setup:**
+
+```bash
+git clone https://github.com/AviranLevi/atlas.git
+cd atlas
+pnpm setup       # installs Node 24 via fnm, pnpm, dependencies, and builds
+pnpm dev
+```
+
+**Or manually:**
+
 **Prerequisites:**
-- **Node.js ≥ 24** — check with `node --version`, install via [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm)
+- **Node.js 24** — check with `node --version`, install via [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm)
 - **pnpm** — `npm install -g pnpm`
 - At least one agent CLI installed and authenticated (see table above)
 
@@ -201,7 +216,7 @@ The HTTP/SSE MCP server runs automatically on **http://localhost:3101** when Atl
 
 ### Available MCP tools
 
-Agents with MCP access can use: `list_tasks`, `create_task`, `update_task`, `get_project_context`, `create_memory`, `update_memory`, `supersede_memory`, `list_memories`, `list_rules`, `list_skills`, `list_phases`, `get_review`, `submit_review`, `search`, `start_workspace`, and more.
+Agents with MCP access can use: `list_tasks`, `create_task`, `update_task`, `get_project_context`, `create_memory`, `update_memory`, `supersede_memory`, `list_memories`, `list_rules`, `list_skills`, `list_phases`, `get_review`, `submit_review`, `search`, `start_workspace`, `list_quick_actions`, `get_quick_action`, `run_quick_action`, and more.
 
 ---
 
@@ -242,6 +257,7 @@ Copy `.env.example` to `.env` to override any of the above defaults.
 
 | Command | Description |
 |---------|-------------|
+| `pnpm setup` | One-command dev setup (installs Node 24, pnpm, dependencies, builds) |
 | `pnpm dev` | Start all packages in dev mode |
 | `pnpm dev:server` | Server only |
 | `pnpm dev:client` | Client only |
@@ -276,7 +292,7 @@ See [docs/roadmap.md](docs/roadmap.md) for full detail on each item.
 - **Commands & task templates** *(v0.2)* — quick parameterized invocations from Chat (`/refactor file.ts`) and Kanban ("New from template…"). See [docs/commands-plan.md](docs/commands-plan.md).
 - **Semantic memory** *(v0.3)* — replace keyword-based memory retrieval with vector similarity search. Pluggable embedding providers (Google Gemini Embedding 2, OpenAI, local). Enables cross-modal search over attached PDFs and images.
 - **DB diagram viewer** *(v0.3)* — interactive, auto-laid-out schema diagram replacing the static Mermaid render. See [docs/db-diagram-plan.md](docs/db-diagram-plan.md).
-- **Automations** *(v0.3)* — event-driven trigger/action rules: `onFlowComplete → save memory`, `onTaskComplete → notify`. No-code builder UI. See [docs/rules-skills-hooks-plan.md](docs/rules-skills-hooks-plan.md).
+- **Event-driven triggers** *(v0.3)* — automatic trigger/action rules: `onFlowComplete → save memory`, `onTaskComplete → notify`. No-code builder UI. See [docs/rules-skills-hooks-plan.md](docs/rules-skills-hooks-plan.md).
 - **Authored diagrams** *(v0.4)* — draw flow/architecture diagrams using React Flow, save as project documents, `@`-mention from tasks/chat, expose via MCP for 3rd-party agents (Cursor, etc.). See [docs/authored-diagrams-plan.md](docs/authored-diagrams-plan.md).
 - **Remote access** — tunnel-based remote access to your local Atlas instance. See [docs/remote-access-plan.md](docs/remote-access-plan.md).
 - **End-to-end tests** — Playwright coverage for critical flows.

@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **Quick Actions** — reusable one-click workflows that pair an agent with a prompt template. Full-stack CRUD (shared schemas, DB, API, MCP tools, UI). Nine starter templates (Commit & Push, Code Review, Create PR, etc.). Scoped per-project or globally. Visual icon picker with 28 Lucide icons. Accessible from sidebar, project detail, and Settings. API route: `/api/v1/quick-actions`. MCP tools: `list_quick_actions`, `get_quick_action`, `run_quick_action`.
+- **Dev setup script** — `pnpm setup` one-command script installs Node 24 via fnm, pnpm, dependencies, rebuilds native modules, and builds all packages.
+- **Gemini CLI auth detection** — Gemini CLI now has proper authentication checking via `authCheck` config, preventing false "ready" status when unauthenticated.
 - **Schema-enforced delete cascades** — every foreign key now has an explicit `ON DELETE` policy (CASCADE / SET NULL / RESTRICT) applied at the SQLite layer via a one-time table rebuild (`apply-fk-cascade-policy.ts`). Replaces ~70 lines of imperative cascade code in `projects.removeWithRelations`.
 - **Agent-delete RESTRICT pre-check** — deleting an agent with active task assignments returns HTTP 409 with `{ agentId, agentName, taskCount }` so the UI can render a precise "reassign first" toast instead of a raw FK error.
 - **Provider-disconnected UI** — when a chat conversation's or agent's `provider_id` is nulled out by a provider deletion, an `Unplug` indicator surfaces in the chat sidebar / agents grid and the chat input is disabled with a banner explaining the state. Conversation history is preserved instead of being deleted alongside the provider.

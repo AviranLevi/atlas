@@ -9,6 +9,17 @@ Thanks for your interest in contributing to Atlas! This guide will help you get 
 
 ## Setup
 
+**One-command setup** (installs Node 24 via fnm, pnpm, and all dependencies):
+
+```bash
+git clone https://github.com/AviranLevi/atlas.git
+cd atlas
+pnpm setup
+pnpm dev
+```
+
+**Or manually:**
+
 ```bash
 git clone https://github.com/AviranLevi/atlas.git
 cd atlas

@@ -58,6 +58,7 @@ MCP Tools (stdio/SSE) ───────────────────�
 | `skill_resources` | Junction: skill ↔ resource |
 | `rules` | Rules (global and project-scoped) |
 | `memory` | Project/global memory entries |
+| `quick_actions` | Reusable one-click workflows (agent + prompt template, project-scoped or global) |
 | `workspaces` | Agent execution environments (process tracking) |
 | `settings` | Key-value global settings |
 | `global_instructions` | Global instruction entries |
@@ -113,6 +114,7 @@ Standalone Node.js `http.createServer` (NOT Hono — `SSEServerTransport` requir
 | `reviews.tools.ts` | get_review, submit_review |
 | `search.tools.ts` | search |
 | `settings.tools.ts` | get_settings |
+| `quick-actions.tools.ts` | list_quick_actions, get_quick_action, run_quick_action |
 | `workspaces.tools.ts` | start_workspace (with baseBranch, model, providerId) |
 
 ### MCP Config Endpoint
@@ -267,6 +269,9 @@ A single package can bundle an agent with its skills and rules. No IDs, timestam
 | `/chat` | ChatPage | Chat interface with conversation history |
 | `/global` | GlobalPage | Global instructions |
 | `/usage` | UsagePage | Token usage and cost tracking |
+| `/quick-actions` | QuickActionsPage | Quick actions list with run/edit/delete |
+| `/quick-actions/new` | QuickActionNewPage | Full-page create form with template picker |
+| `/quick-actions/:id` | QuickActionDetailPage | Quick action detail with inline editing |
 | `/settings` | SettingsPage | MCP connection panel + settings |
 
 ### Page File Convention
