@@ -1,6 +1,7 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -37,8 +38,10 @@ export function useTriggerUpdate() {
   return useMutation({
     mutationFn: () => api.post<{ status: string; startedAt: string }>('/system/update', {}),
     onSuccess: () => {
+      toast.success('Update started');
       qc.invalidateQueries({ queryKey: UPDATE_PROGRESS_KEY });
     },
+    onError: (e) => toast.error(`Failed to start update: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -102,5 +105,7 @@ export function useServerHealthPoll(enabled: boolean) {
 export function useResetAllData() {
   return useMutation({
     mutationFn: () => api.post<unknown>('/system/reset', { confirm: true }),
+    onSuccess: () => toast.success('All data has been reset'),
+    onError: (e) => toast.error(`Failed to reset data: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

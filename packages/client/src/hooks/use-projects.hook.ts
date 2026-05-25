@@ -71,7 +71,11 @@ export function useCreateBranch(
       if (!projectId) throw new Error('projectId is required to create a branch');
       return api.post<{ branch: string }>(`/projects/${projectId}/branches`, data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'branches'] }),
+    onSuccess: (data) => {
+      toast.success(`Branch "${data.branch}" created`);
+      queryClient.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'branches'] });
+    },
+    onError: (e) => toast.error(`Failed to create branch: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -106,10 +110,12 @@ export function useImportProjectRules(
       if (!projectId) throw new Error('projectId is required to import rules');
       return api.post<{ imported: number; ids: string[] }>(`/projects/${projectId}/import-rules`, { items });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      toast.success(`Imported ${data.imported} rule(s)`);
       queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
       queryClient.invalidateQueries({ queryKey: ['rules'] });
     },
+    onError: (e) => toast.error(`Failed to import rules: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -118,6 +124,7 @@ export function useCreateProject() {
   return useMutation({
     mutationFn: (data: CreateProject) => api.post<Project>('/projects', data),
     onSuccess: (project) => {
+      toast.success('Project created');
       // Write synchronously so ProjectContext and RouteGuard see the new project
       // before navigate() fires — without this the cache stays [] and the shell
       // collapses to firstRun, bouncing the user back to /welcome.
@@ -139,6 +146,7 @@ export function useCreateProject() {
       // to firstRun. Queries will refetch naturally on next mount/focus.
       queryClient.invalidateQueries({ queryKey: PROJECTS_KEY, refetchType: 'none' });
     },
+    onError: (e) => toast.error(`Failed to create project: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -148,6 +156,7 @@ export function useScaffoldProject() {
   return useMutation({
     mutationFn: (data: ScaffoldProject) => api.post<Project>('/projects/scaffold', data),
     onSuccess: (project) => {
+      toast.success('Project scaffolded');
       queryClient.setQueryData<Project[]>(PROJECTS_KEY, (old = []) =>
         old.some((p) => p.id === project.id) ? old : [...old, project],
       );
@@ -161,6 +170,7 @@ export function useScaffoldProject() {
       );
       queryClient.invalidateQueries({ queryKey: PROJECTS_KEY, refetchType: 'none' });
     },
+    onError: (e) => toast.error(`Failed to scaffold project: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -169,6 +179,7 @@ export function useUpdateProject() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProject }) => api.put<Project>(`/projects/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onError: (e) => toast.error(`Failed to update project: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -176,7 +187,11 @@ export function useDeleteProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/projects/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: () => {
+      toast.success('Project deleted');
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete project: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -184,7 +199,11 @@ export function useScanProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<Project>(`/projects/${id}/scan`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: () => {
+      toast.success('Project scan complete');
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to scan project: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -192,7 +211,11 @@ export function useGenerateBrief() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<Project>(`/projects/${id}/generate-brief`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: () => {
+      toast.success('Brief generated');
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to generate brief: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -201,7 +224,12 @@ export function useGenerateDesignContext() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<Project>(`/projects/${id}/generate-design-context`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTS_KEY }),
+    onSuccess: () => {
+      toast.success('Design context generated');
+      queryClient.invalidateQueries({ queryKey: PROJECTS_KEY });
+    },
+    onError: (e) =>
+      toast.error(`Failed to generate design context: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 

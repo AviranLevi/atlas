@@ -1,6 +1,7 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -86,6 +87,7 @@ export function useDeleteConversation() {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/chat/conversations/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY }),
+    onError: (e) => toast.error(`Failed to delete conversation: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -98,6 +100,7 @@ export function useUpdateConversationMode() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: [...CONVERSATIONS_KEY, id] });
     },
+    onError: (e) => toast.error(`Failed to update mode: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -111,6 +114,8 @@ export function useUpdateConversationConfig() {
       queryClient.invalidateQueries({ queryKey: [...CONVERSATIONS_KEY, id] });
       queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
     },
+    onError: (e) =>
+      toast.error(`Failed to update conversation config: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 

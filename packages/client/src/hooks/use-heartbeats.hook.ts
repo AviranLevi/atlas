@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -22,7 +23,11 @@ export function useCreateHeartbeatConfig() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateHeartbeatConfig) => api.post<HeartbeatConfig>(`/agents/${data.agentId}/heartbeats`, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: HEARTBEAT_CONFIGS_KEY }),
+    onSuccess: () => {
+      toast.success('Heartbeat created');
+      queryClient.invalidateQueries({ queryKey: HEARTBEAT_CONFIGS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create heartbeat: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -32,6 +37,7 @@ export function useUpdateHeartbeatConfig() {
     mutationFn: ({ id, data }: { id: string; data: UpdateHeartbeatConfig }) =>
       api.put<HeartbeatConfig>(`/heartbeats/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: HEARTBEAT_CONFIGS_KEY }),
+    onError: (e) => toast.error(`Failed to update heartbeat: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -39,7 +45,11 @@ export function useDeleteHeartbeatConfig() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/heartbeats/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: HEARTBEAT_CONFIGS_KEY }),
+    onSuccess: () => {
+      toast.success('Heartbeat deleted');
+      queryClient.invalidateQueries({ queryKey: HEARTBEAT_CONFIGS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete heartbeat: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -48,9 +58,11 @@ export function useTriggerHeartbeat() {
   return useMutation({
     mutationFn: (id: string) => api.post<HeartbeatRun>(`/heartbeats/${id}/trigger`, {}),
     onSuccess: () => {
+      toast.success('Heartbeat triggered');
       queryClient.invalidateQueries({ queryKey: HEARTBEAT_CONFIGS_KEY });
       queryClient.invalidateQueries({ queryKey: HEARTBEAT_HISTORY_KEY });
     },
+    onError: (e) => toast.error(`Failed to trigger heartbeat: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 

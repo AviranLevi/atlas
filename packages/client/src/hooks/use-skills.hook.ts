@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -38,7 +39,11 @@ export function useCreateSkill() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateSkill) => api.post<Skill>('/skills', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: SKILLS_KEY }),
+    onSuccess: () => {
+      toast.success('Skill created');
+      queryClient.invalidateQueries({ queryKey: SKILLS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create skill: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -50,6 +55,7 @@ export function useUpdateSkill() {
       queryClient.invalidateQueries({ queryKey: SKILLS_KEY });
       queryClient.invalidateQueries({ queryKey: SKILL_DETAIL_KEY });
     },
+    onError: (e) => toast.error(`Failed to update skill: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -57,7 +63,11 @@ export function useDeleteSkill() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/skills/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: SKILLS_KEY }),
+    onSuccess: () => {
+      toast.success('Skill deleted');
+      queryClient.invalidateQueries({ queryKey: SKILLS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete skill: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 

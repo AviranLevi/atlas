@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -49,7 +50,11 @@ export function useCreatePipeline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreatePipeline) => api.post<PipelineWithTasks>('/pipelines', data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onSuccess: () => {
+      toast.success('Pipeline created');
+      qc.invalidateQueries({ queryKey: PIPELINES_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create pipeline: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -59,6 +64,7 @@ export function useUpdatePipeline() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdatePipeline }) => api.patch<Pipeline>(`/pipelines/${id}`, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onError: (e) => toast.error(`Failed to update pipeline: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -67,7 +73,11 @@ export function useDeletePipeline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/pipelines/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onSuccess: () => {
+      toast.success('Pipeline deleted');
+      qc.invalidateQueries({ queryKey: PIPELINES_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete pipeline: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -80,6 +90,7 @@ export function useAddPipelineTasks() {
     mutationFn: ({ id, data }: { id: string; data: AddPipelineTasks }) =>
       api.post<PipelineWithTasks>(`/pipelines/${id}/tasks`, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onError: (e) => toast.error(`Failed to add tasks: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -90,6 +101,7 @@ export function useUpdatePipelineTask() {
     mutationFn: ({ id, taskId, data }: { id: string; taskId: string; data: UpdatePipelineTask }) =>
       api.patch<PipelineTask>(`/pipelines/${id}/tasks/${taskId}`, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onError: (e) => toast.error(`Failed to update task: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -100,6 +112,7 @@ export function useRemovePipelineTask() {
     mutationFn: ({ id, taskId }: { id: string; taskId: string }) =>
       api.delete<PipelineWithTasks>(`/pipelines/${id}/tasks/${taskId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onError: (e) => toast.error(`Failed to remove task: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -110,6 +123,7 @@ export function useReorderPipelineTasks() {
     mutationFn: ({ id, data }: { id: string; data: ReorderPipelineTasks }) =>
       api.post<PipelineWithTasks>(`/pipelines/${id}/tasks/reorder`, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onError: (e) => toast.error(`Failed to reorder tasks: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -120,7 +134,11 @@ export function useStartPipeline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<PipelineWithTasks>(`/pipelines/${id}/start`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onSuccess: () => {
+      toast.success('Pipeline started');
+      qc.invalidateQueries({ queryKey: PIPELINES_KEY });
+    },
+    onError: (e) => toast.error(`Failed to start pipeline: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -129,7 +147,11 @@ export function usePausePipeline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<Pipeline>(`/pipelines/${id}/pause`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onSuccess: () => {
+      toast.success('Pipeline paused');
+      qc.invalidateQueries({ queryKey: PIPELINES_KEY });
+    },
+    onError: (e) => toast.error(`Failed to pause pipeline: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -138,7 +160,11 @@ export function useResumePipeline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<PipelineWithTasks>(`/pipelines/${id}/resume`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onSuccess: () => {
+      toast.success('Pipeline resumed');
+      qc.invalidateQueries({ queryKey: PIPELINES_KEY });
+    },
+    onError: (e) => toast.error(`Failed to resume pipeline: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -147,6 +173,10 @@ export function useCancelPipeline() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<PipelineWithTasks>(`/pipelines/${id}/cancel`, {}),
-    onSuccess: () => qc.invalidateQueries({ queryKey: PIPELINES_KEY }),
+    onSuccess: () => {
+      toast.success('Pipeline cancelled');
+      qc.invalidateQueries({ queryKey: PIPELINES_KEY });
+    },
+    onError: (e) => toast.error(`Failed to cancel pipeline: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

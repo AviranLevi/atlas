@@ -82,10 +82,8 @@ export function HeartbeatSection({ agentId }: HeartbeatSectionProps) {
       updateConfig.mutate(
         { id: config.id, data: { enabled } },
         {
-          onSuccess: () => toast.success(enabled ? 'Heartbeat enabled' : 'Heartbeat disabled'),
-          onError: (err) => {
+          onError: () => {
             setFormEnabled(prev);
-            toast.error(err instanceof Error ? err.message : 'Update failed');
           },
         },
       );
@@ -108,21 +106,9 @@ export function HeartbeatSection({ agentId }: HeartbeatSectionProps) {
     const base = { runtime, cronExpression, enabled: formEnabled, maxConcurrent, maxRunsPerDay, projectId };
 
     if (config) {
-      updateConfig.mutate(
-        { id: config.id, data: base },
-        {
-          onSuccess: () => toast.success('Heartbeat saved'),
-          onError: (err) => toast.error(err instanceof Error ? err.message : 'Save failed'),
-        },
-      );
+      updateConfig.mutate({ id: config.id, data: base });
     } else {
-      createConfig.mutate(
-        { agentId, ...base },
-        {
-          onSuccess: () => toast.success('Heartbeat created'),
-          onError: (err) => toast.error(err instanceof Error ? err.message : 'Save failed'),
-        },
-      );
+      createConfig.mutate({ agentId, ...base });
     }
   };
 
@@ -130,19 +116,14 @@ export function HeartbeatSection({ agentId }: HeartbeatSectionProps) {
     if (!config) return;
     deleteConfig.mutate(config.id, {
       onSuccess: () => {
-        toast.success('Heartbeat removed');
         setShowSetup(false);
       },
-      onError: (err) => toast.error(err instanceof Error ? err.message : 'Delete failed'),
     });
   };
 
   const handleTestNow = () => {
     if (!config) return;
-    triggerHeartbeat.mutate(config.id, {
-      onSuccess: () => toast.success('Heartbeat triggered'),
-      onError: (err) => toast.error(err instanceof Error ? err.message : 'Trigger failed'),
-    });
+    triggerHeartbeat.mutate(config.id);
   };
 
   if (configsLoading) {

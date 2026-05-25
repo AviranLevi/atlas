@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -42,7 +43,11 @@ export function useCreateRule() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateRule) => api.post<Rule>('/rules', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: RULES_KEY }),
+    onSuccess: () => {
+      toast.success('Rule created');
+      queryClient.invalidateQueries({ queryKey: RULES_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create rule: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -54,6 +59,7 @@ export function useUpdateRule() {
       queryClient.invalidateQueries({ queryKey: RULES_KEY });
       queryClient.invalidateQueries({ queryKey: RULE_DETAIL_KEY });
     },
+    onError: (e) => toast.error(`Failed to update rule: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -61,7 +67,11 @@ export function useDeleteRule() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/rules/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: RULES_KEY }),
+    onSuccess: () => {
+      toast.success('Rule deleted');
+      queryClient.invalidateQueries({ queryKey: RULES_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete rule: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 

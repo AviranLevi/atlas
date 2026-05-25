@@ -96,9 +96,7 @@ export function GlobalPage() {
       createRule.mutate(payload, {
         onSuccess: () => {
           handleCancelEdit();
-          toast.success('Dispatch rule created');
         },
-        onError: (err) => toast.error(err.message ?? 'Failed to create rule'),
       });
     } else if (editingRuleId) {
       updateRule.mutate(
@@ -106,9 +104,7 @@ export function GlobalPage() {
         {
           onSuccess: () => {
             handleCancelEdit();
-            toast.success('Dispatch rule updated');
           },
-          onError: (err) => toast.error(err.message ?? 'Failed to update rule'),
         },
       );
     }
@@ -225,10 +221,7 @@ export function GlobalPage() {
               variant="destructive"
               onClick={() => {
                 if (deleteRuleId) {
-                  deleteRule.mutate(deleteRuleId, {
-                    onSuccess: () => toast.success('Dispatch rule deleted'),
-                    onError: (err) => toast.error(err.message ?? 'Failed to delete rule'),
-                  });
+                  deleteRule.mutate(deleteRuleId);
                   setDeleteRuleId(null);
                 }
               }}

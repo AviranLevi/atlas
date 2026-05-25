@@ -3,7 +3,6 @@
 // React / library
 import { FolderOpen } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -60,11 +59,9 @@ export function ScaffoldForm({ onCreated, onCancel, hideCancel }: ProjectCreateB
       {
         onSuccess: (project) => {
           saveLastParent(parentPath);
-          toast.success(`Created ${project.name}`);
           if (autoOpenEditor) openInEditor.mutate(project.id);
           onCreated?.(project);
         },
-        onError: (err) => toast.error((err as Error).message),
       },
     );
   };

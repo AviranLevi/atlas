@@ -3,7 +3,6 @@
 // React / library
 import { FolderOpen } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { toast } from 'sonner';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -61,11 +60,9 @@ export function PickExistingForm({ onCreated, onCancel, hideCancel }: ProjectCre
       },
       {
         onSuccess: (project) => {
-          toast.success(`Imported ${project.name}`);
           if (autoOpenEditor) openInEditor.mutate(project.id);
           onCreated?.(project);
         },
-        onError: (err) => toast.error((err as Error).message),
       },
     );
   };

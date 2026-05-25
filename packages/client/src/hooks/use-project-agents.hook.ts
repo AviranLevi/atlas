@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -25,10 +26,11 @@ export function useAssignAgent() {
     mutationFn: ({ projectId, agentId, role }: { projectId: string; agentId: string; role?: string | null }) =>
       api.post(`/projects/${projectId}/agents`, { agentId, role }),
     onSuccess: () => {
+      toast.success('Agent assigned to project');
       queryClient.invalidateQueries({ queryKey: PROJECT_AGENTS_KEY });
-      // Also invalidate project context since it includes agents
       queryClient.invalidateQueries({ queryKey: ['project-context'] });
     },
+    onError: (e) => toast.error(`Failed to assign agent: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -38,8 +40,10 @@ export function useUnassignAgent() {
     mutationFn: ({ projectId, agentId }: { projectId: string; agentId: string }) =>
       api.delete(`/projects/${projectId}/agents/${agentId}`),
     onSuccess: () => {
+      toast.success('Agent unassigned from project');
       queryClient.invalidateQueries({ queryKey: PROJECT_AGENTS_KEY });
       queryClient.invalidateQueries({ queryKey: ['project-context'] });
     },
+    onError: (e) => toast.error(`Failed to unassign agent: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

@@ -13,13 +13,17 @@ import { api } from '@/lib/api';
 // Types
 import type { ExecutorStatus, Workspace } from '@atlas/shared';
 
+const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Unknown error');
+
 export function useRefreshRuntimes() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => api.post<ExecutorStatus[]>('/workspaces/agent-runtimes/refresh', {}),
     onSuccess: (data) => {
       queryClient.setQueryData(RUNTIMES_KEY, data);
+      toast.success('Agent runtimes refreshed');
     },
+    onError: (e) => toast.error(`Failed to refresh runtimes: ${errMsg(e)}`),
   });
 }
 
@@ -35,9 +39,11 @@ export function useStartWork() {
       workflowEnabled?: boolean;
     }) => api.post<Workspace>('/workspaces', data),
     onSuccess: () => {
+      toast.success('Agent started');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
+    onError: (e) => toast.error(`Failed to start agent: ${errMsg(e)}`),
   });
 }
 
@@ -60,10 +66,12 @@ export function useAdvanceWorkflow() {
         selectedApproach: params.selectedApproach,
       }),
     onSuccess: () => {
+      toast.success('Workflow advanced to next stage');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
+    onError: (e) => toast.error(`Failed to advance workflow: ${errMsg(e)}`),
   });
 }
 
@@ -77,10 +85,12 @@ export function useRejectWorkflow() {
   return useMutation({
     mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/reject`, {}),
     onSuccess: () => {
+      toast.success('Workflow rejected — task returned to To Do');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
+    onError: (e) => toast.error(`Failed to reject workflow: ${errMsg(e)}`),
   });
 }
 
@@ -102,9 +112,11 @@ export function useStartAiReview() {
       autoFix?: boolean;
     }) => api.post<Workspace>(`/workspaces/${workspaceId}/start-ai-review`, { agentRuntimeId, autoFix }),
     onSuccess: () => {
+      toast.success('AI review started');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
     },
+    onError: (e) => toast.error(`Failed to start AI review: ${errMsg(e)}`),
   });
 }
 
@@ -120,10 +132,12 @@ export function useApplyReviewFix() {
     mutationFn: ({ workspaceId, agentRuntimeId }: { workspaceId: string; agentRuntimeId: string }) =>
       api.post<Workspace>(`/workspaces/${workspaceId}/apply-review-fix`, { agentRuntimeId }),
     onSuccess: () => {
+      toast.success('Review fix agent started');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
+    onError: (e) => toast.error(`Failed to apply review fix: ${errMsg(e)}`),
   });
 }
 
@@ -132,9 +146,11 @@ export function useStopWork() {
   return useMutation({
     mutationFn: (id: string) => api.post<Workspace>(`/workspaces/${id}/stop`, {}),
     onSuccess: () => {
+      toast.success('Agent stopped');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
+    onError: (e) => toast.error(`Failed to stop agent: ${errMsg(e)}`),
   });
 }
 
@@ -144,8 +160,10 @@ export function useCleanupWorkspace() {
     mutationFn: ({ id, force }: { id: string; force?: boolean }) =>
       api.delete(`/workspaces/${id}${force ? '?force=true' : ''}`),
     onSuccess: () => {
+      toast.success('Workspace cleaned up');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
     },
+    onError: (e) => toast.error(`Cleanup failed: ${errMsg(e)}`),
   });
 }
 
@@ -155,10 +173,12 @@ export function useMergeWorkspace() {
     mutationFn: ({ workspaceId, skipSecretsScan }: { workspaceId: string; skipSecretsScan?: boolean }) =>
       api.post<Workspace>(`/workspaces/${workspaceId}/merge${skipSecretsScan ? '?skipSecretsScan=true' : ''}`, {}),
     onSuccess: () => {
+      toast.success('Changes merged successfully');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
+    onError: (e) => toast.error(`Merge failed: ${errMsg(e)}`),
   });
 }
 
@@ -167,10 +187,12 @@ export function useCompleteWorkspace() {
   return useMutation({
     mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/complete`, {}),
     onSuccess: () => {
+      toast.success('Workspace completed');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
+    onError: (e) => toast.error(`Failed to complete workspace: ${errMsg(e)}`),
   });
 }
 
@@ -183,10 +205,12 @@ export function useRerunWorkspace() {
   return useMutation({
     mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/rerun`, {}),
     onSuccess: () => {
+      toast.success('Workspace re-run started');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: PIPELINES_KEY });
     },
+    onError: (e) => toast.error(`Failed to re-run workspace: ${errMsg(e)}`),
   });
 }
 
@@ -208,9 +232,11 @@ export function useCreatePR() {
         `/workspaces/${workspaceId}/create-pr${skipSecretsScan ? '?skipSecretsScan=true' : ''}`,
         { title, body },
       ),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      toast.success(`PR #${data.prNumber} created`);
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
     },
+    onError: (e) => toast.error(`PR creation failed: ${errMsg(e)}`),
   });
 }
 
@@ -219,9 +245,11 @@ export function useRequestChanges() {
   return useMutation({
     mutationFn: (workspaceId: string) => api.post<Workspace>(`/workspaces/${workspaceId}/request-changes`, {}),
     onSuccess: () => {
+      toast.success('Changes requested — agent will resume');
       queryClient.invalidateQueries({ queryKey: WORKSPACES_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
+    onError: (e) => toast.error(`Failed to request changes: ${errMsg(e)}`),
   });
 }
 
@@ -238,6 +266,7 @@ export function useAddDiffComment() {
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, workspaceId] });
     },
+    onError: (e) => toast.error(`Failed to add comment: ${errMsg(e)}`),
   });
 }
 
@@ -249,6 +278,7 @@ export function useEditDiffComment() {
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, workspaceId] });
     },
+    onError: (e) => toast.error(`Failed to edit comment: ${errMsg(e)}`),
   });
 }
 
@@ -260,6 +290,7 @@ export function useRemoveDiffComment() {
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, workspaceId] });
     },
+    onError: (e) => toast.error(`Failed to remove comment: ${errMsg(e)}`),
   });
 }
 
@@ -270,8 +301,10 @@ export function useRevertWorkspaceCommit() {
     mutationFn: ({ id, commitSha }: { id: string; commitSha: string }) =>
       api.post(`/workspaces/${id}/revert`, { commitSha }),
     onSuccess: (_, { id }) => {
+      toast.success('Commit reverted');
       queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, id, 'commits'] });
       queryClient.invalidateQueries({ queryKey: [...WORKSPACES_KEY, id, 'diff'] });
     },
+    onError: (e) => toast.error(`Failed to revert commit: ${errMsg(e)}`),
   });
 }

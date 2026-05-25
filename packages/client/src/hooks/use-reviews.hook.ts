@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -23,6 +24,7 @@ export function useCreateReview() {
   return useMutation({
     mutationFn: (taskId: string) => api.post<Review>('/reviews', { taskId }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: REVIEWS_KEY }),
+    onError: (e) => toast.error(`Failed to create review: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -31,6 +33,7 @@ export function useUpdateReview() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateReview }) => api.put<Review>(`/reviews/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: REVIEWS_KEY }),
+    onError: (e) => toast.error(`Failed to update review: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -38,10 +41,12 @@ export function useDecideReview() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: DecideReview }) => api.post<Review>(`/reviews/${id}/decide`, data),
-    onSuccess: () => {
+    onSuccess: (_, { data }) => {
+      toast.success(`Review ${data.decision === 'approved' ? 'approved' : 'changes requested'}`);
       queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
+    onError: (e) => toast.error(`Failed to submit review: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -71,5 +76,6 @@ export function useTriggerAiReview() {
       queryClient.invalidateQueries({ queryKey: REVIEWS_KEY });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
+    onError: (e) => toast.error(`Failed to trigger AI review: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

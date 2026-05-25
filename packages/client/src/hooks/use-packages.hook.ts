@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -16,6 +17,8 @@ export function useExportSkillPackage() {
       downloadJson(pkg, `${name}.atlas.json`);
       return pkg;
     },
+    onSuccess: () => toast.success('Skill exported'),
+    onError: (e) => toast.error(`Failed to export skill: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -27,6 +30,8 @@ export function useExportRulePackage() {
       downloadJson(pkg, `${name}.atlas.json`);
       return pkg;
     },
+    onSuccess: () => toast.success('Rule exported'),
+    onError: (e) => toast.error(`Failed to export rule: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -38,6 +43,8 @@ export function useExportAgentPackage() {
       downloadJson(pkg, `${name}.atlas.json`);
       return pkg;
     },
+    onSuccess: () => toast.success('Agent exported'),
+    onError: (e) => toast.error(`Failed to export agent: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -45,6 +52,7 @@ export function useExportAgentPackage() {
 export function usePreviewImportPackage() {
   return useMutation({
     mutationFn: (pkg: AtlasPackage) => api.post<ImportPreview>('/packages/import/preview', pkg),
+    onError: (e) => toast.error(`Failed to preview import: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -54,9 +62,11 @@ export function useApplyImportPackage() {
   return useMutation({
     mutationFn: (data: ImportRequest) => api.post<ImportSummary>('/packages/import/apply', data),
     onSuccess: () => {
+      toast.success('Package imported');
       qc.invalidateQueries({ queryKey: ['agents'] });
       qc.invalidateQueries({ queryKey: ['skills'] });
       qc.invalidateQueries({ queryKey: ['rules'] });
     },
+    onError: (e) => toast.error(`Failed to import package: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

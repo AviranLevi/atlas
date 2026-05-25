@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -27,7 +28,11 @@ export function useCreateAgentProvider() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateAgentProvider) => api.post<AgentProvider>('/agent-providers', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROVIDERS_KEY }),
+    onSuccess: () => {
+      toast.success('Provider created');
+      queryClient.invalidateQueries({ queryKey: PROVIDERS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create provider: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -36,7 +41,11 @@ export function useUpdateAgentProvider() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateAgentProvider }) =>
       api.put<AgentProvider>(`/agent-providers/${id}`, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROVIDERS_KEY }),
+    onSuccess: () => {
+      toast.success('Provider updated');
+      queryClient.invalidateQueries({ queryKey: PROVIDERS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to update provider: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -44,7 +53,11 @@ export function useDeleteAgentProvider() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/agent-providers/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROVIDERS_KEY }),
+    onSuccess: () => {
+      toast.success('Provider deleted');
+      queryClient.invalidateQueries({ queryKey: PROVIDERS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete provider: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 

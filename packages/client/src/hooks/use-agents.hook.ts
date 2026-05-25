@@ -1,5 +1,6 @@
 import type { Agent, CreateAgent, Rule, Skill, UpdateAgent } from '@atlas/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
 
 const AGENTS_KEY = ['agents'] as const;
@@ -35,7 +36,11 @@ export function useCreateAgent() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateAgent) => api.post<Agent>('/agents', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: AGENTS_KEY }),
+    onSuccess: () => {
+      toast.success('Agent created');
+      queryClient.invalidateQueries({ queryKey: AGENTS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create agent: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -47,6 +52,7 @@ export function useUpdateAgent() {
       queryClient.invalidateQueries({ queryKey: AGENTS_KEY });
       queryClient.invalidateQueries({ queryKey: AGENT_DETAIL_KEY });
     },
+    onError: (e) => toast.error(`Failed to update agent: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -54,7 +60,11 @@ export function useDeleteAgent() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/agents/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: AGENTS_KEY }),
+    onSuccess: () => {
+      toast.success('Agent deleted');
+      queryClient.invalidateQueries({ queryKey: AGENTS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete agent: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -75,7 +85,11 @@ export function useAttachSkill() {
   return useMutation({
     mutationFn: ({ agentId, skillId }: { agentId: string; skillId: string }) =>
       api.post(`/agents/${agentId}/skills`, { skillId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: AGENT_DETAIL_KEY }),
+    onSuccess: () => {
+      toast.success('Skill attached');
+      qc.invalidateQueries({ queryKey: AGENT_DETAIL_KEY });
+    },
+    onError: (e) => toast.error(`Failed to attach skill: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -84,7 +98,11 @@ export function useDetachSkill() {
   return useMutation({
     mutationFn: ({ agentId, skillId }: { agentId: string; skillId: string }) =>
       api.delete(`/agents/${agentId}/skills/${skillId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: AGENT_DETAIL_KEY }),
+    onSuccess: () => {
+      toast.success('Skill detached');
+      qc.invalidateQueries({ queryKey: AGENT_DETAIL_KEY });
+    },
+    onError: (e) => toast.error(`Failed to detach skill: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -93,7 +111,11 @@ export function useAttachRule() {
   return useMutation({
     mutationFn: ({ agentId, ruleId }: { agentId: string; ruleId: string }) =>
       api.post(`/agents/${agentId}/rules`, { ruleId }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: AGENT_DETAIL_KEY }),
+    onSuccess: () => {
+      toast.success('Rule attached');
+      qc.invalidateQueries({ queryKey: AGENT_DETAIL_KEY });
+    },
+    onError: (e) => toast.error(`Failed to attach rule: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -102,6 +124,10 @@ export function useDetachRule() {
   return useMutation({
     mutationFn: ({ agentId, ruleId }: { agentId: string; ruleId: string }) =>
       api.delete(`/agents/${agentId}/rules/${ruleId}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: AGENT_DETAIL_KEY }),
+    onSuccess: () => {
+      toast.success('Rule detached');
+      qc.invalidateQueries({ queryKey: AGENT_DETAIL_KEY });
+    },
+    onError: (e) => toast.error(`Failed to detach rule: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

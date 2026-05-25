@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -39,7 +40,11 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateTask) => api.post<Task>('/tasks', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+    onSuccess: () => {
+      toast.success('Task created');
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create task: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -48,6 +53,7 @@ export function useUpdateTask() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateTask }) => api.put<Task>(`/tasks/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+    onError: (e) => toast.error(`Failed to update task: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -55,6 +61,10 @@ export function useDeleteTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/tasks/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+    onSuccess: () => {
+      toast.success('Task deleted');
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete task: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

@@ -36,7 +36,11 @@ export function useCreateQuickAction() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateQuickAction) => api.post<QuickAction>('/quick-actions', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUICK_ACTIONS_KEY }),
+    onSuccess: () => {
+      toast.success('Quick action created');
+      queryClient.invalidateQueries({ queryKey: QUICK_ACTIONS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create quick action: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -46,6 +50,7 @@ export function useUpdateQuickAction() {
     mutationFn: ({ id, data }: { id: string; data: UpdateQuickAction }) =>
       api.put<QuickAction>(`/quick-actions/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUICK_ACTIONS_KEY }),
+    onError: (e) => toast.error(`Failed to update quick action: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -53,7 +58,11 @@ export function useDeleteQuickAction() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/quick-actions/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUICK_ACTIONS_KEY }),
+    onSuccess: () => {
+      toast.success('Quick action deleted');
+      queryClient.invalidateQueries({ queryKey: QUICK_ACTIONS_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete quick action: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 

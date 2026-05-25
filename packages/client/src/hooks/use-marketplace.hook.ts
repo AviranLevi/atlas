@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -33,9 +34,11 @@ export function useInstallPackage() {
     mutationFn: (data: { listing: MarketplaceListing; projectId?: string }) =>
       api.post<ImportSummary>('/marketplace/install', { ...data.listing, projectId: data.projectId }),
     onSuccess: () => {
+      toast.success('Package installed');
       qc.invalidateQueries({ queryKey: ['agents'] });
       qc.invalidateQueries({ queryKey: ['skills'] });
       qc.invalidateQueries({ queryKey: ['rules'] });
     },
+    onError: (e) => toast.error(`Failed to install package: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -45,7 +46,11 @@ export function useCreateMemory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateMemory) => api.post<Memory>('/memory', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMORY_KEY }),
+    onSuccess: () => {
+      toast.success('Memory created');
+      queryClient.invalidateQueries({ queryKey: MEMORY_KEY });
+    },
+    onError: (e) => toast.error(`Failed to create memory: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -55,6 +60,7 @@ export function useUpdateMemory() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateMemory }) => api.put<Memory>(`/memory/${id}`, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMORY_KEY }),
+    onError: (e) => toast.error(`Failed to update memory: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -63,7 +69,11 @@ export function useDeleteMemory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/memory/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMORY_KEY }),
+    onSuccess: () => {
+      toast.success('Memory deleted');
+      queryClient.invalidateQueries({ queryKey: MEMORY_KEY });
+    },
+    onError: (e) => toast.error(`Failed to delete memory: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
 
@@ -73,5 +83,6 @@ export function useTogglePinMemory() {
   return useMutation({
     mutationFn: ({ id, isPinned }: { id: string; isPinned: boolean }) => api.put<Memory>(`/memory/${id}`, { isPinned }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: MEMORY_KEY }),
+    onError: (e) => toast.error(`Failed to update memory: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }
