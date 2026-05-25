@@ -182,6 +182,44 @@ export class ProjectsService {
     }
   }
 
+  /** Checks out an existing branch in the project's local repository. */
+  async checkoutBranch(projectId: string, branchName: string): Promise<string> {
+    const FUNCTION_NAME = 'checkoutBranch';
+    try {
+      const project = await this.getById(projectId);
+      if (!project.localPath) {
+        throw new AppError('Project has no local path configured', { status: 400 });
+      }
+
+      const opts = {
+        cwd: project.localPath,
+        encoding: 'utf-8' as const,
+        stdio: ['pipe', 'pipe', 'pipe'] as ['pipe', 'pipe', 'pipe'],
+        timeout: 15_000,
+      };
+
+      // Safety: refuse checkout if there are uncommitted changes
+      const status = execSync('git status --porcelain', opts).trim();
+      if (status) {
+        throw new AppError('Cannot switch branches — there are uncommitted changes. Commit or stash them first.', {
+          status: 409,
+        });
+      }
+
+      execSync(`git checkout "${branchName}"`, opts);
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - checked out "${branchName}" in ${project.localPath}`);
+      return branchName;
+    } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (msg.includes('did not match any')) {
+        throw new AppError(`Branch "${branchName}" does not exist`, { status: 404 });
+      }
+      throw new AppError(`Failed to checkout branch: ${msg}`, { status: 500, cause: error });
+    }
+  }
+
   /** Pulls the latest changes from origin into the project's local repository. */
   async gitPull(projectId: string): Promise<GitPullResult> {
     const FUNCTION_NAME = 'gitPull';

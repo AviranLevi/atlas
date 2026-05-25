@@ -68,6 +68,13 @@ export async function createProjectBranch(c: Context) {
   return c.json({ branch }, 201);
 }
 
+/** Checks out an existing branch in a project's local repository. */
+export async function checkoutProjectBranch(c: Context) {
+  const { branch } = (await c.req.json()) as { branch: string };
+  const result = await projectsService.checkoutBranch(c.req.param('id')!, branch);
+  return c.json({ branch: result });
+}
+
 /** Returns the full context for a project (agents, tasks, memories). */
 export async function getProjectContext(c: Context) {
   const ctx = await projectsService.getContext(c.req.param('id')!);

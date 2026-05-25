@@ -15,6 +15,7 @@ import { zValidator } from '@hono/zod-validator';
 // Controllers
 import {
   assignProjectAgent,
+  checkoutProjectBranch,
   createProject,
   createProjectBranch,
   deleteProject,
@@ -39,6 +40,7 @@ export const projectsRoute = new Hono()
   .get('/', listProjects)
   .get('/:id/branches', getProjectBranches)
   .post('/:id/branches', zValidator('json', CreateBranchSchema), createProjectBranch)
+  .post('/:id/checkout', checkoutProjectBranch)
   .post('/:id/import-rules', zValidator('json', ImportRulesSchema), importProjectRules)
   .get('/:id/context', getProjectContext)
   .get('/:id', getProject)

@@ -75,6 +75,24 @@ export function useCreateBranch(
   });
 }
 
+export function useCheckoutBranch(projectId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (branch: string) => {
+      if (!projectId) throw new Error('projectId is required to checkout a branch');
+      return api.post<{ branch: string }>(`/projects/${projectId}/checkout`, { branch });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'git-status'] });
+      queryClient.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'branches'] });
+      toast.success(`Switched to ${data.branch}`);
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to switch branch');
+    },
+  });
+}
+
 export function useImportProjectRules(
   projectId: string | undefined,
 ): UseMutationResult<
