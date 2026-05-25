@@ -1,5 +1,6 @@
 // React / library
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Lib
 import { api } from '@/lib/api';
@@ -61,9 +62,13 @@ export function useRunQuickAction() {
   return useMutation({
     mutationFn: ({ id, projectId }: { id: string; projectId: string }) =>
       api.post<Workspace>(`/quick-actions/${id}/run`, { projectId }),
-    onSuccess: () => {
+    onSuccess: (workspace) => {
+      toast.success(`Quick action started — workspace "${workspace.taskName ?? 'Untitled'}" is running`);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    },
+    onError: (error) => {
+      toast.error(`Quick action failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     },
   });
 }

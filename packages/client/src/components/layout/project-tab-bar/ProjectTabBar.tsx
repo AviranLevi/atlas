@@ -1,5 +1,5 @@
 // React / library
-import { Plus } from 'lucide-react';
+import { GitBranch, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -12,11 +12,16 @@ import { TabButton } from './TabButton';
 // Context
 import { useActiveProject } from '@/contexts/ProjectContext';
 
+// Hooks
+import { useGitStatus } from '@/hooks/use-projects.hook';
+
 export function ProjectTabBar() {
-  const { activeProjectId, projects, setActiveProjectId } = useActiveProject();
+  const { activeProjectId, activeProject, projects, setActiveProjectId } = useActiveProject();
   const navigate = useNavigate();
   const location = useLocation();
   const [createOpen, setCreateOpen] = useState(false);
+  const { data: gitStatus } = useGitStatus(activeProjectId ?? undefined, !!activeProject?.localPath);
+  const currentBranch = gitStatus?.currentBranch ?? null;
 
   const handleTabClick = (id: string) => {
     setActiveProjectId(id);
@@ -60,6 +65,22 @@ export function ProjectTabBar() {
         </Tooltip>
 
         <div className="flex-1" />
+
+        {currentBranch && (
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <div className="flex shrink-0 items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground">
+                <GitBranch className="h-3 w-3" />
+                <span className="max-w-[160px] truncate">{currentBranch}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {currentBranch !== activeProject?.defaultBranch
+                ? `Currently on ${currentBranch} (default: ${activeProject?.defaultBranch ?? 'main'})`
+                : `On default branch`}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       <ProjectCreateDialog
