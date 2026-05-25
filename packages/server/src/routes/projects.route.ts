@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 // Shared
 import {
   AssignAgentSchema,
+  CheckoutBranchSchema,
   CreateBranchSchema,
   CreateProjectSchema,
   ImportRulesSchema,
@@ -40,7 +41,7 @@ export const projectsRoute = new Hono()
   .get('/', listProjects)
   .get('/:id/branches', getProjectBranches)
   .post('/:id/branches', zValidator('json', CreateBranchSchema), createProjectBranch)
-  .post('/:id/checkout', checkoutProjectBranch)
+  .post('/:id/checkout', zValidator('json', CheckoutBranchSchema), checkoutProjectBranch)
   .post('/:id/import-rules', zValidator('json', ImportRulesSchema), importProjectRules)
   .get('/:id/context', getProjectContext)
   .get('/:id', getProject)

@@ -1,5 +1,5 @@
 // External
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -172,7 +172,7 @@ export class WorkspaceCompletionService {
         }
         // Delete the orphaned branch (no code to preserve)
         try {
-          execSync(`git branch -D "${workspace.branchName}"`, {
+          execFileSync('git', ['branch', '-D', workspace.branchName], {
             cwd: project.localPath,
             stdio: 'pipe',
           });
@@ -255,18 +255,17 @@ export class WorkspaceCompletionService {
       }
 
       // Push the branch to remote
+      const pushOpts = { stdio: 'pipe' as const, encoding: 'utf-8' as const };
       try {
-        execSync(`git push -u origin "${workspace.branchName}"`, {
+        execFileSync('git', ['push', '-u', 'origin', workspace.branchName], {
+          ...pushOpts,
           cwd: workspace.worktreePath,
-          stdio: 'pipe',
-          encoding: 'utf-8',
         });
       } catch (_pushError: unknown) {
         // Try from project root if worktree is gone
-        execSync(`git push -u origin "${workspace.branchName}"`, {
+        execFileSync('git', ['push', '-u', 'origin', workspace.branchName], {
+          ...pushOpts,
           cwd: project.localPath,
-          stdio: 'pipe',
-          encoding: 'utf-8',
         });
       }
 
@@ -285,9 +284,10 @@ export class WorkspaceCompletionService {
 
       const baseBranch = project.defaultBranch || 'main';
 
-      // Create PR using gh CLI
-      const ghOutput = execSync(
-        `gh pr create --title "${prTitle.replace(/"/g, '\\"')}" --body "${prBody.replace(/"/g, '\\"')}" --base "${baseBranch}" --head "${workspace.branchName}"`,
+      // Create PR using gh CLI (execFileSync avoids shell injection via title/body)
+      const ghOutput = execFileSync(
+        'gh',
+        ['pr', 'create', '--title', prTitle, '--body', prBody, '--base', baseBranch, '--head', workspace.branchName],
         {
           cwd: project.localPath,
           encoding: 'utf-8',

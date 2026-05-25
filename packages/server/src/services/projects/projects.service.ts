@@ -1,5 +1,5 @@
 // External
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 
 // Shared
 import type { CreateProject, GitPullResult, GitStatus, Project, UpdateProject } from '@atlas/shared';
@@ -25,6 +25,7 @@ export class ProjectsService {
       return this.repo.findAll();
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to list projects', { cause: error });
     }
   }
@@ -35,6 +36,7 @@ export class ProjectsService {
     try {
       return this.repo.findByIdOrThrow(id);
     } catch (error: unknown) {
+      if (error instanceof AppError) throw error;
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to get project', { cause: error });
     }
@@ -47,6 +49,7 @@ export class ProjectsService {
       return this.repo.insert(data);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to create project', { cause: error });
     }
   }
@@ -58,6 +61,7 @@ export class ProjectsService {
       return this.repo.update(id, data);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to update project', { cause: error });
     }
   }
@@ -72,6 +76,7 @@ export class ProjectsService {
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - deleted project ${id} and all related records`);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to delete project', { cause: error });
     }
   }
@@ -96,6 +101,7 @@ export class ProjectsService {
       });
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to list projects with summary', { cause: error });
     }
   }
@@ -120,6 +126,7 @@ export class ProjectsService {
       };
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
+      if (error instanceof AppError) throw error;
       throw new AppError('Failed to get project context', { cause: error });
     }
   }
@@ -161,9 +168,12 @@ export class ProjectsService {
       }
 
       const args = ['branch', sanitized];
-      if (baseBranch) args.push(baseBranch);
+      if (baseBranch) {
+        const sanitizedBase = baseBranch.replace(/[^a-zA-Z0-9._\-/]/g, '-');
+        if (sanitizedBase && sanitizedBase !== '-') args.push(sanitizedBase);
+      }
 
-      execSync(`git ${args.join(' ')}`, {
+      execFileSync('git', args, {
         cwd: project.localPath,
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -206,7 +216,7 @@ export class ProjectsService {
         });
       }
 
-      execSync(`git checkout "${branchName}"`, opts);
+      execFileSync('git', ['checkout', branchName], opts);
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - checked out "${branchName}" in ${project.localPath}`);
       return branchName;
     } catch (error: unknown) {
@@ -237,7 +247,7 @@ export class ProjectsService {
       };
       let output: string;
       try {
-        output = execSync(`git pull origin ${branch}`, opts).trim();
+        output = execFileSync('git', ['pull', 'origin', branch], opts).trim();
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (msg.toLowerCase().includes('conflict')) {
@@ -292,7 +302,7 @@ export class ProjectsService {
         // Network unavailable or no remote — return what we have
         return { currentBranch, commitsBehind: 0, lastChecked: now };
       }
-      const countStr = execSync(`git rev-list HEAD..origin/${branch} --count`, opts).trim();
+      const countStr = execFileSync('git', ['rev-list', `HEAD..origin/${branch}`, '--count'], opts).trim();
       const commitsBehind = parseInt(countStr, 10) || 0;
       return { currentBranch, commitsBehind, lastChecked: new Date().toISOString() };
     } catch (error: unknown) {

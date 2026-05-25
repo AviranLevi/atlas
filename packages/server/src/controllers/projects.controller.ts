@@ -70,7 +70,7 @@ export async function createProjectBranch(c: Context) {
 
 /** Checks out an existing branch in a project's local repository. */
 export async function checkoutProjectBranch(c: Context) {
-  const { branch } = (await c.req.json()) as { branch: string };
+  const { branch } = getValidatedBody<{ branch: string }>(c);
   const result = await projectsService.checkoutBranch(c.req.param('id')!, branch);
   return c.json({ branch: result });
 }

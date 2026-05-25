@@ -16,6 +16,10 @@ export const CreateBranchSchema = z.object({
   baseBranch: z.string().optional(),
 });
 
+export const CheckoutBranchSchema = z.object({
+  branch: z.string().min(1).max(200),
+});
+
 export const ImportRulesSchema = z.object({
   items: z.array(AiConfigSchema).min(1),
 });

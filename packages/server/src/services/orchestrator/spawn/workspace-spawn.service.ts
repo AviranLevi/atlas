@@ -56,6 +56,8 @@ export class WorkspaceSpawnService {
     parentWorkspaceId?: string,
   ): Promise<Workspace> {
     const FUNCTION_NAME = 'startWork';
+    let createdWorktreePath: string | null = null;
+    let projectLocalPath: string | null = null;
     try {
       const { task, project, executor } = await validateSpawnPreconditions(taskId, agentRuntimeId);
 
@@ -93,16 +95,17 @@ export class WorkspaceSpawnService {
         // Provider unavailable — fall through to CLI execution
       }
 
+      projectLocalPath = project.localPath!;
       const { worktreePath, branchName, persistedBaseBranch } = prepareWorktree({
         worktreeService: this.worktreeService,
-        // validateSpawnPreconditions already threw if localPath is null/missing
-        localPath: project.localPath!,
+        localPath: projectLocalPath,
         defaultBranch: project.defaultBranch,
         taskId,
         taskName: task.name,
         baseBranch,
         effectiveStage,
       });
+      createdWorktreePath = worktreePath;
 
       const workspace = workspacesRepository.insert({
         taskId,
@@ -160,6 +163,17 @@ export class WorkspaceSpawnService {
 
       return workspacesRepository.findByIdOrThrow(workspace.id);
     } catch (error: unknown) {
+      // Clean up orphaned worktree if it was created before the failure
+      if (createdWorktreePath && projectLocalPath) {
+        try {
+          this.worktreeService.remove(createdWorktreePath, projectLocalPath);
+          logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - cleaned up orphaned worktree after failure`);
+        } catch {
+          logger.warn(
+            `${FILE_PATH} :: ${FUNCTION_NAME} - failed to clean up orphaned worktree at ${createdWorktreePath}`,
+          );
+        }
+      }
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to start work', { cause: error });
