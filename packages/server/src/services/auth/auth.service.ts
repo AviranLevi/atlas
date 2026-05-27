@@ -90,14 +90,15 @@ export class AuthService {
    * default name and a structured 409 cause so the client can render a
    * targeted recovery banner instead of parsing the message string.
    */
-  async bootstrapKey(): Promise<{ apiKey: ApiKey; rawKey: string }> {
+async bootstrapKey(): Promise<{ apiKey: ApiKey; rawKey: string }> {
     const FUNCTION_NAME = 'bootstrapKey';
     try {
-      // Always mint a fresh key. A browser that lost its localStorage (cleared
-      // cache, new incognito window, different browser) is indistinguishable
-      // from a first-time install. Since the endpoint is already gated by the
-      // `localOnly` middleware (localhost-only origin + host), the security
-      // boundary is the network check, not key scarcity.
+      if (await this.keysExist()) {
+        throw new AppError('Setup already complete', {
+          status: 409,
+          cause: { code: 'ALREADY_INITIALIZED' },
+        });
+      }
       return this.generateKey('Browser default');
     } catch (error: unknown) {
       if (error instanceof AppError) throw error;
