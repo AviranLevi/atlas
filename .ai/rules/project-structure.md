@@ -1,0 +1,70 @@
+# Project Structure
+
+> Applies to: all files. Always active.
+
+Monorepo with three packages: `server`, `client`, `shared`.
+
+```
+packages/
+  shared/        # Zod schemas, TypeScript types, constants
+  server/        # Hono REST API + MCP server + Drizzle SQLite
+  client/        # React SPA (Vite + Tailwind + shadcn/ui)
+data/
+  agents.db      # SQLite database (gitignored)
+```
+
+## Naming Conventions
+
+- Files: `kebab-case` (e.g., `agents.service.ts`, `AgentDialog.tsx`)
+- Classes/Types/Interfaces: `PascalCase`
+- Functions/variables: `camelCase`
+- Constants: `UPPER_SNAKE_CASE` for true constants, `camelCase` for config objects
+- Zod schemas: `PascalCase` ending with `Schema` (e.g., `CreateAgentSchema`)
+- Database tables: `snake_case` plural (e.g., `agents`, `agent_skills`)
+
+## File Suffixes
+
+Server: `.service.ts`, `.route.ts`, `.repository.ts`, `.schema.ts`, `.tools.ts`
+Client: `.page.tsx` for page components, `.hook.ts` for hooks, `.tsx` for components
+Shared: `.schema.ts`
+
+## Client Page Folder Structure
+
+Each page folder under `pages/` follows this layout:
+
+```
+pages/<feature>/
+  <feature>.page.tsx            # Main routed page (kebab-case)
+  <feature>-detail.page.tsx     # Detail page if applicable
+  <feature>.types.ts            # Shared types for the page
+  <feature>.constants.ts        # Shared constants for the page
+  <feature>.utils.ts            # Pure utility functions for the page
+  components/                   # Sub-components used only within this page
+    ComponentName.tsx            # PascalCase component files
+  hooks/                        # Page-scoped hooks (too tightly coupled for src/hooks/)
+    use-<concern>.hook.ts        # e.g. use-chat-config.hook.ts, use-chat-actions.hook.ts
+  <sub-feature>/                # Complex sub-features get their own subfolder
+```
+
+## Architecture Layers
+
+```
+Routes (thin HTTP) ─┐
+                     ├→ Services (business logic) → Repositories (data access) → Drizzle/SQLite
+MCP Tools (stdio)  ─┘
+```
+
+- Routes: request validation + delegation only. No business logic.
+- MCP Tools: Zod-validated input, delegates to services. No business logic.
+- Services: all business logic. May call multiple repositories.
+- Repositories: single-table data access. No cross-entity logic.
+- Shared schemas validate on both client and server.
+
+## General Rules
+
+- No `any`. Use `unknown` with narrowing when type is truly unknown.
+- Explicit return types on all exported functions.
+- Prefer `type` over `interface` unless extending is needed.
+- One export per file for services, repositories, and components. Barrel `index.ts` for re-exports.
+- All IDs are UUIDs (generated with `crypto.randomUUID()`).
+- All tables include `created_at` and `updated_at` timestamps.

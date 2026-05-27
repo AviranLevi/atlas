@@ -1,0 +1,59 @@
+# Import Ordering
+
+> Applies to: `**/*.{ts,tsx}`
+
+Group imports with blank lines between sections. No blank lines within a section.
+
+## Server Files (`.ts` in `packages/server/`)
+
+1. NPM / framework imports
+2. Shared package imports
+3. Services
+4. DB (schema, repositories, helpers)
+5. Types
+6. Utils / helpers
+
+```typescript
+// NPM
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+// Shared
+import { CreateAgentSchema, type Agent } from '@atlas/shared';
+// Services
+import { agentService } from '../services/agents.service';
+// DB
+import { agents } from '../db/schema/index.js';
+import { AgentRepository } from '../db/repositories/agents.repository.js';
+```
+
+## Client Files (`.tsx` in `packages/client/`)
+
+1. React / library imports
+2. Shared package imports
+3. Components
+4. Hooks
+5. Utils / lib
+6. Types
+7. Styles (if any)
+
+```typescript
+// React / libraries
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+// Shared
+import type { Agent } from '@atlas/shared';
+// Components
+import { Button } from '@/components/ui/button';
+import { AgentCard } from '@/components/agents/AgentCard';
+// Hooks
+import { useAgents } from '@/hooks/use-agents.hook';
+// Types
+import type { AgentListProps } from './AgentList.types';
+```
+
+## Rules
+
+- Use `type` imports when importing only types: `import type { Agent } from '...'`.
+- Prefer path aliases: `@atlas/shared` for shared, `@/` for client src.
+- Keep relative imports for same-module files (`./`, `../`).
+- Section comment headers (`// NPM`, `// Shared`, etc.) are required when 3+ sections exist.

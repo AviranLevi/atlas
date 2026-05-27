@@ -1,0 +1,123 @@
+# Testing Conventions
+
+> Applies to: `packages/*/tests/**`
+
+Framework: **Vitest** (config at root `vitest.config.ts`).
+
+## Test Location
+
+Tests live in `packages/<pkg>/tests/`, **never** inside `src/`.
+Mirror the `src/` folder structure:
+
+```
+src/services/foo/foo.service.ts  ->  tests/services/foo/foo.service.test.ts
+src/lib/bar.ts                   ->  tests/lib/bar.test.ts
+```
+
+## File Naming
+
+- Test files: `<module>.test.ts` or `<module>.spec.ts` (kebab-case, matching source file name)
+- Mock files: `<name>.mock.ts` (e.g., `agents.service.mock.ts`, `logger.mock.ts`)
+- Factory files: `<name>.factory.ts` (e.g., `agent.factory.ts`)
+- Constant files: `<name>.constants.ts` (e.g., `timestamps.constants.ts`)
+
+## Setup File (`tests/setup.ts`)
+
+Universal mocks and global hooks live in `tests/setup.ts` (registered via `setupFiles` in `vitest.config.ts`). This file handles:
+
+- **Universal mocks**: `logger` and `errors` are mocked globally — every test gets them automatically. Do NOT repeat these `vi.mock()` calls in individual test files.
+- **Global cleanup**: `beforeEach(() => vi.clearAllMocks())` runs before every test. Do NOT add `beforeEach` cleanup in individual test files.
+
+Only add mocks to the setup file if they apply to **every** test. Test-specific mocks stay in the test file.
+
+## Shared Mocks (`tests/mocks/`)
+
+One file per individual mock. Export named constants, not default exports.
+
+```ts
+// tests/mocks/agents.service.mock.ts
+import { vi } from 'vitest';
+
+export const mockAgentsService = {
+  list: vi.fn(),
+  getById: vi.fn(),
+  create: vi.fn(),
+};
+```
+
+## Factories (`tests/factories/`)
+
+One factory per entity. Each takes `Partial<T>` overrides and returns a complete object with sensible defaults. Barrel re-export from `tests/factories/index.ts`.
+
+```ts
+// tests/factories/agent.factory.ts
+import type { Agent } from '@atlas/shared';
+import { TS } from '../constants/timestamps.constants.js';
+
+export function makeAgent(overrides: Partial<Agent> = {}): Agent {
+  return { id: 'agent-1', name: 'Test Agent', createdAt: TS, updatedAt: TS, ...overrides };
+}
+```
+
+## Constants (`tests/constants/`)
+
+One file per concern. Barrel re-export from `tests/constants/index.ts`.
+
+```ts
+// tests/constants/timestamps.constants.ts
+export const TS = '2025-01-01T00:00:00.000Z';
+```
+
+## Test File Structure
+
+Order within a test file:
+
+1. All imports grouped together (external, shared, SUT, factories, constants)
+2. Test-specific `vi.mock()` calls (below imports, never between them)
+3. `vi.mocked()` typed wrappers
+4. `describe`/`it` blocks
+
+**No inline factory functions, mock definitions, or constants in test files.** Always import from `tests/mocks/`, `tests/factories/`, or `tests/constants/`.
+
+Example layout:
+
+```ts
+// External
+import { describe, expect, it, vi } from 'vitest';
+
+// Shared
+import { SomeSchema } from '@atlas/shared';
+
+// SUT
+import { someService } from '../../../src/services/index.js';
+import { SomeClass } from '../../../src/services/some/some.service.js';
+
+// Factories & Constants
+import { makeSomething } from '../../factories/index.js';
+import { SOME_CONSTANT } from '../../constants/index.js';
+
+// Module mocks (test-specific only — logger/errors are in setup.ts)
+vi.mock('../../../src/services/index.js', async () => {
+  const { mockSomeService } = await import('../../mocks/some.service.mock.js');
+  return { someService: mockSomeService };
+});
+
+// Typed wrappers
+const mSome = vi.mocked(someService);
+
+// Tests
+describe('SomeClass', () => { ... });
+```
+
+## `vi.mock()` Pattern
+
+Use async factories with dynamic imports to reference shared mock files:
+
+```ts
+vi.mock('../../../src/services/index.js', async () => {
+  const { mockAgentsService } = await import('../../mocks/agents.service.mock.js');
+  return { agentsService: mockAgentsService };
+});
+```
+
+`vi.mock()` calls must appear in the test file itself for test-specific mocks (vitest hoisting requires it). Universal mocks (`logger`, `errors`) go in `tests/setup.ts` instead.
