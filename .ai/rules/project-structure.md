@@ -1,9 +1,6 @@
----
-description: Core project structure, naming conventions, and architecture rules for the Agents Manager monorepo
-alwaysApply: true
----
-
 # Project Structure
+
+> Applies to: all files. Always active.
 
 Monorepo with three packages: `server`, `client`, `shared`.
 

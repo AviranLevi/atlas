@@ -1,10 +1,6 @@
----
-description: Service layer patterns for business logic in the server package
-globs: packages/server/src/services/**/*.ts
-alwaysApply: false
----
-
 # Services
+
+> Applies to: `packages/server/src/services/**/*.ts`
 
 Services contain all business logic. Data access is delegated to repositories.
 

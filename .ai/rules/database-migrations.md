@@ -1,9 +1,6 @@
----
-description: Rules for database migrations with Drizzle ORM
-alwaysApply: true
----
-
 # Database Migrations
+
+> Applies to: all files. Always active.
 
 ## Creating Migrations
 

@@ -1,10 +1,6 @@
----
-description: MCP (Model Context Protocol) tool layer patterns for AI agent integration
-globs: packages/server/src/mcp/**/*.ts
-alwaysApply: false
----
-
 # MCP Tools
+
+> Applies to: `packages/server/src/mcp/**/*.ts`
 
 The MCP server exposes tools over stdio so AI agents (Cursor, Claude, etc.) can interact with the local database through the same service layer the REST API uses.
 
@@ -65,4 +61,3 @@ export function registerAgentTools(server: McpServer) {
 
 - `packages/server/package.json`: `"mcp": "tsx src/mcp.ts"`
 - Root `package.json`: `"mcp": "npm run mcp -w packages/server"`
-- `.cursor/mcp.json`: Cursor MCP discovery config.

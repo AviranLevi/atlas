@@ -1,10 +1,6 @@
----
-description: React hooks and TanStack Query patterns for data fetching
-globs: packages/client/src/hooks/**/*.ts
-alwaysApply: false
----
-
 # Hooks
+
+> Applies to: `packages/client/src/hooks/**/*.ts`
 
 ## Structure
 

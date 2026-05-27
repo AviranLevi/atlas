@@ -1,10 +1,6 @@
----
-description: Drizzle ORM schema definitions and repository patterns for SQLite
-globs: packages/server/src/db/**/*.ts
-alwaysApply: false
----
-
 # Database & Repositories
+
+> Applies to: `packages/server/src/db/**/*.ts`
 
 ## Schema Definitions
 

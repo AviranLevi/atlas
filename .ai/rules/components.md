@@ -1,10 +1,6 @@
----
-description: React component patterns for the client package
-globs: packages/client/src/**/*.tsx
-alwaysApply: false
----
-
 # Components
+
+> Applies to: `packages/client/src/**/*.tsx`
 
 ## Placement
 
@@ -111,7 +107,7 @@ export function AgentCard({ agent, onSelect }: AgentCardProps) {
 
 ## Props
 
-- Define props in the directory's `.types.ts` file (see `client-organization.mdc`).
+- Define props in the directory's `.types.ts` file (see `client-organization.md`).
 - Props type named `ComponentNameProps` (e.g., `KanbanCardProps`, not `Props`).
 - Import with `import type { ComponentNameProps } from './<directory>.types'`.
 - Destructure props in the function signature.

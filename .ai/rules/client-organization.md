@@ -1,10 +1,6 @@
----
-description: Client-side file organization rules for types, constants, and utilities
-globs: packages/client/src/**/*.{ts,tsx}
-alwaysApply: false
----
-
 # Client-Side Organization
+
+> Applies to: `packages/client/src/**/*.{ts,tsx}`
 
 ## Types
 

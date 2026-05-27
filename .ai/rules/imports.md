@@ -1,10 +1,6 @@
----
-description: Import ordering and grouping rules for all TypeScript files
-globs: "**/*.{ts,tsx}"
-alwaysApply: false
----
-
 # Import Ordering
+
+> Applies to: `**/*.{ts,tsx}`
 
 Group imports with blank lines between sections. No blank lines within a section.
 

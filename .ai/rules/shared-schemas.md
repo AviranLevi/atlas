@@ -1,10 +1,6 @@
----
-description: Zod validation schemas and shared TypeScript types
-globs: packages/shared/src/**/*.ts
-alwaysApply: false
----
-
 # Shared Schemas & Types
+
+> Applies to: `packages/shared/src/**/*.ts`
 
 The `shared` package is the single source of truth for validation and types used by both server and client.
 

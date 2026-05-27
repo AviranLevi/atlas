@@ -1,11 +1,6 @@
----
-description: Test structure conventions, mock/factory/constant patterns, and naming rules
-alwaysApply: false
-globs:
-  - packages/*/tests/**
----
-
 # Testing Conventions
+
+> Applies to: `packages/*/tests/**`
 
 Framework: **Vitest** (config at root `vitest.config.ts`).
 

@@ -1,10 +1,6 @@
----
-description: Hono route handler patterns for REST API endpoints
-globs: packages/server/src/routes/**/*.ts
-alwaysApply: false
----
-
 # Routes
+
+> Applies to: `packages/server/src/routes/**/*.ts`
 
 Routes are thin HTTP adapters. They validate input, call a service, and return a response.
 
