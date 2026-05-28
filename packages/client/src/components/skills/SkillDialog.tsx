@@ -109,6 +109,7 @@ export function SkillDialog({ open, onOpenChange, onCreated }: SkillDialogProps)
               </SelectContent>
             </Select>
           </div>
+          {createSkill.isError && <p className="text-sm text-destructive">{(createSkill.error as Error).message}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
@@ -123,7 +124,6 @@ export function SkillDialog({ open, onOpenChange, onCreated }: SkillDialogProps)
             <Button type="submit" disabled={createSkill.isPending || !name.trim()}>
               {createSkill.isPending ? 'Creating...' : 'Create Skill'}
             </Button>
-            {createSkill.isError && <p className="text-sm text-destructive">{(createSkill.error as Error).message}</p>}
           </div>
         </form>
       </DialogContent>

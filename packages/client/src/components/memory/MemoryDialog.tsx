@@ -140,6 +140,7 @@ export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
               </Select>
             </div>
           )}
+          {createMemory.isError && <p className="text-sm text-destructive">{(createMemory.error as Error).message}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
@@ -154,9 +155,6 @@ export function MemoryDialog({ open, onOpenChange }: MemoryDialogProps) {
             <Button type="submit" disabled={createMemory.isPending || !name.trim() || !content.trim()}>
               {createMemory.isPending ? 'Creating...' : 'Create Memory'}
             </Button>
-            {createMemory.isError && (
-              <p className="text-sm text-destructive">{(createMemory.error as Error).message}</p>
-            )}
           </div>
         </form>
       </DialogContent>

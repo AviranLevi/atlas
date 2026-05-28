@@ -283,6 +283,9 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
             </div>
           )}
 
+          {submitMutation.isError && (
+            <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
@@ -290,9 +293,6 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
             <Button type="submit" disabled={isPending || !name.trim() || !modelName.trim()}>
               {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Provider'}
             </Button>
-            {submitMutation.isError && (
-              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
-            )}
           </div>
         </form>
       </DialogContent>

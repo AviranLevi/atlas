@@ -285,6 +285,9 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
             </>
           }
 
+          {submitMutation.isError && (
+            <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" asChild>
               <button type="button" onClick={() => onOpenChange(false)}>
@@ -296,9 +299,6 @@ export function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProp
                 {isPending ? 'Saving...' : 'Save Changes'}
               </button>
             </Button>
-            {submitMutation.isError && (
-              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
-            )}
           </div>
 
           <FolderPickerDialog

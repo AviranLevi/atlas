@@ -117,6 +117,9 @@ export function AgentDialog({ open, onOpenChange, agent, onCreated }: AgentDialo
               </Select>
             </div>
           )}
+          {submitMutation.isError && (
+            <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
@@ -124,9 +127,6 @@ export function AgentDialog({ open, onOpenChange, agent, onCreated }: AgentDialo
             <Button type="submit" disabled={isPending || !name.trim()}>
               {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Agent'}
             </Button>
-            {submitMutation.isError && (
-              <p className="text-sm text-destructive">{(submitMutation.error as Error).message}</p>
-            )}
           </div>
         </form>
       </DialogContent>
