@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { EditableCard } from '@/components/ui/editable-card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,7 +35,7 @@ const NONE = '__none__';
 export function QuickActionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: quickAction, isLoading } = useQuickAction(id);
+  const { data: quickAction, isLoading, isError, refetch } = useQuickAction(id);
   const { data: agents = [] } = useAgents();
   const { data: projects = [] } = useProjects();
   const updateQuickAction = useUpdateQuickAction();
@@ -57,6 +58,10 @@ export function QuickActionDetailPage() {
     updateQuickAction.mutate({ id: quickAction.id, data: { name: nameDraft.trim() } });
     setEditingName(false);
   }, [quickAction, nameDraft, updateQuickAction]);
+
+  if (isError) {
+    return <ErrorState message="Failed to load quick action." onRetry={refetch} />;
+  }
 
   if (isLoading) {
     return (

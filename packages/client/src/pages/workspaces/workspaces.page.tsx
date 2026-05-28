@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { Card } from '@/components/ui/card';
 import { WorkspaceRow } from './components/WorkspaceRow';
 
@@ -21,7 +22,7 @@ import { bucketOfWorkspace, filterTabs } from './workspaces.constants';
 import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 
 export function WorkspacesPage() {
-  const { data: allWorkspaces = [], isLoading } = useWorkspaces();
+  const { data: allWorkspaces = [], isLoading, isError, refetch } = useWorkspaces();
   const { activeProjectId } = useActiveProject();
   const [filter, setFilter] = useState<StatusFilter>('all');
 
@@ -95,7 +96,9 @@ export function WorkspacesPage() {
         ))}
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState message="Failed to load workspaces." onRetry={refetch} />
+      ) : isLoading ? (
         <div className="flex h-32 items-center justify-center">
           <p className="text-sm text-muted-foreground">Loading workspaces...</p>
         </div>

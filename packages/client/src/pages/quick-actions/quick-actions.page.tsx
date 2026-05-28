@@ -7,6 +7,7 @@ import { Zap, Plus, Play, Pencil, Trash2, Globe, FolderOpen } from 'lucide-react
 import { QuickActionDialog } from '@/components/quick-actions/QuickActionDialog';
 import { resolveIcon } from '@/components/quick-actions/IconPicker';
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,7 +26,7 @@ import type { QuickAction } from '@atlas/shared';
 export function QuickActionsPage() {
   const navigate = useNavigate();
   const { activeProjectId } = useActiveProject();
-  const { data: quickActions = [], isLoading } = useQuickActions(activeProjectId ?? undefined);
+  const { data: quickActions = [], isLoading, isError, refetch } = useQuickActions(activeProjectId ?? undefined);
   const { data: agents = [] } = useAgents();
   const deleteQuickAction = useDeleteQuickAction();
   const runQuickAction = useRunQuickAction();
@@ -44,6 +45,10 @@ export function QuickActionsPage() {
     if (!agentId) return null;
     return agents.find((a) => a.id === agentId)?.name ?? null;
   };
+
+  if (isError) {
+    return <ErrorState message="Failed to load quick actions." onRetry={refetch} />;
+  }
 
   if (isLoading) {
     return (

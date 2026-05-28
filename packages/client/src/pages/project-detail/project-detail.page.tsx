@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // Components
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { Button } from '@/components/ui/button';
 import { ProjectAgentsSection } from './components/ProjectAgentsSection';
@@ -36,7 +37,7 @@ import { statusConfig, UI_PROJECT_TYPES } from './project-detail.constants';
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: ctx, isLoading } = useProjectContext(id);
+  const { data: ctx, isLoading, isError, refetch } = useProjectContext(id);
   const scanProject = useScanProject();
   const generateBrief = useGenerateBrief();
   const [editOpen, setEditOpen] = useState(false);
@@ -52,6 +53,10 @@ export function ProjectDetailPage() {
     const assignedIds = new Set(projectAgents.map((a) => a.id));
     return allAgents.filter((a) => !assignedIds.has(a.id));
   }, [projectAgents, allAgents]);
+
+  if (isError) {
+    return <ErrorState message="Failed to load project." onRetry={refetch} />;
+  }
 
   if (isLoading) {
     return (

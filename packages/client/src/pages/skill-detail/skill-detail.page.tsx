@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { EditableCard } from '@/components/ui/editable-card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -42,7 +43,7 @@ import { SKILL_TYPES, NONE } from '@/components/skills/skills.constants';
 export function SkillDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: detail, isLoading } = useSkillDetail(id);
+  const { data: detail, isLoading, isError, refetch } = useSkillDetail(id);
   const { data: projects = [] } = useProjects();
   const updateSkill = useUpdateSkill();
   const deleteSkill = useDeleteSkill();
@@ -62,6 +63,10 @@ export function SkillDetailPage() {
     updateSkill.mutate({ id: detail.skill.id, data: { name: nameDraft.trim() } });
     setEditingName(false);
   }, [detail, nameDraft, updateSkill]);
+
+  if (isError) {
+    return <ErrorState message="Failed to load skill." onRetry={refetch} />;
+  }
 
   if (isLoading) {
     return (

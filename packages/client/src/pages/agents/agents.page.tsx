@@ -18,9 +18,14 @@ import type { Agent, AgentProvider } from '@atlas/shared';
 
 export function AgentsPage() {
   const navigate = useNavigate();
-  const { data: agents, isLoading } = useAgents();
+  const { data: agents, isLoading, isError, refetch } = useAgents();
   const deleteAgent = useDeleteAgent();
-  const { data: providers = [], isLoading: providersLoading } = useAgentProviders();
+  const {
+    data: providers = [],
+    isLoading: providersLoading,
+    isError: providersError,
+    refetch: refetchProviders,
+  } = useAgentProviders();
   const deleteProvider = useDeleteAgentProvider();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,6 +71,8 @@ export function AgentsPage() {
       <ProvidersSection
         providers={providers}
         isLoading={providersLoading}
+        isError={providersError}
+        onRetry={refetchProviders}
         onCreate={handleCreateProvider}
         onEdit={handleEditProvider}
         onDelete={handleDeleteProvider}
@@ -74,6 +81,8 @@ export function AgentsPage() {
       <AgentsSection
         agents={agents}
         isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
         onCreate={handleCreateAgent}
         onImport={() => setImportOpen(true)}
         onEdit={handleEditAgent}

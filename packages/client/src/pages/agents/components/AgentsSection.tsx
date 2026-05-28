@@ -3,6 +3,7 @@ import { Bot, Plus, Pencil, Trash2, Upload, Unplug } from 'lucide-react';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -15,6 +16,8 @@ import type { AgentsSectionProps } from '../agents.types';
 export function AgentsSection({
   agents,
   isLoading,
+  isError,
+  onRetry,
   onCreate,
   onImport,
   onEdit,
@@ -40,7 +43,9 @@ export function AgentsSection({
         </div>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState message="Failed to load agents." onRetry={onRetry} />
+      ) : isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : !agents?.length ? (
         <EmptyState

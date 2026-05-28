@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { EditableCard } from '@/components/ui/editable-card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,7 +29,7 @@ import { RULE_TYPES, NONE } from '@/components/rules/rules.constants';
 export function RuleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: detail, isLoading } = useRuleDetail(id);
+  const { data: detail, isLoading, isError, refetch } = useRuleDetail(id);
   const { data: projects = [] } = useProjects();
   const updateRule = useUpdateRule();
   const deleteRule = useDeleteRule();
@@ -67,6 +68,10 @@ export function RuleDetailPage() {
     updateRule.mutate({ id: detail.rule.id, data: { tags } });
     setEditingTags(false);
   }, [detail, tagsDraft, updateRule]);
+
+  if (isError) {
+    return <ErrorState message="Failed to load rule." onRetry={refetch} />;
+  }
 
   if (isLoading) {
     return (

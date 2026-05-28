@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { BacklogList } from '@/components/kanban/BacklogList';
 import { KanbanCard } from '@/components/kanban/KanbanCard';
 import { KanbanColumn } from '@/components/kanban/KanbanColumn';
@@ -74,7 +75,7 @@ export function KanbanPage() {
     return Object.keys(f).length > 0 ? f : undefined;
   }, [projectFilter, agentFilter]);
 
-  const { data: tasks = [], isLoading } = useTasks(filters);
+  const { data: tasks = [], isLoading, isError, refetch } = useTasks(filters);
   const { data: projects = [] } = useProjects();
   const { data: agents = [] } = useAgents();
   const { data: workspaces = [] } = useWorkspaces();
@@ -118,6 +119,10 @@ export function KanbanPage() {
   const clearSelection = useCallback(() => setSelectedTaskIds(new Set()), []);
 
   const selectedTasks = useMemo(() => tasks.filter((t) => selectedTaskIds.has(t.id)), [tasks, selectedTaskIds]);
+
+  if (isError) {
+    return <ErrorState message="Failed to load tasks." onRetry={refetch} />;
+  }
 
   if (isLoading) {
     return (

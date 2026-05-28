@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { MemoryDialog } from '@/components/memory/MemoryDialog';
 import { Button } from '@/components/ui/button';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
@@ -41,7 +42,7 @@ export function MemoryPage() {
     return Object.keys(f).length > 0 ? f : undefined;
   }, [typeFilter, scopeFilter, activeProjectId]);
 
-  const { data: memories = [], isLoading } = useMemories(filters);
+  const { data: memories = [], isLoading, isError, refetch } = useMemories(filters);
   const deleteMemory = useDeleteMemory();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -120,7 +121,9 @@ export function MemoryPage() {
         </Select>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState message="Failed to load memories." onRetry={refetch} />
+      ) : isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : filtered.length === 0 ? (
         <EmptyState

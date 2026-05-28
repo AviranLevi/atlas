@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
 import { RuleDialog } from '@/components/rules/RuleDialog';
 import { RuleTemplatesDialog } from '@/components/rules/RuleTemplatesDialog';
@@ -38,7 +39,7 @@ export function RulesPage() {
   const [search, setSearch] = useState('');
 
   const filters = typeFilter && typeFilter !== 'all' ? { type: typeFilter } : undefined;
-  const { data: rules = [], isLoading } = useRules(filters);
+  const { data: rules = [], isLoading, isError, refetch } = useRules(filters);
   const deleteRule = useDeleteRule();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteRuleId, setDeleteRuleId] = useState<string | null>(null);
@@ -188,7 +189,9 @@ export function RulesPage() {
         </Select>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState message="Failed to load rules." onRetry={refetch} />
+      ) : isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : filtered.length === 0 ? (
         <EmptyState

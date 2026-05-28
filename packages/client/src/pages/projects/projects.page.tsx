@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { ProjectCreateDialog } from '@/components/projects/ProjectCreateDialog';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,7 @@ import type { Project } from '@atlas/shared';
 import type { ProjectWithSummary } from './projects.types';
 
 export function ProjectsPage() {
-  const { data: projects, isLoading } = useProjectsWithSummary();
+  const { data: projects, isLoading, isError, refetch } = useProjectsWithSummary();
   const deleteProject = useDeleteProject();
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const { setActiveProjectId } = useActiveProject();
@@ -115,7 +116,9 @@ export function ProjectsPage() {
         </Select>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState message="Failed to load projects." onRetry={refetch} />
+      ) : isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : !projects?.length ? (
         <EmptyState

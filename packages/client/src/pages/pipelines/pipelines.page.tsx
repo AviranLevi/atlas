@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,11 +25,15 @@ import { PIPELINE_STATUS_META } from './pipelines.constants';
 export function PipelinesPage() {
   const navigate = useNavigate();
   const { activeProjectId } = useActiveProject();
-  const { data: pipelines = [], isLoading } = usePipelines(activeProjectId ?? undefined);
+  const { data: pipelines = [], isLoading, isError, refetch } = usePipelines(activeProjectId ?? undefined);
   const { data: tasks = [] } = useTasks(activeProjectId ? { projectId: activeProjectId } : undefined);
   const deletePipeline = useDeletePipeline();
   const [createOpen, setCreateOpen] = useState(false);
   const [deletePipelineId, setDeletePipelineId] = useState<string | null>(null);
+
+  if (isError) {
+    return <ErrorState message="Failed to load pipelines." onRetry={refetch} />;
+  }
 
   if (isLoading) {
     return (

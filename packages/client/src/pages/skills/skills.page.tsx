@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 // Components
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
 import { SkillDialog } from '@/components/skills/SkillDialog';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +37,7 @@ export function SkillsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
 
-  const { data: skills = [], isLoading } = useSkills();
+  const { data: skills = [], isLoading, isError, refetch } = useSkills();
   const deleteSkill = useDeleteSkill();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteSkillId, setDeleteSkillId] = useState<string | null>(null);
@@ -172,7 +173,9 @@ export function SkillsPage() {
         </Select>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState message="Failed to load skills." onRetry={refetch} />
+      ) : isLoading ? (
         <div className="text-muted-foreground py-12 text-center text-sm">Loading...</div>
       ) : filtered.length === 0 ? (
         <EmptyState

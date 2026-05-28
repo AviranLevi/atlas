@@ -4,6 +4,7 @@ import { Cpu, Plus, Pencil, Trash2 } from 'lucide-react';
 // Components
 import { ProviderTypeBadge } from '@/components/agents/ProviderTypeBadge';
 import { EmptyState } from '@/components/empty-state/EmptyState';
+import { ErrorState } from '@/components/error-state/ErrorState';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -13,7 +14,15 @@ import { TOUR_TARGETS } from '@/lib/tours/tour-targets';
 // Types
 import type { ProvidersSectionProps } from '../agents.types';
 
-export function ProvidersSection({ providers, isLoading, onEdit, onCreate, onDelete }: ProvidersSectionProps) {
+export function ProvidersSection({
+  providers,
+  isLoading,
+  isError,
+  onRetry,
+  onEdit,
+  onCreate,
+  onDelete,
+}: ProvidersSectionProps) {
   return (
     <div data-tour={TOUR_TARGETS.agentsProviders}>
       <div className="mb-4 flex items-center justify-between">
@@ -30,7 +39,9 @@ export function ProvidersSection({ providers, isLoading, onEdit, onCreate, onDel
         </Button>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState message="Failed to load providers." onRetry={onRetry} compact />
+      ) : isLoading ? (
         <div className="text-muted-foreground py-6 text-center text-sm">Loading...</div>
       ) : providers.length === 0 ? (
         <EmptyState
