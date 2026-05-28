@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import { EmptyState } from '@/components/empty-state/EmptyState';
 import { MemoryDialog } from '@/components/memory/MemoryDialog';
 import { Button } from '@/components/ui/button';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MemoryTable } from './components/MemoryTable';
@@ -27,6 +28,7 @@ export function MemoryPage() {
   const [scopeFilter, setScopeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('active');
   const [search, setSearch] = useState('');
+  const [deleteMemoryId, setDeleteMemoryId] = useState<string | null>(null);
   const { data: projects = [] } = useProjects();
   const { data: agents = [] } = useAgents();
   const { activeProjectId } = useActiveProject();
@@ -136,13 +138,24 @@ export function MemoryPage() {
           memories={filtered}
           projectMap={projectMap}
           agentMap={agentMap}
-          onDelete={(id) => {
-            if (confirm('Delete this memory?')) deleteMemory.mutate(id);
-          }}
+          onDelete={(id) => setDeleteMemoryId(id)}
         />
       )}
 
       <MemoryDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      <ConfirmDeleteDialog
+        open={!!deleteMemoryId}
+        onOpenChange={(open) => !open && setDeleteMemoryId(null)}
+        title="Delete memory"
+        description="This will permanently delete the memory entry. This action cannot be undone."
+        isPending={deleteMemory.isPending}
+        onConfirm={() => {
+          if (deleteMemoryId) {
+            deleteMemory.mutate(deleteMemoryId, { onSuccess: () => setDeleteMemoryId(null) });
+          }
+        }}
+      />
     </div>
   );
 }

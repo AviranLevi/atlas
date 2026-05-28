@@ -20,6 +20,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { EditableCard } from '@/components/ui/editable-card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,6 +49,7 @@ export function SkillDetailPage() {
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const startEditName = useCallback(() => {
     if (!detail) return;
@@ -84,9 +86,7 @@ export function SkillDetailPage() {
   const { skill, agents } = detail;
 
   const handleDelete = () => {
-    if (confirm('Delete this skill? This cannot be undone.')) {
-      deleteSkill.mutate(skill.id, { onSuccess: () => navigate('/skills') });
-    }
+    setDeleteOpen(true);
   };
 
   return (
@@ -208,6 +208,17 @@ export function SkillDetailPage() {
           </Select>
         </Card>
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete skill"
+        description="This will permanently delete the skill. This action cannot be undone."
+        isPending={deleteSkill.isPending}
+        onConfirm={() => {
+          deleteSkill.mutate(skill.id, { onSuccess: () => navigate('/skills') });
+        }}
+      />
 
       {/* Editable content cards */}
       <EditableCard

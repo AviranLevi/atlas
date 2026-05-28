@@ -1,5 +1,5 @@
 // React / library
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Plus, Play, Pencil, Trash2, Globe, FolderOpen } from 'lucide-react';
 
@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 
 // Hooks
 import { useAgents } from '@/hooks/use-agents.hook';
@@ -24,6 +25,7 @@ export function ProjectQuickActionsSection({ projectId }: ProjectQuickActionsSec
   const { data: agents = [] } = useAgents();
   const deleteQuickAction = useDeleteQuickAction();
   const runQuickAction = useRunQuickAction();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const resolved = useMemo(() => {
     const projectNames = new Set(quickActions.filter((a) => a.projectId === projectId).map((a) => a.name));
@@ -129,7 +131,7 @@ export function ProjectQuickActionsSection({ projectId }: ProjectQuickActionsSec
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => deleteQuickAction.mutate(quickAction.id)}
+                    onClick={() => setDeleteId(quickAction.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -139,6 +141,19 @@ export function ProjectQuickActionsSection({ projectId }: ProjectQuickActionsSec
           })}
         </div>
       )}
+
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete quick action"
+        description="This will permanently delete the quick action. This action cannot be undone."
+        isPending={deleteQuickAction.isPending}
+        onConfirm={() => {
+          if (deleteId) {
+            deleteQuickAction.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
+          }
+        }}
+      />
     </section>
   );
 }

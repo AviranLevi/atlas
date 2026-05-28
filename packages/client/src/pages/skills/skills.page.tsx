@@ -10,6 +10,7 @@ import { SkillDialog } from '@/components/skills/SkillDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -38,6 +39,7 @@ export function SkillsPage() {
   const { data: skills = [], isLoading } = useSkills();
   const deleteSkill = useDeleteSkill();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteSkillId, setDeleteSkillId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
 
   const projectMap = useMemo(() => new Map(projects.map((p) => [p.id, p.name])), [projects]);
@@ -75,7 +77,7 @@ export function SkillsPage() {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Delete this skill?')) deleteSkill.mutate(id);
+    setDeleteSkillId(id);
   };
 
   const renderCard = (skill: Skill) => {
@@ -208,6 +210,19 @@ export function SkillsPage() {
       />
 
       <ImportPackageDialog open={importOpen} onOpenChange={setImportOpen} />
+
+      <ConfirmDeleteDialog
+        open={!!deleteSkillId}
+        onOpenChange={(open) => !open && setDeleteSkillId(null)}
+        title="Delete skill"
+        description="This will permanently delete the skill. This action cannot be undone."
+        isPending={deleteSkill.isPending}
+        onConfirm={() => {
+          if (deleteSkillId) {
+            deleteSkill.mutate(deleteSkillId, { onSuccess: () => setDeleteSkillId(null) });
+          }
+        }}
+      />
     </div>
   );
 }

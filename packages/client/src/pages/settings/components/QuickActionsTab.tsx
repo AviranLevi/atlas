@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 
 // Hooks
 import { useAgents } from '@/hooks/use-agents.hook';
@@ -22,6 +23,7 @@ export function QuickActionsTab() {
   const deleteQuickAction = useDeleteQuickAction();
 
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const globalQuickActions = useMemo(() => quickActions.filter((a) => a.projectId === null), [quickActions]);
 
@@ -104,7 +106,7 @@ export function QuickActionsTab() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => deleteQuickAction.mutate(quickAction.id)}
+                      onClick={() => setDeleteId(quickAction.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -120,6 +122,19 @@ export function QuickActionsTab() {
         open={quickAddOpen}
         onOpenChange={setQuickAddOpen}
         onSaved={(created) => navigate('/quick-actions/' + created.id)}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete quick action"
+        description="This will permanently delete the quick action. This action cannot be undone."
+        isPending={deleteQuickAction.isPending}
+        onConfirm={() => {
+          if (deleteId) {
+            deleteQuickAction.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
+          }
+        }}
       />
     </Card>
   );

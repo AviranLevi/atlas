@@ -11,6 +11,7 @@ import { RuleTemplatesDialog } from '@/components/rules/RuleTemplatesDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -40,6 +41,7 @@ export function RulesPage() {
   const { data: rules = [], isLoading } = useRules(filters);
   const deleteRule = useDeleteRule();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteRuleId, setDeleteRuleId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
 
@@ -73,7 +75,7 @@ export function RulesPage() {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Delete this rule?')) deleteRule.mutate(id);
+    setDeleteRuleId(id);
   };
 
   const renderCard = (rule: Rule) => {
@@ -222,6 +224,19 @@ export function RulesPage() {
       <ImportPackageDialog open={importOpen} onOpenChange={setImportOpen} />
 
       <RuleTemplatesDialog open={templatesOpen} onOpenChange={setTemplatesOpen} />
+
+      <ConfirmDeleteDialog
+        open={!!deleteRuleId}
+        onOpenChange={(open) => !open && setDeleteRuleId(null)}
+        title="Delete rule"
+        description="This will permanently delete the rule. This action cannot be undone."
+        isPending={deleteRule.isPending}
+        onConfirm={() => {
+          if (deleteRuleId) {
+            deleteRule.mutate(deleteRuleId, { onSuccess: () => setDeleteRuleId(null) });
+          }
+        }}
+      />
     </div>
   );
 }

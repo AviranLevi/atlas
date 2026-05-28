@@ -84,19 +84,41 @@ export class WorkspaceCompletionService {
         }
       }
 
-      // Merge the branch
+      // Merge the branch — this is the irreversible action
       this.worktreeService.merge(workspace.worktreePath, project.localPath, workspace.branchName);
 
-      // Move task to Done
-      await tasksService.update(workspace.taskId, { status: TASK_STATUS.DONE });
+      // Mark as merged IMMEDIATELY after the irreversible merge so the
+      // workspace never gets stuck at 'completed' if a cleanup step fails.
+      const merged = workspacesRepository.update(workspaceId, {
+        status: 'merged',
+        completedAt: new Date().toISOString(),
+      });
 
-      // Archive the workspace log (backup copy with descriptive name)
-      const archivedLogPath = this.archiveLog(workspaceId, workspace);
+      // --- All steps below are best-effort cleanup. Each is individually
+      //     wrapped so a failure in one doesn't block the others. ---
+
+      let archivedLogPath: string | undefined;
+
+      try {
+        await tasksService.update(workspace.taskId, { status: TASK_STATUS.DONE });
+      } catch (e) {
+        logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to move task to Done`, e);
+      }
+
+      try {
+        archivedLogPath = this.archiveLog(workspaceId, workspace);
+      } catch (e) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to archive log`, e);
+      }
 
       // Safety check: log if dirty after merge (shouldn't happen since we merge the branch)
-      const dirty = this.worktreeService.checkDirty(workspace.worktreePath);
-      if (dirty.isDirty) {
-        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree still dirty after merge (${dirty.fileCount} files)`);
+      try {
+        const dirty = this.worktreeService.checkDirty(workspace.worktreePath);
+        if (dirty.isDirty) {
+          logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree still dirty after merge (${dirty.fileCount} files)`);
+        }
+      } catch {
+        // Non-critical — skip
       }
 
       // Clean up worktree + MCP config (keep log file + DB record for history)
@@ -106,13 +128,11 @@ export class WorkspaceCompletionService {
         logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree already removed`);
       }
 
-      removeMcpConfig(workspaceId, executorRegistry.getById(workspace.agentRuntime)?.mcpConfigFormat);
-
-      // Mark as merged (keep the DB record for history)
-      const merged = workspacesRepository.update(workspaceId, {
-        status: 'merged',
-        completedAt: new Date().toISOString(),
-      });
+      try {
+        removeMcpConfig(workspaceId, executorRegistry.getById(workspace.agentRuntime)?.mcpConfigFormat);
+      } catch (e) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to remove MCP config`, e);
+      }
 
       activityLogService.log({
         projectId: workspace.projectId,
@@ -157,11 +177,28 @@ export class WorkspaceCompletionService {
 
       const project = await projectsService.getById(workspace.projectId);
 
-      // Move task to Done
-      await tasksService.update(workspace.taskId, { status: TASK_STATUS.DONE });
+      // Mark as merged IMMEDIATELY so the workspace never gets stuck at
+      // 'completed' if a cleanup step below fails.
+      const completed = workspacesRepository.update(workspaceId, {
+        status: 'merged',
+        completedAt: new Date().toISOString(),
+      });
 
-      // Archive the workspace log
-      const archivedLogPath = this.archiveLog(workspaceId, workspace);
+      // --- All steps below are best-effort cleanup ---
+
+      let archivedLogPath: string | undefined;
+
+      try {
+        await tasksService.update(workspace.taskId, { status: TASK_STATUS.DONE });
+      } catch (e) {
+        logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to move task to Done`, e);
+      }
+
+      try {
+        archivedLogPath = this.archiveLog(workspaceId, workspace);
+      } catch (e) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to archive log`, e);
+      }
 
       // Clean up worktree, branch, + MCP config (discard — no changes to keep)
       if (project.localPath) {
@@ -181,13 +218,11 @@ export class WorkspaceCompletionService {
         }
       }
 
-      removeMcpConfig(workspaceId, executorRegistry.getById(workspace.agentRuntime)?.mcpConfigFormat);
-
-      // Mark as merged (same final status for history consistency)
-      const completed = workspacesRepository.update(workspaceId, {
-        status: 'merged',
-        completedAt: new Date().toISOString(),
-      });
+      try {
+        removeMcpConfig(workspaceId, executorRegistry.getById(workspace.agentRuntime)?.mcpConfigFormat);
+      } catch (e) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to remove MCP config`, e);
+      }
 
       activityLogService.log({
         projectId: workspace.projectId,

@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/empty-state/EmptyState';
 import { ProjectCreateDialog } from '@/components/projects/ProjectCreateDialog';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { Button } from '@/components/ui/button';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProjectCard } from './components/ProjectCard';
@@ -28,6 +29,7 @@ import type { ProjectWithSummary } from './projects.types';
 export function ProjectsPage() {
   const { data: projects, isLoading } = useProjectsWithSummary();
   const deleteProject = useDeleteProject();
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const { setActiveProjectId } = useActiveProject();
   const navigate = useNavigate();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -48,9 +50,7 @@ export function ProjectsPage() {
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm('Delete this project and all its tasks, workspaces, memories, and phases? This cannot be undone.')) {
-      deleteProject.mutate(id);
-    }
+    setDeleteProjectId(id);
   };
 
   const handleOpen = (id: string) => {
@@ -151,6 +151,19 @@ export function ProjectsPage() {
         onCreated={(p) => handleOpen(p.id)}
       />
       <ProjectDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} project={editingProject} />
+
+      <ConfirmDeleteDialog
+        open={!!deleteProjectId}
+        onOpenChange={(open) => !open && setDeleteProjectId(null)}
+        title="Delete project"
+        description="This will permanently delete the project and all its tasks, workspaces, memories, and phases. This action cannot be undone."
+        isPending={deleteProject.isPending}
+        onConfirm={() => {
+          if (deleteProjectId) {
+            deleteProject.mutate(deleteProjectId, { onSuccess: () => setDeleteProjectId(null) });
+          }
+        }}
+      />
     </div>
   );
 }

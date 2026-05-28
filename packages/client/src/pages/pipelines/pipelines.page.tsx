@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/empty-state/EmptyState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 
 // Hooks
 import { useActiveProject } from '@/contexts/ProjectContext';
@@ -27,6 +28,7 @@ export function PipelinesPage() {
   const { data: tasks = [] } = useTasks(activeProjectId ? { projectId: activeProjectId } : undefined);
   const deletePipeline = useDeletePipeline();
   const [createOpen, setCreateOpen] = useState(false);
+  const [deletePipelineId, setDeletePipelineId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -92,7 +94,7 @@ export function PipelinesPage() {
                       className="h-7 text-muted-foreground hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deletePipeline.mutate(pipeline.id);
+                        setDeletePipelineId(pipeline.id);
                       }}
                     >
                       Delete
@@ -111,6 +113,19 @@ export function PipelinesPage() {
         projectId={activeProjectId ?? ''}
         tasks={tasks}
         onCreated={(pipeline) => navigate(`/pipelines/${pipeline.id}`)}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deletePipelineId}
+        onOpenChange={(open) => !open && setDeletePipelineId(null)}
+        title="Delete pipeline"
+        description="This will permanently delete the pipeline and all its task configuration. This action cannot be undone."
+        isPending={deletePipeline.isPending}
+        onConfirm={() => {
+          if (deletePipelineId) {
+            deletePipeline.mutate(deletePipelineId, { onSuccess: () => setDeletePipelineId(null) });
+          }
+        }}
       />
     </div>
   );

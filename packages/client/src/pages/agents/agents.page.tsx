@@ -1,21 +1,17 @@
 // React / library
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-
 // Components
 import { AgentDialog } from '@/components/agents/AgentDialog';
 import { AgentProviderDialog } from '@/components/agents/AgentProviderDialog';
 import { ImportPackageDialog } from '@/components/packages/ImportPackageDialog';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { AgentsSection } from './components/AgentsSection';
 import { ProvidersSection } from './components/ProvidersSection';
 
 // Hooks
 import { useAgentProviders, useDeleteAgentProvider } from '@/hooks/use-agent-providers.hook';
 import { useAgents, useDeleteAgent } from '@/hooks/use-agents.hook';
-
-// Lib
-import { ApiError } from '@/lib/api';
 
 // Types
 import type { Agent, AgentProvider } from '@atlas/shared';
@@ -32,6 +28,8 @@ export function AgentsPage() {
   const [providerDialogOpen, setProviderDialogOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<AgentProvider | undefined>();
   const [importOpen, setImportOpen] = useState(false);
+  const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
+  const [deleteProviderId, setDeleteProviderId] = useState<string | null>(null);
 
   const handleCreateAgent = () => {
     setEditingAgent(undefined);
@@ -46,23 +44,7 @@ export function AgentsPage() {
 
   const handleDeleteAgent = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const agent = agents?.find((a) => a.id === id);
-    const name = agent?.name ?? 'this agent';
-    if (!confirm(`Delete agent "${name}"?`)) return;
-    deleteAgent.mutate(id, {
-      onError: (err) => {
-        // 409 from RESTRICT pre-check: server returns structured details so we
-        // can render a precise toast instead of a generic FK error string.
-        if (err instanceof ApiError && err.status === 409 && err.details) {
-          const { agentName, taskCount } = err.details as { agentName?: string; taskCount?: number };
-          toast.error(
-            `Cannot delete "${agentName ?? name}" — ${taskCount ?? '?'} active task(s) still assigned. Reassign first.`,
-          );
-          return;
-        }
-        toast.error((err as Error).message);
-      },
-    });
+    setDeleteAgentId(id);
   };
 
   const handleCreateProvider = () => {
@@ -76,9 +58,7 @@ export function AgentsPage() {
   };
 
   const handleDeleteProvider = (id: string) => {
-    if (confirm('Delete this provider?')) {
-      deleteProvider.mutate(id);
-    }
+    setDeleteProviderId(id);
   };
 
   return (
@@ -111,6 +91,32 @@ export function AgentsPage() {
       <AgentProviderDialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen} provider={editingProvider} />
 
       <ImportPackageDialog open={importOpen} onOpenChange={setImportOpen} />
+
+      <ConfirmDeleteDialog
+        open={!!deleteAgentId}
+        onOpenChange={(open) => !open && setDeleteAgentId(null)}
+        title="Delete agent"
+        description={`This will permanently delete "${agents?.find((a) => a.id === deleteAgentId)?.name ?? 'this agent'}". This action cannot be undone.`}
+        isPending={deleteAgent.isPending}
+        onConfirm={() => {
+          if (deleteAgentId) {
+            deleteAgent.mutate(deleteAgentId, { onSuccess: () => setDeleteAgentId(null) });
+          }
+        }}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deleteProviderId}
+        onOpenChange={(open) => !open && setDeleteProviderId(null)}
+        title="Delete provider"
+        description="This will permanently delete the provider. This action cannot be undone."
+        isPending={deleteProvider.isPending}
+        onConfirm={() => {
+          if (deleteProviderId) {
+            deleteProvider.mutate(deleteProviderId, { onSuccess: () => setDeleteProviderId(null) });
+          }
+        }}
+      />
     </div>
   );
 }

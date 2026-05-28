@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { PhaseCard } from '@/components/phases/PhaseCard';
 import { PhaseDialog } from '@/components/phases/PhaseDialog';
 import { Button } from '@/components/ui/button';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 
 // Hooks
 import { usePhases, useDeletePhase } from '@/hooks/use-phases.hook';
@@ -19,6 +20,7 @@ export function ProjectPhasesSection({ projectId }: ProjectPhasesSectionProps) {
   const deletePhase = useDeletePhase();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPhase, setEditingPhase] = useState<Phase | undefined>();
+  const [deletePhaseId, setDeletePhaseId] = useState<string | null>(null);
 
   return (
     <section>
@@ -58,17 +60,26 @@ export function ProjectPhasesSection({ projectId }: ProjectPhasesSectionProps) {
                 setEditingPhase(p);
                 setDialogOpen(true);
               }}
-              onDelete={(phaseId) => {
-                if (confirm('Delete this phase? Tasks in this phase will be unassigned.')) {
-                  deletePhase.mutate(phaseId);
-                }
-              }}
+              onDelete={(phaseId) => setDeletePhaseId(phaseId)}
             />
           ))}
         </div>
       )}
 
       <PhaseDialog open={dialogOpen} onOpenChange={setDialogOpen} projectId={projectId} phase={editingPhase} />
+
+      <ConfirmDeleteDialog
+        open={!!deletePhaseId}
+        onOpenChange={(open) => !open && setDeletePhaseId(null)}
+        title="Delete phase"
+        description="This will permanently delete the phase. Tasks in this phase will be unassigned. This action cannot be undone."
+        isPending={deletePhase.isPending}
+        onConfirm={() => {
+          if (deletePhaseId) {
+            deletePhase.mutate(deletePhaseId, { onSuccess: () => setDeletePhaseId(null) });
+          }
+        }}
+      />
     </section>
   );
 }

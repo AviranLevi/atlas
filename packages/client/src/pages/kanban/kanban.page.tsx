@@ -14,6 +14,7 @@ import { TaskDetailSheet } from '@/components/task-detail/TaskDetailSheet';
 import { TaskDialog } from '@/components/kanban/TaskDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StartWorkDialog } from '@/components/workspaces/StartWorkDialog';
 import { CreatePipelineDialog } from '@/pages/pipelines/components/CreatePipelineDialog';
@@ -48,6 +49,7 @@ export function KanbanPage() {
   const [startWorkTask, setStartWorkTask] = useState<Task | null>(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [createPipelineOpen, setCreatePipelineOpen] = useState(false);
+  const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
   const { activeProjectId } = useActiveProject();
 
   const projectFilter = activeProjectId ?? undefined;
@@ -213,7 +215,7 @@ export function KanbanPage() {
                     status={status}
                     tasks={tasksByStatus[status] ?? []}
                     onEdit={(task) => setSheetTaskId(task.id)}
-                    onDelete={(id) => deleteTask.mutate(id)}
+                    onDelete={(id) => setDeleteTaskId(id)}
                     onStartWork={(task) => {
                       setStartWorkTask(task);
                       setStartWorkDialogOpen(true);
@@ -254,7 +256,7 @@ export function KanbanPage() {
               projectMap={projectMap}
               showProject={!projectFilter}
               onEdit={(task) => setSheetTaskId(task.id)}
-              onDelete={(id) => deleteTask.mutate(id)}
+              onDelete={(id) => setDeleteTaskId(id)}
               onPromote={(id) => updateTask.mutate({ id, data: { status: TASK_STATUS.TODO } })}
             />
           </TabsContent>
@@ -302,6 +304,19 @@ export function KanbanPage() {
           }}
         />
       )}
+
+      <ConfirmDeleteDialog
+        open={!!deleteTaskId}
+        onOpenChange={(open) => !open && setDeleteTaskId(null)}
+        title="Delete task"
+        description="This will permanently delete the task. This action cannot be undone."
+        isPending={deleteTask.isPending}
+        onConfirm={() => {
+          if (deleteTaskId) {
+            deleteTask.mutate(deleteTaskId, { onSuccess: () => setDeleteTaskId(null) });
+          }
+        }}
+      />
     </div>
   );
 }

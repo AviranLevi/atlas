@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Combobox } from '@/components/ui/combobox';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { EditableCard } from '@/components/ui/editable-card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -37,6 +38,7 @@ export function RuleDetailPage() {
   const [nameDraft, setNameDraft] = useState('');
   const [editingTags, setEditingTags] = useState(false);
   const [tagsDraft, setTagsDraft] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const startEditName = useCallback(() => {
     if (!detail) return;
@@ -90,9 +92,7 @@ export function RuleDetailPage() {
   const _projectName = rule.projectId ? projects.find((p) => p.id === rule.projectId)?.name : null;
 
   const handleDelete = () => {
-    if (confirm('Delete this rule? This cannot be undone.')) {
-      deleteRule.mutate(rule.id, { onSuccess: () => navigate('/rules') });
-    }
+    setDeleteOpen(true);
   };
 
   return (
@@ -257,6 +257,17 @@ export function RuleDetailPage() {
           )}
         </Card>
       </div>
+
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete rule"
+        description="This will permanently delete the rule. This action cannot be undone."
+        isPending={deleteRule.isPending}
+        onConfirm={() => {
+          deleteRule.mutate(rule.id, { onSuccess: () => navigate('/rules') });
+        }}
+      />
 
       {/* Content */}
       <EditableCard

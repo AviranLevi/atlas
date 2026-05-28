@@ -8,6 +8,7 @@ import { IconPicker, resolveIcon } from '@/components/quick-actions/IconPicker';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 import { EditableCard } from '@/components/ui/editable-card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,6 +44,7 @@ export function QuickActionDetailPage() {
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const startEditName = useCallback(() => {
     if (!quickAction) return;
@@ -77,9 +79,7 @@ export function QuickActionDetailPage() {
   }
 
   const handleDelete = () => {
-    if (confirm('Delete this quick action? This cannot be undone.')) {
-      deleteQuickAction.mutate(quickAction.id, { onSuccess: () => navigate('/quick-actions') });
-    }
+    setDeleteOpen(true);
   };
 
   const handleRun = () => {
@@ -243,6 +243,17 @@ export function QuickActionDetailPage() {
         placeholder="Click to add a description..."
         isPending={updateQuickAction.isPending}
         onSave={(val) => updateQuickAction.mutate({ id: quickAction.id, data: { description: val } })}
+      />
+
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete quick action"
+        description="This will permanently delete the quick action. This action cannot be undone."
+        isPending={deleteQuickAction.isPending}
+        onConfirm={() => {
+          deleteQuickAction.mutate(quickAction.id, { onSuccess: () => navigate('/quick-actions') });
+        }}
       />
 
       {/* Prompt Template */}
