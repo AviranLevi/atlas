@@ -16,31 +16,31 @@
     "reset-auth": "tsx scripts/reset-auth.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.69",
-    "@ai-sdk/google": "^3.0.63",
-    "@ai-sdk/openai": "^3.0.53",
-    "@anthropic-ai/sdk": "^0.80.0",
+    "@ai-sdk/anthropic": "^3.0.81",
+    "@ai-sdk/google": "^3.0.80",
+    "@ai-sdk/openai": "^3.0.66",
+    "@anthropic-ai/sdk": "^0.100.1",
     "@atlas/shared": "workspace:*",
-    "@hono/node-server": "^1.13",
-    "@hono/zod-validator": "^0.4",
+    "@hono/node-server": "^2.0",
+    "@hono/zod-validator": "^0.8",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "ai": "^6.0.161",
-    "better-sqlite3": "^11.7",
-    "drizzle-orm": "^0.38",
-    "hono": "^4.7",
+    "ai": "^6.0.193",
+    "better-sqlite3": "^12.10",
+    "drizzle-orm": "^0.45",
+    "hono": "^4.12",
     "minimatch": "^10.2.4",
     "node-cron": "^4.2.1",
-    "openai": "^6.32.0",
+    "openai": "^6.39.1",
     "pdf-parse": "^2.4.5",
-    "zod": "^3.24",
+    "zod": "^4.4",
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6",
     "@types/node-cron": "^3.0.11",
     "@types/pdf-parse": "^1.1.5",
-    "drizzle-kit": "^0.30",
-    "tsx": "^4.19",
-    "typescript": "^5.7"
+    "drizzle-kit": "^0.31",
+    "tsx": "^4.22",
+    "typescript": "^6.0"
   }
 }
