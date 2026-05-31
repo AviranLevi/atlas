@@ -173,7 +173,8 @@ AGENT_STRICT_ID=$(post "/agents" '{
   "description": "Senior engineer with strict coding standards. Follows TDD, enforces types, writes comprehensive tests.",
   "personality": "You are a meticulous senior engineer. You never cut corners. Every function has types, every feature has tests, every PR is clean. You prefer explicit over implicit and correctness over speed.",
   "unbreakableRules": "Never use any type. Never skip tests. Never leave TODO comments.",
-  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'"
+  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'",
+  "defaultModel": null
 }' | jq_id)
 echo "  ✓ Strict Engineer: $AGENT_STRICT_ID"
 
@@ -182,7 +183,8 @@ AGENT_MINIMAL_ID=$(post "/agents" '{
   "description": "Fast-moving developer focused on shipping. Gets things working quickly with minimal ceremony.",
   "personality": "You are a pragmatic developer who focuses on shipping working code fast. You write clean code but dont over-engineer. Get the feature working first, optimize later.",
   "unbreakableRules": "",
-  "providerId": "'"$PROVIDER_OPENAI_ID"'"
+  "providerId": "'"$PROVIDER_OPENAI_ID"'",
+  "defaultModel": null
 }' | jq_id)
 echo "  ✓ Quick Builder: $AGENT_MINIMAL_ID"
 
@@ -191,7 +193,8 @@ AGENT_OPINIONATED_ID=$(post "/agents" '{
   "description": "Experienced architect who enforces layered architecture patterns. Focuses on clean separation of concerns.",
   "personality": "You are a software architect who values clean architecture above all. Every layer has a purpose, every module has clear boundaries. You design for maintainability and think in terms of systems, not just features.",
   "unbreakableRules": "Never skip layers in the architecture. Never put business logic in controllers.",
-  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'"
+  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'",
+  "defaultModel": null
 }' | jq_id)
 echo "  ✓ Architecture Lead: $AGENT_OPINIONATED_ID"
 
@@ -200,7 +203,8 @@ AGENT_REVIEWER_ID=$(post "/agents" '{
   "description": "Dedicated code reviewer that checks for security, performance, and best practices.",
   "personality": "You are a thorough code reviewer. You catch bugs before they ship, flag security issues, and suggest performance improvements. You are constructive but firm.",
   "unbreakableRules": "Always check for SQL injection. Always check for unhandled errors. Always check for missing input validation.",
-  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'"
+  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'",
+  "defaultModel": null
 }' | jq_id)
 echo "  ✓ Code Reviewer: $AGENT_REVIEWER_ID"
 
