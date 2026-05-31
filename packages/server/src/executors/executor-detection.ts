@@ -65,6 +65,18 @@ export async function detectExecutor(executor: ExecutorConfig): Promise<Detectio
     return { installed: false, authenticated: false };
   }
 
+  // When the executor uses a different binary for actual execution (e.g.
+  // Ollama detects `ollama` but spawns `aider`), verify the spawn binary
+  // is also installed. Without it the executor would appear "ready" but
+  // fail at runtime.
+  if (executor.spawnCommand && executor.spawnCommand !== executor.command) {
+    try {
+      await execWithTimeout(`command -v ${executor.spawnCommand}`, { timeout: 3000 });
+    } catch {
+      return { installed: false, authenticated: false };
+    }
+  }
+
   const [versionResult, authResult] = await Promise.all([
     (async () => {
       try {
