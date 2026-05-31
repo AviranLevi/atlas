@@ -76,13 +76,7 @@ export const executorAider: ExecutorConfig = {
     { value: 'gemini/gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
     { value: 'gemini/gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
     { value: 'gemini/gemini-2.5-flash-lite-preview-06-17', label: 'Gemini 2.5 Flash Lite', provider: 'google' },
-    { value: 'ollama_chat/qwen2.5-coder', label: 'Qwen 2.5 Coder (Ollama)', provider: 'ollama' },
-    { value: 'ollama_chat/deepseek-r1', label: 'DeepSeek R1 (Ollama)', provider: 'ollama' },
-    { value: 'ollama_chat/deepseek-coder-v2', label: 'DeepSeek Coder V2 (Ollama)', provider: 'ollama' },
-    { value: 'ollama_chat/gemma3', label: 'Gemma 3 (Ollama)', provider: 'ollama' },
-    { value: 'ollama_chat/llama3.2', label: 'Llama 3.2 (Ollama)', provider: 'ollama' },
-    { value: 'ollama_chat/phi4', label: 'Phi-4 (Ollama)', provider: 'ollama' },
-    { value: 'ollama_chat/codellama', label: 'Code Llama (Ollama)', provider: 'ollama' },
+    // Ollama models are added dynamically from installed models — no hardcoded presets.
   ],
   toCliModel: aiderCliModel,
   providerMapping: [
@@ -213,18 +207,9 @@ export const executorOllama: ExecutorConfig = {
   registry: { type: 'github', repo: 'ollama/ollama' },
   env: { OLLAMA_API_BASE: 'http://localhost:11434' },
   modelFlag: '--model',
-  defaultModel: 'ollama_chat/qwen2.5-coder',
-  modelPresets: [
-    { value: 'ollama_chat/qwen2.5-coder', label: 'Qwen 2.5 Coder' },
-    { value: 'ollama_chat/qwen2.5-coder:32b', label: 'Qwen 2.5 Coder 32B' },
-    { value: 'ollama_chat/deepseek-r1', label: 'DeepSeek R1' },
-    { value: 'ollama_chat/deepseek-coder-v2', label: 'DeepSeek Coder V2' },
-    { value: 'ollama_chat/gemma3', label: 'Gemma 3' },
-    { value: 'ollama_chat/llama3.2', label: 'Llama 3.2' },
-    { value: 'ollama_chat/phi4', label: 'Phi-4' },
-    { value: 'ollama_chat/mistral', label: 'Mistral' },
-    { value: 'ollama_chat/codellama', label: 'Code Llama' },
-  ],
+  // No hardcoded presets — only locally installed models are relevant.
+  // The dynamic model cache populates this list from the Ollama API.
+  modelPresets: [],
   toCliModel: (apiModelId: string) => `ollama_chat/${apiModelId}`,
   providerMapping: [{ providerType: 'ollama', envVars: { OLLAMA_API_BASE: 'baseUrl' } }],
 };
@@ -255,12 +240,7 @@ export const executorGoose: ExecutorConfig = {
     { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'google' },
     { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
     { value: 'gemini-2.5-flash-lite-preview-06-17', label: 'Gemini 2.5 Flash Lite', provider: 'google' },
-    { value: 'qwen2.5-coder', label: 'Qwen 2.5 Coder (Ollama)', provider: 'ollama' },
-    { value: 'deepseek-r1', label: 'DeepSeek R1 (Ollama)', provider: 'ollama' },
-    { value: 'deepseek-coder-v2', label: 'DeepSeek Coder V2 (Ollama)', provider: 'ollama' },
-    { value: 'gemma3', label: 'Gemma 3 (Ollama)', provider: 'ollama' },
-    { value: 'llama3.2', label: 'Llama 3.2 (Ollama)', provider: 'ollama' },
-    { value: 'phi4', label: 'Phi-4 (Ollama)', provider: 'ollama' },
+    // Ollama models are added dynamically from installed models — no hardcoded presets.
   ],
   toCliModel: passthroughCliModel,
   providerMapping: [
