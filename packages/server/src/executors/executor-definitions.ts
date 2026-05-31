@@ -225,6 +225,8 @@ export const executorOllama: ExecutorConfig = {
     { value: 'ollama_chat/mistral', label: 'Mistral' },
     { value: 'ollama_chat/codellama', label: 'Code Llama' },
   ],
+  toCliModel: (apiModelId: string) => `ollama_chat/${apiModelId}`,
+  providerMapping: [{ providerType: 'ollama', envVars: { OLLAMA_API_BASE: 'baseUrl' } }],
 };
 
 export const executorGoose: ExecutorConfig = {

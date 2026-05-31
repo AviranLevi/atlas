@@ -163,6 +163,23 @@ export function ChatPage() {
           </div>
         )}
 
+        {isNewChat && !config.canSend && state === 'idle' && !creatingChat && (
+          <div className="flex items-center justify-center gap-2 px-4 py-1.5 text-xs text-muted-foreground border-t border-border/30">
+            {config.modelsLoading ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading models from provider...
+              </>
+            ) : !config.selectedProviderId && config.backendType === 'api' ? (
+              'Select an AI provider to start chatting'
+            ) : !config.selectedModel ? (
+              'Select a model to start chatting'
+            ) : !config.selectedExecutorId && config.backendType === 'cli' ? (
+              'Select a CLI agent to start chatting'
+            ) : null}
+          </div>
+        )}
+
         <ChatInput
           onSend={handleSend}
           disabled={

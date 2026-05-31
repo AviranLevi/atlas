@@ -44,7 +44,11 @@ export class AgentProvidersService {
   async create(data: CreateAgentProvider): Promise<AgentProvider> {
     const FUNCTION_NAME = 'create';
     try {
-      return this.repo.insert(data);
+      const provider = this.repo.insert(data);
+      // Refresh model cache in the background so newly added provider models
+      // are immediately available in executor preset dropdowns.
+      this.refreshModelCacheInBackground();
+      return provider;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to create agent provider', { cause: error });
@@ -54,11 +58,20 @@ export class AgentProvidersService {
   async update(id: string, data: UpdateAgentProvider): Promise<AgentProvider> {
     const FUNCTION_NAME = 'update';
     try {
-      return this.repo.update(id, data);
+      const provider = this.repo.update(id, data);
+      this.refreshModelCacheInBackground();
+      return provider;
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);
       throw new AppError('Failed to update agent provider', { cause: error });
     }
+  }
+
+  /** Fire-and-forget model cache refresh — logs errors but never throws. */
+  private refreshModelCacheInBackground(): void {
+    import('../index.js')
+      .then(({ modelCacheService }) => modelCacheService.refreshAll())
+      .catch((err) => logger.warn(`${FILE_PATH} :: background model cache refresh failed`, err));
   }
 
   async delete(id: string): Promise<void> {
