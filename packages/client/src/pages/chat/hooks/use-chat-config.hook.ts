@@ -60,8 +60,14 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
   }, [providers.length, installedExecutors.length]);
 
   // Auto-select provider: prefer remembered if still in the list, else first available.
+  // Also handles stale IDs (e.g. after DB reset) by checking the ID exists in the list.
   useEffect(() => {
-    if (providers.length === 0 || selectedProviderId) return;
+    if (providers.length === 0) return;
+    // If a provider is selected, validate it still exists
+    if (selectedProviderId) {
+      if (providers.some((p) => p.id === selectedProviderId)) return; // valid — keep it
+      // Stale ID — fall through to re-select
+    }
     const prefs = getChatPrefs();
     const preferred = prefs.lastProviderId && providers.find((p) => p.id === prefs.lastProviderId);
     setSelectedProviderId(preferred ? preferred.id : providers[0].id);
