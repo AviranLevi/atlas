@@ -25,15 +25,25 @@ import {
   chatMessages,
   dispatchRules,
   globalInstructions,
+  heartbeatConfigs,
+  heartbeatRuns,
+  integrations,
+  mcpServers,
   memory,
+  modelCache,
   phases,
+  pipelines,
+  pipelineTasks,
   preferences,
+  projectDocs,
   projects,
+  quickActions,
   reviews,
   rules,
   skillRules,
   skills,
   tasks,
+  usageLogs,
   workspaces,
 } from '../../db/schema/index.js';
 
@@ -160,30 +170,46 @@ export class SystemService {
     }
   }
 
-  /** Deletes all rows from every application table (FK order). */
+  /** Deletes all rows from every application table (children before parents). */
   resetDatabase(): void {
     const FUNCTION_NAME = 'resetDatabase';
     try {
+      // --- Leaf tables (no dependents) ---
       db.delete(chatMessages).run();
+      db.delete(usageLogs).run();
+      db.delete(activityLog).run();
+      db.delete(modelCache).run();
+      db.delete(preferences).run();
+      db.delete(heartbeatRuns).run();
+      db.delete(pipelineTasks).run();
+      db.delete(projectDocs).run();
+
+      // --- Tables referencing agents / projects / tasks ---
       db.delete(chatConversations).run();
-      db.delete(workspaces).run();
       db.delete(reviews).run();
-      db.delete(tasks).run();
-      db.delete(memory).run();
+      db.delete(quickActions).run();
       db.delete(agentProjects).run();
       db.delete(agentSkills).run();
       db.delete(agentRules).run();
       db.delete(skillRules).run();
-      db.delete(phases).run();
       db.delete(dispatchRules).run();
+      db.delete(heartbeatConfigs).run();
+      db.delete(pipelines).run();
+      db.delete(phases).run();
+      db.delete(memory).run();
+      db.delete(workspaces).run();
+
+      // --- Core entity tables ---
+      db.delete(tasks).run();
       db.delete(skills).run();
       db.delete(rules).run();
       db.delete(globalInstructions).run();
-      db.delete(activityLog).run();
-      db.delete(preferences).run();
+      db.delete(integrations).run();
+      db.delete(mcpServers).run();
       db.delete(agents).run();
       db.delete(projects).run();
       db.delete(agentProviders).run();
+
       logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - database reset complete`);
     } catch (error: unknown) {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME}`, error);

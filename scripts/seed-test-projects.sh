@@ -1,12 +1,38 @@
 #!/usr/bin/env bash
 # seed-test-projects.sh
-# Sets up 3 parallel test projects with different agent/rule/skill configs.
-# Usage: bash scripts/seed-test-projects.sh
+# Seeds Atlas with realistic demo data for README screenshots / GIFs.
+#
+# Creates 3 projects with different configs, agents, rules, skills, tasks,
+# phases, memory entries, quick actions, global instructions, and dispatch rules
+# so every page in the UI looks populated.
+#
+# Usage:
+#   bash scripts/seed-test-projects.sh          # seed fresh data
+#   bash scripts/seed-test-projects.sh --clean   # wipe DB + re-seed
+#
+# Auth: Auto-bootstraps an API key via the local-only /auth/bootstrap endpoint.
+#        Falls back to bypass mode if ATLAS_AUTH_BYPASS=true is set.
 
 set -euo pipefail
 
 API="http://localhost:3100/api/v1"
 TEST_DIR="$HOME/Documents/Projects/test-builds"
+AUTH_HEADER=""
+
+# ── Handle --clean flag ────────────────────────────────────────────────────
+
+if [[ "${1:-}" == "--clean" ]]; then
+  echo "→ Cleaning database..."
+  DB_PATH="$(dirname "$0")/../data/agents.db"
+  if [ -f "$DB_PATH" ]; then
+    rm -f "$DB_PATH" "$DB_PATH-wal" "$DB_PATH-shm"
+    echo "  ✓ Database removed. Restart the server before re-running."
+    exit 0
+  else
+    echo "  ⚠ No database found at $DB_PATH"
+    exit 0
+  fi
+fi
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -14,6 +40,7 @@ post() {
   local endpoint="$1" body="$2"
   curl -s -X POST "$API$endpoint" \
     -H "Content-Type: application/json" \
+    ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
     -d "$body"
 }
 
@@ -21,7 +48,14 @@ put() {
   local endpoint="$1" body="$2"
   curl -s -X PUT "$API$endpoint" \
     -H "Content-Type: application/json" \
+    ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
     -d "$body"
+}
+
+get() {
+  local endpoint="$1"
+  curl -s "$API$endpoint" \
+    ${AUTH_HEADER:+-H "$AUTH_HEADER"}
 }
 
 jq_id() { python3 -c "import sys,json; print(json.loads(sys.stdin.read())['id'])"; }
@@ -32,7 +66,7 @@ post_rule() {
   python3 -c "
 import json, sys, urllib.request
 body = json.dumps({'name': sys.argv[1], 'type': sys.argv[2], 'tags': json.loads(sys.argv[3]), 'content': sys.argv[4], 'projectId': sys.argv[5]})
-req = urllib.request.Request(sys.argv[6], data=body.encode(), headers={'Content-Type': 'application/json'})
+req = urllib.request.Request(sys.argv[6], data=body.encode(), headers={'Content-Type': 'application/json'${AUTH_HEADER:+, 'Authorization': '${AUTH_HEADER#Authorization: }'}})
 urllib.request.urlopen(req)
 " "$name" "$type" "$tags" "$content" "$pid" "$API/rules"
 }
@@ -43,13 +77,13 @@ post_skill() {
   python3 -c "
 import json, sys, urllib.request
 body = json.dumps({'name': sys.argv[1], 'type': sys.argv[2], 'steps': sys.argv[3], 'inputFormat': sys.argv[4], 'outputFormat': sys.argv[5], 'projectId': sys.argv[6]})
-req = urllib.request.Request(sys.argv[7], data=body.encode(), headers={'Content-Type': 'application/json'})
+req = urllib.request.Request(sys.argv[7], data=body.encode(), headers={'Content-Type': 'application/json'${AUTH_HEADER:+, 'Authorization': '${AUTH_HEADER#Authorization: }'}})
 urllib.request.urlopen(req)
 " "$name" "$type" "$steps" "$input" "$output" "$pid" "$API/skills"
 }
 
 echo "╔══════════════════════════════════════════╗"
-echo "║   Atlas Test Projects Seed Script        ║"
+echo "║   Atlas Demo Data Seed Script            ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
@@ -57,12 +91,34 @@ echo ""
 
 echo "→ Checking server..."
 if ! curl -s "$API/" > /dev/null 2>&1; then
-  echo "✗ Server not reachable at $API. Start it first."
+  echo "✗ Server not reachable at $API. Start it first (pnpm dev)."
   exit 1
 fi
 echo "  ✓ Server is running"
 
-# ── 2. Create test project directories ──────────────────────────────────────
+# ── 2. Bootstrap auth key ──────────────────────────────────────────────────
+
+echo ""
+echo "→ Setting up authentication..."
+BOOTSTRAP_RESP=$(curl -s -X POST "$API/auth/bootstrap" -H "Content-Type: application/json")
+RAW_KEY=$(echo "$BOOTSTRAP_RESP" | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('rawKey',''))" 2>/dev/null || echo "")
+
+if [ -n "$RAW_KEY" ]; then
+  AUTH_HEADER="Authorization: Bearer $RAW_KEY"
+  echo "  ✓ API key bootstrapped"
+else
+  echo "  ⟳ Bootstrap returned no key (may already exist or bypass is on)"
+  # Try without auth — works if ATLAS_AUTH_BYPASS=true
+  TEST_RESP=$(curl -s -o /dev/null -w "%{http_code}" "$API/agents")
+  if [ "$TEST_RESP" = "200" ]; then
+    echo "  ✓ Auth bypass active, proceeding without key"
+  else
+    echo "  ✗ Cannot authenticate. Set ATLAS_AUTH_BYPASS=true or check your API key."
+    exit 1
+  fi
+fi
+
+# ── 3. Create test project directories ──────────────────────────────────────
 
 echo ""
 echo "→ Creating project directories..."
@@ -75,26 +131,39 @@ for name in taskflow-strict taskflow-minimal taskflow-opinionated; do
   mkdir -p "$dir"
   git -C "$dir" init -q
   echo "# TaskFlow ($name)" > "$dir/README.md"
+  mkdir -p "$dir/src" "$dir/tests"
+  echo '{ "name": "taskflow-'"$name"'", "version": "0.1.0", "private": true }' > "$dir/package.json"
+  echo '{ "compilerOptions": { "strict": true, "target": "ES2022" } }' > "$dir/tsconfig.json"
   git -C "$dir" add .
   git -C "$dir" commit -q -m "Initial commit"
   echo "  ✓ $dir"
 done
 
-# ── 3. Create AI Provider ──────────────────────────────────────────────────
+# ── 4. Create AI Providers ────────────────────────────────────────────────
 
 echo ""
-echo "→ Creating AI provider..."
-PROVIDER_ID=$(post "/agent-providers" '{
+echo "→ Creating AI providers..."
+PROVIDER_ANTHROPIC_ID=$(post "/agent-providers" '{
   "name": "Anthropic",
   "type": "anthropic",
   "apiKey": "REPLACE_ME",
-  "baseUrl": "https://api.anthropic.com",
+  "baseUrl": null,
   "modelName": "claude-sonnet-4-20250514"
 }' | jq_id)
-echo "  ✓ Provider: $PROVIDER_ID"
-echo "  ⚠  Update the API key in Settings → Providers"
+echo "  ✓ Anthropic provider: $PROVIDER_ANTHROPIC_ID"
 
-# ── 4. Create Agents ───────────────────────────────────────────────────────
+PROVIDER_OPENAI_ID=$(post "/agent-providers" '{
+  "name": "OpenAI",
+  "type": "openai",
+  "apiKey": "REPLACE_ME",
+  "baseUrl": null,
+  "modelName": "gpt-4.1"
+}' | jq_id)
+echo "  ✓ OpenAI provider: $PROVIDER_OPENAI_ID"
+
+echo "  ⚠  Update API keys in Settings → Providers"
+
+# ── 5. Create Agents ───────────────────────────────────────────────────────
 
 echo ""
 echo "→ Creating agents..."
@@ -104,8 +173,7 @@ AGENT_STRICT_ID=$(post "/agents" '{
   "description": "Senior engineer with strict coding standards. Follows TDD, enforces types, writes comprehensive tests.",
   "personality": "You are a meticulous senior engineer. You never cut corners. Every function has types, every feature has tests, every PR is clean. You prefer explicit over implicit and correctness over speed.",
   "unbreakableRules": "Never use any type. Never skip tests. Never leave TODO comments.",
-  "providerId": "'"$PROVIDER_ID"'",
-  "defaultModel": "claude-sonnet-4-20250514"
+  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'"
 }' | jq_id)
 echo "  ✓ Strict Engineer: $AGENT_STRICT_ID"
 
@@ -114,8 +182,7 @@ AGENT_MINIMAL_ID=$(post "/agents" '{
   "description": "Fast-moving developer focused on shipping. Gets things working quickly with minimal ceremony.",
   "personality": "You are a pragmatic developer who focuses on shipping working code fast. You write clean code but dont over-engineer. Get the feature working first, optimize later.",
   "unbreakableRules": "",
-  "providerId": "'"$PROVIDER_ID"'",
-  "defaultModel": "claude-sonnet-4-20250514"
+  "providerId": "'"$PROVIDER_OPENAI_ID"'"
 }' | jq_id)
 echo "  ✓ Quick Builder: $AGENT_MINIMAL_ID"
 
@@ -124,12 +191,20 @@ AGENT_OPINIONATED_ID=$(post "/agents" '{
   "description": "Experienced architect who enforces layered architecture patterns. Focuses on clean separation of concerns.",
   "personality": "You are a software architect who values clean architecture above all. Every layer has a purpose, every module has clear boundaries. You design for maintainability and think in terms of systems, not just features.",
   "unbreakableRules": "Never skip layers in the architecture. Never put business logic in controllers.",
-  "providerId": "'"$PROVIDER_ID"'",
-  "defaultModel": "claude-sonnet-4-20250514"
+  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'"
 }' | jq_id)
 echo "  ✓ Architecture Lead: $AGENT_OPINIONATED_ID"
 
-# ── 5. Create Projects ─────────────────────────────────────────────────────
+AGENT_REVIEWER_ID=$(post "/agents" '{
+  "name": "Code Reviewer",
+  "description": "Dedicated code reviewer that checks for security, performance, and best practices.",
+  "personality": "You are a thorough code reviewer. You catch bugs before they ship, flag security issues, and suggest performance improvements. You are constructive but firm.",
+  "unbreakableRules": "Always check for SQL injection. Always check for unhandled errors. Always check for missing input validation.",
+  "providerId": "'"$PROVIDER_ANTHROPIC_ID"'"
+}' | jq_id)
+echo "  ✓ Code Reviewer: $AGENT_REVIEWER_ID"
+
+# ── 6. Create Projects ─────────────────────────────────────────────────────
 
 echo ""
 echo "→ Creating projects..."
@@ -153,8 +228,8 @@ PROJ_STRICT_ID=$(post "/projects" '{
 echo "  ✓ Strict: $PROJ_STRICT_ID"
 
 PROJ_MINIMAL_ID=$(post "/projects" '{
-  "name": "TaskFlow — Minimal Guidance",
-  "description": "A task management app built with minimal rules — just ship it. See how the agent performs with freedom.",
+  "name": "TaskFlow — Rapid Prototype",
+  "description": "A task management app built with minimal rules — ship fast, iterate quickly. See how the agent performs with freedom.",
   "techStack": "TypeScript, React, Node.js",
   "status": "active",
   "localPath": "'"$TEST_DIR/taskflow-minimal"'",
@@ -170,7 +245,7 @@ PROJ_MINIMAL_ID=$(post "/projects" '{
 echo "  ✓ Minimal: $PROJ_MINIMAL_ID"
 
 PROJ_OPINIONATED_ID=$(post "/projects" '{
-  "name": "TaskFlow — Opinionated Stack",
+  "name": "TaskFlow — Clean Architecture",
   "description": "A task management app built with opinionated architecture: layered backend, component-driven frontend, clear module boundaries.",
   "techStack": "TypeScript, React 19, Hono, Drizzle ORM, SQLite, Tailwind CSS 4",
   "status": "active",
@@ -187,23 +262,42 @@ PROJ_OPINIONATED_ID=$(post "/projects" '{
 }' | jq_id)
 echo "  ✓ Opinionated: $PROJ_OPINIONATED_ID"
 
-# ── 6. Assign Agents to Projects ───────────────────────────────────────────
+# ── 7. Assign Agents to Projects ───────────────────────────────────────────
 
 echo ""
 echo "→ Assigning agents to projects..."
 post "/projects/$PROJ_STRICT_ID/agents" '{"agentId":"'"$AGENT_STRICT_ID"'","role":"lead"}' > /dev/null
+post "/projects/$PROJ_STRICT_ID/agents" '{"agentId":"'"$AGENT_REVIEWER_ID"'","role":"reviewer"}' > /dev/null
 post "/projects/$PROJ_MINIMAL_ID/agents" '{"agentId":"'"$AGENT_MINIMAL_ID"'","role":"lead"}' > /dev/null
 post "/projects/$PROJ_OPINIONATED_ID/agents" '{"agentId":"'"$AGENT_OPINIONATED_ID"'","role":"lead"}' > /dev/null
+post "/projects/$PROJ_OPINIONATED_ID/agents" '{"agentId":"'"$AGENT_REVIEWER_ID"'","role":"reviewer"}' > /dev/null
 echo "  ✓ All agents assigned"
 
-# ── 7. Create Rules ────────────────────────────────────────────────────────
+# ── 8. Create Phases ──────────────────────────────────────────────────────
+
+echo ""
+echo "→ Creating project phases..."
+
+# Strict project phases
+post "/phases" '{"projectId":"'"$PROJ_STRICT_ID"'","name":"Foundation","description":"Project setup, auth, and core infrastructure","status":"completed","orderIndex":0}' > /dev/null
+post "/phases" '{"projectId":"'"$PROJ_STRICT_ID"'","name":"Core Features","description":"Task CRUD, kanban board, and search","status":"active","orderIndex":1}' > /dev/null
+post "/phases" '{"projectId":"'"$PROJ_STRICT_ID"'","name":"Polish & Deploy","description":"UI refinements, performance, and deployment","status":"planning","orderIndex":2}' > /dev/null
+echo "  ✓ 3 phases for Strict"
+
+# Opinionated project phases
+post "/phases" '{"projectId":"'"$PROJ_OPINIONATED_ID"'","name":"Architecture Design","description":"Define layers, data model, and API contracts","status":"completed","orderIndex":0}' > /dev/null
+post "/phases" '{"projectId":"'"$PROJ_OPINIONATED_ID"'","name":"Backend Implementation","description":"Build the layered backend: routes, controllers, services, repositories","status":"active","orderIndex":1}' > /dev/null
+post "/phases" '{"projectId":"'"$PROJ_OPINIONATED_ID"'","name":"Frontend Implementation","description":"Build the component-driven UI with hooks and state management","status":"planning","orderIndex":2}' > /dev/null
+post "/phases" '{"projectId":"'"$PROJ_OPINIONATED_ID"'","name":"Integration & Testing","description":"End-to-end testing, architecture audit, and deployment","status":"planning","orderIndex":3}' > /dev/null
+echo "  ✓ 4 phases for Opinionated"
+
+# ── 9. Create Rules ────────────────────────────────────────────────────────
 
 echo ""
 echo "→ Creating rules..."
 
 # --- Strict rules (5) ---
 
-# Source: awesome-cursorrules (typescript-nestjs — TS General Guidelines section)
 read -r -d '' RULE_TS_GUIDELINES << 'RULEEOF' || true
 ## TypeScript General Guidelines
 
@@ -223,51 +317,18 @@ read -r -d '' RULE_TS_GUIDELINES << 'RULEEOF' || true
 - Avoid magic numbers and define constants.
 - Start each function with a verb.
 - Use verbs for boolean variables: isLoading, hasError, canDelete.
-- Use complete words instead of abbreviations (except standard ones like API, URL, i/j for loops, err for errors, ctx for contexts, req/res/next for middleware).
 
 ### Functions
 - Write short functions with a single purpose. Less than 20 instructions.
-- Name functions with a verb and something else.
-- Avoid nesting blocks by using early checks and returns, and extraction to utility functions.
+- Avoid nesting blocks by using early checks and returns.
 - Use higher-order functions (map, filter, reduce) to avoid function nesting.
 - Use arrow functions for simple functions (less than 3 instructions).
-- Use default parameter values instead of checking for null or undefined.
 - Reduce function parameters using RO-RO (Receive an Object, Return an Object).
-- Use a single level of abstraction.
-
-### Data
-- Prefer immutability for data.
-- Use readonly for data that doesn't change.
-- Use as const for literals that don't change.
-
-### Classes
-- Follow SOLID principles.
-- Prefer composition over inheritance.
-- Declare interfaces to define contracts.
-- Write small classes with a single purpose: less than 200 instructions, less than 10 public methods, less than 10 properties.
-
-### Exceptions
-- Use exceptions to handle errors you don't expect.
-- If you catch an exception, it should be to fix an expected problem or add context. Otherwise, use a global handler.
-
-### Testing
-- Follow the Arrange-Act-Assert convention for tests.
-- Name test variables clearly: inputX, mockX, actualX, expectedX.
-- Write unit tests for each public function.
-- Use test doubles to simulate dependencies (except for cheap third-party deps).
-- Write acceptance tests for each module using Given-When-Then convention.
 RULEEOF
-post_rule "TypeScript General Guidelines" "Backend" '["typescript","types","naming","functions","solid"]' "$RULE_TS_GUIDELINES" "$PROJ_STRICT_ID"
+post_rule "TypeScript General Guidelines" "Backend" '["typescript","types","naming","functions"]' "$RULE_TS_GUIDELINES" "$PROJ_STRICT_ID"
 
-# Source: awesome-cursorrules (vitest-unit-testing)
 read -r -d '' RULE_VITEST << 'RULEEOF' || true
 ## Vitest Unit Testing Standards
-
-### Focus
-- Create unit tests that focus on critical functionality (business logic, utility functions).
-- Mock dependencies (API calls, external modules) before imports using vi.mock.
-- Test various data scenarios: valid inputs, invalid inputs, edge cases.
-- Write maintainable tests with descriptive names grouped in describe blocks.
 
 ### Best Practices
 1. Critical Functionality: Prioritize testing business logic and utility functions.
@@ -275,15 +336,12 @@ read -r -d '' RULE_VITEST << 'RULEEOF' || true
 3. Data Scenarios: Test valid inputs, invalid inputs, and edge cases.
 4. Descriptive Naming: Use clear test names indicating expected behavior.
 5. Test Organization: Group related tests in describe/context blocks.
-6. Project Patterns: Match team testing conventions and patterns.
-7. Edge Cases: Include tests for undefined values, type mismatches, and unexpected inputs.
-8. Limit to 3-5 focused tests per file for maintainability.
-9. Use Arrange-Act-Assert pattern in every test.
-10. Always clearAllMocks in beforeEach.
+6. Edge Cases: Include tests for undefined values, type mismatches, and unexpected inputs.
+7. Use Arrange-Act-Assert pattern in every test.
+8. Always clearAllMocks in beforeEach.
 RULEEOF
-post_rule "Vitest Unit Testing" "Testing" '["testing","vitest","unit-tests","mocking"]' "$RULE_VITEST" "$PROJ_STRICT_ID"
+post_rule "Vitest Unit Testing" "Testing" '["testing","vitest","unit-tests"]' "$RULE_VITEST" "$PROJ_STRICT_ID"
 
-# Source: awesome-cursorrules (javascript-typescript-code-quality — 10x dev)
 read -r -d '' RULE_CODE_QUALITY << 'RULEEOF' || true
 ## Code Quality Guidelines
 
@@ -293,32 +351,25 @@ read -r -d '' RULE_CODE_QUALITY << 'RULEEOF' || true
 3. Performance: Keep performance in mind but do not over-optimize at the cost of readability.
 4. Maintainability: Write code that is easy to maintain and update.
 5. Testability: Ensure your code is easy to test.
-6. Reusability: Write reusable components and functions.
 
 ### Code Rules
-1. Utilize Early Returns: Use early returns to avoid nested conditions and improve readability.
-2. Descriptive Names: Use descriptive names for variables and functions. Prefix event handler functions with handle (e.g., handleClick, handleKeyDown).
-3. Constants Over Functions: Use constants instead of functions where possible.
-4. Correct and DRY Code: Focus on writing correct, best practice, DRY code.
-5. Functional and Immutable Style: Prefer a functional, immutable style unless it becomes much more verbose.
-6. Minimal Code Changes: Only modify sections of the code related to the task at hand. Avoid modifying unrelated pieces of code.
-7. Lines of code = Debt. Less code is better.
-
-### Comments and Documentation
-- Add a comment at the start of each function describing what it does.
-- Comments should describe purpose, not effect.
+1. Utilize Early Returns to avoid nested conditions and improve readability.
+2. Descriptive Names for variables and functions.
+3. Correct and DRY Code: Focus on writing correct, best practice, DRY code.
+4. Functional and Immutable Style: Prefer a functional, immutable style.
+5. Lines of code = Debt. Less code is better.
 RULEEOF
 post_rule "Code Quality (10x Developer)" "General" '["quality","readability","dry","simplicity"]' "$RULE_CODE_QUALITY" "$PROJ_STRICT_ID"
 
-post_rule "No Shortcuts Policy" "General" '["quality","standards","enforcement"]' \
-  "No TODO comments in merged code. No console.log - use a proper logger. No hardcoded values - use constants or env vars. No magic numbers. Every error must be handled explicitly. No suppressing TypeScript or linter errors. No any types. No type assertions without a justifying comment." \
+post_rule "No Shortcuts Policy" "General" '["quality","standards"]' \
+  "No TODO comments in merged code. No console.log - use a proper logger. No hardcoded values - use constants or env vars. No magic numbers. Every error must be handled explicitly. No suppressing TypeScript or linter errors. No any types." \
   "$PROJ_STRICT_ID"
 
 post_rule "Code Review Standards" "General" '["review","quality","commits"]' \
   "Every PR must be self-contained and reviewable. Max 400 lines per PR. Commit messages follow conventional commits (feat:, fix:, refactor:, test:, docs:). Each commit does one thing. PRs must include tests for new functionality." \
   "$PROJ_STRICT_ID"
 
-echo "  ✓ 5 strict rules (3 community + 2 custom)"
+echo "  ✓ 5 strict rules"
 
 # --- Minimal rules (1) ---
 post_rule "Keep It Simple" "General" '["simple","pragmatic"]' \
@@ -329,24 +380,17 @@ echo "  ✓ 1 minimal rule"
 
 # --- Opinionated rules (4) ---
 post_rule "Layered Architecture" "Backend" '["architecture","layers","separation"]' \
-  "Follow a strict 4-layer architecture: Route > Controller > Service > Repository. Routes only define paths and validation. Controllers read the request and call services. Services contain business logic. Repositories handle database queries. Never skip layers. Controllers never import db or schema tables. Routes never contain logic or direct data access." \
+  "Follow a strict 4-layer architecture: Route > Controller > Service > Repository. Routes only define paths and validation. Controllers read the request and call services. Services contain business logic. Repositories handle database queries. Never skip layers." \
   "$PROJ_OPINIONATED_ID"
 
-# Source: agent-skills-standard (react-component-patterns)
 read -r -d '' RULE_REACT_PATTERNS << 'RULEEOF' || true
 ## React Component Patterns
 
 ### Core Rules
-- Functions only (no classes). Less than 250 lines per component. One component per file. Named exports only. PascalCase for component names.
+- Functions only (no classes). Less than 250 lines per component. One component per file.
 - Favor Compound Components for complex state sharing.
-- Use HOC for cross-cutting concerns (e.g., withAuth).
-- Slots/Render Props over deep prop hierarchies.
-
-### Props and State
-- Controlled components for forms (favor controlled over uncontrolled).
-- Explicit TypeScript interfaces for all props.
+- Controlled components for forms. Explicit TypeScript interfaces for all props.
 - Avoid prop drilling - use Context or Zustand for deeply shared state.
-- Use ternary over && for conditional rendering (prevents the 0 rendering bug).
 
 ### Organization
 - pages/ for route components (compose features only).
@@ -355,15 +399,10 @@ read -r -d '' RULE_REACT_PATTERNS << 'RULEEOF' || true
 - hooks/ for all data fetching and business logic.
 - Components never call API directly - always through hooks.
 RULEEOF
-post_rule "React Component Patterns" "Frontend" '["react","components","patterns","architecture"]' "$RULE_REACT_PATTERNS" "$PROJ_OPINIONATED_ID"
+post_rule "React Component Patterns" "Frontend" '["react","components","patterns"]' "$RULE_REACT_PATTERNS" "$PROJ_OPINIONATED_ID"
 
-# Source: agent-skills-standard (typescript-best-practices)
 read -r -d '' RULE_TS_BEST << 'RULEEOF' || true
 ## TypeScript Best Practices
-
-### Naming Conventions
-- PascalCase for types/interfaces, camelCase for variables/functions, UPPER_SNAKE_CASE for constants.
-- Named exports only. Arrow functions for callbacks, function declarations for top-level exports.
 
 ### Patterns
 - async/await with Promise.all() for concurrent operations.
@@ -372,267 +411,435 @@ read -r -d '' RULE_TS_BEST << 'RULEEOF' || true
 - Optional chaining (?.) and nullish coalescing (??) over manual null checks.
 - import type for type-only imports.
 
-### Classes
-- Explicit access modifiers (public/private/protected).
-- Composition over inheritance.
-- Constructor dependency injection.
-
-### Validation
-- Use Zod for runtime boundary validation (API inputs, external data).
-- Trust internal types - only validate at system boundaries.
-
 ### Anti-patterns to Avoid
-- No default exports.
-- No implicit returns in multi-line functions.
-- No any - use unknown and narrow.
+- No default exports. No any - use unknown and narrow.
 - No require() - use ESM imports.
 - No eslint-disable without a justifying comment.
 RULEEOF
-post_rule "TypeScript Best Practices" "Backend" '["typescript","patterns","naming","validation"]' "$RULE_TS_BEST" "$PROJ_OPINIONATED_ID"
+post_rule "TypeScript Best Practices" "Backend" '["typescript","patterns","naming"]' "$RULE_TS_BEST" "$PROJ_OPINIONATED_ID"
 
 post_rule "Database Patterns" "Backend" '["database","drizzle","patterns"]' \
-  "Use Drizzle ORM with SQLite. Every table gets its own schema file. Repository methods: findAll, findById, findByIdOrThrow, insert, update, remove. Always set updatedAt on updates. Use transactions for multi-table writes. Never access the database directly from controllers or routes." \
+  "Use Drizzle ORM with SQLite. Every table gets its own schema file. Repository methods: findAll, findById, findByIdOrThrow, insert, update, remove. Always set updatedAt on updates. Use transactions for multi-table writes. Never access the database directly from controllers." \
   "$PROJ_OPINIONATED_ID"
 
-echo "  ✓ 4 opinionated rules (2 community + 2 custom)"
+echo "  ✓ 4 opinionated rules"
 
-# ── 8. Create Skills ───────────────────────────────────────────────────────
+# ── 10. Create Skills ──────────────────────────────────────────────────────
 
 echo ""
 echo "→ Creating skills..."
 
 # --- Strict skills (3) ---
 
-# Source: agent-skills-standard (common-tdd)
 read -r -d '' SKILL_TDD << 'SKILLEOF' || true
 1. Read the task requirements and acceptance criteria carefully.
 2. Write a failing test that covers the expected behavior (Red phase).
-3. Run the test suite to confirm the new test fails - verify the failure message matches expectations.
+3. Run the test suite to confirm the new test fails.
 4. Write the MINIMUM implementation code to make the failing test pass (Green phase).
 5. Run tests again to confirm they pass.
 6. Refactor the implementation while keeping all tests green (Refactor phase).
-7. Add edge case tests: undefined values, empty inputs, type mismatches, error paths.
+7. Add edge case tests: undefined values, empty inputs, type mismatches.
 8. Run full test suite with coverage report.
 
 ## Mandatory Rules
-- Never write production code without a failing test first (Iron Law).
+- Never write production code without a failing test first.
 - Every test must use AAA structure: Arrange, Act, Assert.
 - Coverage thresholds: 80% statement/function/line, 75% branch.
-- Always mock: HTTP calls, Time/Date, Filesystem access.
-- Never mock: fast internal services or pure domain logic.
-
-## Anti-patterns to Avoid
-- Writing tests after implementation.
-- Assertion-free tests (tests that don't actually assert anything).
-- Testing implementation details instead of behavior.
-- Mocking everything - only mock external boundaries.
 SKILLEOF
 post_skill "TDD (Red-Green-Refactor)" "Coding" "$SKILL_TDD" \
   "Task description with acceptance criteria and definition of done" \
   "Implementation code + test files + coverage report showing thresholds met" \
   "$PROJ_STRICT_ID"
 
-# Source: agent-skills-standard (common-code-review)
 read -r -d '' SKILL_REVIEW << 'SKILLEOF' || true
 1. Review the diff or PR content thoroughly.
 2. Check Security: injection risks, hardcoded secrets, auth leaks, improper input validation.
 3. Check Efficiency: N+1 queries, memory leaks, unnecessary re-renders, Big O concerns.
 4. Check Logic: requirements met, edge cases handled, error paths covered.
-5. Check Clean Code: DRY/SOLID principles, naming clarity, separation of concerns.
-6. Check Types: no any, no untyped parameters, no assertions without justification.
-7. Check Tests: every new function has tests, edge cases tested.
-8. Tag each finding with severity: [BLOCKER] (must fix), [MAJOR] (should fix), [NIT] (suggestion).
-9. Format: [SEVERITY] [File:Line] Issue Description / Why it matters / Suggested fix.
-
-## Anti-patterns to Avoid
-- Nitpicking code style when logic is the concern.
-- Vague demands without specifics.
-- Skimming over test files - tests deserve the same review rigor.
-- Approving without actually reading the full diff.
+5. Check Types: no any, no untyped parameters, no assertions without justification.
+6. Check Tests: every new function has tests, edge cases tested.
+7. Tag each finding: [BLOCKER] (must fix), [MAJOR] (should fix), [NIT] (suggestion).
 SKILLEOF
 post_skill "Code Review" "Review" "$SKILL_REVIEW" \
   "Git diff or PR content" \
-  "Severity-tagged review comments: [BLOCKER]/[MAJOR]/[NIT] with file, issue, why, and fix" \
+  "Severity-tagged review comments with file, issue, why, and fix" \
   "$PROJ_STRICT_ID"
 
-# Custom skill
 read -r -d '' SKILL_PLANNING << 'SKILLEOF' || true
 1. Analyze the task requirements and definition of done.
-2. Identify affected layers: database schema, repository, service, controller, route, UI components, hooks.
+2. Identify affected layers: database, repository, service, controller, route, UI, hooks.
 3. Break into sub-tasks of max 200 lines each.
 4. Define implementation order: data model first, then API, then UI.
-5. List test scenarios for each sub-task (happy path + error cases + edge cases).
+5. List test scenarios for each sub-task (happy path + error + edge cases).
 6. Estimate complexity (S/M/L) for each sub-task.
 7. Identify risks, dependencies, and potential blockers.
-8. Produce an ordered checklist ready for execution.
 SKILLEOF
 post_skill "Planning & Breakdown" "Planning" "$SKILL_PLANNING" \
   "Feature description or user story with acceptance criteria" \
   "Ordered list of sub-tasks with estimates, test scenarios, and dependency notes" \
   "$PROJ_STRICT_ID"
 
-echo "  ✓ 3 strict skills (2 community + 1 custom)"
-
-# --- Minimal: no skills ---
+echo "  ✓ 3 strict skills"
 echo "  ✓ 0 minimal skills (intentional)"
 
 # --- Opinionated skills (2) ---
 
-# Source: agent-skills-standard (common-system-design)
 read -r -d '' SKILL_SYSTEM_DESIGN << 'SKILLEOF' || true
 1. Identify bounded contexts and domain entities involved.
 2. Define dependency direction: outer layers depend on inner layers, never the reverse.
-3. Select communication patterns: sync REST for queries, async events for side effects, hybrid where appropriate.
-4. Design the data model: entities, relationships, constraints.
-5. Design the API contract: endpoints, request/response shapes, status codes.
-6. Plan the layer structure: which services, repositories, controllers are needed.
-7. Identify shared utilities and cross-cutting concerns.
-8. Validate separation of concerns: no god classes, no circular dependencies.
-9. Document key design decisions as Architecture Decision Records (ADRs).
-
-## Principles
-- Separation of Concerns: each module has one reason to change.
-- Single Source of Truth: every piece of data has one authoritative owner.
-- Fail Fast: validate early, surface errors immediately.
-- Graceful Degradation: handle failures without cascading.
-
-## Anti-patterns to Avoid
-- God classes (>500 lines doing everything).
-- Synchronous coupling across services.
-- Premature abstraction (do not abstract until you have 3+ concrete cases).
-- Skipping layers in the architecture.
+3. Design the data model: entities, relationships, constraints.
+4. Design the API contract: endpoints, request/response shapes, status codes.
+5. Plan the layer structure: which services, repositories, controllers are needed.
+6. Validate separation of concerns: no god classes, no circular dependencies.
+7. Document key design decisions as Architecture Decision Records (ADRs).
 SKILLEOF
 post_skill "System Design" "Architecture / Data" "$SKILL_SYSTEM_DESIGN" \
   "Feature requirements and existing architecture context" \
-  "Architecture document with data model, API contract, layer breakdown, component tree, and ADRs" \
+  "Architecture document with data model, API contract, layer breakdown, and ADRs" \
   "$PROJ_OPINIONATED_ID"
 
-# Source: agent-skills-standard (common-architecture-audit)
 read -r -d '' SKILL_ARCH_AUDIT << 'SKILLEOF' || true
-1. Scan for structural duplication: ServiceV2 files, /v1 /v2 folders, copy-paste patterns.
-2. Detect logic leakage: business logic in controllers, DB queries in routes, API calls in components.
-3. Check monolith indicators: UI files >500 lines (Medium), >1000 lines (Critical). Backend files >1000 lines (Medium), >1500 lines (Critical/God Class).
-4. Verify layer boundaries: Route > Controller > Service > Repository. No skipping.
+1. Scan for structural duplication: ServiceV2 files, copy-paste patterns.
+2. Detect logic leakage: business logic in controllers, DB queries in routes.
+3. Check file sizes: UI >500 lines (Medium), >1000 lines (Critical).
+4. Verify layer boundaries: Route > Controller > Service > Repository.
 5. Check for circular dependencies between modules.
-6. Assess hook/component ratio: if components folder has 20x more hooks than hooks folder, architecture is monolithic.
-7. Score findings: -15 per layer violation, -10 per duplicated legacy entity, -10 per 1000+ line file.
-8. Produce a health report with severity ratings and recommended refactoring actions.
-
-## What to Flag
-- God classes: files doing too many things.
-- Layer violations: controllers accessing DB, routes containing logic.
-- Structural duplication: same pattern implemented differently in two places.
-- Missing abstractions: repeated inline logic that should be a shared utility.
+6. Score findings: -15 per layer violation, -10 per 1000+ line file.
+7. Produce a health report with severity ratings and recommended refactoring actions.
 SKILLEOF
 post_skill "Architecture Audit" "Architecture / Data" "$SKILL_ARCH_AUDIT" \
   "Codebase file listing and key source files" \
   "Health score, severity-rated findings, and recommended refactoring actions" \
   "$PROJ_OPINIONATED_ID"
 
-echo "  ✓ 2 opinionated skills (2 community)"
+echo "  ✓ 2 opinionated skills"
 
-# ── 9. Create Tasks ────────────────────────────────────────────────────────
+# ── 11. Create Tasks (with status variety) ─────────────────────────────────
 
 echo ""
 echo "→ Creating tasks..."
 
-create_tasks() {
-  local proj_id="$1" agent_id="$2" workflow="$3"
+# --- Strict project: realistic engineering tasks ---
+post "/tasks" '{
+  "name": "Set up project with TypeScript strict mode",
+  "status": "Done",
+  "priority": "High",
+  "estimate": "M",
+  "definitionOfDone": "TypeScript strict mode enabled. Biome linting configured. Vitest with coverage thresholds. CI pipeline running tests on push.",
+  "notes": "Foundation task — sets the engineering standards for everything that follows.",
+  "tags": ["setup", "typescript", "ci"],
+  "projectId": "'"$PROJ_STRICT_ID"'",
+  "agentId": "'"$AGENT_STRICT_ID"'"
+}' > /dev/null
 
-  local wf_enabled="false" wf_stage="null"
-  if [ "$workflow" = "true" ]; then
-    wf_enabled="true"
-    wf_stage='"brainstorm"'
-  fi
+post "/tasks" '{
+  "name": "Implement JWT authentication",
+  "status": "Done",
+  "priority": "High",
+  "estimate": "L",
+  "definitionOfDone": "Register and login endpoints. JWT tokens with refresh. Auth middleware protecting all routes. Login page with form validation.",
+  "notes": "Use bcrypt for password hashing. Access tokens expire in 15 minutes, refresh tokens in 7 days.",
+  "tags": ["auth", "security", "backend"],
+  "projectId": "'"$PROJ_STRICT_ID"'",
+  "agentId": "'"$AGENT_STRICT_ID"'"
+}' > /dev/null
 
-  post "/tasks" '{
-    "name": "Initialize project with authentication",
-    "status": "To Do",
-    "priority": "High",
-    "estimate": "L",
-    "definitionOfDone": "Project scaffolded with TypeScript, React frontend, Hono backend, SQLite database. User registration and login endpoints working. JWT-based auth middleware. Login page in the UI.",
-    "notes": "Start from scratch. Set up the full project structure, install dependencies, configure TypeScript, and implement basic auth (register, login, protected routes).",
-    "tags": ["setup", "auth", "backend", "frontend"],
-    "projectId": "'"$proj_id"'",
-    "agentId": "'"$agent_id"'",
-    "workflowEnabled": '"$wf_enabled"',
-    "workflowStage": '"$wf_stage"'
-  }' > /dev/null
+post "/tasks" '{
+  "name": "Build task CRUD API with validation",
+  "status": "In Progress",
+  "priority": "High",
+  "estimate": "M",
+  "definitionOfDone": "Full CRUD for tasks. Zod validation on all inputs. Proper error responses. 100% test coverage on service layer.",
+  "notes": "Tasks have: title, description, status (todo/in-progress/review/done), priority (low/medium/high/critical), due date, assignee.",
+  "tags": ["backend", "api", "crud"],
+  "projectId": "'"$PROJ_STRICT_ID"'",
+  "agentId": "'"$AGENT_STRICT_ID"'"
+}' > /dev/null
 
-  post "/tasks" '{
-    "name": "Build task CRUD API",
-    "status": "Backlog",
-    "priority": "High",
-    "estimate": "M",
-    "definitionOfDone": "Full CRUD API for tasks: create, read (list + single), update, delete. Tasks have: title, description, status (todo/in-progress/done), priority (low/medium/high), due date, assigned user. All endpoints protected by auth.",
-    "notes": "Build the backend API for task management. Include proper validation, error handling, and database schema.",
-    "tags": ["backend", "api", "crud"],
-    "projectId": "'"$proj_id"'",
-    "agentId": "'"$agent_id"'",
-    "workflowEnabled": '"$wf_enabled"',
-    "workflowStage": '"$wf_stage"'
-  }' > /dev/null
+post "/tasks" '{
+  "name": "Build Kanban board UI",
+  "status": "In Progress",
+  "priority": "High",
+  "estimate": "L",
+  "definitionOfDone": "Drag-and-drop Kanban board with 4 columns. Task cards showing title, priority badge, assignee avatar. Create task dialog. Responsive layout.",
+  "notes": "Use @dnd-kit for drag-and-drop. Connect to the CRUD API.",
+  "tags": ["frontend", "ui", "react", "dnd"],
+  "projectId": "'"$PROJ_STRICT_ID"'",
+  "agentId": "'"$AGENT_STRICT_ID"'"
+}' > /dev/null
 
-  post "/tasks" '{
-    "name": "Build task management UI",
-    "status": "Backlog",
-    "priority": "Medium",
-    "estimate": "L",
-    "definitionOfDone": "Task list page showing all tasks with status badges and priority indicators. Task creation form in a dialog. Task detail view with edit capability. Status change via dropdown or drag. Responsive layout.",
-    "notes": "Create the frontend UI for managing tasks. Should connect to the CRUD API built in the previous task.",
-    "tags": ["frontend", "ui", "react"],
-    "projectId": "'"$proj_id"'",
-    "agentId": "'"$agent_id"'",
-    "workflowEnabled": '"$wf_enabled"',
-    "workflowStage": '"$wf_stage"'
-  }' > /dev/null
+post "/tasks" '{
+  "name": "Add search and filtering",
+  "status": "To Do",
+  "priority": "Medium",
+  "estimate": "M",
+  "definitionOfDone": "Search bar filtering by title and description. Filter dropdowns for status and priority. Filters persist in URL query params.",
+  "tags": ["frontend", "backend", "search"],
+  "projectId": "'"$PROJ_STRICT_ID"'",
+  "agentId": "'"$AGENT_STRICT_ID"'"
+}' > /dev/null
 
-  post "/tasks" '{
-    "name": "Add search and filtering",
-    "status": "Backlog",
-    "priority": "Medium",
-    "estimate": "M",
-    "definitionOfDone": "Search bar that filters tasks by title and description. Filter dropdowns for status, priority, and assigned user. Filters persist in URL query params. Server-side filtering for efficiency. Clear filters button.",
-    "notes": "Add search and filtering capabilities to the task management UI and API.",
-    "tags": ["frontend", "backend", "search", "filters"],
-    "projectId": "'"$proj_id"'",
-    "agentId": "'"$agent_id"'",
-    "workflowEnabled": '"$wf_enabled"',
-    "workflowStage": '"$wf_stage"'
-  }' > /dev/null
-}
+post "/tasks" '{
+  "name": "Add due date reminders and notifications",
+  "status": "Backlog",
+  "priority": "Low",
+  "estimate": "M",
+  "definitionOfDone": "Visual indicators for overdue and upcoming tasks. Optional email notification for tasks due within 24 hours.",
+  "tags": ["feature", "notifications"],
+  "projectId": "'"$PROJ_STRICT_ID"'",
+  "agentId": "'"$AGENT_STRICT_ID"'"
+}' > /dev/null
 
-create_tasks "$PROJ_STRICT_ID" "$AGENT_STRICT_ID" "true"
-echo "  ✓ 4 tasks for Strict (workflow: full, stage: brainstorm)"
+echo "  ✓ 6 tasks for Strict (2 Done, 2 In Progress, 1 To Do, 1 Backlog)"
 
-create_tasks "$PROJ_MINIMAL_ID" "$AGENT_MINIMAL_ID" "false"
-echo "  ✓ 4 tasks for Minimal (workflow: off)"
+# --- Minimal project: quick-ship tasks ---
+post "/tasks" '{
+  "name": "Scaffold React + Node app",
+  "status": "Done",
+  "priority": "High",
+  "estimate": "S",
+  "definitionOfDone": "Working React frontend + Node backend. Hot reload. Basic routing.",
+  "tags": ["setup"],
+  "projectId": "'"$PROJ_MINIMAL_ID"'",
+  "agentId": "'"$AGENT_MINIMAL_ID"'"
+}' > /dev/null
 
-create_tasks "$PROJ_OPINIONATED_ID" "$AGENT_OPINIONATED_ID" "true"
-echo "  ✓ 4 tasks for Opinionated (workflow: full, stage: brainstorm)"
+post "/tasks" '{
+  "name": "Build task list with add/edit/delete",
+  "status": "In Progress",
+  "priority": "High",
+  "estimate": "M",
+  "definitionOfDone": "Task list page. Add task form. Edit inline. Delete with confirmation. Data persists in SQLite.",
+  "tags": ["fullstack", "crud"],
+  "projectId": "'"$PROJ_MINIMAL_ID"'",
+  "agentId": "'"$AGENT_MINIMAL_ID"'"
+}' > /dev/null
+
+post "/tasks" '{
+  "name": "Add drag-and-drop status changes",
+  "status": "To Do",
+  "priority": "Medium",
+  "estimate": "M",
+  "definitionOfDone": "Drag tasks between status columns. Visual feedback during drag.",
+  "tags": ["frontend", "dnd"],
+  "projectId": "'"$PROJ_MINIMAL_ID"'",
+  "agentId": "'"$AGENT_MINIMAL_ID"'"
+}' > /dev/null
+
+post "/tasks" '{
+  "name": "Deploy to Vercel",
+  "status": "Backlog",
+  "priority": "Low",
+  "estimate": "S",
+  "definitionOfDone": "App deployed and accessible via public URL.",
+  "tags": ["deploy"],
+  "projectId": "'"$PROJ_MINIMAL_ID"'",
+  "agentId": "'"$AGENT_MINIMAL_ID"'"
+}' > /dev/null
+
+echo "  ✓ 4 tasks for Minimal (1 Done, 1 In Progress, 1 To Do, 1 Backlog)"
+
+# --- Opinionated project: architecture-focused tasks ---
+post "/tasks" '{
+  "name": "Design data model and API contracts",
+  "status": "Done",
+  "priority": "High",
+  "estimate": "M",
+  "definitionOfDone": "ERD for all entities. OpenAPI spec for all endpoints. ADR for key decisions.",
+  "tags": ["architecture", "design", "api"],
+  "projectId": "'"$PROJ_OPINIONATED_ID"'",
+  "agentId": "'"$AGENT_OPINIONATED_ID"'"
+}' > /dev/null
+
+post "/tasks" '{
+  "name": "Implement repository and service layers",
+  "status": "In Progress",
+  "priority": "High",
+  "estimate": "L",
+  "definitionOfDone": "Drizzle schema for tasks, users, and projects. Repository with CRUD ops. Service layer with business logic. Full test coverage.",
+  "tags": ["backend", "architecture", "database"],
+  "projectId": "'"$PROJ_OPINIONATED_ID"'",
+  "agentId": "'"$AGENT_OPINIONATED_ID"'"
+}' > /dev/null
+
+post "/tasks" '{
+  "name": "Build controller and route layers",
+  "status": "To Do",
+  "priority": "High",
+  "estimate": "M",
+  "definitionOfDone": "Hono routes with Zod validation. Controllers that call services. Proper error handling middleware. No business logic in controllers.",
+  "tags": ["backend", "api", "architecture"],
+  "projectId": "'"$PROJ_OPINIONATED_ID"'",
+  "agentId": "'"$AGENT_OPINIONATED_ID"'"
+}' > /dev/null
+
+post "/tasks" '{
+  "name": "Build component library and page shells",
+  "status": "To Do",
+  "priority": "Medium",
+  "estimate": "L",
+  "definitionOfDone": "Reusable UI primitives in components/ui/. Page shells in pages/. Custom hooks for API calls. No direct API calls in components.",
+  "tags": ["frontend", "components", "architecture"],
+  "projectId": "'"$PROJ_OPINIONATED_ID"'",
+  "agentId": "'"$AGENT_OPINIONATED_ID"'"
+}' > /dev/null
+
+post "/tasks" '{
+  "name": "Run architecture audit",
+  "status": "Backlog",
+  "priority": "Medium",
+  "estimate": "S",
+  "definitionOfDone": "Architecture audit report with health score. No layer violations. No god classes. All circular dependencies resolved.",
+  "tags": ["architecture", "quality"],
+  "projectId": "'"$PROJ_OPINIONATED_ID"'",
+  "agentId": "'"$AGENT_REVIEWER_ID"'"
+}' > /dev/null
+
+echo "  ✓ 5 tasks for Opinionated (1 Done, 1 In Progress, 2 To Do, 1 Backlog)"
+
+# ── 12. Create Memory Entries ──────────────────────────────────────────────
+
+echo ""
+echo "→ Creating memory entries..."
+
+post "/memory" '{
+  "name": "Drizzle ORM is preferred over Prisma",
+  "content": "We chose Drizzle ORM over Prisma for the database layer. Reasons: better SQLite support, lighter bundle size, more control over queries, and it works well with the edge runtime. All new database work should use Drizzle.",
+  "type": "Decision",
+  "scope": "project",
+  "projectId": "'"$PROJ_STRICT_ID"'"
+}' > /dev/null
+
+post "/memory" '{
+  "name": "Use Zod for all API input validation",
+  "content": "All API endpoints must validate request bodies using Zod schemas. Schemas live in the shared package and are used by both server (validation) and client (type inference). Never use manual type assertions for request data.",
+  "type": "Convention",
+  "scope": "global"
+}' > /dev/null
+
+post "/memory" '{
+  "name": "Tailwind CSS 4 migration complete",
+  "content": "The project has been migrated from Tailwind CSS 3 to Tailwind CSS 4. Key differences: no more tailwind.config.js (use CSS-based config), @apply still works, and the new color system uses oklch. All new components should use the v4 syntax.",
+  "type": "Decision",
+  "scope": "project",
+  "projectId": "'"$PROJ_OPINIONATED_ID"'"
+}' > /dev/null
+
+post "/memory" '{
+  "name": "SQLite WAL mode is always enabled",
+  "content": "SQLite is configured with WAL (Write-Ahead Logging) mode for better concurrent read performance. This is set in the database initialization code. Do not change the journal mode.",
+  "type": "Convention",
+  "scope": "global"
+}' > /dev/null
+
+post "/memory" '{
+  "name": "Toast notifications use Sonner",
+  "content": "We use the Sonner library for toast notifications. Import toast from sonner. Use toast.success(), toast.error(), toast.info(). Always show success feedback on mutations and error feedback on failures.",
+  "type": "Preference",
+  "scope": "global"
+}' > /dev/null
+
+post "/memory" '{
+  "name": "Git branch naming: feature/task-slug",
+  "content": "All feature branches follow the pattern feature/<task-slug>. Atlas auto-generates branch names from task titles. Do not manually create branches with different naming patterns.",
+  "type": "Convention",
+  "scope": "global"
+}' > /dev/null
+
+echo "  ✓ 6 memory entries (2 project-scoped, 4 global)"
+
+# ── 13. Create Quick Actions ──────────────────────────────────────────────
+
+echo ""
+echo "→ Creating quick actions..."
+
+post "/quick-actions" '{
+  "name": "Fix Bug",
+  "description": "Investigate and fix a reported bug",
+  "promptTemplate": "Investigate and fix the following bug:\n\n{{description}}\n\nSteps to reproduce:\n{{steps}}\n\nExpected behavior: {{expected}}\nActual behavior: {{actual}}\n\nWrite a fix with tests that verify the bug is resolved.",
+  "icon": "Bug"
+}' > /dev/null
+
+post "/quick-actions" '{
+  "name": "Add API Endpoint",
+  "description": "Create a new REST API endpoint following the project patterns",
+  "promptTemplate": "Create a new API endpoint:\n\nEndpoint: {{method}} {{path}}\nPurpose: {{description}}\n\nFollow the existing project patterns for route → controller → service → repository. Include Zod validation, error handling, and tests.",
+  "icon": "Globe"
+}' > /dev/null
+
+post "/quick-actions" '{
+  "name": "Write Tests",
+  "description": "Add unit tests for existing code",
+  "promptTemplate": "Write comprehensive unit tests for:\n\n{{target}}\n\nCover: happy path, error cases, edge cases, and boundary values. Use Vitest with the AAA pattern. Mock external dependencies.",
+  "icon": "TestTube"
+}' > /dev/null
+
+post "/quick-actions" '{
+  "name": "Refactor Module",
+  "description": "Refactor a module for better readability and maintainability",
+  "promptTemplate": "Refactor the following module:\n\n{{module}}\n\nGoals:\n- Improve readability and reduce complexity\n- Follow DRY and SOLID principles\n- Maintain all existing behavior (no functional changes)\n- Ensure all existing tests still pass",
+  "icon": "Sparkles"
+}' > /dev/null
+
+echo "  ✓ 4 quick actions"
+
+# ── 14. Create Global Instructions ────────────────────────────────────────
+
+echo ""
+echo "→ Creating global instructions..."
+
+post "/settings/global-instructions" '{
+  "content": "You are working on a TypeScript monorepo. Always use ESM imports (never require). Prefer named exports over default exports. Use async/await over raw promises. Handle all errors explicitly — never silently swallow exceptions. When creating new files, follow the existing directory structure and naming conventions."
+}' > /dev/null
+
+echo "  ✓ 1 global instruction"
+
+# ── 15. Create Dispatch Rules ─────────────────────────────────────────────
+
+echo ""
+echo "→ Creating dispatch rules..."
+
+post "/settings/dispatch-rules" '{
+  "pattern": "bug|fix|broken|regression|crash",
+  "agentId": "'"$AGENT_STRICT_ID"'",
+  "skillId": null,
+  "autoStart": false
+}' > /dev/null
+
+post "/settings/dispatch-rules" '{
+  "pattern": "review|audit|check|inspect",
+  "agentId": "'"$AGENT_REVIEWER_ID"'",
+  "skillId": null,
+  "autoStart": false
+}' > /dev/null
+
+echo "  ✓ 2 dispatch rules"
 
 # ── Done ────────────────────────────────────────────────────────────────────
 
 echo ""
-echo "╔═══════════════════════════════════════════════╗"
-echo "║   ✓ Seed complete!                              ║"
-echo "╠═══════════════════════════════════════════════╣"
-echo "║                                                 ║"
-echo "║  3 projects × 4 tasks = 12 tasks total          ║"
-echo "║                                                 ║"
-echo "║  Config A: Strict Engineering                    ║"
-echo "║    → 5 rules, 3 skills, workflow: full           ║"
-echo "║    → Sources: awesome-cursorrules,               ║"
-echo "║      agent-skills-standard, custom               ║"
-echo "║                                                 ║"
-echo "║  Config B: Minimal Guidance                      ║"
-echo "║    → 1 rule, 0 skills, workflow: off             ║"
-echo "║                                                 ║"
-echo "║  Config C: Opinionated Stack                     ║"
-echo "║    → 4 rules, 2 skills, workflow: full           ║"
-echo "║    → Sources: agent-skills-standard, custom      ║"
-echo "║                                                 ║"
-echo "║  ⚠  Update your Anthropic API key in            ║"
-echo "║     Settings → Providers                         ║"
-echo "║                                                 ║"
-echo "╚═══════════════════════════════════════════════╝"
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║   ✓ Seed complete!                                       ║"
+echo "╠═══════════════════════════════════════════════════════════╣"
+echo "║                                                           ║"
+echo "║  3 projects × varied tasks = 15 tasks total               ║"
+echo "║  4 agents (2 providers: Anthropic + OpenAI)               ║"
+echo "║  10 rules, 5 skills, 7 phases                            ║"
+echo "║  6 memory entries, 4 quick actions                        ║"
+echo "║  1 global instruction, 2 dispatch rules                   ║"
+echo "║                                                           ║"
+echo "║  Config A: Strict Engineering                              ║"
+echo "║    → 5 rules, 3 skills, 3 phases, workflow: full          ║"
+echo "║    → Tasks: 2 Done, 2 In Progress, 1 To Do, 1 Backlog    ║"
+echo "║                                                           ║"
+echo "║  Config B: Rapid Prototype                                 ║"
+echo "║    → 1 rule, 0 skills, 0 phases, workflow: off            ║"
+echo "║    → Tasks: 1 Done, 1 In Progress, 1 To Do, 1 Backlog    ║"
+echo "║                                                           ║"
+echo "║  Config C: Clean Architecture                              ║"
+echo "║    → 4 rules, 2 skills, 4 phases, workflow: full          ║"
+echo "║    → Tasks: 1 Done, 1 In Progress, 2 To Do, 1 Backlog    ║"
+echo "║                                                           ║"
+echo "║  ⚠  Update your API keys in Settings → Providers          ║"
+echo "║                                                           ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
