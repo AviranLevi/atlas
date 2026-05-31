@@ -52,7 +52,11 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateTask }) => api.put<Task>(`/tasks/${id}`, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+      // Pipeline views embed task details (agent, status) — refetch so they stay in sync.
+      queryClient.invalidateQueries({ queryKey: ['pipelines'] });
+    },
     onError: (e) => toast.error(`Failed to update task: ${e instanceof Error ? e.message : 'Unknown error'}`),
   });
 }

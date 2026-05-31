@@ -39,12 +39,23 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: 'Request failed' }));
-    const errorMsg =
-      typeof body.error === 'string'
-        ? body.error
-        : typeof body.message === 'string'
-          ? body.message
-          : `HTTP ${res.status}`;
+    let errorMsg = `HTTP ${res.status}`;
+    if (typeof body.error === 'string') {
+      errorMsg = body.error;
+    } else if (typeof body.message === 'string') {
+      errorMsg = body.message;
+    } else if (body.error && typeof body.error === 'object') {
+      // Hono zod-validator returns { success: false, error: { issues: [...] } }
+      const issues = (body.error as { issues?: { path?: string[]; message?: string }[] }).issues;
+      if (Array.isArray(issues) && issues.length > 0) {
+        errorMsg = issues
+          .map((i) => {
+            const field = i.path?.join('.') || 'input';
+            return `${field}: ${i.message}`;
+          })
+          .join(', ');
+      }
+    }
     const details =
       body && typeof body.details === 'object' && body.details !== null
         ? (body.details as Record<string, unknown>)
