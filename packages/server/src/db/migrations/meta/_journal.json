@@ -197,6 +197,13 @@
       "when": 1775800000000,
       "tag": "0027_rename_automations_to_quick_actions",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1775900000000,
+      "tag": "0028_model_cache",
+      "breakpoints": true
     }
   ]
 }

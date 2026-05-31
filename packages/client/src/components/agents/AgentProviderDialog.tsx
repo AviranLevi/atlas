@@ -17,6 +17,7 @@ import {
   useTestAgentProvider,
   useUpdateAgentProvider,
 } from '@/hooks/use-agent-providers.hook';
+import { useCachedModelsForType } from '@/hooks/use-model-cache.hook';
 
 // Types
 import type { CreateAgentProvider, ProviderModel, ProviderType } from '@atlas/shared';
@@ -41,6 +42,10 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
   const [modelSelectValue, setModelSelectValue] = useState('');
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
 
+  // Cached models from the server (refreshed on startup) — used as dynamic
+  // presets so the dropdown stays fresh without a hardcoded list update.
+  const cachedModels = useCachedModelsForType(type);
+
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
@@ -61,9 +66,10 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
   const liveModels = isEditing ? fetchedModels : (inlineModels.data ?? []);
 
   const modelOptions = useMemo(() => {
-    const presets = PROVIDER_MODEL_PRESETS[type] ?? [];
-    const seen = new Set(presets.map((p) => p.value));
-    const merged: ProviderModel[] = [...presets];
+    // Priority: cached models (auto-refreshed on startup) → hardcoded fallback → live fetch.
+    const base = cachedModels.length > 0 ? cachedModels : (PROVIDER_MODEL_PRESETS[type] ?? []);
+    const seen = new Set(base.map((p) => p.value));
+    const merged: ProviderModel[] = [...base];
     for (const m of liveModels) {
       if (!seen.has(m.value)) {
         merged.push(m);
@@ -71,7 +77,7 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
       }
     }
     return merged;
-  }, [type, liveModels]);
+  }, [type, cachedModels, liveModels]);
 
   const hasPresets = modelOptions.length > 0;
 
@@ -109,10 +115,15 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
 
   const handleTypeChange = (newType: ProviderType) => {
     setType(newType);
-    const presets = PROVIDER_MODEL_PRESETS[newType];
-    if (presets.length > 0) {
-      setModelSelectValue(presets[0].value);
-      setModelName(presets[0].value);
+    // modelOptions will recompute on next render — but we need an immediate
+    // default. Use whatever the first option will be (cached or hardcoded).
+    const fallback = PROVIDER_MODEL_PRESETS[newType];
+    // Note: cachedModels won't update until the `type` state triggers re-render.
+    // The hardcoded fallback covers the immediate selection; the memo will merge
+    // cached data on the next render and the select will be correct.
+    if (fallback.length > 0) {
+      setModelSelectValue(fallback[0].value);
+      setModelName(fallback[0].value);
     } else {
       setModelSelectValue('');
       setModelName('');
@@ -156,6 +167,9 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
   const showApiKey = type !== 'ollama';
   const isPending = createProvider.isPending || updateProvider.isPending;
   const submitMutation = isEditing ? updateProvider : createProvider;
+  // Disable model selection until the user provides credentials (API key or base URL for Ollama).
+  const awaitingCredentials = !isEditing && showApiKey && !apiKey.trim();
+  const modelDisabled = awaitingCredentials;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -214,7 +228,7 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
           )}
           <div className="space-y-2">
             <Label>Model</Label>
-            {hasPresets ? (
+            {hasPresets && !modelDisabled ? (
               <>
                 <div className="relative">
                   <Select value={modelSelectValue} onValueChange={handleModelSelect}>
@@ -249,7 +263,11 @@ export function AgentProviderDialog({ open, onOpenChange, provider }: AgentProvi
                 onChange={(e) => setModelName(e.target.value)}
                 placeholder={PROVIDER_MODEL_PLACEHOLDERS[type]}
                 required
+                disabled={modelDisabled}
               />
+            )}
+            {modelDisabled && (
+              <p className="text-muted-foreground text-xs">Enter your API key to load available models</p>
             )}
             {!isEditing && inlineModels.isError && (
               <p className="flex items-center gap-1.5 text-sm text-destructive">

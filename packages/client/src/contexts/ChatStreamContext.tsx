@@ -195,7 +195,14 @@ export function ChatStreamProvider({ children }: { children: ReactNode }) {
         }
 
         abortControllersRef.current.delete(id);
-        updateSession(id, (s) => ({ ...s, state: 'idle', pendingUserMessage: null }));
+        // Preserve 'error' state if the server sent an error event during the stream.
+        // Without this guard the cleanup would overwrite the error back to 'idle',
+        // leaving the UI stuck in a "thinking" state with no way to recover.
+        updateSession(id, (s) => ({
+          ...s,
+          state: s.state === 'error' ? 'error' : 'idle',
+          pendingUserMessage: null,
+        }));
         setActiveStreamingIds((prev) => {
           const next = new Set(prev);
           next.delete(id);

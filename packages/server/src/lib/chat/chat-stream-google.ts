@@ -4,6 +4,58 @@ import { decodeText, isImage, isPdf, wrapFileContent } from './attachment-utils.
 import { GOOGLE_AI_BASE } from '../providers/provider-clients.js';
 import { logger } from '../logger.js';
 
+/**
+ * Google's Gemini API accepts a restricted subset of OpenAPI 3.0 schema — not
+ * full JSON Schema 7 that `zodToJsonSchema` produces. This function recursively
+ * transforms a JSON Schema object into something Gemini accepts:
+ *
+ *  - Removes unsupported top-level keys (`$schema`, `additionalProperties`).
+ *  - Converts array `type` (e.g. `["string", "null"]`) → single `type` + `nullable`.
+ *  - Converts `anyOf`/`oneOf` nullable patterns (e.g. `{ anyOf: [{type: "string"}, {type: "null"}] }`)
+ *    into `{ type: "string", nullable: true }`.
+ */
+function toGeminiSchema(obj: unknown): unknown {
+  if (obj === null || obj === undefined || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(toGeminiSchema);
+
+  const BLOCKED_KEYS = new Set(['$schema', 'additionalProperties']);
+  const src = obj as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+
+  // Handle anyOf/oneOf nullable pattern: { anyOf: [{type: "string"}, {type: "null"}] }
+  for (const unionKey of ['anyOf', 'oneOf'] as const) {
+    const union = src[unionKey];
+    if (Array.isArray(union) && union.length === 2) {
+      const types = union as Record<string, unknown>[];
+      const nullEntry = types.find((t) => t.type === 'null');
+      const realEntry = types.find((t) => t.type !== 'null');
+      if (nullEntry && realEntry) {
+        // Flatten: take the real schema, mark it nullable, carry over other fields
+        const merged = { ...src };
+        delete merged[unionKey];
+        return toGeminiSchema({ ...merged, ...realEntry, nullable: true });
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(src)) {
+    if (BLOCKED_KEYS.has(key)) continue;
+
+    // Convert array type → single type + nullable
+    if (key === 'type' && Array.isArray(value)) {
+      const types = value as string[];
+      const nonNull = types.filter((t) => t !== 'null');
+      if (types.includes('null')) result.nullable = true;
+      result.type = nonNull.length === 1 ? nonNull[0] : (nonNull[0] ?? 'string');
+      continue;
+    }
+
+    result[key] = toGeminiSchema(value);
+  }
+
+  return result;
+}
+
 export async function* streamGoogle(
   apiKey: string,
   model: string,
@@ -42,7 +94,12 @@ export async function* streamGoogle(
       if (m.content) parts.push({ text: m.content });
       if (m.toolCalls) {
         for (const tc of m.toolCalls) {
-          parts.push({ functionCall: { name: tc.name, args: tc.args } });
+          const part: Record<string, unknown> = { functionCall: { name: tc.name, args: tc.args } };
+          // Gemini 3.5+ requires thought_signature on function call parts in multi-turn.
+          if (tc.metadata?.thought_signature) {
+            part.thought_signature = tc.metadata.thought_signature;
+          }
+          parts.push(part);
         }
       }
       // Google rejects messages with empty parts arrays — skip them
@@ -58,7 +115,7 @@ export async function* streamGoogle(
             functionDeclarations: tools.map((t) => ({
               name: t.name,
               description: t.description,
-              parameters: t.parameters,
+              parameters: toGeminiSchema(t.parameters),
             })),
           },
         ]
@@ -122,7 +179,17 @@ export async function* streamGoogle(
           if (part.functionCall) {
             const fc = part.functionCall as { name: string; args?: Record<string, unknown> };
             const callId = `google_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-            yield { type: 'tool_call', id: callId, name: fc.name, args: fc.args ?? {} };
+            // Gemini 3.5+ returns thought_signature on function calls — must be preserved
+            // and sent back in multi-turn conversations or the API rejects the request.
+            const metadata: Record<string, unknown> = {};
+            if (part.thought_signature) metadata.thought_signature = part.thought_signature;
+            yield {
+              type: 'tool_call',
+              id: callId,
+              name: fc.name,
+              args: fc.args ?? {},
+              ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+            };
             yield { type: 'tool_call_done' };
           }
         }

@@ -1,8 +1,11 @@
 // Executors
-import type { DetectionResult, ExecutorConfig, ExecutorStatus } from './executor.types.js';
+import type { DetectionResult, ExecutorConfig, ExecutorStatus, ModelPreset } from './executor.types.js';
 import { detectExecutor } from './executor-detection.js';
 import { checkLatestVersion } from './version-checker.js';
 import { KNOWN_EXECUTORS } from './executor-definitions.js';
+
+// Repositories
+import { modelCacheRepository } from '../db/repositories/index.js';
 
 // Lib
 import { logger } from '../lib/logger.js';
@@ -82,6 +85,44 @@ class ExecutorRegistry {
     return KNOWN_EXECUTORS.find((e) => e.id === id);
   }
 
+  /**
+   * Builds dynamic model presets by merging the executor's hardcoded presets with
+   * cached API models transformed via `toCliModel`. Hardcoded presets are listed
+   * first; dynamically added models are appended without duplicates.
+   */
+  private buildModelPresets(executor: ExecutorConfig): ModelPreset[] | undefined {
+    const staticPresets = executor.modelPresets ?? [];
+    if (!executor.toCliModel || !executor.providerMapping?.length)
+      return staticPresets.length ? staticPresets : undefined;
+
+    try {
+      const cachedRows = modelCacheRepository.findAll();
+      if (cachedRows.length === 0) return staticPresets.length ? staticPresets : undefined;
+
+      const merged: ModelPreset[] = [...staticPresets];
+      const seen = new Set(staticPresets.map((p) => p.value));
+
+      // Which provider types does this executor support?
+      const supportedTypes = new Set(executor.providerMapping.map((pm) => pm.providerType));
+
+      for (const row of cachedRows) {
+        if (!supportedTypes.has(row.providerType)) continue;
+
+        for (const model of row.models) {
+          const cliName = executor.toCliModel(model.value, row.providerType);
+          if (!cliName || seen.has(cliName)) continue;
+          seen.add(cliName);
+          merged.push({ value: cliName, label: model.label, provider: row.providerType });
+        }
+      }
+
+      return merged.length ? merged : undefined;
+    } catch (error: unknown) {
+      logger.warn(`${FILE_PATH} :: buildModelPresets - failed for ${executor.id}`, error);
+      return staticPresets.length ? staticPresets : undefined;
+    }
+  }
+
   async listAll(): Promise<ExecutorStatus[]> {
     await this.refreshCache();
     return KNOWN_EXECUTORS.map((e) => {
@@ -101,7 +142,7 @@ class ExecutorRegistry {
         setup: e.setup,
         modelFlag: e.modelFlag,
         defaultModel: e.defaultModel,
-        modelPresets: e.modelPresets,
+        modelPresets: this.buildModelPresets(e),
         providerMapping: e.providerMapping,
         supportsCustomModel: e.supportsCustomModel,
       };

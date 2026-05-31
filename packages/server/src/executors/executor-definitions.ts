@@ -1,6 +1,32 @@
 // Executors
 import type { ExecutorConfig } from './executor.types.js';
 
+// ---------------------------------------------------------------------------
+// CLI model name transforms
+// ---------------------------------------------------------------------------
+
+/** Aider uses LiteLLM format: openai models stay as-is, others get provider prefix. */
+function aiderCliModel(apiModelId: string, providerType: string): string | null {
+  if (providerType === 'openai') return apiModelId;
+  if (providerType === 'anthropic') return `anthropic/${apiModelId}`;
+  if (providerType === 'google') return `gemini/${apiModelId}`;
+  if (providerType === 'ollama') return `ollama_chat/${apiModelId}`;
+  return null;
+}
+
+/** OpenCode uses provider/model-id format for all providers. */
+function opencodeCliModel(apiModelId: string, providerType: string): string | null {
+  if (providerType === 'anthropic') return `anthropic/${apiModelId}`;
+  if (providerType === 'openai') return `openai/${apiModelId}`;
+  if (providerType === 'google') return `google/${apiModelId}`;
+  return null;
+}
+
+/** Passthrough: CLI model name === API model ID. */
+function passthroughCliModel(apiModelId: string): string {
+  return apiModelId;
+}
+
 export const executorClaudeCode: ExecutorConfig = {
   id: 'claude-code',
   name: 'Claude Code',
@@ -23,6 +49,7 @@ export const executorClaudeCode: ExecutorConfig = {
     { value: 'sonnet', label: 'Claude Sonnet 4.6' },
     { value: 'haiku', label: 'Claude Haiku 4.5' },
   ],
+  // Claude Code uses fixed aliases (sonnet/opus/haiku) — no dynamic expansion.
 };
 
 export const executorAider: ExecutorConfig = {
@@ -57,6 +84,7 @@ export const executorAider: ExecutorConfig = {
     { value: 'ollama_chat/phi4', label: 'Phi-4 (Ollama)', provider: 'ollama' },
     { value: 'ollama_chat/codellama', label: 'Code Llama (Ollama)', provider: 'ollama' },
   ],
+  toCliModel: aiderCliModel,
   providerMapping: [
     { providerType: 'anthropic', envVars: { ANTHROPIC_API_KEY: 'apiKey' } },
     { providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } },
@@ -84,6 +112,7 @@ export const executorCodex: ExecutorConfig = {
     { value: 'gpt-5.1-codex-mini', label: 'GPT-5.1 Codex Mini', provider: 'openai' },
     { value: 'o3', label: 'o3', provider: 'openai' },
   ],
+  toCliModel: passthroughCliModel,
   providerMapping: [{ providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } }],
 };
 
@@ -113,6 +142,7 @@ export const executorGeminiCli: ExecutorConfig = {
     { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
     { value: 'gemini-2.5-flash-lite-preview-06-17', label: 'Gemini 2.5 Flash Lite', provider: 'google' },
   ],
+  toCliModel: passthroughCliModel,
   providerMapping: [{ providerType: 'google', envVars: { GEMINI_API_KEY: 'apiKey' } }],
 };
 
@@ -154,6 +184,7 @@ export const executorOpencode: ExecutorConfig = {
     { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'google' },
     { value: 'google/gemini-2.5-flash-lite-preview-06-17', label: 'Gemini 2.5 Flash Lite', provider: 'google' },
   ],
+  toCliModel: opencodeCliModel,
   providerMapping: [
     { providerType: 'anthropic', envVars: { ANTHROPIC_API_KEY: 'apiKey' } },
     { providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } },
@@ -229,6 +260,7 @@ export const executorGoose: ExecutorConfig = {
     { value: 'llama3.2', label: 'Llama 3.2 (Ollama)', provider: 'ollama' },
     { value: 'phi4', label: 'Phi-4 (Ollama)', provider: 'ollama' },
   ],
+  toCliModel: passthroughCliModel,
   providerMapping: [
     { providerType: 'anthropic', envVars: { ANTHROPIC_API_KEY: 'apiKey' } },
     { providerType: 'openai', envVars: { OPENAI_API_KEY: 'apiKey' } },

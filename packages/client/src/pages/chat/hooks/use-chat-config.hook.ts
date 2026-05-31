@@ -67,13 +67,26 @@ export function useChatConfig(conversationId: string | undefined): ChatConfigSta
     setSelectedProviderId(preferred ? preferred.id : providers[0].id);
   }, [providers, selectedProviderId]);
 
-  // Auto-select API model: prefer remembered for this provider if still in the list, else first.
+  // Auto-select API model: prefer remembered → provider's configured model → first available.
   useEffect(() => {
     if (providerModels.length === 0 || selectedModel) return;
     const remembered = getChatPrefs().modelByProvider(selectedProviderId);
     const match = remembered && providerModels.find((m) => m.value === remembered);
-    setSelectedModel(match ? match.value : providerModels[0].value);
-  }, [providerModels, selectedModel, selectedProviderId]);
+    if (match) {
+      setSelectedModel(match.value);
+      return;
+    }
+    // Fall back to the model configured on the provider itself (e.g. gpt-5.5-pro).
+    const selectedProvider = providers.find((p) => p.id === selectedProviderId);
+    if (selectedProvider) {
+      const providerDefault = providerModels.find((m) => m.value === selectedProvider.modelName);
+      if (providerDefault) {
+        setSelectedModel(providerDefault.value);
+        return;
+      }
+    }
+    setSelectedModel(providerModels[0].value);
+  }, [providerModels, selectedModel, selectedProviderId, providers]);
 
   // Auto-select executor: prefer remembered if still in the list, else first available.
   useEffect(() => {

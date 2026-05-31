@@ -12,7 +12,7 @@ import { ZodError } from 'zod';
 import { startMcpHttpServer } from './mcp-http.js';
 import { apiRoutes } from './routes/index.js';
 import { authRoute } from './routes/auth.route.js';
-import { activityLogService, heartbeatService, orchestratorService } from './services/index.js';
+import { activityLogService, heartbeatService, modelCacheService, orchestratorService } from './services/index.js';
 import { activeProcesses, markShuttingDown } from './services/orchestrator/shared/index.js';
 import { startupCleanupService } from './services/orchestrator/lifecycle/startup-cleanup.service.js';
 import { startZombieSweeper } from './services/orchestrator/lifecycle/zombie-sweeper.js';
@@ -111,6 +111,11 @@ const zombieSweeperInterval = startZombieSweeper();
 
 startupCleanupService.runNow();
 const startupCleanupInterval = startupCleanupService.scheduleDaily();
+
+// Refresh model cache in the background — non-blocking, non-fatal.
+modelCacheService.refreshAll().catch((err) => {
+  logger.warn('Model cache refresh on startup failed', err);
+});
 
 // ─── Graceful shutdown ───────────────────────────────────────────────────────
 // Keeps in-flight agent children from being orphaned when the Atlas server

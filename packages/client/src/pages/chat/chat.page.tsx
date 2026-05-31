@@ -67,8 +67,10 @@ export function ChatPage() {
     [config, conversationId, updateMode, send],
   );
 
-  // True when the server is still processing a response (e.g. user navigated away mid-stream and back)
-  const isAwaitingResponse = state === 'idle' && messages.length > 0 && messages[messages.length - 1]?.role === 'user';
+  // True when the server is still processing a response (e.g. user navigated away mid-stream and back).
+  // Exclude error state — a failed response leaves the last message as 'user' but the chat isn't waiting.
+  const isAwaitingResponse =
+    state === 'idle' && !error && messages.length > 0 && messages[messages.length - 1]?.role === 'user';
   const isNewChat = !conversationId;
   const hasAnyBackend = config.providers.length > 0 || config.installedExecutors.length > 0;
 

@@ -38,13 +38,16 @@ export async function resolveSpawnOptions(
 
   if (!resolvedModel && executor.defaultModel) resolvedModel = executor.defaultModel;
 
+  // Log a note when the model isn't in the static presets — it may come from
+  // the dynamic model cache or user custom input. Don't reject it: the CLI
+  // itself will error if the model name is invalid, and blocking here would
+  // prevent users from using dynamically fetched models.
   if (resolvedModel && executor.modelPresets?.length) {
     const known = new Set(executor.modelPresets.map((p) => p.value));
     if (!known.has(resolvedModel)) {
-      logger.warn(
-        `${FILE_PATH} :: resolveSpawnOptions - model "${resolvedModel}" not in ${executor.id} presets, falling back to ${executor.defaultModel ?? 'runtime default'}`,
+      logger.info(
+        `${FILE_PATH} :: resolveSpawnOptions - model "${resolvedModel}" not in ${executor.id} static presets (may be a cached/custom model)`,
       );
-      resolvedModel = executor.defaultModel;
     }
   }
 

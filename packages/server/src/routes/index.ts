@@ -12,6 +12,7 @@ import { integrationsRoute } from './integrations.route.js';
 import { mcpConfigRoute } from './mcp-config.route.js';
 import { mcpServersRoute } from './mcp-servers.route.js';
 import { memoryRoute } from './memory.route.js';
+import { modelsRoute } from './models.route.js';
 import { marketplaceRoute } from './marketplace.route.js';
 import { packageRoute } from './package.route.js';
 import { phasesRoute } from './phases.route.js';
@@ -36,6 +37,7 @@ export const apiRoutes = new Hono()
   .route('/skills', skillsRoute)
   .route('/rules', rulesRoute)
   .route('/memory', memoryRoute)
+  .route('/models', modelsRoute)
   .route('/tasks', tasksRoute)
   .route('/projects', projectsRoute)
   .route('/projects/:projectId/docs', projectDocsRoute)

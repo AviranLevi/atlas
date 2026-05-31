@@ -48,7 +48,7 @@ const MAX_TOOL_ROUNDS = 10;
 
 type StreamCallback = (event: string, data: unknown) => void | Promise<void>;
 
-type PendingToolCall = { id: string; name: string; args: Record<string, unknown> };
+type PendingToolCall = { id: string; name: string; args: Record<string, unknown>; metadata?: Record<string, unknown> };
 
 export class ChatService {
   private readonly repo = chatRepository;
@@ -297,7 +297,7 @@ export class ChatService {
           await emit('text_delta', { text: event.text });
           break;
         case 'tool_call':
-          pendingToolCalls.push({ id: event.id, name: event.name, args: event.args });
+          pendingToolCalls.push({ id: event.id, name: event.name, args: event.args, metadata: event.metadata });
           await emit('tool_call', { id: event.id, name: event.name, args: event.args });
           break;
         case 'usage':

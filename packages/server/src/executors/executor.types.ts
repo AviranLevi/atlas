@@ -57,8 +57,14 @@ export interface ExecutorConfig {
   modelFlag?: string;
   /** Default model used when none is specified. */
   defaultModel?: string;
-  /** Well-known models for quick selection in the UI. */
+  /** Well-known models for quick selection in the UI (used as fallback when no cached models exist). */
   modelPresets?: ModelPreset[];
+  /**
+   * Transforms an API-level model ID into the CLI model name this executor expects.
+   * Used to dynamically expand model presets from cached provider models.
+   * When undefined, the executor does not support dynamic model expansion.
+   */
+  toCliModel?: (apiModelId: string, providerType: string) => string | null;
   /** How to inject AgentProvider credentials as environment variables per provider type. */
   providerMapping?: ProviderMapping[];
   /** Whether the UI should allow free-text model input. Defaults to true. */

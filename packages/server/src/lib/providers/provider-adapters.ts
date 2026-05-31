@@ -55,7 +55,12 @@ const DATED_SNAPSHOT_RE = /(-\d{4}(-\d{2}){0,2})$/;
 function isOpenAIChatAlias(id: string): boolean {
   if (!OPENAI_CHAT_PREFIXES.some((p) => id.startsWith(p))) return false;
   if (DATED_SNAPSHOT_RE.test(id)) return false;
-  if (/-(image|audio|realtime|transcription|embedding|moderation|search)/.test(id)) return false;
+  if (/-(image|audio|realtime|transcription|embedding|moderation|search|instruct|completions?)/.test(id)) return false;
+  // Fine-tuned models start with "ft:" — include them only if the base matches
+  if (id.startsWith('ft:')) return false;
+  // gpt-*-pro models (e.g. gpt-5.5-pro) are Responses-API-only, not chat/completions.
+  // Note: o1-pro IS a chat model — this only blocks gpt- prefixed -pro variants.
+  if (id.startsWith('gpt-') && id.endsWith('-pro')) return false;
   return true;
 }
 

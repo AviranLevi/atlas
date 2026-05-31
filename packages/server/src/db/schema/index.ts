@@ -8,6 +8,7 @@ export { heartbeatConfigs, heartbeatRuns } from './heartbeats.schema.js';
 export { integrations } from './integrations.schema.js';
 export { mcpServers } from './mcp-servers.schema.js';
 export { memory } from './memory.schema.js';
+export { modelCache } from './model-cache.schema.js';
 export { phases } from './phases.schema.js';
 export { preferences } from './preferences.schema.js';
 export { projects } from './projects.schema.js';

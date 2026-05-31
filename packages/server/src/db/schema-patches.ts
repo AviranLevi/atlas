@@ -28,6 +28,7 @@ export function applySchemaPatches(sqlite: Database.Database): void {
     'ALTER TABLE workspaces ADD COLUMN base_branch TEXT',
     'ALTER TABLE workspaces ADD COLUMN provider_fallback_reason TEXT',
     'ALTER TABLE agents ADD COLUMN execution_mode TEXT',
+    'ALTER TABLE agents ADD COLUMN default_runtime_id TEXT',
     'ALTER TABLE chat_conversations ADD COLUMN execution_mode TEXT',
   ];
 
