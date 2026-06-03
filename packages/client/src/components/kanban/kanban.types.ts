@@ -83,6 +83,8 @@ export type TaskCoreFieldsProps = {
   onEstimateChange: (estimate: TaskEstimate) => void;
   projects: { id: string; name: string }[];
   agents: { id: string; name: string }[];
+  /** True after a submit attempt with no project selected — shows an error state. */
+  projectError?: boolean;
 };
 
 export type BacklogListProps = {

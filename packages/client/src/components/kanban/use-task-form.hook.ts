@@ -40,6 +40,7 @@ export function useTaskForm({
   const [projectId, setProjectId] = useState<string>(NONE_VALUE);
   const [tagsInput, setTagsInput] = useState('');
   const [phaseId, setPhaseId] = useState<string>(NONE_VALUE);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   const { data: agents = [] } = useAgents();
   const { data: projects = [] } = useProjects();
@@ -50,18 +51,23 @@ export function useTaskForm({
 
   const isEditing = !!task;
 
-  // Tracks which subject the form was last initialized for. Initializing the
-  // form is a RESET — it must only happen when the form's subject genuinely
-  // changes (a different task, or new ↔ edit), NOT on every background refetch
-  // of `task`/`projects`. Keying the reset on identity prevents a refetch from
-  // wiping the user's in-progress edits (which previously sent stale values on
-  // submit, making updates appear to "not persist").
+  // Tracks which task snapshot the form was last initialized for. Initializing
+  // the form is a RESET — keying it on `id + updatedAt` means:
+  //   • a background refetch of `projects`/`agents` (task unchanged) does NOT
+  //     re-run the reset, so in-progress edits are preserved; and
+  //   • genuinely fresh task data — after a save, or stale-cache → fresh on
+  //     reopen (React Query serves stale data first, then refetches) — DOES
+  //     re-initialize, so the form always reflects the latest saved values.
+  // Using `id` alone caused reopened forms to display stale cached values
+  // (project/agent/status appearing empty) because the guard blocked the
+  // re-init once the fresh data arrived.
   const initializedKey = useRef<string | null>(null);
 
   useEffect(() => {
-    const key = task ? `edit:${task.id}` : 'new';
+    const key = task ? `edit:${task.id}:${task.updatedAt}` : 'new';
     if (initializedKey.current === key) return;
     initializedKey.current = key;
+    setAttemptedSubmit(false);
 
     if (task) {
       setName(task.name);
@@ -112,6 +118,8 @@ export function useTaskForm({
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
+      // Surface required-field errors instead of silently doing nothing.
+      setAttemptedSubmit(true);
       if (!name.trim() || projectId === NONE_VALUE) return;
 
       const parsedTags = tagsInput.trim()
@@ -193,5 +201,9 @@ export function useTaskForm({
     submitError: submitMutation.isError ? (submitMutation.error as Error) : null,
     canSubmit: !!name.trim() && projectId !== NONE_VALUE,
     handleSubmit,
+    // Validation surfaced only after a submit attempt, so the form doesn't
+    // show errors before the user has tried anything.
+    nameError: attemptedSubmit && !name.trim(),
+    projectError: attemptedSubmit && projectId === NONE_VALUE,
   };
 }

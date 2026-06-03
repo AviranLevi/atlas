@@ -25,6 +25,7 @@ export function TaskCoreFields({
   onEstimateChange,
   projects,
   agents,
+  projectError,
 }: TaskCoreFieldsProps) {
   return (
     <>
@@ -34,7 +35,9 @@ export function TaskCoreFields({
             Project <span className="text-destructive">*</span>
           </Label>
           <Select value={projectId} onValueChange={onProjectChange}>
-            <SelectTrigger className={projectId === NONE_VALUE ? 'border-destructive/50' : ''}>
+            <SelectTrigger
+              className={projectError ? 'border-destructive' : projectId === NONE_VALUE ? 'border-destructive/50' : ''}
+            >
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
             <SelectContent>
@@ -45,7 +48,11 @@ export function TaskCoreFields({
               ))}
             </SelectContent>
           </Select>
-          {projectId === NONE_VALUE && <p className="text-xs text-destructive">Required to run tasks</p>}
+          {projectError ? (
+            <p className="text-xs text-destructive font-medium">Please select a project</p>
+          ) : (
+            projectId === NONE_VALUE && <p className="text-xs text-destructive">Required to run tasks</p>
+          )}
         </div>
 
         <div className="space-y-1.5">

@@ -121,6 +121,7 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
           onEstimateChange={form.setEstimate}
           projects={form.projects}
           agents={form.agents}
+          projectError={form.projectError}
         />
 
         <div className="space-y-1.5">
@@ -187,11 +188,19 @@ function TaskDetailContent({ task, onClose }: { task: Task; onClose: () => void 
         )}
 
         <div className="flex items-center justify-end gap-2 pt-1 sticky bottom-0 bg-background pb-2">
-          {form.submitError && <p className="mr-auto text-sm text-destructive">{form.submitError.message}</p>}
+          {form.submitError ? (
+            <p className="mr-auto text-sm text-destructive">{form.submitError.message}</p>
+          ) : (
+            (form.nameError || form.projectError) && (
+              <p className="mr-auto text-sm text-destructive">
+                {form.nameError ? 'Task name is required' : 'Please select a project'}
+              </p>
+            )
+          )}
           <Button variant="outline" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={form.isPending || !form.canSubmit}>
+          <Button type="submit" disabled={form.isPending}>
             {form.isPending ? 'Saving…' : 'Update'}
           </Button>
         </div>

@@ -72,6 +72,7 @@ export function TaskDialog({
             onEstimateChange={form.setEstimate}
             projects={form.projects}
             agents={form.agents}
+            projectError={form.projectError}
           />
 
           <div className="space-y-1.5">
@@ -122,11 +123,19 @@ export function TaskDialog({
           {form.isEditing && task?.status === TASK_STATUS.IN_REVIEW && <ReviewPanel taskId={task.id} />}
 
           <div className="flex items-center justify-end gap-2 pt-1">
-            {form.submitError && <p className="mr-auto text-sm text-destructive">{form.submitError.message}</p>}
+            {form.submitError ? (
+              <p className="mr-auto text-sm text-destructive">{form.submitError.message}</p>
+            ) : (
+              (form.nameError || form.projectError) && (
+                <p className="mr-auto text-sm text-destructive">
+                  {form.nameError ? 'Task name is required' : 'Please select a project'}
+                </p>
+              )
+            )}
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={form.isPending || !form.canSubmit}>
+            <Button type="submit" disabled={form.isPending}>
               {form.isPending ? 'Saving…' : form.isEditing ? 'Update' : 'Create'}
             </Button>
           </div>
