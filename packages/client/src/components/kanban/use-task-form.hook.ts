@@ -1,6 +1,6 @@
 // React / library
 import { TASK_STATUS } from '@atlas/shared';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Hooks
 import { useAgents } from '@/hooks/use-agents.hook';
@@ -50,7 +50,19 @@ export function useTaskForm({
 
   const isEditing = !!task;
 
+  // Tracks which subject the form was last initialized for. Initializing the
+  // form is a RESET — it must only happen when the form's subject genuinely
+  // changes (a different task, or new ↔ edit), NOT on every background refetch
+  // of `task`/`projects`. Keying the reset on identity prevents a refetch from
+  // wiping the user's in-progress edits (which previously sent stale values on
+  // submit, making updates appear to "not persist").
+  const initializedKey = useRef<string | null>(null);
+
   useEffect(() => {
+    const key = task ? `edit:${task.id}` : 'new';
+    if (initializedKey.current === key) return;
+    initializedKey.current = key;
+
     if (task) {
       setName(task.name);
       setStatus(task.status);
@@ -82,6 +94,15 @@ export function useTaskForm({
       setTagsInput(followUpContext ? 'follow-up' : '');
     }
   }, [task, defaultProjectId, defaultStatus, projects, followUpContext]);
+
+  // New-task only: auto-select the project once the projects list loads (if the
+  // user hasn't already picked one). Kept separate from the reset effect so it
+  // doesn't clobber edits on refetch.
+  useEffect(() => {
+    if (task || defaultProjectId) return;
+    if (projectId !== NONE_VALUE) return;
+    if (projects.length === 1) setProjectId(projects[0].id);
+  }, [task, defaultProjectId, projectId, projects]);
 
   const handleProjectChange = useCallback((id: string) => {
     setProjectId(id);
