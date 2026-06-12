@@ -11,6 +11,7 @@ import { projects, tasks, workspaces } from '../../schema/index.js';
 // Lib
 import { NotFoundError } from '../../../lib/errors.js';
 import { withAppErrorSync } from '../../../lib/with-app-error.js';
+import { eventBus } from '../../../lib/event-bus.js';
 
 // Local
 import type { InsertWorkspace, UpdateWorkspace, WorkspaceJoinRow } from './workspaces.repository.types.js';
@@ -204,16 +205,20 @@ export class WorkspacesRepository {
 
   /** Inserts a new workspace and returns the created record. */
   insert(data: InsertWorkspace): Workspace {
-    return withAppErrorSync(() => this.db.insert(workspaces).values(data).returning().get() as Workspace, {
+    const result = withAppErrorSync(() => this.db.insert(workspaces).values(data).returning().get() as Workspace, {
       filePath: FILE_PATH,
       functionName: 'insert',
       message: 'Failed to insert workspace',
     });
+    // Notify SSE subscribers so the UI reflects new/changed workspaces live
+    // without waiting for the next poll. Invalidation-only — see event-bus.ts.
+    eventBus.publish({ kind: 'workspace', id: result.id });
+    return result;
   }
 
   /** Updates a workspace and returns the updated record. */
   update(id: string, data: UpdateWorkspace): Workspace {
-    return withAppErrorSync(
+    const result = withAppErrorSync(
       () =>
         this.db
           .update(workspaces)
@@ -223,6 +228,8 @@ export class WorkspacesRepository {
           .get() as Workspace,
       { filePath: FILE_PATH, functionName: 'update', message: 'Failed to update workspace' },
     );
+    eventBus.publish({ kind: 'workspace', id });
+    return result;
   }
 
   /** Deletes a workspace by ID. */
@@ -233,6 +240,7 @@ export class WorkspacesRepository {
       },
       { filePath: FILE_PATH, functionName: 'remove', message: 'Failed to delete workspace' },
     );
+    eventBus.publish({ kind: 'workspace', id });
   }
 
   /** Deletes all workspaces for a task. */
@@ -247,5 +255,6 @@ export class WorkspacesRepository {
         message: 'Failed to delete workspaces for task',
       },
     );
+    eventBus.publish({ kind: 'workspace' });
   }
 }

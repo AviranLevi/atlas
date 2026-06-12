@@ -12,6 +12,9 @@ import { AuthProvider } from '@/contexts/auth.context';
 import { ChatStreamProvider } from '@/contexts/ChatStreamContext';
 import { ProjectProvider } from '@/contexts/ProjectContext';
 
+// Hooks
+import { useEventStream } from '@/hooks/use-event-stream.hook';
+
 // Lib
 import { ApiError } from '@/lib/api';
 
@@ -27,9 +30,16 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Opens the SSE change stream once for the whole app. Renders nothing. */
+function EventStreamBridge() {
+  useEventStream();
+  return null;
+}
+
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
+      <EventStreamBridge />
       <AuthProvider>
         <ProjectProvider>
           <TooltipProvider>

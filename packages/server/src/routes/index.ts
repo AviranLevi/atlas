@@ -19,6 +19,7 @@ import { phasesRoute } from './phases.route.js';
 import { pipelinesRoute } from './pipelines.route.js';
 import { preferencesRoute } from './preferences.route.js';
 import { docsRoute } from './docs.route.js';
+import { eventsRoute } from './events.route.js';
 import { projectDocsRoute } from './project-docs.route.js';
 import { projectsRoute } from './projects.route.js';
 import { reviewsRoute } from './reviews.route.js';
@@ -59,4 +60,5 @@ export const apiRoutes = new Hono()
   .route('/integrations', integrationsRoute)
   .route('/mcp-servers', mcpServersRoute)
   .route('/usage', usageRoute)
+  .route('/events', eventsRoute)
   .route('/', heartbeatsRoute);
