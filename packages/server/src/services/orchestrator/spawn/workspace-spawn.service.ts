@@ -25,9 +25,12 @@ import { validateSpawnPreconditions } from './helpers/spawn-preconditions.helper
 import { prepareWorktree } from './helpers/spawn-worktree-prep.helper.js';
 import { createTerminalCallbacks } from './helpers/spawn-terminal-callbacks.helper.js';
 import { killOnShutdown } from './helpers/spawn-shutdown-guard.helper.js';
+import { notifyPipelineTransition } from './helpers/spawn-pipeline-notify.helper.js';
 
 // Executors
 import { spawnAgent } from '../../../executors/spawn-agent.js';
+import type { ExecutorConfig } from '../../../executors/executor.types.js';
+import type { SpawnOptions } from '../../../executors/spawn-agent.js';
 
 // Lib
 import { AppError } from '../../../lib/errors.js';
@@ -59,11 +62,11 @@ export class WorkspaceSpawnService {
     let createdWorktreePath: string | null = null;
     let projectLocalPath: string | null = null;
     try {
-      const { task, project, executor } = await validateSpawnPreconditions(taskId, agentRuntimeId);
+      const t0 = Date.now();
 
-      // Provider is sourced from the task so all entry-points share the same
-      // resolution path. Callers that want a different provider persist it to
-      // the task before calling startWork.
+      const { task, project, executor } = await validateSpawnPreconditions(taskId, agentRuntimeId);
+      logger.debug(`${FILE_PATH} :: ${FUNCTION_NAME} - preconditions validated [${Date.now() - t0}ms]`);
+
       const effectiveProviderId = task.workflowProviderId ?? undefined;
       const { resolvedModel, spawnOpts } = await resolveSpawnOptions(
         executor,
@@ -71,14 +74,11 @@ export class WorkspaceSpawnService {
         model,
         effectiveProviderId,
       );
+      logger.debug(`${FILE_PATH} :: ${FUNCTION_NAME} - spawn options resolved [${Date.now() - t0}ms]`);
 
-      // Determine the effective workflow stage for this run.
       const effectiveStage = workflowStage ?? (task.workflowEnabled ? (task.workflowStage ?? 'brainstorm') : null);
       const isStructuredStage = effectiveStage === 'brainstorm' || effectiveStage === 'plan';
 
-      // Tracks why the structured path bailed, if it did. Persisted on the
-      // CLI-fallback workspace row so the UI can explain "we wanted structured
-      // output but no API provider was available".
       let providerFallbackReason: string | null = null;
 
       if (isStructuredStage) {
@@ -92,7 +92,6 @@ export class WorkspaceSpawnService {
         );
         if (structuredResult.kind === 'structured') return structuredResult.workspace;
         providerFallbackReason = structuredResult.reason;
-        // Provider unavailable — fall through to CLI execution
       }
 
       projectLocalPath = project.localPath!;
@@ -106,6 +105,7 @@ export class WorkspaceSpawnService {
         effectiveStage,
       });
       createdWorktreePath = worktreePath;
+      logger.debug(`${FILE_PATH} :: ${FUNCTION_NAME} - worktree prepared [${Date.now() - t0}ms]`);
 
       const workspace = workspacesRepository.insert({
         taskId,
@@ -123,47 +123,32 @@ export class WorkspaceSpawnService {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
+      logger.info(
+        `${FILE_PATH} :: ${FUNCTION_NAME} - workspace ${workspace.id} created (pending) [${Date.now() - t0}ms]`,
+      );
 
-      const prompt = await buildPrompt({
-        taskId,
-        projectId: project.id,
-        agentId: task.agentId,
-        hasMcpAccess: executor.mcpConfigFormat !== 'none',
-        workflowStage: effectiveStage,
-      });
-
-      const cwd = executor.usesProjectRoot ? project.localPath! : worktreePath;
-
-      const { onCompleted, onFailed } = createTerminalCallbacks({
+      // Return the workspace immediately — prompt building, agent spawning,
+      // and activation continue in the background so the HTTP response is not
+      // blocked by potentially slow operations (external API calls, process
+      // spawning, MCP config generation).
+      this.spawnInBackground({
         workspace,
-        worktreeService: this.worktreeService,
-        taskName: task.name,
-        notifyPipeline: true,
-      });
-
-      const result = await spawnAgent(workspace.id, executor, cwd, prompt, { onCompleted, onFailed }, spawnOpts);
-
-      if (killOnShutdown(workspace.id, result.process)) {
-        throw new AppError('Server is shutting down', { status: 503 });
-      }
-
-      await this.activateWorkspace({
-        workspace,
-        taskId,
         taskName: task.name,
         agentId: task.agentId ?? null,
         projectId: project.id,
-        proc: result.process,
-        onFailed,
+        projectLocalPath,
+        executor,
+        spawnOpts,
+        resolvedModel,
         effectiveStage,
         agentRuntimeId,
-        resolvedModel,
+        parentWorkspaceId,
+        worktreePath,
         branchName,
       });
 
       return workspacesRepository.findByIdOrThrow(workspace.id);
     } catch (error: unknown) {
-      // Clean up orphaned worktree if it was created before the failure
       if (createdWorktreePath && projectLocalPath) {
         try {
           this.worktreeService.remove(createdWorktreePath, projectLocalPath);
@@ -178,6 +163,122 @@ export class WorkspaceSpawnService {
       if (error instanceof AppError) throw error;
       throw new AppError('Failed to start work', { cause: error });
     }
+  }
+
+  /**
+   * Builds the prompt, spawns the agent process, and activates the workspace.
+   * Runs detached from the HTTP request so the client gets an immediate response.
+   * On failure, marks the workspace as failed and cleans up the worktree.
+   */
+  private spawnInBackground(ctx: {
+    workspace: Workspace;
+    taskName: string;
+    agentId: string | null;
+    projectId: string;
+    projectLocalPath: string;
+    executor: ExecutorConfig;
+    spawnOpts: SpawnOptions;
+    resolvedModel: string | null | undefined;
+    effectiveStage: 'brainstorm' | 'plan' | 'execute' | null;
+    agentRuntimeId: string;
+    parentWorkspaceId?: string;
+    worktreePath: string;
+    branchName: string;
+  }): void {
+    const FUNCTION_NAME = 'spawnInBackground';
+    const t0 = Date.now();
+
+    const run = async () => {
+      const prompt = await buildPrompt({
+        taskId: ctx.workspace.taskId,
+        projectId: ctx.projectId,
+        agentId: ctx.agentId,
+        hasMcpAccess: ctx.executor.mcpConfigFormat !== 'none',
+        workflowStage: ctx.effectiveStage,
+      });
+      logger.debug(`${FILE_PATH} :: ${FUNCTION_NAME} - prompt built [${Date.now() - t0}ms]`);
+
+      const cwd = ctx.executor.usesProjectRoot ? ctx.projectLocalPath : ctx.worktreePath;
+
+      const { onCompleted, onFailed } = createTerminalCallbacks({
+        workspace: ctx.workspace,
+        worktreeService: this.worktreeService,
+        taskName: ctx.taskName,
+        notifyPipeline: true,
+      });
+
+      const result = await spawnAgent(
+        ctx.workspace.id,
+        ctx.executor,
+        cwd,
+        prompt,
+        { onCompleted, onFailed },
+        ctx.spawnOpts,
+      );
+      logger.debug(`${FILE_PATH} :: ${FUNCTION_NAME} - agent spawned [${Date.now() - t0}ms]`);
+
+      if (killOnShutdown(ctx.workspace.id, result.process)) {
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
+      await this.activateWorkspace({
+        workspace: ctx.workspace,
+        taskId: ctx.workspace.taskId,
+        taskName: ctx.taskName,
+        agentId: ctx.agentId,
+        projectId: ctx.projectId,
+        proc: result.process,
+        onFailed,
+        effectiveStage: ctx.effectiveStage,
+        agentRuntimeId: ctx.agentRuntimeId,
+        resolvedModel: ctx.resolvedModel,
+        branchName: ctx.branchName,
+      });
+      logger.info(`${FILE_PATH} :: ${FUNCTION_NAME} - workspace ${ctx.workspace.id} activated [${Date.now() - t0}ms]`);
+    };
+
+    // Note: this catch can't reuse createTerminalCallbacks' onFailed — its
+    // dedupe guard requires the workspace in activeProcesses, which only
+    // happens during activateWorkspace. Pre-activation failures land here.
+    run().catch((error) => {
+      logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - workspace ${ctx.workspace.id}`, error);
+
+      try {
+        workspacesRepository.update(ctx.workspace.id, {
+          status: 'failed',
+          output: error instanceof Error ? error.message : 'Failed to start agent',
+          completedAt: new Date().toISOString(),
+        });
+      } catch (e) {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to update workspace status`, e);
+      }
+
+      // Reset the task so it can be retried (activateWorkspace may have moved
+      // it to In Progress before the failure).
+      tasksService.update(ctx.workspace.taskId, { status: TASK_STATUS.TODO }).catch((e: unknown) => {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to reset task status`, e);
+      });
+
+      try {
+        this.worktreeService.remove(ctx.worktreePath, ctx.projectLocalPath);
+      } catch {
+        logger.warn(`${FILE_PATH} :: ${FUNCTION_NAME} - failed to clean up worktree at ${ctx.worktreePath}`);
+      }
+
+      activityLogService.log({
+        projectId: ctx.projectId,
+        taskId: ctx.workspace.taskId,
+        workspaceId: ctx.workspace.id,
+        agentId: ctx.agentId,
+        eventType: 'agent_failed',
+        description: `Failed to start agent: ${error instanceof Error ? error.message : 'unknown error'}`,
+        metadata: { error: error instanceof Error ? error.message : String(error) },
+      });
+
+      // Without this, a pipeline that recorded this workspaceId would wait
+      // forever for a status transition that never arrives.
+      notifyPipelineTransition(ctx.workspace.id, 'failed');
+    });
   }
 
   /**

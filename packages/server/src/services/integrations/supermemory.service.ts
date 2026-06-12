@@ -33,7 +33,13 @@ export class SupermemoryService {
   }
 
   /** Calls the Supermemory REST API. */
-  private async request(config: SupermemoryConfig, method: string, path: string, body?: unknown): Promise<unknown> {
+  private async request(
+    config: SupermemoryConfig,
+    method: string,
+    path: string,
+    body?: unknown,
+    timeoutMs = 10_000,
+  ): Promise<unknown> {
     const res = await fetch(`${config.baseUrl}${path}`, {
       method,
       headers: {
@@ -41,6 +47,7 @@ export class SupermemoryService {
         Authorization: `Bearer ${config.apiKey}`,
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
