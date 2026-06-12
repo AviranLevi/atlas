@@ -29,6 +29,9 @@ packages/shared/src/**/*.d.ts.map
 packages/*/CLAUDE.md
 .cursor/
 
-# Local planning / scratch docs (not part of the repo contract)
-docs/
+# Local planning / scratch docs (not part of the repo contract).
+# Use docs/* (not docs/) so the public roadmap can be un-ignored below —
+# git won't descend into a fully-ignored directory to apply the negation.
+docs/*
+!docs/roadmap.md
 launch/
