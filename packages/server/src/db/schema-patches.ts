@@ -6,11 +6,21 @@ import type Database from 'better-sqlite3';
  * These patches add columns that were introduced after the initial Drizzle migrations.
  * Each is wrapped in try/catch so it's safe to run repeatedly.
  *
- * TODO: Once Node is upgraded to >=24 (or drizzle-kit's CJS loader is fixed),
- * run `pnpm --filter @atlas/server db:generate` to produce a proper .sql migration
- * for every entry below, then empty this list. Each patch here is schema drift
- * that drizzle-kit doesn't know about — `db:generate` will try to re-add them,
- * producing duplicate-column migration errors until reconciled.
+ * TODO(migration-reconciliation): fold these into a proper .sql migration, then
+ * empty this list. The real blocker is NOT the Node version (Node 24 is fine) —
+ * a 2026-06 spike found `drizzle-kit generate` fails to resolve the `.js`-suffixed
+ * ESM import specifiers in the schema `.ts` files (`Cannot find module
+ * '../helpers/index.js'`). Viable path, to run with a human at an interactive
+ * terminal (drizzle-kit prompts and hangs in non-TTY/CI):
+ *   1. `pnpm --filter @atlas/server build`, then point drizzle-kit at the
+ *      COMPILED schema (`./dist/db/schema/*.schema.js`) where the `.js` imports
+ *      resolve — confirmed to get past the resolution error.
+ *   2. The generated migration will `ADD COLUMN` columns that EXISTING user DBs
+ *      already have (these patches added them outside Drizzle's journal). Make it
+ *      tolerant: stamp the journal as applied when the columns are detected, or
+ *      keep this idempotent (try/catch) `applySchemaPatches` for one release as a
+ *      no-op safety net, then delete it.
+ *   3. Enforce going forward: new columns go through `db:generate`, not here.
  */
 export function applySchemaPatches(sqlite: Database.Database): void {
   const patches = [
