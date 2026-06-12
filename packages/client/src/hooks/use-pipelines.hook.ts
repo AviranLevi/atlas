@@ -37,8 +37,10 @@ export function usePipeline(id: string | undefined) {
     queryFn: () => api.get<PipelineWithTasks>(`/pipelines/${id}`),
     enabled: !!id,
     refetchInterval: (query) => {
+      // Pipeline advancement cascades from workspace transitions, which the SSE
+      // event bus invalidates live. Poll only while running, as a fallback.
       const status = query.state.data?.status;
-      return status === 'running' ? 3000 : false;
+      return status === 'running' ? 15000 : false;
     },
   });
 }

@@ -24,7 +24,9 @@ export function useWorkspaces(activeOnly = false) {
   return useQuery({
     queryKey: [...WORKSPACES_KEY, activeOnly ? 'active' : 'all'],
     queryFn: () => api.get<Workspace[]>(`/workspaces${activeOnly ? '?status=active' : ''}`),
-    refetchInterval: 5000,
+    // The SSE event bus invalidates this on every workspace change; the
+    // interval is now a fallback for a dropped stream, not the primary driver.
+    refetchInterval: 20000,
   });
 }
 
@@ -33,7 +35,9 @@ export function useWorkspaceStatus(id: string | undefined) {
     queryKey: [...WORKSPACES_KEY, id],
     queryFn: () => api.get<Workspace & { fullOutput?: string }>(`/workspaces/${id}`),
     enabled: !!id,
-    refetchInterval: 3000,
+    // Status transitions arrive live via the SSE event bus; this is a fallback.
+    // (Live agent output streams over the separate log SSE, unaffected.)
+    refetchInterval: 15000,
     retry: (failureCount, error) => {
       // Don't retry 404s (workspace was deleted after merge/cleanup)
       if (error instanceof ApiError && error.status === 404) return false;
