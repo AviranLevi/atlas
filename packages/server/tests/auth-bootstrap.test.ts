@@ -8,9 +8,11 @@
  *      (forged Origin + non-local Host) both fail closed. If a future refactor
  *      relaxes either check, these tests catch it.
  *
- *   2. `AuthService.bootstrapKey` — first call mints a key, second call throws
- *      a 409 `AppError` with `{ code: 'ALREADY_INITIALIZED' }` as cause so the
- *      client can render the recovery banner instead of parsing the message.
+ *   2. `AuthService.bootstrapKey` — always mints a fresh key. A browser that
+ *      lost its localStorage is indistinguishable from a first-time install,
+ *      and the endpoint is gated by `localOnly`, so the security boundary is
+ *      the network check, not key scarcity. (Previously the second call threw
+ *      409 ALREADY_INITIALIZED; that gate was removed deliberately.)
  *
  *   3. End-to-end: a minimal Hono app that wires `localOnly` in front of the
  *      bootstrap call. Same shape as production, but assembled inline so we
@@ -127,14 +129,14 @@ describe('AuthService.bootstrapKey', () => {
     expect(fakeKeyStore.length).toBe(1);
   });
 
-  it('second call throws 409 AppError with { code: ALREADY_INITIALIZED } cause', async () => {
+  it('second call mints another fresh key (no ALREADY_INITIALIZED gate)', async () => {
     const svc = new AuthService();
-    await svc.bootstrapKey();
+    const first = await svc.bootstrapKey();
+    const second = await svc.bootstrapKey();
 
-    await expect(svc.bootstrapKey()).rejects.toMatchObject({
-      status: 409,
-      cause: { code: 'ALREADY_INITIALIZED' },
-    });
+    expect(second.rawKey).toMatch(/^atlas_[A-Za-z0-9_-]+$/);
+    expect(second.rawKey).not.toBe(first.rawKey);
+    expect(fakeKeyStore.length).toBe(2);
   });
 
   it('keysExist reflects state', async () => {
@@ -189,15 +191,17 @@ describe('end-to-end: localOnly + bootstrap handler', () => {
     expect(body.name).toBe('Browser default');
   });
 
-  it('second POST /auth/bootstrap → 409 with details.code = ALREADY_INITIALIZED', async () => {
+  it('second POST /auth/bootstrap → 201 with a fresh key (always-mint)', async () => {
     const app = makeApp();
     const first = await app.request('/api/v1/auth/bootstrap', { method: 'POST', headers: localHeaders });
     expect(first.status).toBe(201);
+    const firstBody = (await first.json()) as { rawKey: string };
 
     const second = await app.request('/api/v1/auth/bootstrap', { method: 'POST', headers: localHeaders });
-    expect(second.status).toBe(409);
-    const body = (await second.json()) as { error: string; details?: { code?: string } };
-    expect(body.details?.code).toBe('ALREADY_INITIALIZED');
+    expect(second.status).toBe(201);
+    const secondBody = (await second.json()) as { rawKey: string };
+    expect(secondBody.rawKey).toMatch(/^atlas_/);
+    expect(secondBody.rawKey).not.toBe(firstBody.rawKey);
   });
 
   it('rejects bootstrap from a non-localhost origin (DNS rebinding)', async () => {

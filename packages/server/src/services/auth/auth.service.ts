@@ -86,9 +86,10 @@ export class AuthService {
   }
 
   /**
-   * Browser bootstrap path. Identical to `setupFirstKey` but with a fixed
-   * default name and a structured 409 cause so the client can render a
-   * targeted recovery banner instead of parsing the message string.
+   * Browser bootstrap path. Always mints a fresh key with a fixed default
+   * name — unlike `setupFirstKey`, it does NOT gate on existing keys, because
+   * a browser that lost its localStorage is indistinguishable from a first
+   * install. Safe because the route is gated by `localOnly` (localhost-only).
    */
   async bootstrapKey(): Promise<{ apiKey: ApiKey; rawKey: string }> {
     const FUNCTION_NAME = 'bootstrapKey';
