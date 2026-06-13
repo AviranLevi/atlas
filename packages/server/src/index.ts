@@ -13,7 +13,12 @@ import { startMcpHttpServer } from './mcp-http.js';
 import { apiRoutes } from './routes/index.js';
 import { authRoute } from './routes/auth.route.js';
 import { activityLogService, heartbeatService, modelCacheService, orchestratorService } from './services/index.js';
-import { activeProcesses, markShuttingDown } from './services/orchestrator/shared/index.js';
+import {
+  activeProcesses,
+  awaitPendingSpawns,
+  markShuttingDown,
+  pendingSpawnCount,
+} from './services/orchestrator/shared/index.js';
 import { startupCleanupService } from './services/orchestrator/lifecycle/startup-cleanup.service.js';
 import { startZombieSweeper } from './services/orchestrator/lifecycle/zombie-sweeper.js';
 import { workspacesRepository } from './db/repositories/index.js';
@@ -154,6 +159,16 @@ function gracefulShutdown(signal: string): void {
     clearInterval(startupCleanupInterval);
   } catch (e) {
     logger.warn('startup cleanup stop failed', e);
+  }
+
+  // Background spawns that are mid-flight (building prompt, about to spawn a
+  // child) will hit the isShuttingDown() guard and abort + clean up on their
+  // own — markShuttingDown() above flipped the gate. Log them for visibility;
+  // the grace window below covers their (fast) settle.
+  const inflight = pendingSpawnCount();
+  if (inflight > 0) {
+    logger.info(`${inflight} background spawn(s) in-flight; aborting at shutdown guard`);
+    void awaitPendingSpawns();
   }
 
   const entries = Array.from(activeProcesses.entries());

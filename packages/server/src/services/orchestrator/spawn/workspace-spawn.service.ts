@@ -16,7 +16,7 @@ import { WorktreeService } from '../../worktree/index.js';
 import { resolveSpawnOptions, buildPrompt } from './spawn-options.js';
 import { structuredStageService } from './structured-stage.service.js';
 import { attachWatchdog } from './spawn-watchdog.js';
-import { activeProcesses } from '../shared/active-processes.js';
+import { activeProcesses, isShuttingDown, trackPendingSpawn } from '../shared/active-processes.js';
 import type { ActiveProcessEntry } from '../shared/active-processes.js';
 import { getMaxRuntimeMs, type RuntimeStage } from '../../../lib/runtime-limits.js';
 
@@ -200,6 +200,14 @@ export class WorkspaceSpawnService {
 
       const cwd = ctx.executor.usesProjectRoot ? ctx.projectLocalPath : ctx.worktreePath;
 
+      // Belt to killOnShutdown's suspenders: if a shutdown signal arrived while
+      // we were building the prompt, bail BEFORE spawning a child so we never
+      // create an orphan that survives process.exit. (killOnShutdown still
+      // covers the narrower window of a signal arriving during spawnAgent.)
+      if (isShuttingDown()) {
+        throw new AppError('Server is shutting down', { status: 503 });
+      }
+
       const { onCompleted, onFailed } = createTerminalCallbacks({
         workspace: ctx.workspace,
         worktreeService: this.worktreeService,
@@ -240,7 +248,7 @@ export class WorkspaceSpawnService {
     // Note: this catch can't reuse createTerminalCallbacks' onFailed — its
     // dedupe guard requires the workspace in activeProcesses, which only
     // happens during activateWorkspace. Pre-activation failures land here.
-    run().catch((error) => {
+    const settled = run().catch((error) => {
       logger.error(`${FILE_PATH} :: ${FUNCTION_NAME} - workspace ${ctx.workspace.id}`, error);
 
       try {
@@ -279,6 +287,10 @@ export class WorkspaceSpawnService {
       // forever for a status transition that never arrives.
       notifyPipelineTransition(ctx.workspace.id, 'failed');
     });
+
+    // Register the (always-resolving) settled promise so graceful shutdown can
+    // wait for in-flight spawns to reach their guard and clean up before exit.
+    trackPendingSpawn(settled);
   }
 
   /**

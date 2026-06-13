@@ -53,6 +53,31 @@ export function markShuttingDown(): void {
   shuttingDown = true;
 }
 
+/**
+ * In-flight background spawns (`spawnInBackground`) that have started but not
+ * yet registered a child in `activeProcesses`. A spawn lives here only during
+ * its prompt-build → spawn → activate window. Tracked so graceful shutdown can
+ * account for agents that are mid-spawn when a signal arrives, instead of
+ * exiting out from under them and orphaning a just-spawned child.
+ */
+const pendingSpawns = new Set<Promise<unknown>>();
+
+/** Registers an in-flight background spawn; auto-removes when it settles. */
+export function trackPendingSpawn(promise: Promise<unknown>): void {
+  pendingSpawns.add(promise);
+  void promise.finally(() => pendingSpawns.delete(promise));
+}
+
+/** Number of background spawns currently mid-flight. */
+export function pendingSpawnCount(): number {
+  return pendingSpawns.size;
+}
+
+/** Resolves once every in-flight background spawn has settled. Never rejects. */
+export function awaitPendingSpawns(): Promise<unknown> {
+  return Promise.allSettled([...pendingSpawns]);
+}
+
 /** Clears any watchdog/softWarn timers attached to an entry. Safe to call multiple times. */
 export function clearEntryTimers(entry: ActiveProcessEntry): void {
   if (entry.watchdogTimer) {
