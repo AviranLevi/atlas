@@ -28,32 +28,32 @@
     "@radix-ui/react-switch": "^1.3.7",
     "@radix-ui/react-tabs": "^1.1",
     "@radix-ui/react-tooltip": "^1.2",
-    "@tanstack/react-query": "^5.102",
-    "@xyflow/react": "^12.11.5",
+    "@tanstack/react-query": "^5.103",
+    "@xyflow/react": "^12.11.6",
     "class-variance-authority": "^0.7",
     "clsx": "^2.1",
     "cmdk": "^1.1.1",
     "driver.js": "^1.8.0",
     "force-graph": "^1.51.4",
-    "lucide-react": "^1.38",
-    "mermaid": "^11.17.2",
-    "react": "^19.2",
-    "react-dom": "^19.2",
+    "lucide-react": "^1.47",
+    "mermaid": "^12.0.0",
+    "react": "^19.3",
+    "react-dom": "^19.3",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18",
     "react-syntax-highlighter": "^16.1.1",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.8",
-    "tailwind-merge": "^3.6"
+    "tailwind-merge": "^3.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3",
-    "@types/react": "^19.2",
-    "@types/react-dom": "^19.2",
+    "@types/react": "^19.3",
+    "@types/react-dom": "^19.3",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^6.1",
     "tailwindcss": "^4.3",
     "typescript": "^7.0",
-    "vite": "^8.2"
+    "vite": "^8.3"
   }
 }
